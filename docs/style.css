@@ -1,0 +1,78 @@
+* {
+    --color-main-light: #eee;
+    --color-main-middle: #999;
+    --color-main-dark: #222;
+    --color-main-text: var(--color-main-light);
+    --color-main-background: var(--color-main-dark);
+    --color-button: var(--color-main-dark);
+}
+
+* {
+    color: var(--color-main-text);
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--color-main-background);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+button {
+    border-radius: 1px;
+    background: var(--color-main-light);
+    padding: 0.5rem 1rem;
+    color: var(--color-main-dark);
+    border: solid 1px var(--color-main-middle);
+}
+
+button:disabled {
+    background: var(--color-main-dark);
+    color: var(--color-main-middle);
+    border: solid 1px var(--color-main-middle);
+}
+
+.content {
+    display: flex;
+    width: 100vw;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.left {
+    flex-grow: 2;
+    width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.right {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 0;
+}
+
+pre {
+    flex-grow: 0;
+}
+
+.buttons {
+    margin: 1rem 0;
+}
+
+textarea {
+    background: var(--color-main-background);
+    border: none;
+    flex-grow: 1;
+}
+
+.canvas {
+    background: #333;
+    max-height: 100%;
+}
