@@ -15,7 +15,16 @@ canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
 
-const universe = Universe.new(200, 200, 0.01, 98.1, Algorithm.Verlet);
+const universe = Universe.new();
+universe.load_from_json(`{
+    "width": 200,
+    "height": 200,
+    "delta_time": 0.01,
+    "gravitational_constant": 667.4,
+    "minimal_distance_for_gravity": 0.1,
+    "algorithm": ${Algorithm.Verlet}
+}`);
+
 let interval = null;
 let time = null;
 let delta = null;
@@ -111,112 +120,128 @@ const tickMultiple = () => {
 };
 
 const heart = () => {
-    jsonTextarea.value = `[
-    {
-        "x": 0,
-        "y": 20,
-        "fixed": false
-    }, {
-        "x": 10,
-        "y": 30,
-        "fixed": false
-    }, {
-        "x": 20,
-        "y": 30,
-        "fixed": false
-    }, {
-        "x": 30,
-        "y": 20,
-        "fixed": false
-    }, {
-        "x": 20,
-        "y": 5,
-        "fixed": false
-    }, {
-        "x": 10,
-        "y": -10,
-        "fixed": false
-    }, {
-        "x": 0,
-        "y": -20,
-        "fixed": false
-    }, {
-        "x": -10,
-        "y": 30,
-        "fixed": false
-    }, {
-        "x": -20,
-        "y": 30,
-        "fixed": false
-    }, {
-        "x": -30,
-        "y": 20,
-        "fixed": false
-    }, {
-        "x": -20,
-        "y": 5,
-        "fixed": false
-    }, {
-        "x": -10,
-        "y": -10,
-        "fixed": false
-    }, {
-        "x": 0,
-        "y": -35,
-        "fixed": false
-    }
-]`;
+    jsonTextarea.value = `{
+    "width": 200,
+    "height": 200,
+    "delta_time": 0.01,
+    "gravitational_constant": 667.4,
+    "minimal_distance_for_gravity": 0.1,
+    "algorithm": ${Algorithm.Verlet},
+    "particles": [
+        {
+            "x": 0,
+            "y": 20,
+            "fixed": false
+        }, {
+            "x": 10,
+            "y": 30,
+            "fixed": false
+        }, {
+            "x": 20,
+            "y": 30,
+            "fixed": false
+        }, {
+            "x": 30,
+            "y": 20,
+            "fixed": false
+        }, {
+            "x": 20,
+            "y": 5,
+            "fixed": false
+        }, {
+            "x": 10,
+            "y": -10,
+            "fixed": false
+        }, {
+            "x": 0,
+            "y": -20,
+            "fixed": false
+        }, {
+            "x": -10,
+            "y": 30,
+            "fixed": false
+        }, {
+            "x": -20,
+            "y": 30,
+            "fixed": false
+        }, {
+            "x": -30,
+            "y": 20,
+            "fixed": false
+        }, {
+            "x": -20,
+            "y": 5,
+            "fixed": false
+        }, {
+            "x": -10,
+            "y": -10,
+            "fixed": false
+        }, {
+            "x": 0,
+            "y": -35,
+            "fixed": false
+        }
+    ]
+}`;
     reload();
 };
 
 const diamond = () => {
-    jsonTextarea.value = `[
-    {
-        "x": -30,
-        "y": -40,
-        "fixed": false
-    }, {
-        "x": -30,
-        "y": -41,
-        "fixed": false
-    }, {
-        "x": 0,
-        "y": 41,
-        "fixed": false
-    }, {
-        "x": 20,
-        "y": 20,
-        "fixed": true
-    }, {
-        "x": 20,
-        "y": -20,
-        "fixed": true
-    }, {
-        "x": -20,
-        "y": 20,
-        "fixed": true
-    }, {
-        "x": -20,
-        "y": -20,
-        "fixed": true
-    }, {
-        "x": 0,
-        "y": 40,
-        "fixed": true
-    }, {
-        "x": 0,
-        "y": -40,
-        "fixed": true
-    }, {
-        "x": 40,
-        "y": 0,
-        "fixed": true
-    }, {
-        "x": -40,
-        "y": 0,
-        "fixed": true
-    }
-]`;
+    jsonTextarea.value = `{
+    "width": 200,
+    "height": 200,
+    "delta_time": 0.01,
+    "gravitational_constant": 667.4,
+    "minimal_distance_for_gravity": 0.1,
+    "algorithm": ${Algorithm.Verlet},
+    "particles": [
+        {
+            "x": -30,
+            "y": -40,
+            "fixed": false
+        }, {
+            "x": -30,
+            "y": -41,
+            "fixed": false
+        }, {
+            "x": 0,
+            "y": 41,
+            "fixed": false
+        }, {
+            "x": 20,
+            "y": 20,
+            "fixed": true
+        }, {
+            "x": 20,
+            "y": -20,
+            "fixed": true
+        }, {
+            "x": -20,
+            "y": 20,
+            "fixed": true
+        }, {
+            "x": -20,
+            "y": -20,
+            "fixed": true
+        }, {
+            "x": 0,
+            "y": 40,
+            "fixed": true
+        }, {
+            "x": 0,
+            "y": -40,
+            "fixed": true
+        }, {
+            "x": 40,
+            "y": 0,
+            "fixed": true
+        }, {
+            "x": -40,
+            "y": 0,
+            "fixed": true
+        }
+    ]
+}`;
     reload();
 };
 
@@ -227,24 +252,7 @@ const reload = () => {
     interval = null;
     time = null;
     delta = null;
-    const str = jsonTextarea.value;
-    let particles;
-    try {
-        particles = JSON.parse(str);
-    } catch(e) {
-        alert(e);
-    }
-    if(particles.length) {
-        particles.forEach((particle) => {
-            if (particle.fixed === true) {
-                universe.add_fixed_particle(particle.x, particle.y);
-            } else {
-                universe.add_particle(particle.x, particle.y);
-            }
-        });
-    } else {
-        // NTD
-    }
+    universe.load_from_json(jsonTextarea.value);
     start();
 };
 
@@ -252,6 +260,6 @@ const getIndex = (row, column) => {
     return row * width + column;
 };
 
-heart();
+diamond();
 requestAnimationFrame(renderLoop);
 

@@ -14,8 +14,35 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 //
 #[wasm_bindgen]
 pub enum Algorithm {
-    Euler,
-    Verlet
+    Euler = 1,
+    Verlet = 2
+}
+
+//
+// Implement convertion function for Algorithm
+//
+impl Algorithm {
+
+    //
+    // Convert from u32 to Algorithm
+    //
+    fn from_u32(value: u32) -> Algorithm {
+        match value {
+            1 => Algorithm::Euler,
+            2 => Algorithm::Verlet,
+            _ => panic!("Unknown value: {}", value),
+        }
+    }
+
+    //
+    // Convert Algorithm to u32
+    //
+    fn as_u32(&self) -> u32 {
+        match self {
+            Algorithm::Euler => 1,
+            Algorithm::Verlet => 2
+        }
+    }
 }
 
 //
@@ -27,7 +54,7 @@ struct ValueWithDistance {
 }
 
 //
-// Point definition
+// Represent 2d coordinates
 //
 struct Point {
     x: f64,
@@ -94,15 +121,15 @@ impl Particle {
     }
 
     //
-    // Add graavity forces exerced on the Particle by the rest of the Particles
+    // Add gravity forces exerced on the Particle by the rest of the Particles
     //
     fn add_gravity_forces(
             & mut self,
             particles: & Vec<Particle>,
-            gravity: f64,
+            gravitational_constant: f64,
             world_width: f64,
             world_height: f64,
-            delta_time: f64
+            minimal_distance_for_gravity: f64
     ) {
         if self.is_fixed {
             // NTD
@@ -124,8 +151,8 @@ impl Particle {
                             clone.x, clone.y
                         );
                         let force;
-                        if distance > delta_time * 100.0 {
-                            force = - gravity * self.mass * particle.mass / (distance * distance);
+                        if distance > minimal_distance_for_gravity {
+                            force = - gravitational_constant * self.mass * particle.mass / (distance * distance);
                         } else {
                             // Particles are too close, which can result in instability
                             force = 0.0;
@@ -303,7 +330,7 @@ impl Particle {
     }
 
     //
-    // 
+    // Update is_fixed attribut
     //
     fn set_fixed(&mut self, is_fixed: bool) {
         self.is_fixed = is_fixed;
@@ -319,10 +346,11 @@ pub struct Universe {
     height: f64,
     step: u32,
     delta_time: f64,
-    gravity: f64,
+    gravitational_constant: f64,
     particles: Vec<Particle>,
     particle_counter: u32,
-    algorithm: Algorithm
+    algorithm: Algorithm,
+    minimal_distance_for_gravity: f64
 }
 
 //
@@ -334,25 +362,52 @@ impl Universe {
     //
     // Create a new Universe
     //
-    pub fn new(
-            width: f64, height: f64,
-            delta_time: f64,
-            gravity: f64,
-            algorithm: Algorithm
-    ) -> Universe {
+    pub fn new() -> Universe {
         let step = 0;
-        let delta_time = delta_time;
-        let gravity = gravity;
         let particles = Vec::new();
+        let width = 10.0;
+        let height = 10.0;
+        let delta_time = 0.01;
+        let algorithm = Algorithm::Verlet;
+        let gravitational_constant = 667.4;
         Universe {
-            width,
-            height,
-            step,
-            delta_time,
-            particles,
-            gravity,
+            width: width,
+            height: height,
+            step: step,
+            delta_time: delta_time,
+            particles: particles,
+            gravitational_constant: gravitational_constant,
             particle_counter: 0,
-            algorithm: algorithm
+            algorithm: algorithm,
+            minimal_distance_for_gravity: delta_time * 100.0
+        }
+    }
+
+    //
+    // Load Universe from a JSON String
+    //
+    pub fn load_from_json(&mut self, json_string: String) {
+        let json_parsed = &json::parse(&json_string).unwrap();
+        self.width = json_parsed["minimal_distance_for_gravity"].as_f64().unwrap_or(self.minimal_distance_for_gravity);
+        self.width = json_parsed["width"].as_f64().unwrap_or(self.width);
+        self.height = json_parsed["height"].as_f64().unwrap_or(self.height);
+        self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
+        self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
+        self.algorithm = Algorithm::from_u32(json_parsed["algorithm"].as_u32().unwrap_or(self.algorithm.as_u32()));
+        let particles_data = &json_parsed["particles"];
+        for i in 0..particles_data.len() {
+            let particle_data = &particles_data[i];
+            self.add_particle (
+                particle_data["x"].as_f64().unwrap_or(0.0),
+                particle_data["y"].as_f64().unwrap_or(0.0)
+            );
+            let n = self.particles.len() - 1;
+            let particle = &mut self.particles[n];
+            if particle_data["fixed"].as_bool().unwrap_or(false) == true {
+                particle.set_fixed(true);
+            } else {
+                // NTD
+            }
         }
     }
 
@@ -492,10 +547,10 @@ impl Universe {
         for particle in &mut self.particles {
             particle.add_gravity_forces(
                 & particles,
-                self.gravity,
+                self.gravitational_constant,
                 self.width,
                 self.height,
-                delta_time
+                self.minimal_distance_for_gravity
             );
         }
         for particle in &mut self.particles {
@@ -529,10 +584,10 @@ impl Universe {
         for particle in &mut self.particles {
             particle.add_gravity_forces(
                 & particles,
-                self.gravity,
+                self.gravitational_constant,
                 self.width,
                 self.height,
-                delta_time
+                self.minimal_distance_for_gravity
             );
         }
         for particle in &mut self.particles {
@@ -550,6 +605,9 @@ impl Universe {
     }
 }
 
+//
+// Unit tests
+//
 #[cfg(test)]
 mod tests {
     use super::*;
