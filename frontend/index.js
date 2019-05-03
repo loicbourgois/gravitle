@@ -8,6 +8,7 @@ const startButton = document.getElementById('button-start');
 const stopButton = document.getElementById('button-stop');
 const heartButton = document.getElementById('button-heart');
 const diamondButton = document.getElementById('button-diamond');
+const randomizeButton = document.getElementById('button-randomize');
 const jsonTextarea = document.getElementById('json');
 
 const canvas = document.getElementById('canvas');
@@ -15,21 +16,27 @@ canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
 
+const BASE_CONF = Object.freeze({
+    width: 200,
+    height: 200,
+    delta_time: 0.01,
+    gravitational_constant: 667.4,
+    minimal_distance_for_gravity: 0.1,
+    algorithm: Algorithm.Verlet,
+    particles: []
+});
+
 const universe = Universe.new();
-universe.load_from_json(`{
-    "width": 200,
-    "height": 200,
-    "delta_time": 0.01,
-    "gravitational_constant": 667.4,
-    "minimal_distance_for_gravity": 0.1,
-    "algorithm": ${Algorithm.Verlet}
-}`);
+universe.load_from_json(JSON.stringify(BASE_CONF));
 
 let interval = null;
 let time = null;
 let delta = null;
-
 let last = null;
+
+randomizeButton.addEventListener('click', () => {
+    randomize();
+});
 
 reloadButton.addEventListener('click', () => {
     reload();
@@ -120,14 +127,8 @@ const tickMultiple = () => {
 };
 
 const heart = () => {
-    jsonTextarea.value = `{
-    "width": 200,
-    "height": 200,
-    "delta_time": 0.01,
-    "gravitational_constant": 667.4,
-    "minimal_distance_for_gravity": 0.1,
-    "algorithm": ${Algorithm.Verlet},
-    "particles": [
+    const conf = jsonCopy(BASE_CONF);
+    conf.particles = [
         {
             "x": 0,
             "y": 20,
@@ -181,20 +182,14 @@ const heart = () => {
             "y": -35,
             "fixed": false
         }
-    ]
-}`;
+    ];
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 };
 
 const diamond = () => {
-    jsonTextarea.value = `{
-    "width": 200,
-    "height": 200,
-    "delta_time": 0.01,
-    "gravitational_constant": 667.4,
-    "minimal_distance_for_gravity": 0.1,
-    "algorithm": ${Algorithm.Verlet},
-    "particles": [
+    const conf = jsonCopy(BASE_CONF);
+    conf.particles = [
         {
             "x": -30,
             "y": -40,
@@ -240,13 +235,42 @@ const diamond = () => {
             "y": 0,
             "fixed": true
         }
-    ]
-}`;
+    ];
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 };
 
+const randomize = () => {
+    const conf = jsonCopy(BASE_CONF);
+    const particles = [];
+    for (let i = 0 ; i < 10 ; i++) {
+        const x = getRandomNumber(- conf.width / 2, conf.width / 2);
+        const y = getRandomNumber(- conf.height / 2, conf.height / 2);
+        const fixed = getRandomBoolean();
+        particles.push({
+            x: x,
+            y: y,
+            fixed: fixed
+        });
+    }
+    conf.particles = particles;
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const jsonCopy = (object) => {
+    return JSON.parse(JSON.stringify(object));
+}
+
+const getRandomBoolean = () => {
+    return Math.random() > 0.5;
+}
+
+const getRandomNumber = (min, max) => {
+    return Math.random() * (max - min) + min;
+}
+
 const reload = () => {
-    last = diamond;
     stop();
     universe.reset();
     interval = null;
