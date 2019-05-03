@@ -282,8 +282,8 @@ const randomize = () => {
     const conf = jsonCopy(BASE_CONF);
     const particles = [];
     for (let i = 0 ; i < 10 ; i++) {
-        const x = getRandomNumber(- conf.width / 3, conf.width / 3);
-        const y = getRandomNumber(- conf.height / 3, conf.height / 3);
+        const x = getRandomNumber(- conf.width / 10, conf.width / 10);
+        const y = getRandomNumber(- conf.height / 10, conf.height / 10);
         const mass = getRandomNumber(0.5, 5.0);
         const fixed = false;
         const diameter = mass;
