@@ -68,6 +68,7 @@ struct Point {
 pub struct Particle {
     x: f64,
     y: f64,
+    diameter: f64,
     forces_x: f64,
     forces_y: f64,
     acceleration_x: f64,
@@ -93,6 +94,7 @@ impl Particle {
         Particle {
             x: 0.0,
             y: 0.0,
+            diameter: 1.0,
             forces_x: 0.0,
             forces_y: 0.0,
             acceleration_x: 0.0,
@@ -114,6 +116,7 @@ impl Particle {
         let json_parsed = &json::parse(&json_string).unwrap();
         self.x = json_parsed["x"].as_f64().unwrap_or(self.x);
         self.y = json_parsed["y"].as_f64().unwrap_or(self.y);
+        self.diameter = json_parsed["diameter"].as_f64().unwrap_or(self.diameter);
         self.old_x = self.x;
         self.old_y = self.y;
         self.mass = json_parsed["mass"].as_f64().unwrap_or(self.mass);

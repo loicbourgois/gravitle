@@ -9,6 +9,7 @@ const stopButton = document.getElementById('button-stop');
 const heartButton = document.getElementById('button-heart');
 const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
+const clubButton = document.getElementById('button-club');
 const jsonTextarea = document.getElementById('json');
 
 const canvas = document.getElementById('canvas');
@@ -62,6 +63,10 @@ diamondButton.addEventListener('click', () => {
     diamond();
 });
 
+clubButton.addEventListener('click', () => {
+    club();
+});
+
 const renderLoop = () => {
     infos.textContent = universe.get_infos();
     draw();
@@ -72,7 +77,7 @@ const draw = () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     const particlesPointer = universe.get_particles();
     const particlesCount = universe.get_particles_count();
-    const PARTICLE_SIZE = 12;
+    const PARTICLE_SIZE = 13;
     const particles = new Float64Array(memory.buffer, particlesPointer, particlesCount * PARTICLE_SIZE);
     const universeWidth = universe.get_width();
     const universeHeight = universe.get_height();
@@ -81,17 +86,19 @@ const draw = () => {
     context.strokeStyle = "#FFF";
     context.lineWidth = 4;
     for (let i = 0 ; i < particles.length ; i+= PARTICLE_SIZE ) {
+        const x = (universeWidth / 2) * unitX + particles[i + 0] * unitX;
+        const y = (universeHeight / 2) * unitY - particles[i + 1] * unitY;
+        const diameter = (unitX / 2) * particles[i + 2];
         context.beginPath();
         context.arc(
-            (universeWidth / 2) * unitX + particles[i + 0] * unitX,
-            (universeHeight / 2) * unitY - particles[i + 1] * unitY,
-            unitX / 2,
+            x,
+            y,
+            diameter,
             0,
             2 * Math.PI
         );
         context.stroke();
     }
-    
 };
 
 const start = () => {
@@ -227,19 +234,65 @@ const diamond = () => {
     reload();
 };
 
+const club = () => {
+    const conf = jsonCopy(BASE_CONF);
+    conf.particles = [
+        {
+            "x": 0.01,
+            "y": -25,
+            "fixed": false
+        },
+        {
+            "x": 10,
+            "y": -35,
+            "fixed": false
+        },
+        {
+            "x": -10,
+            "y": -35,
+            "fixed": false
+        },
+        {
+            "x": 0,
+            "y": 40,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        },
+        {
+            "x": 40,
+            "y": -10,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        },
+        {
+            "x": -40,
+            "y": -10,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        }
+    ];
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
 const randomize = () => {
     const conf = jsonCopy(BASE_CONF);
     const particles = [];
     for (let i = 0 ; i < 10 ; i++) {
-        const x = getRandomNumber(- conf.width / 2, conf.width / 2);
-        const y = getRandomNumber(- conf.height / 2, conf.height / 2);
+        const x = getRandomNumber(- conf.width / 3, conf.width / 3);
+        const y = getRandomNumber(- conf.height / 3, conf.height / 3);
         const mass = getRandomNumber(0.5, 5.0);
-        const fixed = getRandomBoolean();
+        const fixed = false;
+        const diameter = mass;
         particles.push({
             x: x,
             y: y,
             mass: mass,
-            fixed: fixed
+            fixed: fixed,
+            diameter: diameter
         });
     }
     conf.particles = particles;
