@@ -12,6 +12,7 @@
     font-family: monospace;
     margin: 0;
     padding: 0;
+    text-decoration: none;
 }
 
 body {
@@ -29,10 +30,20 @@ button {
     border: solid 1px var(--color-main-middle);
 }
 
+button:hover {
+    background: var(--color-main-middle);
+    cursor: pointer;
+}
+
 button:disabled {
     background: var(--color-main-dark);
     color: var(--color-main-middle);
     border: solid 1px var(--color-main-middle);
+}
+
+button:hover:disabled {
+    background: var(--color-main-dark);
+    cursor: default;
 }
 
 .content {
@@ -75,4 +86,19 @@ textarea {
 .canvas {
     background: #333;
     max-height: 100%;
+}
+
+img {
+    height: 2rem;
+    width: 2rem;
+    padding: 0 1rem;
+}
+
+a:hover > h1 {
+    color: var(--color-main-middle);
+}
+
+.top {
+    display: flex;
+    flex-direction: row;
 }
