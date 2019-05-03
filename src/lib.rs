@@ -89,28 +89,36 @@ impl Particle {
     //
     // Create a new Particle
     //
-    fn new(id: u32, x: f64, y: f64) -> Particle {
-        let delta_time = 1.0;
-        let speed_x = 0.0;
-        let speed_y = 0.0;
-        let old_x = x - speed_x * delta_time;
-        let old_y = y - speed_y * delta_time;
+    fn new(id: u32) -> Particle {
         Particle {
-            x,
-            y,
+            x: 0.0,
+            y: 0.0,
             forces_x: 0.0,
             forces_y: 0.0,
             acceleration_x: 0.0,
             acceleration_y: 0.0,
             mass: 1.0,
-            old_x: old_x,
-            old_y: old_y,
+            old_x: 0.0,
+            old_y: 0.0,
             id: id,
-            speed_x: speed_x,
-            speed_y: speed_y,
+            speed_x: 0.0,
+            speed_y: 0.0,
             is_fixed: false
         }
     }
+
+    //
+    // Load
+    //
+    fn load_from_json(&mut self, json_string: String) {
+        let json_parsed = &json::parse(&json_string).unwrap();
+        self.x = json_parsed["x"].as_f64().unwrap_or(self.x);
+        self.y = json_parsed["y"].as_f64().unwrap_or(self.y);
+        self.old_x = self.x;
+        self.old_y = self.y;
+        self.mass = json_parsed["mass"].as_f64().unwrap_or(self.mass);
+        self.is_fixed = json_parsed["fixed"].as_bool().unwrap_or(self.is_fixed);
+     }
 
     //
     // Reset forces for the Particle
@@ -328,13 +336,6 @@ impl Particle {
         self.x = x;
         self.y = y;
     }
-
-    //
-    // Update is_fixed attribut
-    //
-    fn set_fixed(&mut self, is_fixed: bool) {
-        self.is_fixed = is_fixed;
-    }
 }
 
 //
@@ -396,18 +397,11 @@ impl Universe {
         self.algorithm = Algorithm::from_u32(json_parsed["algorithm"].as_u32().unwrap_or(self.algorithm.as_u32()));
         let particles_data = &json_parsed["particles"];
         for i in 0..particles_data.len() {
-            let particle_data = &particles_data[i];
-            self.add_particle (
-                particle_data["x"].as_f64().unwrap_or(0.0),
-                particle_data["y"].as_f64().unwrap_or(0.0)
-            );
+            self.add_particle ();
             let n = self.particles.len() - 1;
-            let particle = &mut self.particles[n];
-            if particle_data["fixed"].as_bool().unwrap_or(false) == true {
-                particle.set_fixed(true);
-            } else {
-                // NTD
-            }
+            let particle = & mut self.particles[n];
+            let particle_json_string = & particles_data[i];
+            particle.load_from_json(particle_json_string.to_string());
         }
     }
 
@@ -434,24 +428,10 @@ impl Universe {
     //
     // Add a Particle to the Universe at the desirated coordinates
     //
-    pub fn add_particle(&mut self, x: f64, y: f64) {
+    pub fn add_particle(&mut self) {
         self.particles.push(Particle::new(
-            self.particle_counter,
-            x, y
+            self.particle_counter
         ));
-        self.particle_counter += 1;
-    }
-
-    //
-    // Add a fixed Particle to the Universe at the desirated coordinates
-    //
-    pub fn add_fixed_particle(&mut self, x: f64, y: f64) {
-        let mut particle = Particle::new(
-            self.particle_counter,
-            x, y
-        );
-        particle.set_fixed(true);
-        self.particles.push(particle);
         self.particle_counter += 1;
     }
 

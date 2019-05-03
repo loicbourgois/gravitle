@@ -20,7 +20,7 @@ const BASE_CONF = Object.freeze({
     width: 200,
     height: 200,
     delta_time: 0.01,
-    gravitational_constant: 667.4,
+    gravitational_constant: 66.74,
     minimal_distance_for_gravity: 0.1,
     algorithm: Algorithm.Verlet,
     particles: []
@@ -131,56 +131,43 @@ const heart = () => {
     conf.particles = [
         {
             "x": 0,
-            "y": 20,
-            "fixed": false
+            "y": 20
         }, {
             "x": 10,
-            "y": 30,
-            "fixed": false
+            "y": 30
         }, {
             "x": 20,
-            "y": 30,
-            "fixed": false
+            "y": 30
         }, {
             "x": 30,
-            "y": 20,
-            "fixed": false
+            "y": 20
         }, {
             "x": 20,
-            "y": 5,
-            "fixed": false
+            "y": 5
         }, {
             "x": 10,
-            "y": -10,
-            "fixed": false
+            "y": -10
         }, {
             "x": 0,
-            "y": -20,
-            "fixed": false
+            "y": -20
         }, {
             "x": -10,
-            "y": 30,
-            "fixed": false
+            "y": 30
         }, {
             "x": -20,
-            "y": 30,
-            "fixed": false
+            "y": 30
         }, {
             "x": -30,
-            "y": 20,
-            "fixed": false
+            "y": 20
         }, {
             "x": -20,
-            "y": 5,
-            "fixed": false
+            "y": 5
         }, {
             "x": -10,
-            "y": -10,
-            "fixed": false
+            "y": -10
         }, {
             "x": 0,
-            "y": -35,
-            "fixed": false
+            "y": -35
         }
     ];
     jsonTextarea.value = JSON.stringify(conf, null, 4);
@@ -246,10 +233,12 @@ const randomize = () => {
     for (let i = 0 ; i < 10 ; i++) {
         const x = getRandomNumber(- conf.width / 2, conf.width / 2);
         const y = getRandomNumber(- conf.height / 2, conf.height / 2);
+        const mass = getRandomNumber(0.5, 5.0);
         const fixed = getRandomBoolean();
         particles.push({
             x: x,
             y: y,
+            mass: mass,
             fixed: fixed
         });
     }
