@@ -10,6 +10,7 @@ const heartButton = document.getElementById('button-heart');
 const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
 const clubButton = document.getElementById('button-club');
+const spadeButton = document.getElementById('button-spade');
 const jsonTextarea = document.getElementById('json');
 
 const canvas = document.getElementById('canvas');
@@ -67,6 +68,10 @@ clubButton.addEventListener('click', () => {
     club();
 });
 
+spadeButton.addEventListener('click', () => {
+    spade();
+});
+
 const renderLoop = () => {
     infos.textContent = universe.get_infos();
     draw();
@@ -75,6 +80,35 @@ const renderLoop = () => {
 
 const draw = () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    drawSegments();
+    drawParticles();
+};
+
+
+const drawSegments = () => {
+    const segmentsPointer = universe.get_segments();
+    const segmentsCount = universe.get_segments_count();
+    const SEGMENT_SIZE = 5;
+    const segments = new Float64Array(memory.buffer, segmentsPointer, segmentsCount * SEGMENT_SIZE);
+    const universeWidth = universe.get_width();
+    const universeHeight = universe.get_height();
+    const unitX = canvas.width / universeWidth;
+    const unitY = canvas.height / universeHeight;
+    context.strokeStyle = "#eee";
+    context.lineWidth = 4;
+    for (let i = 0 ; i < segments.length ; i+= SEGMENT_SIZE ) {
+        const x1 = (universeWidth / 2) * unitX + segments[i + 0] * unitX;
+        const y1 = (universeHeight / 2) * unitY - segments[i + 1] * unitY;
+        const x2 = (universeWidth / 2) * unitX + segments[i + 2] * unitX;
+        const y2 = (universeHeight / 2) * unitY - segments[i + 3] * unitY;
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+    }
+};
+
+const drawParticles = () => {
     const particlesPointer = universe.get_particles();
     const particlesCount = universe.get_particles_count();
     const PARTICLE_SIZE = 13;
@@ -100,6 +134,7 @@ const draw = () => {
         context.stroke();
     }
 };
+
 
 const start = () => {
     time = Date.now();
@@ -278,6 +313,94 @@ const club = () => {
     reload();
 }
 
+const spade = () => {
+    const conf = jsonCopy(BASE_CONF);
+    conf.particles = [
+        {
+            "x": 0,
+            "y": 35
+        },
+        {
+            "x": 10,
+            "y": 25,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": 25,
+            "fixed": true
+        },{
+            "x": 15,
+            "y": 15,
+            "fixed": true
+        },
+        {
+            "x": -15,
+            "y": 15,
+            "fixed": true
+        },{
+            "x": 20,
+            "y": 5,
+            "fixed": true
+        },
+        {
+            "x": -20,
+            "y": 5,
+            "fixed": true
+        },{
+            "x": 15,
+            "y": 0,
+            "fixed": true
+        },
+        {
+            "x": -15,
+            "y": 0,
+            "fixed": true
+        },{
+            "x": 5,
+            "y": -5,
+            "fixed": true
+        },
+        {
+            "x": -5,
+            "y": -5,
+            "fixed": true
+        },{
+            "x": 10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": -10,
+            "fixed": true
+        }
+    ];
+    conf.segments = [
+        {
+            "p1_index": 1,
+            "p2_index": 2
+        }, {
+            "p1_index": 3,
+            "p2_index": 4
+        }, {
+            "p1_index": 5,
+            "p2_index": 6
+        }, {
+            "p1_index": 7,
+            "p2_index": 8
+        }, {
+            "p1_index": 9,
+            "p2_index": 10
+        }, {
+            "p1_index": 11,
+            "p2_index": 12
+        }
+    ];
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
 const randomize = () => {
     const conf = jsonCopy(BASE_CONF);
     const particles = [];
@@ -326,6 +449,6 @@ const getIndex = (row, column) => {
     return row * width + column;
 };
 
-diamond();
+heart();
 requestAnimationFrame(renderLoop);
 

@@ -1,4 +1,6 @@
 mod utils;
+mod segment;
+use segment::Segment;
 
 use std::fmt;
 use wasm_bindgen::prelude::*;
@@ -8,6 +10,39 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+//
+// Bind `console.log` manually, without the help of `web_sys`.
+//
+#[wasm_bindgen]
+extern "C" {
+    // Use `js_namespace` here to bind `console.log(..)` instead of just
+    // `log(..)`
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+    fn error(s: &str);
+}
+
+//
+// Log a message to the browser console
+//
+macro_rules! console_log {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+//
+// Log an error message to the browser console
+//
+macro_rules! console_error {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => {
+        let message = &format_args!($($t)*).to_string();
+        log(&format_args!("[Error] {}", message).to_string());
+    }
+}
 
 //
 // Algorithm definition
@@ -354,7 +389,8 @@ pub struct Universe {
     particles: Vec<Particle>,
     particle_counter: u32,
     algorithm: Algorithm,
-    minimal_distance_for_gravity: f64
+    minimal_distance_for_gravity: f64,
+    segments: Vec<Segment>
 }
 
 //
@@ -367,6 +403,7 @@ impl Universe {
     // Create a new Universe
     //
     pub fn new() -> Universe {
+        utils::set_panic_hook();
         let step = 0;
         let particles = Vec::new();
         let width = 10.0;
@@ -383,7 +420,8 @@ impl Universe {
             gravitational_constant: gravitational_constant,
             particle_counter: 0,
             algorithm: algorithm,
-            minimal_distance_for_gravity: delta_time * 100.0
+            minimal_distance_for_gravity: delta_time * 100.0,
+            segments: Vec::new()
         }
     }
 
@@ -398,13 +436,21 @@ impl Universe {
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
         self.algorithm = Algorithm::from_u32(json_parsed["algorithm"].as_u32().unwrap_or(self.algorithm.as_u32()));
+        self.particles = Vec::new();
         let particles_data = &json_parsed["particles"];
         for i in 0..particles_data.len() {
-            self.add_particle ();
+            self.add_particle();
             let n = self.particles.len() - 1;
             let particle = & mut self.particles[n];
             let particle_json_string = & particles_data[i];
             particle.load_from_json(particle_json_string.to_string());
+        }
+        self.segments = Vec::new();
+        let segments_data = &json_parsed["segments"];
+        for i in 0..segments_data.len() {
+            let p1_id = segments_data[i]["p1_index"].as_usize().unwrap();
+            let p2_id = segments_data[i]["p2_index"].as_usize().unwrap();
+            self.add_segment(p1_id, p2_id);
         }
     }
 
@@ -417,7 +463,7 @@ impl Universe {
             Algorithm::Euler => self.advance_euler(self.get_delta_time()),
             Algorithm::Verlet => self.advance_verlet(self.get_delta_time())
         }
-        
+        self.update_segments_coordinates();
     }
 
     //
@@ -426,16 +472,6 @@ impl Universe {
     pub fn reset(&mut self) {
         self.step = 0;
         self.particles = Vec::new();
-    }
-
-    //
-    // Add a Particle to the Universe at the desirated coordinates
-    //
-    pub fn add_particle(&mut self) {
-        self.particles.push(Particle::new(
-            self.particle_counter
-        ));
-        self.particle_counter += 1;
     }
 
     //
@@ -471,6 +507,20 @@ impl Universe {
     //
     pub fn get_particles_count(&self) -> usize {
         self.particles.len()
+    }
+
+    //
+    // Return a pointer to the Vec of Segments
+    //
+    pub fn get_segments(&self) -> *const Segment {
+        self.segments.as_ptr()
+    }
+
+    //
+    // Return number of Segments in the Universe
+    //
+    pub fn get_segments_count(&self) -> usize {
+        self.segments.len()
     }
 
     //
@@ -585,6 +635,46 @@ impl Universe {
                 self.height
             );
         }
+    }
+
+    //
+    // Update segments coordinates by coppying particles coordinates to segments
+    //
+    fn update_segments_coordinates(&mut self) {
+        for segment in &mut self.segments {
+            segment.set_coordinates(
+                & self.particles[segment.get_p1_id()].x,
+                & self.particles[segment.get_p1_id()].y,
+                & self.particles[segment.get_p2_id()].x,
+                & self.particles[segment.get_p2_id()].y
+            );
+        }
+    }
+
+    //
+    // Add a Particle to the Universe
+    //
+    fn add_particle(&mut self) {
+        self.particles.push(Particle::new(
+            self.particle_counter
+        ));
+        self.particle_counter += 1;
+    }
+
+    //
+    // Add a Segment to the Universe
+    //
+    fn add_segment(&mut self, p1_id: usize, p2_id: usize) {
+        if p1_id >= self.particles.len() {
+            console_error!("Cannot add segment : particle #{} does not exist", p1_id);
+        }
+        if p2_id >= self.particles.len() {
+            console_error!("Cannot add segment : particle #{} does not exist", p2_id);
+        }
+        self.segments.push(Segment::new(
+            p1_id,
+            p2_id
+        ));
     }
 }
 
