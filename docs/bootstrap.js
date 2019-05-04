@@ -58,17 +58,26 @@
 /******/ 					"__wbg_log_db0ce4382904de06": function(p0i32,p1i32) {
 /******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_log_db0ce4382904de06"](p0i32,p1i32);
 /******/ 					},
-/******/ 					"__wbg_new_59cb74e423758ede": function() {
-/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_new_59cb74e423758ede"]();
-/******/ 					},
-/******/ 					"__wbg_stack_558ba5917b466edd": function(p0i32,p1i32) {
-/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_stack_558ba5917b466edd"](p0i32,p1i32);
-/******/ 					},
-/******/ 					"__wbg_error_4bb6c2a97407129a": function(p0i32,p1i32) {
-/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_error_4bb6c2a97407129a"](p0i32,p1i32);
-/******/ 					},
 /******/ 					"__wbindgen_object_drop_ref": function(p0i32) {
 /******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbindgen_object_drop_ref"](p0i32);
+/******/ 					},
+/******/ 					"__widl_instanceof_Window": function(p0i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__widl_instanceof_Window"](p0i32);
+/******/ 					},
+/******/ 					"__widl_f_now_Performance": function(p0i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__widl_f_now_Performance"](p0i32);
+/******/ 					},
+/******/ 					"__widl_f_performance_Window": function(p0i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__widl_f_performance_Window"](p0i32);
+/******/ 					},
+/******/ 					"__wbg_newnoargs_9fab447a311888a5": function(p0i32,p1i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_newnoargs_9fab447a311888a5"](p0i32,p1i32);
+/******/ 					},
+/******/ 					"__wbg_call_001e26aeb2fdef67": function(p0i32,p1i32,p2i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbg_call_001e26aeb2fdef67"](p0i32,p1i32,p2i32);
+/******/ 					},
+/******/ 					"__wbindgen_object_clone_ref": function(p0i32) {
+/******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbindgen_object_clone_ref"](p0i32);
 /******/ 					},
 /******/ 					"__wbindgen_throw": function(p0i32,p1i32) {
 /******/ 						return installedModules["../pkg/gravitle.js"].exports["__wbindgen_throw"](p0i32,p1i32);
@@ -171,7 +180,7 @@
 /******/ 				promises.push(installedWasmModuleData);
 /******/ 			else {
 /******/ 				var importObject = wasmImportObjects[wasmModuleId]();
-/******/ 				var req = fetch(__webpack_require__.p + "" + {"../pkg/gravitle_bg.wasm":"ec602ea73f7b35a87b7b"}[wasmModuleId] + ".module.wasm");
+/******/ 				var req = fetch(__webpack_require__.p + "" + {"../pkg/gravitle_bg.wasm":"7fb749d4477003731bdf"}[wasmModuleId] + ".module.wasm");
 /******/ 				var promise;
 /******/ 				if(importObject instanceof Promise && typeof WebAssembly.compileStreaming === 'function') {
 /******/ 					promise = Promise.all([WebAssembly.compileStreaming(req), importObject]).then(function(items) {
