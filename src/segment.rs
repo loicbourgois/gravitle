@@ -1,3 +1,7 @@
+//
+// Segment composed of two particles
+//
+#[derive(Copy, Clone)]
 pub struct Segment {
     x1: f64,
     y1: f64,
@@ -7,7 +11,14 @@ pub struct Segment {
     p2_id: usize
 }
 
+//
+// Implementation
+//
 impl Segment {
+
+    //
+    // Constructor
+    //
     pub fn new(p1_id: usize, p2_id: usize) -> Segment {
         Segment {
             p1_id: p1_id,
@@ -19,6 +30,9 @@ impl Segment {
         }
     }
 
+    //
+    // Setter for x1, y1, x2, y2
+    //
     pub fn set_coordinates(
             &mut self,
             x1: & f64, y1: & f64,
@@ -28,6 +42,13 @@ impl Segment {
         self.y1 = *y1;
         self.x2 = *x2;
         self.y2 = *y2;
+    }
+
+    //
+    // Getter for x1, y1, x2, y2
+    //
+    pub fn get_coordinates(& self) -> (f64, f64, f64, f64) {
+        (self.x1, self.y1, self.x2, self.y2)
     }
 
     pub fn get_p1_id(&self) -> usize {

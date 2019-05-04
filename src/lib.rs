@@ -1,9 +1,16 @@
 mod utils;
 mod segment;
+mod intersection;
+
 use segment::Segment;
+use intersection::Intersection;
 
 use std::fmt;
+use std::mem;
 use wasm_bindgen::prelude::*;
+
+use line_intersection::{LineInterval};
+use geo::{Line};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -99,7 +106,7 @@ struct Point {
 //
 // Particle definition
 //
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Particle {
     x: f64,
     y: f64,
@@ -390,7 +397,8 @@ pub struct Universe {
     particle_counter: u32,
     algorithm: Algorithm,
     minimal_distance_for_gravity: f64,
-    segments: Vec<Segment>
+    segments: Vec<Segment>,
+    intersections: Vec<Intersection>
 }
 
 //
@@ -421,7 +429,8 @@ impl Universe {
             particle_counter: 0,
             algorithm: algorithm,
             minimal_distance_for_gravity: delta_time * 100.0,
-            segments: Vec::new()
+            segments: Vec::new(),
+            intersections: Vec::new()
         }
     }
 
@@ -464,6 +473,7 @@ impl Universe {
             Algorithm::Verlet => self.advance_verlet(self.get_delta_time())
         }
         self.update_segments_coordinates();
+        self.intersections = self.get_tick_intersections();
     }
 
     //
@@ -535,6 +545,34 @@ impl Universe {
     //
     pub fn get_height(&self) -> f64 {
         self.height
+    }
+
+    //
+    // Returns a pointer to intersections
+    //
+    pub fn get_intersections(&self) -> *const Intersection {
+        self.intersections.as_ptr()
+    }
+
+    //
+    // Returns the number of intersections
+    //
+    pub fn get_intersections_count(&self) -> usize {
+        self.intersections.len()
+    }
+
+    //
+    // Return the size of an Intersection
+    //
+    pub fn get_intersection_size(&self) -> usize {
+        mem::size_of::<Intersection>()
+    }
+
+    //
+    // Return a specific intersection
+    //
+    pub fn get_intersection(&self, id: usize) -> Intersection {
+        self.intersections[id]
     }
 }
 
@@ -648,6 +686,78 @@ impl Universe {
                 & self.particles[segment.get_p2_id()].x,
                 & self.particles[segment.get_p2_id()].y
             );
+        }
+    }
+
+    //
+    // Find intersections happening in a given tick
+    //
+    fn get_tick_intersections(& mut self) -> Vec<Intersection> {
+        let mut intersections = Vec::new();
+        for (segment_id, segment) in self.segments.iter().enumerate() {
+            for (particle_id, particle) in self.particles.iter().enumerate() {
+                let x1 = particle.x;
+                let y1 = particle.y;
+                let x2 = particle.old_x;
+                let y2 = particle.old_y;
+                let coordinates = segment.get_coordinates();
+                let x3 = coordinates.0;
+                let y3 = coordinates.1;
+                let x4 = coordinates.2;
+                let y4 = coordinates.3;
+                match Universe::get_intersect(
+                    x1, y1,
+                    x2, y2,
+                    x3, y3,
+                    x4, y4
+                ) {
+                    Some(intersect) => {
+                        intersections.push(
+                            Intersection::new(
+                                intersect.0,
+                                intersect.1,
+                                segment_id,
+                                particle_id
+                            )
+                        );
+                    },
+                    None => {
+                        // NTD
+                    }
+                }
+            }
+        }
+        return intersections;
+    }
+
+    //
+    // Helper method to find if two segments intersect
+    //
+    fn get_intersect(
+            x1: f64, y1: f64,
+            x2: f64, y2: f64,
+            x3: f64, y3: f64,
+            x4: f64, y4: f64
+    ) -> Option<(f64, f64)> {
+        let segment_1 = LineInterval::line_segment(
+            Line::new(
+                geo::Point::new(x1, y1),
+                geo::Point::new(x2, y2)
+            )
+        );
+        let segment_2 = LineInterval::line_segment(
+            Line::new(
+                geo::Point::new(x3, y3),
+                geo::Point::new(x4, y4)
+            )
+        );
+        match segment_1.relate(&segment_2).unique_intersection() {
+            Some(intersect) => {
+                Some((intersect.x(), intersect.y()))
+            },
+            None    => {
+                None
+            }
         }
     }
 

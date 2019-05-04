@@ -96,15 +96,20 @@ const drawSegments = () => {
     const unitY = canvas.height / universeHeight;
     context.strokeStyle = "#eee";
     context.lineWidth = 4;
-    for (let i = 0 ; i < segments.length ; i+= SEGMENT_SIZE ) {
-        const x1 = (universeWidth / 2) * unitX + segments[i + 0] * unitX;
-        const y1 = (universeHeight / 2) * unitY - segments[i + 1] * unitY;
-        const x2 = (universeWidth / 2) * unitX + segments[i + 2] * unitX;
-        const y2 = (universeHeight / 2) * unitY - segments[i + 3] * unitY;
-        context.beginPath();
-        context.moveTo(x1, y1);
-        context.lineTo(x2, y2);
-        context.stroke();
+    for (let id = 0 ; id < segmentsCount ; id += 1 ) {
+        let i = id * SEGMENT_SIZE;
+        if (universe.segmentsStates[id] === true) {
+            const x1 = (universeWidth / 2) * unitX + segments[i + 0] * unitX;
+            const y1 = (universeHeight / 2) * unitY - segments[i + 1] * unitY;
+            const x2 = (universeWidth / 2) * unitX + segments[i + 2] * unitX;
+            const y2 = (universeHeight / 2) * unitY - segments[i + 3] * unitY;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+        } else {
+            // NTD
+        }
     }
 };
 
@@ -155,6 +160,12 @@ const stop = () => {
 
 const tick = () => {
     universe.tick();
+    const intersectionsCount = universe.get_intersections_count();
+    for (let i = 0 ; i < intersectionsCount ; i++) {
+        const intersection = universe.get_intersection(i);
+        const segment_id = intersection.get_segment_id();
+        universe.segmentsStates[segment_id] = !universe.segmentsStates[segment_id];
+    }
 };
 
 const tickMultiple = () => {
@@ -163,7 +174,7 @@ const tickMultiple = () => {
     const resolution = universe.get_delta_time_milli();
     while (delta > resolution) {
         delta -= resolution;
-        universe.tick();
+        tick();
     }
     time = now - delta;
 };
@@ -442,6 +453,7 @@ const reload = () => {
     time = null;
     delta = null;
     universe.load_from_json(jsonTextarea.value);
+    universe.segmentsStates = Array(universe.get_segments_count()).fill(true);
     start();
 };
 
