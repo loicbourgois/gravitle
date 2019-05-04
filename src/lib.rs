@@ -2,12 +2,16 @@ mod utils;
 mod segment;
 mod intersection;
 
+extern crate web_sys;
+extern crate wasm_bindgen;
+
+use wasm_bindgen::prelude::*;
+
 use segment::Segment;
 use intersection::Intersection;
 
 use std::fmt;
 use std::mem;
-use wasm_bindgen::prelude::*;
 
 use line_intersection::{LineInterval};
 use geo::{Line};
@@ -398,7 +402,9 @@ pub struct Universe {
     algorithm: Algorithm,
     minimal_distance_for_gravity: f64,
     segments: Vec<Segment>,
-    intersections: Vec<Intersection>
+    intersections: Vec<Intersection>,
+    tick_durations: Vec<f64>,
+    tick_average_duration: f64
 }
 
 //
@@ -430,7 +436,9 @@ impl Universe {
             algorithm: algorithm,
             minimal_distance_for_gravity: delta_time * 100.0,
             segments: Vec::new(),
-            intersections: Vec::new()
+            intersections: Vec::new(),
+            tick_durations: Vec::new(),
+            tick_average_duration: 0.0
         }
     }
 
@@ -463,10 +471,23 @@ impl Universe {
         }
     }
 
+
+    fn now() -> f64 {
+        web_sys::window()
+            .expect("should have a Window")
+            .performance()
+            .expect("should have a Performance")
+            .now()
+    }
+
     //
     // Advance the Universe by one step
     //
     pub fn tick(&mut self) {
+        // Setup permormance analysis
+        let t1 = Universe::now();
+
+        // Perform actual computations
         self.step += 1;
         match self.algorithm {
             Algorithm::Euler => self.advance_euler(self.get_delta_time()),
@@ -474,6 +495,19 @@ impl Universe {
         }
         self.update_segments_coordinates();
         self.intersections = self.get_tick_intersections();
+
+        // Permormance analysis
+        let t2 = Universe::now();
+        let duration = t2 - t1;
+        self.tick_durations.push(duration);
+        if self.tick_durations.len() > (1.0 / self.delta_time) as usize {
+            self.tick_durations.drain(0..1);
+        }
+        self.tick_average_duration = 0.0;
+        for duration in self.tick_durations.iter() {
+            self.tick_average_duration += duration;
+        }
+        self.tick_average_duration /= self.tick_durations.len() as f64;
     }
 
     //
@@ -591,6 +625,11 @@ impl fmt::Display for Universe {
             // Error
         }
         if write!(f, "Step : {}\n", self.step).is_ok() {
+            // NTD
+        } else {
+            // Error
+        }
+        if write!(f, "Tick : {:.2} ms\n", self.tick_average_duration).is_ok() {
             // NTD
         } else {
             // Error

@@ -103,3 +103,18 @@ a:hover > h1 {
     display: flex;
     flex-direction: row;
 }
+
+input {
+    height: 100%;
+    background: var(--color-main-dark);
+    border: solid 1px var(--color-main-middle);
+    padding: 0.5rem;
+}
+
+.outer-input {
+    padding: 0.5rem 0;
+}
+
+.outer-input > label {
+    width: 50rem;
+}

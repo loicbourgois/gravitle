@@ -12,6 +12,10 @@ const randomizeButton = document.getElementById('button-randomize');
 const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
 const jsonTextarea = document.getElementById('json');
+const inputCount = document.getElementById('input-count');
+const inputWidth = document.getElementById('input-width');
+const inputHeight = document.getElementById('input-height');
+const inputG = document.getElementById('input-g');
 
 const canvas = document.getElementById('canvas');
 canvas.height = 1000;
@@ -413,9 +417,9 @@ const spade = () => {
 }
 
 const randomize = () => {
-    const conf = jsonCopy(BASE_CONF);
+    const conf = getParameterizedConf();
     const particles = [];
-    for (let i = 0 ; i < 10 ; i++) {
+    for (let i = 0 ; i < parseFloat(inputCount.value) ; i++) {
         const x = getRandomNumber(- conf.width / 10, conf.width / 10);
         const y = getRandomNumber(- conf.height / 10, conf.height / 10);
         const mass = getRandomNumber(0.5, 5.0);
@@ -432,6 +436,14 @@ const randomize = () => {
     conf.particles = particles;
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
+}
+
+const getParameterizedConf = () => {
+    const conf = jsonCopy(BASE_CONF);
+    conf.width = parseFloat(inputWidth.value);
+    conf.height = parseFloat(inputHeight.value);
+    conf.gravitational_constant = parseFloat(inputG.value);
+    return conf;
 }
 
 const jsonCopy = (object) => {
