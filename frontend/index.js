@@ -88,25 +88,24 @@ const draw = () => {
     drawParticles();
 };
 
-
 const drawSegments = () => {
-    const segmentsPointer = universe.get_segments();
-    const segmentsCount = universe.get_segments_count();
-    const SEGMENT_SIZE = 5;
-    const segments = new Float64Array(memory.buffer, segmentsPointer, segmentsCount * SEGMENT_SIZE);
+    const linksPointer = universe.get_links();
+    const linksCount = universe.get_links_count();
+    const LINK_SIZE = 5;
+    const links = new Float64Array(memory.buffer, linksPointer, linksCount * LINK_SIZE);
     const universeWidth = universe.get_width();
     const universeHeight = universe.get_height();
     const unitX = canvas.width / universeWidth;
     const unitY = canvas.height / universeHeight;
     context.strokeStyle = "#eee";
     context.lineWidth = 4;
-    for (let id = 0 ; id < segmentsCount ; id += 1 ) {
-        let i = id * SEGMENT_SIZE;
-        if (universe.segmentsStates[id] === true) {
-            const x1 = (universeWidth / 2) * unitX + segments[i + 0] * unitX;
-            const y1 = (universeHeight / 2) * unitY - segments[i + 1] * unitY;
-            const x2 = (universeWidth / 2) * unitX + segments[i + 2] * unitX;
-            const y2 = (universeHeight / 2) * unitY - segments[i + 3] * unitY;
+    for (let id = 0 ; id < linksCount ; id += 1 ) {
+        let i = id * LINK_SIZE;
+        if (universe.linksStates[id] === true) {
+            const x1 = (universeWidth / 2) * unitX + links[i + 0] * unitX;
+            const y1 = (universeHeight / 2) * unitY - links[i + 1] * unitY;
+            const x2 = (universeWidth / 2) * unitX + links[i + 2] * unitX;
+            const y2 = (universeHeight / 2) * unitY - links[i + 3] * unitY;
             context.beginPath();
             context.moveTo(x1, y1);
             context.lineTo(x2, y2);
@@ -167,8 +166,8 @@ const tick = () => {
     const intersectionsCount = universe.get_intersections_count();
     for (let i = 0 ; i < intersectionsCount ; i++) {
         const intersection = universe.get_intersection(i);
-        const segment_id = intersection.get_segment_id();
-        universe.segmentsStates[segment_id] = !universe.segmentsStates[segment_id];
+        const link_id = intersection.get_link_id();
+        universe.linksStates[link_id] = !universe.linksStates[link_id];
     }
 };
 
@@ -391,7 +390,7 @@ const spade = () => {
             "fixed": true
         }
     ];
-    conf.segments = [
+    conf.links = [
         {
             "p1_index": 1,
             "p2_index": 2
@@ -465,7 +464,7 @@ const reload = () => {
     time = null;
     delta = null;
     universe.load_from_json(jsonTextarea.value);
-    universe.segmentsStates = Array(universe.get_segments_count()).fill(true);
+    universe.linksStates = Array(universe.get_links_count()).fill(true);
     start();
 };
 
