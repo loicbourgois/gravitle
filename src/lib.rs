@@ -1,6 +1,7 @@
 mod utils;
 mod link;
 mod intersection;
+mod collision;
 mod particle;
 
 extern crate web_sys;
@@ -11,6 +12,7 @@ use wasm_bindgen::prelude::*;
 use link::Link;
 use intersection::Intersection;
 use particle::Particle;
+use collision::Collision;
 
 use std::fmt;
 use std::mem;
@@ -54,6 +56,87 @@ macro_rules! console_error {
     ($($t:tt)*) => {
         let message = &format_args!($($t)*).to_string();
         log(&format_args!("[Error] {}", message).to_string());
+    }
+}
+
+//
+// Collision happens when two particles collide
+//
+#[wasm_bindgen]
+pub enum CollisionBehavior {
+    DoNothing = 0,
+    DestroyParticles = 1,
+    CreateLink = 2,
+    MergeParticles = 3
+}
+
+//
+// Implement convertion function for Algorithm
+//
+impl CollisionBehavior {
+
+    //
+    // Convert from u32 to CollisionBehavior
+    //
+    fn from_u32(value: u32) -> CollisionBehavior {
+        match value {
+            0 => CollisionBehavior::DoNothing,
+            1 => CollisionBehavior::DestroyParticles,
+            2 => CollisionBehavior::CreateLink,
+            3 => CollisionBehavior::MergeParticles,
+            _ => panic!("Unknown value: {}", value),
+        }
+    }
+
+    //
+    // Convert CollisionBehavior to u32
+    //
+    fn as_u32(&self) -> u32 {
+        match self {
+            CollisionBehavior::DoNothing => 0,
+            CollisionBehavior::DestroyParticles => 1,
+            CollisionBehavior::CreateLink => 2,
+            CollisionBehavior::MergeParticles => 3
+        }
+    }
+}
+
+//
+// Intersection happens when a moving particle and a link intersect
+//
+#[wasm_bindgen]
+pub enum IntersectionBehavior {
+    DoNothing = 0,
+    DestroyParticle = 1,
+    DestroyLink = 2
+}
+
+//
+// IntersectionBehavior
+//
+impl IntersectionBehavior {
+
+    //
+    // Convert from u32 to IntersectionBehavior
+    //
+    fn from_u32(value: u32) -> IntersectionBehavior {
+        match value {
+            0 => IntersectionBehavior::DoNothing,
+            1 => IntersectionBehavior::DestroyParticle,
+            2 => IntersectionBehavior::DestroyLink,
+            _ => panic!("Unknown value: {}", value),
+        }
+    }
+
+    //
+    // Convert Algorithm to u32
+    //
+    fn as_u32(&self) -> u32 {
+        match self {
+            IntersectionBehavior::DoNothing => 0,
+            IntersectionBehavior::DestroyParticle => 1,
+            IntersectionBehavior::DestroyLink => 2
+        }
     }
 }
 
@@ -110,8 +193,15 @@ pub struct Universe {
     minimal_distance_for_gravity: f64,
     links: Vec<Link>,
     intersections: Vec<Intersection>,
+    collisions: Vec<Collision>,
     tick_durations: Vec<f64>,
-    tick_average_duration: f64
+    tick_average_duration: f64,
+    particle_index_to_links_indexes: Vec<Vec<usize>>,
+    intersection_behavior: IntersectionBehavior,
+    collision_behavior: CollisionBehavior,
+    links_to_destroy_indexes: Vec<usize>,
+    particles_to_destroy_indexes: Vec<usize>,
+    links_to_create: Vec<(usize, usize)>
 }
 
 //
@@ -144,8 +234,15 @@ impl Universe {
             minimal_distance_for_gravity: delta_time * 100.0,
             links: Vec::new(),
             intersections: Vec::new(),
+            collisions: Vec::new(),
             tick_durations: Vec::new(),
-            tick_average_duration: 0.0
+            tick_average_duration: 0.0,
+            particle_index_to_links_indexes: Vec::new(),
+            intersection_behavior: IntersectionBehavior::DoNothing,
+            collision_behavior: CollisionBehavior::DoNothing,
+            links_to_destroy_indexes: Vec::new(),
+            particles_to_destroy_indexes: Vec::new(),
+            links_to_create: Vec::new()
         }
     }
 
@@ -160,6 +257,12 @@ impl Universe {
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
         self.algorithm = Algorithm::from_u32(json_parsed["algorithm"].as_u32().unwrap_or(self.algorithm.as_u32()));
+        self.intersection_behavior = IntersectionBehavior::from_u32(
+            json_parsed["intersection_behavior"].as_u32().unwrap_or(self.intersection_behavior.as_u32())
+        );
+        self.collision_behavior = CollisionBehavior::from_u32(
+            json_parsed["collision_behavior"].as_u32().unwrap_or(self.collision_behavior.as_u32())
+        );
         self.particles = Vec::new();
         let particles_data = &json_parsed["particles"];
         for i in 0..particles_data.len() {
@@ -182,19 +285,32 @@ impl Universe {
     // Advance the Universe by one step
     //
     pub fn tick(&mut self) {
+        //
         // Setup permormance analysis
+        //
         let t1 = Universe::now();
-
+        //
         // Perform actual computations
+        //
         self.step += 1;
+        self.particles_to_destroy_indexes.clear();
+        self.links_to_destroy_indexes.clear();
+        self.links_to_create.clear();
         match self.algorithm {
             Algorithm::Euler => self.advance_euler(self.get_delta_time()),
             Algorithm::Verlet => self.advance_verlet(self.get_delta_time())
         }
         self.update_links_coordinates();
-        self.intersections = self.get_tick_intersections();
-
+        self.compute_tick_intersections();
+        self.compute_tick_collisions();
+        self.treat_intersections();
+        self.treat_collisions();
+        self.create_links();
+        self.destroy_links();
+        self.destroy_particles();
+        //
         // Permormance analysis
+        //
         let t2 = Universe::now();
         let duration = t2 - t1;
         self.tick_durations.push(duration);
@@ -333,6 +449,16 @@ impl fmt::Display for Universe {
         } else {
             // Error
         }
+        if write!(f, "Particles : {:.2}\n", self.particles.len()).is_ok() {
+            // NTD
+        } else {
+            // Error
+        }
+        if write!(f, "Links : {:.2}", self.links.len()).is_ok() {
+            // NTD
+        } else {
+            // Error
+        }
         Ok(())
     }
 }
@@ -430,42 +556,215 @@ impl Universe {
     }
 
     //
-    // Find intersections happening in a given tick
+    // List intersections happening during the current tick
     //
-    fn get_tick_intersections(& mut self) -> Vec<Intersection> {
-        let mut intersections = Vec::new();
-        for (link_id, link) in self.links.iter().enumerate() {
-            for (particle_id, particle) in self.particles.iter().enumerate() {
-                let p1_coordinates = particle.get_coordinates();
-                let p1_old_coordinates = particle.get_old_coordinates();
-                let coordinates = link.get_coordinates();
-                let x3 = coordinates.0;
-                let y3 = coordinates.1;
-                let x4 = coordinates.2;
-                let y4 = coordinates.3;
-                match Universe::get_intersect(
-                    p1_coordinates.0, p1_coordinates.1,
-                    p1_old_coordinates.0, p1_old_coordinates.1,
-                    x3, y3,
-                    x4, y4
-                ) {
-                    Some(intersect) => {
-                        intersections.push(
-                            Intersection::new(
-                                intersect.0,
-                                intersect.1,
-                                link_id,
-                                particle_id
-                            )
-                        );
-                    },
-                    None => {
-                        // NTD
+    fn compute_tick_intersections(& mut self) {
+        self.intersections.clear();
+        for (link_index, link) in self.links.iter().enumerate() {
+            for (particle_index, particle) in self.particles.iter().enumerate() {
+                if self.links[link_index].has_particle(particle_index) {
+                    // NTD
+                } else {
+                    let p1_coordinates = particle.get_coordinates();
+                    let p1_old_coordinates = particle.get_old_coordinates();
+                    let coordinates = link.get_coordinates();
+                    let x3 = coordinates.0;
+                    let y3 = coordinates.1;
+                    let x4 = coordinates.2;
+                    let y4 = coordinates.3;
+                    match Universe::get_intersect(
+                        p1_coordinates.0, p1_coordinates.1,
+                        p1_old_coordinates.0, p1_old_coordinates.1,
+                        x3, y3,
+                        x4, y4
+                    ) {
+                        Some(intersect) => {
+                            self.intersections.push(
+                                Intersection::new(
+                                    intersect.0,
+                                    intersect.1,
+                                    link_index,
+                                    particle_index
+                                )
+                            );
+                        },
+                        None => {
+                            // NTD
+                        }
                     }
                 }
             }
         }
-        return intersections;
+    }
+
+    //
+    // List collisions happening during the current tick
+    //
+    fn compute_tick_collisions(& mut self) {
+        self.collisions.clear();
+        for (i, particle_1) in self.particles.iter().enumerate() {
+            for (j, particle_2) in self.particles.iter().enumerate() {
+                let particles_collide = Particle::particles_collide(particle_1, particle_2);
+                if particles_collide {
+                    self.collisions.push(Collision::new(i, j));
+                } else {
+                    // NTD
+                }
+            }
+        }
+    }
+
+    //
+    // Treat detected intersections using the specified intersection behavior
+    //
+    fn treat_intersections(& mut self) {
+        match & self.intersection_behavior {
+            IntersectionBehavior::DoNothing => {
+                // NTD
+            },
+            IntersectionBehavior::DestroyLink => {
+                // List links to destroy
+                for intersection in self.intersections.iter() {
+                    self.links_to_destroy_indexes.push((*intersection).get_link_index());
+                }
+            },
+            IntersectionBehavior::DestroyParticle => {
+                for intersection in self.intersections.iter() {
+                    let particle_index = (*intersection).get_particle_index();
+                    self.particles_to_destroy_indexes.push(particle_index);
+                    let mut links_to_destroy_indexes = self.particle_index_to_links_indexes[particle_index].clone();
+                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes);
+                }
+            }
+        }
+    }
+
+    //
+    // Treat detected collisions using the specified collision behavior
+    //
+    fn treat_collisions(& mut self) {
+        match & self.collision_behavior {
+            CollisionBehavior::DoNothing => {
+                // NTD
+            },
+            CollisionBehavior::DestroyParticles => {
+                for collision in self.collisions.iter() {
+                    let p1_index = (*collision).get_particle_1_index();
+                    self.particles_to_destroy_indexes.push(p1_index);
+                    let p2_index = (*collision).get_particle_2_index();
+                    self.particles_to_destroy_indexes.push(p2_index);
+                    let mut links_to_destroy_indexes = self.particle_index_to_links_indexes[p1_index].clone();
+                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes);
+                    let mut links_to_destroy_indexes_2 = self.particle_index_to_links_indexes[p2_index].clone();
+                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes_2);
+                }
+            },
+            CollisionBehavior::CreateLink => {
+                for collision in self.collisions.iter() {
+                    let p1_index = (*collision).get_particle_1_index();
+                    let p2_index = (*collision).get_particle_2_index();
+                    self.links_to_create.push((p1_index, p2_index));
+                }
+            },
+            CollisionBehavior::MergeParticles => {
+                panic!("Treat collision for CollisionBehavior::MergeParticles not implemented")
+            }
+        }
+    }
+
+    //
+    // Destroy links
+    //
+    fn destroy_links(& mut self) {
+        // Remove duplicates
+        self.links_to_destroy_indexes.sort();
+        self.links_to_destroy_indexes.dedup();
+        // Destroy links
+        for link_to_destroy_index in self.links_to_destroy_indexes.iter().rev() {
+            self.links.remove(*link_to_destroy_index);
+            let tmp_particle_index_to_links_indexes = self.particle_index_to_links_indexes.clone();
+            for (i, links_indexes) in tmp_particle_index_to_links_indexes.iter().enumerate() {
+                for (j, link_index) in links_indexes.iter().enumerate().rev() {
+                    if *link_index == *link_to_destroy_index {
+                        self.particle_index_to_links_indexes[i].remove(j);
+                    } else if *link_index > *link_to_destroy_index {
+                        self.particle_index_to_links_indexes[i][j] -= 1;
+                    } else {
+                        // NTD
+                    }
+                }
+            }
+            
+        }
+    }
+
+    //
+    // Destroy particles
+    //
+    fn destroy_particles(& mut self) {
+        // Remove duplicates
+        self.particles_to_destroy_indexes.sort();
+        self.particles_to_destroy_indexes.dedup();
+        // Destroy particles
+        for particle_to_destroy_index in self.particles_to_destroy_indexes.iter().rev() {
+            self.particles.remove(*particle_to_destroy_index);
+            // Destroy references
+            for (i, link) in self.links.clone().iter().enumerate() {
+                let p1_index = link.get_p1_index();
+                if p1_index > *particle_to_destroy_index {
+                    self.links[i].decrease_p1_index();
+                } else if p1_index == *particle_to_destroy_index {
+                    panic!("Link #{} with reference to destroyed particle #{}",
+                        i,
+                        *particle_to_destroy_index
+                    );
+                } else {
+                    // NTD
+                }
+                let p2_index = link.get_p2_index();
+                if p2_index > *particle_to_destroy_index {
+                    self.links[i].decrease_p2_index();
+                } else if p2_index == *particle_to_destroy_index {
+                    panic!("Link #{} with reference to destroyed particle #{}",
+                        i,
+                        *particle_to_destroy_index
+                    );
+                } else {
+                    // NTD
+                }
+            }
+        }
+    }
+
+    //
+    // Create links if they do not already exist
+    //
+    fn create_links(& mut self) {
+        self.links_to_create.sort();
+        self.links_to_create.dedup();
+        //
+        for link_to_create in self.links_to_create.clone().iter() {
+            if self.link_between_particles_exists(link_to_create.0, link_to_create.1) {
+                // Do nothing
+            } else {
+                self.add_link(link_to_create.0, link_to_create.1);
+            }
+        }
+    }
+
+    //
+    // Check whether or not a link already exists between two particles
+    //
+    fn link_between_particles_exists(& self, p1_index: usize, p2_index: usize) -> bool {
+        for link in & self.links {
+            if (link.get_p1_index() == p1_index && link.get_p2_index() == p2_index)
+                    || (link.get_p1_index() == p2_index && link.get_p2_index() == p1_index) {
+                return true;
+            } else {
+                // Do nothing
+            }
+        }
+        return false;
     }
 
     //
@@ -507,26 +806,29 @@ impl Universe {
             self.particle_counter
         ));
         self.particle_counter += 1;
+        self.particle_index_to_links_indexes.push(Vec::new());
     }
 
     //
     // Add a Link to the Universe
     //
-    fn add_link(&mut self, p1_id: usize, p2_id: usize) {
-        if p1_id >= self.particles.len() {
-            console_error!("Cannot add link : particle #{} does not exist", p1_id);
+    fn add_link(&mut self, p1_index: usize, p2_index: usize) {
+        if p1_index >= self.particles.len() {
+            console_error!("Cannot add link : particle #{} does not exist", p1_index);
+        } else if p2_index >= self.particles.len() {
+            console_error!("Cannot add link : particle #{} does not exist", p2_index);
+        } else {
+            self.links.push(Link::new(
+                p1_index,
+                p2_index
+            ));
+            self.particle_index_to_links_indexes[p1_index].push(self.links.len() - 1);
+            self.particle_index_to_links_indexes[p2_index].push(self.links.len() - 1);
         }
-        if p2_id >= self.particles.len() {
-            console_error!("Cannot add link : particle #{} does not exist", p2_id);
-        }
-        self.links.push(Link::new(
-            p1_id,
-            p2_id
-        ));
     }
 
     //
-    // Helper function to get the time from 
+    // Helper function to get the time from a web browser
     //
     fn now() -> f64 {
         web_sys::window()

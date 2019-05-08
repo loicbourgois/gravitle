@@ -212,6 +212,15 @@ impl Particle {
     pub fn get_old_coordinates(& self) -> (f64, f64) {
         (self.old_x, self.old_y)
     }
+
+    //
+    // Checks whether two particles collide
+    //
+    pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
+        let distance_squared_centers = Particle::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
+        let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
+        return distance_squared_centers < radiuses_squared && p1.id != p2.id;
+    }
 }
 
 //
@@ -385,5 +394,29 @@ mod tests {
         let d: f64 = 4.0;
         let d2: f64 = Particle::get_distance(x1, y1, x2, y2);
         assert_eq!(d, d2);
+    }
+
+    #[test]
+    pub fn test_particles_collide() {
+        //
+        let mut p1 = Particle::new(0);
+        p1.load_from_json(r#"{
+            "x": 1.0,
+            "y": 1.0
+        }"#.to_string());
+        let mut p2 = Particle::new(1);
+        p2.load_from_json(r#"{
+            "x": 1.0,
+            "y": 0.0
+        }"#.to_string());
+        let mut p3 = Particle::new(3);
+        p3.load_from_json(r#"{
+            "x": 1.0,
+            "y": 0.0,
+            "diameter": 1.01
+        }"#.to_string());
+        assert_eq!(false, Particle::particles_collide(&p1, &p1));
+        assert_eq!(false, Particle::particles_collide(&p1, &p2));
+        assert_eq!(true, Particle::particles_collide(&p1, &p3));
     }
 }

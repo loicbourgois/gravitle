@@ -13,7 +13,7 @@ pub struct Intersection {
 }
 
 //
-//
+// Implement Intersection
 //
 #[wasm_bindgen]
 impl Intersection {
@@ -43,10 +43,10 @@ impl Intersection {
     pub fn get_intersection_y(& self) -> f64 {
         self.intersection_y
     }
-    pub fn get_link_id(& self) -> usize {
+    pub fn get_link_index(& self) -> usize {
         self.link_id
     }
-    pub fn get_particle_id(& self) -> usize {
+    pub fn get_particle_index(& self) -> usize {
         self.particle_id
     }
 }

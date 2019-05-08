@@ -1,4 +1,9 @@
-import { Universe, Algorithm } from 'gravitle';
+import {
+    Universe,
+    Algorithm,
+    IntersectionBehavior,
+    CollisionBehavior
+} from 'gravitle';
 import { memory } from "gravitle/gravitle_bg";
 
 const infos = document.getElementById('infos');
@@ -11,6 +16,7 @@ const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
 const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
+const buttonExample5 = document.getElementById('button-example-5');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -29,6 +35,8 @@ const BASE_CONF = Object.freeze({
     gravitational_constant: 66.74,
     minimal_distance_for_gravity: 0.1,
     algorithm: Algorithm.Verlet,
+    intersection_behavior: IntersectionBehavior.DestroyLink,
+    collision_behavior: CollisionBehavior.CreateLink,
     particles: []
 });
 
@@ -76,6 +84,10 @@ spadeButton.addEventListener('click', () => {
     spade();
 });
 
+buttonExample5.addEventListener('click', () => {
+    loadExample5();
+});
+
 const renderLoop = () => {
     infos.textContent = universe.get_infos();
     draw();
@@ -101,18 +113,14 @@ const drawSegments = () => {
     context.lineWidth = 4;
     for (let id = 0 ; id < linksCount ; id += 1 ) {
         let i = id * LINK_SIZE;
-        if (universe.linksStates[id] === true) {
-            const x1 = (universeWidth / 2) * unitX + links[i + 0] * unitX;
-            const y1 = (universeHeight / 2) * unitY - links[i + 1] * unitY;
-            const x2 = (universeWidth / 2) * unitX + links[i + 2] * unitX;
-            const y2 = (universeHeight / 2) * unitY - links[i + 3] * unitY;
-            context.beginPath();
-            context.moveTo(x1, y1);
-            context.lineTo(x2, y2);
-            context.stroke();
-        } else {
-            // NTD
-        }
+        const x1 = (universeWidth / 2) * unitX + links[i + 0] * unitX;
+        const y1 = (universeHeight / 2) * unitY - links[i + 1] * unitY;
+        const x2 = (universeWidth / 2) * unitX + links[i + 2] * unitX;
+        const y2 = (universeHeight / 2) * unitY - links[i + 3] * unitY;
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
     }
 };
 
@@ -163,12 +171,6 @@ const stop = () => {
 
 const tick = () => {
     universe.tick();
-    const intersectionsCount = universe.get_intersections_count();
-    for (let i = 0 ; i < intersectionsCount ; i++) {
-        const intersection = universe.get_intersection(i);
-        const link_id = intersection.get_link_id();
-        universe.linksStates[link_id] = !universe.linksStates[link_id];
-    }
 };
 
 const tickMultiple = () => {
@@ -415,6 +417,77 @@ const spade = () => {
     reload();
 }
 
+const loadExample5 = () => {
+    const conf = jsonCopy(BASE_CONF);
+    conf.intersection_behavior = IntersectionBehavior.DestroyParticle;
+    conf.particles = [
+        {
+            "x": 0,
+            "y": 0
+        },
+        {
+            "x": -10,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": 10,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": 10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": -40,
+            "y": 35,
+            "fixed": false
+        },
+        {
+            "x": 40,
+            "y": 35,
+            "fixed": false
+        },
+        {
+            "x": -50,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": 50,
+            "y": 30,
+            "fixed": true
+        }
+    ];
+    conf.links = [
+        {
+            "p1_index": 0,
+            "p2_index": 1
+        },
+        {
+            "p1_index": 0,
+            "p2_index": 2
+        },
+        {
+            "p1_index": 3,
+            "p2_index": 4
+        },
+        {
+            "p1_index": 5,
+            "p2_index": 6
+        }
+    ];
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
 const randomize = () => {
     const conf = getParameterizedConf();
     const particles = [];
@@ -464,7 +537,6 @@ const reload = () => {
     time = null;
     delta = null;
     universe.load_from_json(jsonTextarea.value);
-    universe.linksStates = Array(universe.get_links_count()).fill(true);
     start();
 };
 
