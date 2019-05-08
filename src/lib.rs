@@ -62,12 +62,11 @@ macro_rules! console_error {
 //
 // Collision happens when two particles collide
 //
-#[wasm_bindgen]
-pub enum CollisionBehavior {
-    DoNothing = 0,
-    DestroyParticles = 1,
-    CreateLink = 2,
-    MergeParticles = 3
+enum CollisionBehavior {
+    DoNothing,
+    DestroyParticles,
+    CreateLink,
+    MergeParticles
 }
 
 //
@@ -76,27 +75,30 @@ pub enum CollisionBehavior {
 impl CollisionBehavior {
 
     //
-    // Convert from u32 to CollisionBehavior
+    // Convert from String to CollisionBehavior
     //
-    fn from_u32(value: u32) -> CollisionBehavior {
-        match value {
-            0 => CollisionBehavior::DoNothing,
-            1 => CollisionBehavior::DestroyParticles,
-            2 => CollisionBehavior::CreateLink,
-            3 => CollisionBehavior::MergeParticles,
-            _ => panic!("Unknown value: {}", value),
+    fn from_string(value: String) -> CollisionBehavior {
+        match value.as_ref() {
+            "do-nothing" => CollisionBehavior::DoNothing,
+            "destroy-particles" => CollisionBehavior::DestroyParticles,
+            "create-link" => CollisionBehavior::CreateLink,
+            "merge-particles" => CollisionBehavior::MergeParticles,
+            _ => {
+                console_error!("Unknown CollisionBehavior : {}", value);
+                panic!("Unknown CollisionBehavior : {}", value);
+            }
         }
     }
 
     //
-    // Convert CollisionBehavior to u32
+    // Convert CollisionBehavior to String
     //
-    fn as_u32(&self) -> u32 {
+    fn as_string(&self) -> String {
         match self {
-            CollisionBehavior::DoNothing => 0,
-            CollisionBehavior::DestroyParticles => 1,
-            CollisionBehavior::CreateLink => 2,
-            CollisionBehavior::MergeParticles => 3
+            CollisionBehavior::DoNothing => "do-nothing".to_string(),
+            CollisionBehavior::DestroyParticles => "destroy-particles".to_string(),
+            CollisionBehavior::CreateLink => "create-link".to_string(),
+            CollisionBehavior::MergeParticles => "merge-particles".to_string()
         }
     }
 }
@@ -104,11 +106,10 @@ impl CollisionBehavior {
 //
 // Intersection happens when a moving particle and a link intersect
 //
-#[wasm_bindgen]
-pub enum IntersectionBehavior {
-    DoNothing = 0,
-    DestroyParticle = 1,
-    DestroyLink = 2
+enum IntersectionBehavior {
+    DoNothing,
+    DestroyParticle,
+    DestroyLink
 }
 
 //
@@ -117,25 +118,28 @@ pub enum IntersectionBehavior {
 impl IntersectionBehavior {
 
     //
-    // Convert from u32 to IntersectionBehavior
+    // Convert from String to IntersectionBehavior
     //
-    fn from_u32(value: u32) -> IntersectionBehavior {
-        match value {
-            0 => IntersectionBehavior::DoNothing,
-            1 => IntersectionBehavior::DestroyParticle,
-            2 => IntersectionBehavior::DestroyLink,
-            _ => panic!("Unknown value: {}", value),
+    fn from_string(value: String) -> IntersectionBehavior {
+        match value.as_ref() {
+            "do-nothing" => IntersectionBehavior::DoNothing,
+            "destroy-particle" => IntersectionBehavior::DestroyParticle,
+            "destroy-link" => IntersectionBehavior::DestroyLink,
+            _ => {
+                console_error!("Unknown IntersectionBehavior : {}", value);
+                panic!("Unknown IntersectionBehavior : {}", value);
+            }
         }
     }
 
     //
-    // Convert Algorithm to u32
+    // Convert Algorithm to String
     //
-    fn as_u32(&self) -> u32 {
+    fn as_string(&self) -> String {
         match self {
-            IntersectionBehavior::DoNothing => 0,
-            IntersectionBehavior::DestroyParticle => 1,
-            IntersectionBehavior::DestroyLink => 2
+            IntersectionBehavior::DoNothing => "do-nothing".to_string(),
+            IntersectionBehavior::DestroyParticle => "destroy-particle".to_string(),
+            IntersectionBehavior::DestroyLink => "destroy-link".to_string()
         }
     }
 }
@@ -143,10 +147,9 @@ impl IntersectionBehavior {
 //
 // Algorithm used to advance by one step
 //
-#[wasm_bindgen]
-pub enum Algorithm {
-    Euler = 1,
-    Verlet = 2
+enum Algorithm {
+    Euler,
+    Verlet
 }
 
 //
@@ -155,23 +158,26 @@ pub enum Algorithm {
 impl Algorithm {
 
     //
-    // Convert from u32 to Algorithm
+    // Convert from String to Algorithm
     //
-    fn from_u32(value: u32) -> Algorithm {
-        match value {
-            1 => Algorithm::Euler,
-            2 => Algorithm::Verlet,
-            _ => panic!("Unknown value: {}", value),
+    fn from_string(value: String) -> Algorithm {
+        match value.as_ref() {
+            "euler" => Algorithm::Euler,
+            "verlet" => Algorithm::Verlet,
+            _ => {
+                console_error!("Unknown Algorithm : {}", value);
+                panic!("Unknown Algorithm : {}", value);
+            }
         }
     }
 
     //
-    // Convert Algorithm to u32
+    // Convert Algorithm to String
     //
-    fn as_u32(&self) -> u32 {
+    fn as_string(&self) -> String {
         match self {
-            Algorithm::Euler => 1,
-            Algorithm::Verlet => 2
+            Algorithm::Euler => "euler".to_string(),
+            Algorithm::Verlet => "verlet".to_string()
         }
     }
 }
@@ -256,13 +262,21 @@ impl Universe {
         self.height = json_parsed["height"].as_f64().unwrap_or(self.height);
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
-        self.algorithm = Algorithm::from_u32(json_parsed["algorithm"].as_u32().unwrap_or(self.algorithm.as_u32()));
-        self.intersection_behavior = IntersectionBehavior::from_u32(
-            json_parsed["intersection_behavior"].as_u32().unwrap_or(self.intersection_behavior.as_u32())
-        );
-        self.collision_behavior = CollisionBehavior::from_u32(
-            json_parsed["collision_behavior"].as_u32().unwrap_or(self.collision_behavior.as_u32())
-        );
+        if json_parsed["algorithm"].to_string() != "null".to_string() {
+            self.algorithm = Algorithm::from_string(json_parsed["algorithm"].to_string());
+        } else {
+            // Do nothing
+        }
+        if json_parsed["intersection_behavior"].to_string() != "null".to_string() {
+            self.intersection_behavior = IntersectionBehavior::from_string(json_parsed["intersection_behavior"].to_string());
+        } else {
+            // Do nothing
+        }
+        if json_parsed["collision_behavior"].to_string() != "null".to_string() {
+            self.collision_behavior = CollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
+        } else {
+            // Do nothing
+        }
         self.particles = Vec::new();
         let particles_data = &json_parsed["particles"];
         for i in 0..particles_data.len() {

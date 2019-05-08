@@ -1,8 +1,5 @@
 import {
-    Universe,
-    Algorithm,
-    IntersectionBehavior,
-    CollisionBehavior
+    Universe
 } from 'gravitle';
 import { memory } from "gravitle/gravitle_bg";
 
@@ -34,9 +31,9 @@ const BASE_CONF = Object.freeze({
     delta_time: 0.01,
     gravitational_constant: 66.74,
     minimal_distance_for_gravity: 0.1,
-    algorithm: Algorithm.Verlet,
-    intersection_behavior: IntersectionBehavior.DestroyLink,
-    collision_behavior: CollisionBehavior.CreateLink,
+    algorithm: 'verlet',
+    intersection_behavior: 'destroy-link',
+    collision_behavior: 'create-link',
     particles: []
 });
 
