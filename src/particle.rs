@@ -200,6 +200,15 @@ impl Particle {
     }
 
     //
+    // Stabilize position by removing last decimals for each coordinate
+    // Useful for conserving symetries
+    //
+    pub fn stabilise_position(&mut self, stabiliser: f64) {
+        self.x = (self.x * stabiliser).trunc() / stabiliser;
+        self.y = (self.y * stabiliser).trunc() / stabiliser;
+    }
+
+    //
     // Getter for current coordinates
     //
     pub fn get_coordinates(& self) -> (f64, f64) {

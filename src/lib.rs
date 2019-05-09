@@ -207,7 +207,9 @@ pub struct Universe {
     collision_behavior: CollisionBehavior,
     links_to_destroy_indexes: Vec<usize>,
     particles_to_destroy_indexes: Vec<usize>,
-    links_to_create: Vec<(usize, usize)>
+    links_to_create: Vec<(usize, usize)>,
+    stabiliser_power: i32,
+    stabilise_positions_enabled: bool
 }
 
 //
@@ -248,7 +250,9 @@ impl Universe {
             collision_behavior: CollisionBehavior::DoNothing,
             links_to_destroy_indexes: Vec::new(),
             particles_to_destroy_indexes: Vec::new(),
-            links_to_create: Vec::new()
+            links_to_create: Vec::new(),
+            stabiliser_power: 10,
+            stabilise_positions_enabled: false
         }
     }
 
@@ -261,7 +265,11 @@ impl Universe {
         self.width = json_parsed["width"].as_f64().unwrap_or(self.width);
         self.height = json_parsed["height"].as_f64().unwrap_or(self.height);
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
+        self.stabiliser_power = json_parsed["stabiliser_power"].as_i32().unwrap_or(self.stabiliser_power);
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
+        self.stabilise_positions_enabled = json_parsed["stabilise_positions_enabled"]
+            .as_bool()
+            .unwrap_or(self.stabilise_positions_enabled);
         if json_parsed["algorithm"].to_string() != "null".to_string() {
             self.algorithm = Algorithm::from_string(json_parsed["algorithm"].to_string());
         } else {
@@ -313,6 +321,14 @@ impl Universe {
         match self.algorithm {
             Algorithm::Euler => self.advance_euler(self.get_delta_time()),
             Algorithm::Verlet => self.advance_verlet(self.get_delta_time())
+        }
+        match self.stabilise_positions_enabled {
+            true => {
+                self.stabilise_positions();
+            },
+            false => {
+                // Do nothing
+            }
         }
         self.update_links_coordinates();
         self.compute_tick_intersections();
@@ -554,6 +570,17 @@ impl Universe {
     }
 
     //
+    // Stabilize positions by removing last decimals for each coordinate
+    // Useful for conserving symetries
+    //
+    fn stabilise_positions(&mut self) {
+        let stabiliser = (10.0_f64).powi(self.stabiliser_power);
+        for particle in &mut self.particles {
+            particle.stabilise_position(stabiliser);
+        }
+    }
+
+    //
     // Update links coordinates by coppying particles coordinates to links
     //
     fn update_links_coordinates(&mut self) {
@@ -772,7 +799,8 @@ impl Universe {
     fn link_between_particles_exists(& self, p1_index: usize, p2_index: usize) -> bool {
         for link in & self.links {
             if (link.get_p1_index() == p1_index && link.get_p2_index() == p2_index)
-                    || (link.get_p1_index() == p2_index && link.get_p2_index() == p1_index) {
+                    || (link.get_p1_index() == p2_index && link.get_p2_index() == p1_index
+            ) {
                 return true;
             } else {
                 // Do nothing

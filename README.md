@@ -31,7 +31,7 @@ cargo test
 wasm-pack test --headless --firefox
 ```
 
-## Publish to NPM with
+## Publish to NPM
 
 ```
 wasm-pack publish

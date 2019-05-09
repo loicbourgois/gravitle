@@ -11,6 +11,7 @@ const stopButton = document.getElementById('button-stop');
 const heartButton = document.getElementById('button-heart');
 const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
+const symetryButton = document.getElementById('button-symetry');
 const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
 const buttonExample5 = document.getElementById('button-example-5');
@@ -47,6 +48,10 @@ let last = null;
 
 randomizeButton.addEventListener('click', () => {
     randomize();
+});
+
+symetryButton.addEventListener('click', () => {
+    symetry();
 });
 
 reloadButton.addEventListener('click', () => {
@@ -416,7 +421,7 @@ const spade = () => {
 
 const loadExample5 = () => {
     const conf = jsonCopy(BASE_CONF);
-    conf.intersection_behavior = IntersectionBehavior.DestroyParticle;
+    conf.intersection_behavior = 'destroy-particle';
     conf.particles = [
         {
             "x": 0,
@@ -488,14 +493,45 @@ const loadExample5 = () => {
 const randomize = () => {
     const conf = getParameterizedConf();
     const particles = [];
-    for (let i = 0 ; i < parseFloat(inputCount.value) ; i++) {
-        const x = getRandomNumber(- conf.width / 10, conf.width / 10);
-        const y = getRandomNumber(- conf.height / 10, conf.height / 10);
+    for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 1) {
+        const x = getRandomIntInclusive(- conf.width / 10, conf.width / 10);
+        const y = getRandomIntInclusive(- conf.height / 5, conf.height / 5);
         const mass = getRandomNumber(0.5, 5.0);
         const fixed = false;
         const diameter = mass;
         particles.push({
             x: x,
+            y: y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+    }
+    conf.particles = particles;
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const symetry = () => {
+    const conf = getParameterizedConf();
+    conf.stabilise_positions_enabled = true;
+    conf.stabiliser_power = 10;
+    const particles = [];
+    for (let i = 0 ; i < parseFloat(inputCount.value) / 2 ; i += 1) {
+        const x = getRandomIntInclusive(- conf.width / 10, conf.width / 10);
+        const y = getRandomIntInclusive(- conf.height / 5, conf.height / 5);
+        const mass = getRandomNumber(0.5, 5.0);
+        const fixed = false;
+        const diameter = mass;
+        particles.push({
+            x: x,
+            y: y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+        particles.push({
+            x: -x,
             y: y,
             mass: mass,
             fixed: fixed,
@@ -525,6 +561,12 @@ const getRandomBoolean = () => {
 
 const getRandomNumber = (min, max) => {
     return Math.random() * (max - min) + min;
+}
+
+function getRandomIntInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const reload = () => {
