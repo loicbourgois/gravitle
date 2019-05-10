@@ -33,8 +33,10 @@ const BASE_CONF = Object.freeze({
     gravitational_constant: 66.74,
     minimal_distance_for_gravity: 0.1,
     algorithm: 'verlet',
-    intersection_behavior: 'destroy-link',
-    collision_behavior: 'create-link',
+    intersection_behavior: 'do-nothing',
+    collision_behavior: 'do-nothing',
+    stabilise_positions_enabled: false,
+    stabiliser_power: 10,
     particles: []
 });
 
@@ -333,6 +335,7 @@ const club = () => {
 
 const spade = () => {
     const conf = jsonCopy(BASE_CONF);
+    conf.intersection_behavior = 'destroy-link';
     conf.particles = [
         {
             "x": 0,
@@ -516,6 +519,8 @@ const symetry = () => {
     const conf = getParameterizedConf();
     conf.stabilise_positions_enabled = true;
     conf.stabiliser_power = 10;
+    conf.intersection_behavior = 'destroy-link';
+    conf.collision_behavior = 'create-link';
     const particles = [];
     for (let i = 0 ; i < parseFloat(inputCount.value) / 2 ; i += 1) {
         const x = getRandomIntInclusive(- conf.width / 10, conf.width / 10);
