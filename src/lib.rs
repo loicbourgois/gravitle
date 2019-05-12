@@ -146,17 +146,6 @@ impl IntersectionBehavior {
             }
         }
     }
-
-    //
-    // Convert Algorithm to String
-    //
-    fn as_string(&self) -> String {
-        match self {
-            IntersectionBehavior::DoNothing => "do-nothing".to_string(),
-            IntersectionBehavior::DestroyParticle => "destroy-particle".to_string(),
-            IntersectionBehavior::DestroyLink => "destroy-link".to_string()
-        }
-    }
 }
 
 //
@@ -183,16 +172,6 @@ impl Algorithm {
                 console_error!("Unknown Algorithm : {}", value);
                 panic!("Unknown Algorithm : {}", value);
             }
-        }
-    }
-
-    //
-    // Convert Algorithm to String
-    //
-    fn as_string(&self) -> String {
-        match self {
-            Algorithm::Euler => "euler".to_string(),
-            Algorithm::Verlet => "verlet".to_string()
         }
     }
 }
@@ -240,23 +219,16 @@ impl Universe {
     //
     pub fn new() -> Universe {
         utils::set_panic_hook();
-        let step = 0;
-        let particles = Vec::new();
-        let width = 10.0;
-        let height = 10.0;
-        let delta_time = 0.01;
-        let algorithm = Algorithm::Verlet;
-        let gravitational_constant = 667.4;
         Universe {
-            width: width,
-            height: height,
-            step: step,
-            delta_time: delta_time,
-            particles: particles,
-            gravitational_constant: gravitational_constant,
+            width: 10.0,
+            height: 10.0,
+            step: 0,
+            delta_time: 0.01,
+            particles: Vec::new(),
+            gravitational_constant: 667.4,
             particle_counter: 0,
-            algorithm: algorithm,
-            minimal_distance_for_gravity: delta_time * 100.0,
+            algorithm: Algorithm::Verlet,
+            minimal_distance_for_gravity: 1.0,
             links: Vec::new(),
             intersections: Vec::new(),
             collisions: Vec::new(),
@@ -289,17 +261,17 @@ impl Universe {
         self.stabilise_positions_enabled = json_parsed["stabilise_positions_enabled"]
             .as_bool()
             .unwrap_or(self.stabilise_positions_enabled);
-        if json_parsed["algorithm"].to_string() != "null".to_string() {
+        if json_parsed["algorithm"].to_string()  != "null" {
             self.algorithm = Algorithm::from_string(json_parsed["algorithm"].to_string());
         } else {
             // Do nothing
         }
-        if json_parsed["intersection_behavior"].to_string() != "null".to_string() {
+        if json_parsed["intersection_behavior"].to_string()  != "null" {
             self.intersection_behavior = IntersectionBehavior::from_string(json_parsed["intersection_behavior"].to_string());
         } else {
             // Do nothing
         }
-        if json_parsed["collision_behavior"].to_string() != "null".to_string() {
+        if json_parsed["collision_behavior"].to_string()  != "null" {
             self.collision_behavior = CollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
         } else {
             // Do nothing
@@ -411,14 +383,14 @@ impl Universe {
     // Get delta_time for the Universe in milliseconds
     //
     pub fn get_delta_time_milli(&self) -> f64 {
-        return self.delta_time * 1000.0;
+        self.delta_time * 1000.0
     }
 
     //
     // Get delta_time for the Universe in seconds
     //
     pub fn get_delta_time(&self) -> f64 {
-        return self.delta_time;
+        self.delta_time
     }
 
     //
@@ -514,7 +486,7 @@ impl Universe {
             let mut trajectory_positions = trajectory.get_positions_at_period_as_f64s(period);
             positions.append(&mut trajectory_positions);
         }
-        return positions;
+        positions
     }
 
     //
@@ -534,30 +506,30 @@ impl fmt::Display for Universe {
     // Format the Universe as a String
     //
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if write!(f, "Size : {} x {}\n", self.width, self.height).is_ok() {
+        if writeln!(f, "Size : {} x {}", self.width, self.height).is_ok() {
             // NTD
         } else {
-            // Error
+            console_error!("Could not write");
         }
-        if write!(f, "Step : {}\n", self.step).is_ok() {
+        if writeln!(f, "Step : {}", self.step).is_ok() {
             // NTD
         } else {
-            // Error
+            console_error!("Could not write");
         }
-        if write!(f, "Tick : {:.2} ms\n", self.tick_average_duration).is_ok() {
+        if writeln!(f, "Tick : {:.2} ms", self.tick_average_duration).is_ok() {
             // NTD
         } else {
-            // Error
+            console_error!("Could not write");
         }
-        if write!(f, "Particles : {:.2}\n", self.particles.len()).is_ok() {
+        if writeln!(f, "Particles : {:.2}", self.particles.len()).is_ok() {
             // NTD
         } else {
-            // Error
+            console_error!("Could not write");
         }
-        if write!(f, "Links : {:.2}", self.links.len()).is_ok() {
+        if writeln!(f, "Links : {:.2}", self.links.len()).is_ok() {
             // NTD
         } else {
-            // Error
+            console_error!("Could not write");
         }
         Ok(())
     }
@@ -697,10 +669,10 @@ impl Universe {
             let p1_coordinates = self.particles[link.get_p1_index()].get_coordinates();
             let p2_coordinates = self.particles[link.get_p2_index()].get_coordinates();
             link.set_coordinates(
-                & p1_coordinates.0,
-                & p1_coordinates.1,
-                & p2_coordinates.0,
-                & p2_coordinates.1
+                p1_coordinates.0,
+                p1_coordinates.1,
+                p2_coordinates.0,
+                p2_coordinates.1
             );
         }
     }
@@ -723,10 +695,10 @@ impl Universe {
                     let x4 = coordinates.2;
                     let y4 = coordinates.3;
                     match Universe::get_intersect(
-                        p1_coordinates.0, p1_coordinates.1,
-                        p1_old_coordinates.0, p1_old_coordinates.1,
-                        x3, y3,
-                        x4, y4
+                        p1_coordinates,
+                        p1_old_coordinates,
+                        (x3, y3),
+                        (x4, y4)
                     ) {
                         Some(intersect) => {
                             self.intersections.push(
@@ -954,28 +926,28 @@ impl Universe {
                 // Do nothing
             }
         }
-        return false;
+        false
     }
 
     //
     // Helper method to find if two links intersect
     //
     fn get_intersect(
-            x1: f64, y1: f64,
-            x2: f64, y2: f64,
-            x3: f64, y3: f64,
-            x4: f64, y4: f64
+            p1: (f64, f64),
+            p2: (f64, f64),
+            p3: (f64, f64),
+            p4: (f64, f64)
     ) -> Option<(f64, f64)> {
         let link_1 = LineInterval::line_segment(
             Line::new(
-                geo::Point::new(x1, y1),
-                geo::Point::new(x2, y2)
+                geo::Point::new(p1.0, p1.1),
+                geo::Point::new(p2.0, p2.1)
             )
         );
         let link_2 = LineInterval::line_segment(
             Line::new(
-                geo::Point::new(x3, y3),
-                geo::Point::new(x4, y4)
+                geo::Point::new(p3.0, p3.1),
+                geo::Point::new(p4.0, p4.1)
             )
         );
         match link_1.relate(&link_2).unique_intersection() {

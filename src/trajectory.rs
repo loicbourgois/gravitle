@@ -27,7 +27,7 @@ impl Trajectory {
     //
     pub fn new(particle_id: u32) -> Trajectory {
         Trajectory {
-            particle_id: particle_id,
+            particle_id,
             positions: Vec::new()
         }
     }
@@ -37,9 +37,9 @@ impl Trajectory {
     //
     pub fn add_position(&mut self, x: f64, y: f64, step: u32) {
         self.positions.push(Position {
-            x: x,
-            y: y,
-            step: step
+            x,
+            y,
+            step
         });
     }
 
@@ -56,6 +56,6 @@ impl Trajectory {
                 // Do nothing
             }
         }
-        return f64s;
+        f64s
     }
 }

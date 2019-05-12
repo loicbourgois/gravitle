@@ -30,7 +30,7 @@ impl ParticleCollisionBehavior {
     //
     // Convert ParticleCollisionBehavior to String
     //
-    pub fn as_string(&self) -> String {
+    pub fn as_string(self) -> String {
         match self {
             ParticleCollisionBehavior::DoNothing => "do-nothing".to_string(),
             ParticleCollisionBehavior::DisableSelf => "disable-self".to_string(),
@@ -54,6 +54,8 @@ struct Point {
     x: f64,
     y: f64
 }
+
+const FLOAT_COMPARE_MARGIN : f64 = std::f64::MIN_POSITIVE;
 
 //
 // Particle definition
@@ -88,6 +90,7 @@ impl Particle {
     //
     pub fn new(id: u32) -> Particle {
         Particle {
+            id,
             x: 0.0,
             y: 0.0,
             diameter: 1.0,
@@ -98,7 +101,6 @@ impl Particle {
             mass: 1.0,
             old_x: 0.0,
             old_y: 0.0,
-            id: id,
             speed_x: 0.0,
             speed_y: 0.0,
             is_fixed: false,
@@ -113,7 +115,7 @@ impl Particle {
     pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
         let distance_squared_centers = Particle::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
         let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
-        return distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled();
+        distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled()
     }
 
     //
@@ -129,7 +131,7 @@ impl Particle {
         self.mass = json_parsed["mass"].as_f64().unwrap_or(self.mass);
         self.is_fixed = json_parsed["fixed"].as_bool().unwrap_or(self.is_fixed);
         self.is_enabled = json_parsed["enabled"].as_bool().unwrap_or(self.is_enabled);
-        if json_parsed["collision_behavior"].to_string() != "null".to_string() {
+        if json_parsed["collision_behavior"].to_string() != "null" {
             self.collision_behavior = ParticleCollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
         } else {
             // Do nothing
@@ -149,7 +151,7 @@ impl Particle {
     //
     pub fn add_gravity_forces(
             & mut self,
-            particles: & Vec<Particle>,
+            particles: &[Particle],
             gravitational_constant: f64,
             world_width: f64,
             world_height: f64,
@@ -173,13 +175,12 @@ impl Particle {
                             self.x, self.y,
                             clone.x, clone.y
                         );
-                        let force;
-                        if distance > minimal_distance_for_gravity {
-                            force = - gravitational_constant * self.mass * particle.mass / (distance * distance);
+                        let force = if distance > minimal_distance_for_gravity {
+                            - gravitational_constant * self.mass * particle.mass / (distance * distance)
                         } else {
                             // Particles are too close, which can result in instability
-                            force = 0.0;
-                        }
+                            0.0
+                        };
                         let delta_x = self.x - clone.x;
                         let delta_y = self.y - clone.y;
                         let force_x = delta_x * force;
@@ -206,8 +207,8 @@ impl Particle {
     // Update the speed of the Particle
     //
     pub fn update_speed(&mut self, delta_time: f64) {
-        self.speed_x = self.speed_x + self.acceleration_x * delta_time;
-        self.speed_y = self.speed_y + self.acceleration_y * delta_time;
+        self.speed_x += self.acceleration_x * delta_time;
+        self.speed_y += self.acceleration_y * delta_time;
     }
 
     //
@@ -327,7 +328,7 @@ impl Particle {
     fn get_distance_squared(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
         let delta_x = x1 - x2;
         let delta_y = y1 - y2;
-        return delta_x * delta_x + delta_y * delta_y;
+        delta_x * delta_x + delta_y * delta_y
     }
 
     //
@@ -337,8 +338,7 @@ impl Particle {
             x1: f64, y1: f64,
             x2: f64, y2: f64
     ) -> f64 {
-        let d2 = Particle::get_distance_squared(x1, y1, x2, y2);
-        return d2.sqrt();
+        Particle::get_distance_squared(x1, y1, x2, y2).sqrt()
     }
 
     //
@@ -346,9 +346,6 @@ impl Particle {
     // boxing a point p2
     // where p1 clones are translation of p1
     // by width and/or height of the Universe.
-    //
-    // If p1 and p2 have same x or same y,
-    // returns only 2 clones
     //
     // Used to compute gravity through the visible edges of the Universe.
     //
@@ -382,9 +379,9 @@ impl Particle {
         xs.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
         ys.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
         //
-        if x1 == x2 && y1 == y2 {
+        if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
             // NTD
-        } else if x1 == x2 {
+        } else if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
             for _ in 0..2 {
                 for i in 0..2 {
                     clones.push(Point {
@@ -393,7 +390,7 @@ impl Particle {
                     });
                 }
             }
-        } else if y1 == y2 {
+        } else if (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
             for _ in 0..2 {
                 for i in 0..2 {
                     clones.push(Point {
@@ -412,7 +409,7 @@ impl Particle {
                 }
             }
         }
-        return clones;
+        clones
     }
 }
 
