@@ -7,32 +7,29 @@ Particle based 2D engine for the web.
 * [Live Examples](https://loicbourgois.github.io/gravitle/index.html)
 * [Sources](https://github.com/loicbourgois/gravitle/tree/master/frontend)
 
-## Deploy website
+## Useful commands
 
+**Deploy website**
 ```
 ./deploy.sh
 ```
 
-## Build
-
+**Build**
 ```
 wasm-pack build
 ```
 
-## Unit tests
-
+**Unit tests**
 ```
 cargo test
 ```
 
-## Test in Headless Browsers
-
+**Test in Headless Browsers**
 ```
 wasm-pack test --headless --firefox
 ```
 
-## Publish to NPM
-
+**Publish to NPM**
 ```
 wasm-pack publish
 ```
