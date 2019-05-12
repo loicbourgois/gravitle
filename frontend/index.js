@@ -12,6 +12,7 @@ const heartButton = document.getElementById('button-heart');
 const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
 const symetryButton = document.getElementById('button-symetry');
+const spaceCroquetButton = document.getElementById('button-space-croquet');
 const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
 const buttonExample5 = document.getElementById('button-example-5');
@@ -25,6 +26,8 @@ const canvas = document.getElementById('canvas');
 canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
+
+let MODE = null;
 
 const BASE_CONF = Object.freeze({
     width: 200,
@@ -40,13 +43,17 @@ const BASE_CONF = Object.freeze({
     particles: []
 });
 
+let space_croquet_links = null;
+
 const universe = Universe.new();
 universe.load_from_json(JSON.stringify(BASE_CONF));
+const launchers = [];
 
 let interval = null;
 let time = null;
 let delta = null;
 let last = null;
+let mouse_positions = null;
 
 randomizeButton.addEventListener('click', () => {
     randomize();
@@ -92,6 +99,30 @@ buttonExample5.addEventListener('click', () => {
     loadExample5();
 });
 
+spaceCroquetButton.addEventListener('click', () => {
+    spaceCroquet();
+});
+
+canvas.addEventListener('mousedown', (event) => {
+    mouse_positions = {};
+    mouse_positions.down = getMousePos(canvas, event);
+    mouse_positions.up = mouse_positions.down;
+});
+
+canvas.addEventListener('mousemove', (event) => {
+    if (mouse_positions) {
+        mouse_positions.up = getMousePos(canvas, event);
+    } else {
+        // Do nothing
+    }
+});
+
+canvas.addEventListener('mouseup', (event) => {
+    mouse_positions.up = getMousePos(canvas, event);
+    launchParticle(mouse_positions);
+    mouse_positions = null;
+});
+
 const renderLoop = () => {
     infos.textContent = universe.get_infos();
     draw();
@@ -100,9 +131,49 @@ const renderLoop = () => {
 
 const draw = () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    if (MODE === 'SPACE-CROQUET') {
+        drawLaunchers();
+    } else {
+        // Do nothing
+    }
+    drawTrajectories(4);
     drawSegments();
     drawParticles();
+    drawMouseInteraction();
 };
+
+const drawLaunchers = () => {
+    context.strokeStyle = "#888";
+    context.lineWidth = 2;
+    for (let i = 0 ; i < launchers.length ; i += 1 ) {
+        context.beginPath();
+        context.moveTo(launchers[i].up.x, launchers[i].up.y);
+        context.lineTo(launchers[i].down.x, launchers[i].down.y);
+        context.stroke();
+    }
+};
+
+const drawTrajectories = (period) => {
+    const trajectories = universe.get_trajectories_position_at_period(period);
+    context.strokeStyle = "#888";
+    context.lineWidth = 1;
+    const diameter = 1;
+    for (let i = 0 ; i < trajectories.length ; i += 2) {
+        const p = getPositionFromUniverseToCanvas({
+            x: trajectories[i + 0],
+            y: trajectories[i + 1]
+        });
+        context.beginPath();
+        context.arc(
+            p.x,
+            p.y,
+            diameter,
+            0,
+            2 * Math.PI
+        );
+        context.stroke();
+    }
+}
 
 const drawSegments = () => {
     const linksPointer = universe.get_links();
@@ -117,13 +188,17 @@ const drawSegments = () => {
     context.lineWidth = 4;
     for (let id = 0 ; id < linksCount ; id += 1 ) {
         let i = id * LINK_SIZE;
-        const x1 = (universeWidth / 2) * unitX + links[i + 0] * unitX;
-        const y1 = (universeHeight / 2) * unitY - links[i + 1] * unitY;
-        const x2 = (universeWidth / 2) * unitX + links[i + 2] * unitX;
-        const y2 = (universeHeight / 2) * unitY - links[i + 3] * unitY;
+        const p1 = getPositionFromUniverseToCanvas({
+            x: links[i + 0],
+            y: links[i + 1]
+        });
+        const p2 = getPositionFromUniverseToCanvas({
+            x: links[i + 2],
+            y: links[i + 3]
+        });
         context.beginPath();
-        context.moveTo(x1, y1);
-        context.lineTo(x2, y2);
+        context.moveTo(p1.x, p1.y);
+        context.lineTo(p2.x, p2.y);
         context.stroke();
     }
 };
@@ -133,20 +208,20 @@ const drawParticles = () => {
     const particlesCount = universe.get_particles_count();
     const PARTICLE_SIZE = 13;
     const particles = new Float64Array(memory.buffer, particlesPointer, particlesCount * PARTICLE_SIZE);
-    const universeWidth = universe.get_width();
-    const universeHeight = universe.get_height();
-    const unitX = canvas.width / universeWidth;
-    const unitY = canvas.height / universeHeight;
+    const unitX = canvas.width / universe.get_width();
+    const unitY = canvas.height / universe.get_height();
     context.strokeStyle = "#FFF";
     context.lineWidth = 4;
     for (let i = 0 ; i < particles.length ; i+= PARTICLE_SIZE ) {
-        const x = (universeWidth / 2) * unitX + particles[i + 0] * unitX;
-        const y = (universeHeight / 2) * unitY - particles[i + 1] * unitY;
+        const position = getPositionFromUniverseToCanvas({
+            x: particles[i + 0],
+            y: particles[i + 1]
+        });
         const diameter = (unitX / 2) * particles[i + 2];
         context.beginPath();
         context.arc(
-            x,
-            y,
+            position.x,
+            position.y,
             diameter,
             0,
             2 * Math.PI
@@ -155,6 +230,32 @@ const drawParticles = () => {
     }
 };
 
+const drawMouseInteraction = () => {
+    if (mouse_positions) {
+        // Position
+        const unitX = canvas.width / universe.get_width();
+        const diameter = (unitX / 2);
+        context.strokeStyle = "#eef";
+        context.lineWidth = 4;
+        context.beginPath();
+        context.arc(
+            mouse_positions.down.x,
+            mouse_positions.down.y,
+            diameter,
+            0,
+            2 * Math.PI
+        );
+        context.stroke();
+        // Line
+        context.strokeStyle = "#ddf";
+        context.beginPath();
+        context.moveTo(mouse_positions.down.x, mouse_positions.down.y);
+        context.lineTo(mouse_positions.up.x, mouse_positions.up.y);
+        context.stroke();
+    } else {
+        // Do nothing
+    }
+}
 
 const start = () => {
     time = Date.now();
@@ -175,6 +276,11 @@ const stop = () => {
 
 const tick = () => {
     universe.tick();
+    if (universe.get_particles_to_disable_indexes_length() && MODE === 'SPACE-CROQUET') {
+        universe.set_links_json(JSON.stringify(space_croquet_links));
+    } else {
+        // Do nothing
+    }
 };
 
 const tickMultiple = () => {
@@ -189,6 +295,7 @@ const tickMultiple = () => {
 };
 
 const heart = () => {
+    MODE = null;
     const conf = jsonCopy(BASE_CONF);
     conf.particles = [
         {
@@ -232,11 +339,13 @@ const heart = () => {
             "y": -35
         }
     ];
+    conf.stabilise_positions_enabled = true;
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 };
 
 const diamond = () => {
+    MODE = null;
     const conf = jsonCopy(BASE_CONF);
     conf.particles = [
         {
@@ -290,6 +399,7 @@ const diamond = () => {
 };
 
 const club = () => {
+    MODE = null;
     const conf = jsonCopy(BASE_CONF);
     conf.particles = [
         {
@@ -334,6 +444,7 @@ const club = () => {
 }
 
 const spade = () => {
+    MODE = null;
     const conf = jsonCopy(BASE_CONF);
     conf.intersection_behavior = 'destroy-link';
     conf.particles = [
@@ -423,6 +534,7 @@ const spade = () => {
 }
 
 const loadExample5 = () => {
+    MODE = null;
     const conf = jsonCopy(BASE_CONF);
     conf.intersection_behavior = 'destroy-particle';
     conf.particles = [
@@ -494,6 +606,7 @@ const loadExample5 = () => {
 }
 
 const randomize = () => {
+    MODE = null;
     const conf = getParameterizedConf();
     const particles = [];
     for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 1) {
@@ -516,6 +629,7 @@ const randomize = () => {
 }
 
 const symetry = () => {
+    MODE = 'SYMETRY';
     const conf = getParameterizedConf();
     conf.stabilise_positions_enabled = true;
     conf.stabiliser_power = 10;
@@ -548,6 +662,122 @@ const symetry = () => {
     reload();
 }
 
+const spaceCroquet = () => {
+    MODE = 'SPACE-CROQUET';
+    const conf = getParameterizedConf();
+    conf.intersection_behavior = 'destroy-link';
+    const particles = [];
+    const links = [];
+    const zones = [];
+    const maxDiameter = 5.0;
+    const checkpointLength = conf.width / 8;
+    const innerRadius = checkpointLength / 2;
+    const zoneRadius = innerRadius + maxDiameter / 2;
+    for (let i = 0 ; i < 3 ; i += 1) {
+        let x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
+        let y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
+        let i = 1000;
+        while (isInZones(x, y, zones, zoneRadius) && i > 0) {
+            x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
+            y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
+            i -= 1;
+        }
+        if (i) {
+            zones.push({
+                x: x,
+                y: y,
+                diameter: zoneRadius * 2,
+                radius: zoneRadius,
+                fixed: true
+            });
+        }
+    }
+    for (let i = 0 ; i < zones.length ; i += 1) {
+        const mass = getRandomNumber(maxDiameter, maxDiameter);
+        const fixed = true;
+        const diameter = mass;
+        const angle = getRandomIntInclusive(0, 359);
+        const p1 = getCoordinateRotatedAround(
+            {
+                x: zones[i].x,
+                y: zones[i].y
+            },
+            {
+                x: zones[i].x + innerRadius,
+                y: zones[i].y
+            },
+            angle
+        );
+        const p2 = getCoordinateRotatedAround(
+            {
+                x: zones[i].x,
+                y: zones[i].y
+            },
+            {
+                x: zones[i].x - innerRadius,
+                y: zones[i].y
+            },
+            angle
+        );
+        particles.push({
+            x: p1.x,
+            y: p1.y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+        particles.push({
+            x: p2.x,
+            y: p2.y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+        links.push({
+            "p1_index": i*2,
+            "p2_index": i*2+1
+        });
+    }
+    conf.particles = particles;
+    conf.links = links;
+    space_croquet_links = links;
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const getCoordinateRotatedAround = (center, point, angle) => {
+    const angleRad = (angle) * (Math.PI / 180);
+    return {
+        x: Math.cos(angleRad) * (point.x - center.x) - Math.sin(angleRad) * (point.y - center.y) + center.x,
+        y: Math.sin(angleRad) * (point.x - center.x) + Math.cos(angleRad) * (point.y - center.y) + center.y
+    };
+}
+
+const isInZones = (x, y, zones, zoneRadius) => {
+    let r = false;
+    for (const index in zones) {
+        const zone = zones[index];
+        if (circlesCollide(x, y, zone.x, zone.y, zone.radius, zoneRadius)) {
+            r = true;
+        } else {
+            // Do nothing
+        }
+    }
+    return r;
+}
+
+const circlesCollide = (x1, y1, x2, y2, zoneRadius1, zoneRadius2) => {
+    const distance_squared_centers = get_distance_squared(x1, y1, x2, y2);
+    const diameters_squared = (zoneRadius1 + zoneRadius2) * (zoneRadius1 + zoneRadius2);
+    return distance_squared_centers < diameters_squared;
+}
+
+const get_distance_squared = (x1, y1, x2, y2) => {
+    const delta_x = x1 - x2;
+    const delta_y = y1 - y2;
+    return delta_x * delta_x + delta_y * delta_y;
+}
+
 const getParameterizedConf = () => {
     const conf = jsonCopy(BASE_CONF);
     conf.width = parseFloat(inputWidth.value);
@@ -577,6 +807,7 @@ function getRandomIntInclusive(min, max) {
 const reload = () => {
     stop();
     universe.reset();
+    launchers.length = 0;
     interval = null;
     time = null;
     delta = null;
@@ -587,6 +818,65 @@ const reload = () => {
 const getIndex = (row, column) => {
     return row * width + column;
 };
+
+const getMousePos = (canvas, event) => {
+    const rect = canvas.getBoundingClientRect(); // abs. size of element
+    const scaleX = canvas.width / rect.width;   // relationship bitmap vs. element for X
+    const scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+    return {
+        x: (event.clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
+        y: (event.clientY - rect.top) * scaleY     // been adjusted to be relative to element
+    }
+}
+
+const getPositionFromCanvasToUniverse = (position_in_canvas) => {
+    const universeWidth = universe.get_width();
+    const universeHeight = universe.get_height();
+    return {
+        x: position_in_canvas.x / canvas.width * universeWidth - universeWidth * 0.5,
+        y: - (position_in_canvas.y / canvas.height * universeHeight - universeHeight * 0.5)
+    }
+}
+
+const getPositionFromUniverseToCanvas = (position_in_universe) => {
+    const universeWidth = universe.get_width();
+    const universeHeight = universe.get_height();
+    const unitX = canvas.width / universeWidth;
+    const unitY = canvas.height / universeHeight;
+    return {
+        x: (universeWidth / 2) * unitX + position_in_universe.x * unitX,
+        y: (universeHeight / 2) * unitY - position_in_universe.y * unitY
+    }
+}
+
+const launchParticle = (mouse_position) => {
+    const position_in_universe = getPositionFromCanvasToUniverse(mouse_positions.down);
+    const position_in_universe_old = getPositionFromCanvasToUniverse(mouse_positions.up);
+    const dx = position_in_universe_old.x - position_in_universe.x;
+    const dy = position_in_universe_old.y - position_in_universe.y;
+    const sensibility = 0.01;
+    let collision_behavior = 'do-nothing';
+    if (MODE === 'SPACE-CROQUET') {
+        collision_behavior = 'disable-self';
+    } else {
+        // Do nothing
+    }
+    universe.add_particle_json(JSON.stringify(
+        {
+            x: position_in_universe.x,
+            y: position_in_universe.y,
+            old_x: position_in_universe.x + dx * sensibility,
+            old_y: position_in_universe.y + dy * sensibility,
+            collision_behavior: collision_behavior
+        }
+    ));
+    launchers.push(mouse_position);
+    if (MODE === 'SPACE-CROQUET') {
+        universe.set_links_json(JSON.stringify(space_croquet_links));
+    } else {
+        // Do nothing
+    }
+}
 
 heart();
 requestAnimationFrame(renderLoop);

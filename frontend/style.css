@@ -46,6 +46,33 @@ button:hover:disabled {
     cursor: default;
 }
 
+pre {
+    flex-grow: 0;
+}
+
+textarea {
+    background: var(--color-main-background);
+    border: none;
+    flex-grow: 1;
+}
+
+img {
+    height: 2rem;
+    width: 2rem;
+    padding: 0 1rem;
+}
+
+a:hover > h1 {
+    color: var(--color-main-middle);
+}
+
+input {
+    height: 100%;
+    background: var(--color-main-dark);
+    border: solid 1px var(--color-main-middle);
+    padding: 0.5rem;
+}
+
 .content {
     display: flex;
     width: 100vw;
@@ -69,18 +96,8 @@ button:hover:disabled {
     width: 0;
 }
 
-pre {
-    flex-grow: 0;
-}
-
 .buttons {
-    margin: 1rem 0;
-}
-
-textarea {
-    background: var(--color-main-background);
-    border: none;
-    flex-grow: 1;
+    margin-top: 1rem;
 }
 
 .canvas {
@@ -89,26 +106,15 @@ textarea {
     max-width: 100%;
 }
 
-img {
-    height: 2rem;
-    width: 2rem;
-    padding: 0 1rem;
-}
-
-a:hover > h1 {
-    color: var(--color-main-middle);
-}
-
 .top {
     display: flex;
     flex-direction: row;
+    padding: 1rem;
+    margin-bottom: 0;
 }
 
-input {
-    height: 100%;
-    background: var(--color-main-dark);
-    border: solid 1px var(--color-main-middle);
-    padding: 0.5rem;
+.grow {
+    flex-grow: 1;
 }
 
 .outer-input {
@@ -117,4 +123,19 @@ input {
 
 .outer-input > label {
     width: 50rem;
+}
+
+.space-croquet {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.instructions {
+    width: 0;
+    flex-grow: 1;
+    padding-left: 0.5rem;
+}
+
+.top-right {
+    padding-bottom: 1rem;
 }

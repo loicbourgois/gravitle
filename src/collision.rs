@@ -4,7 +4,6 @@ use wasm_bindgen::prelude::*;
 // Collision between two particles
 //
 #[wasm_bindgen]
-// #[derive(Copy, Clone)]
 pub struct Collision {
     particle_1_index: usize,
     particle_2_index: usize

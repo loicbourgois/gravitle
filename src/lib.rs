@@ -3,6 +3,7 @@ mod link;
 mod intersection;
 mod collision;
 mod particle;
+mod trajectory;
 
 extern crate web_sys;
 extern crate wasm_bindgen;
@@ -13,6 +14,8 @@ use link::Link;
 use intersection::Intersection;
 use particle::Particle;
 use collision::Collision;
+use trajectory::Trajectory;
+use particle::ParticleCollisionBehavior;
 
 use std::fmt;
 use std::mem;
@@ -45,6 +48,18 @@ macro_rules! console_log {
     // Note that this is using the `log` function imported above during
     // `bare_bones`
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+//
+// Log an error message to the browser console
+//
+macro_rules! console_warning {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => {
+        let message = &format_args!($($t)*).to_string();
+        log(&format_args!("[Warning] {}", message).to_string());
+    }
 }
 
 //
@@ -207,9 +222,11 @@ pub struct Universe {
     collision_behavior: CollisionBehavior,
     links_to_destroy_indexes: Vec<usize>,
     particles_to_destroy_indexes: Vec<usize>,
+    particles_to_disable_indexes: Vec<usize>,
     links_to_create: Vec<(usize, usize)>,
     stabiliser_power: i32,
-    stabilise_positions_enabled: bool
+    stabilise_positions_enabled: bool,
+    trajectories: Vec<Trajectory>
 }
 
 //
@@ -250,9 +267,11 @@ impl Universe {
             collision_behavior: CollisionBehavior::DoNothing,
             links_to_destroy_indexes: Vec::new(),
             particles_to_destroy_indexes: Vec::new(),
+            particles_to_disable_indexes: Vec::new(),
             links_to_create: Vec::new(),
             stabiliser_power: 10,
-            stabilise_positions_enabled: false
+            stabilise_positions_enabled: false,
+            trajectories: Vec::new()
         }
     }
 
@@ -288,19 +307,10 @@ impl Universe {
         self.particles = Vec::new();
         let particles_data = &json_parsed["particles"];
         for i in 0..particles_data.len() {
-            self.add_particle();
-            let n = self.particles.len() - 1;
-            let particle = & mut self.particles[n];
             let particle_json_string = & particles_data[i];
-            particle.load_from_json(particle_json_string.to_string());
+            self.add_particle_json(particle_json_string.to_string());
         }
-        self.links = Vec::new();
-        let links_data = &json_parsed["links"];
-        for i in 0..links_data.len() {
-            let p1_id = links_data[i]["p1_index"].as_usize().unwrap();
-            let p2_id = links_data[i]["p2_index"].as_usize().unwrap();
-            self.add_link(p1_id, p2_id);
-        }
+        self.set_links_json((&json_parsed["links"]).to_string());
     }
 
     //
@@ -314,8 +324,8 @@ impl Universe {
         //
         // Perform actual computations
         //
-        self.step += 1;
         self.particles_to_destroy_indexes.clear();
+        self.particles_to_disable_indexes.clear();
         self.links_to_destroy_indexes.clear();
         self.links_to_create.clear();
         match self.algorithm {
@@ -330,14 +340,17 @@ impl Universe {
                 // Do nothing
             }
         }
+        self.update_trajectories();
         self.update_links_coordinates();
         self.compute_tick_intersections();
         self.compute_tick_collisions();
         self.treat_intersections();
         self.treat_collisions();
         self.create_links();
-        self.destroy_links();
+        self.disable_particles();
         self.destroy_particles();
+        self.destroy_links();
+        self.step += 1;
         //
         // Permormance analysis
         //
@@ -361,6 +374,30 @@ impl Universe {
     pub fn reset(&mut self) {
         self.step = 0;
         self.particles = Vec::new();
+        self.trajectories = Vec::new();
+        self.reset_links();
+    }
+
+    //
+    // Reset links and set them from json
+    //
+    pub fn set_links_json(&mut self, json_string: String ) {
+        self.reset_links();
+        let json_parsed = &json::parse(&json_string).unwrap();
+        for i in 0..json_parsed.len() {
+            let p1_id = json_parsed[i]["p1_index"].as_usize().unwrap();
+            let p2_id = json_parsed[i]["p2_index"].as_usize().unwrap();
+            self.add_link(p1_id, p2_id);
+        }
+    }
+
+    //
+    // Add a new particle and initialise it with the given JSON
+    //
+    pub fn add_particle_json(&mut self, json_string: String) {
+        self.add_particle();
+        let last_index = self.particles.len() - 1;
+        self.particles[last_index].load_from_json(json_string);
     }
 
     //
@@ -453,6 +490,39 @@ impl Universe {
     pub fn get_intersection(&self, id: usize) -> Intersection {
         self.intersections[id]
     }
+
+    //
+    // Returns the number of trajectories
+    //
+    pub fn get_trajectories_count(&self) -> usize {
+        self.trajectories.len()
+    }
+
+    //
+    // Return a specific trajectory
+    //
+    pub fn get_trajectory(&self, id: usize) -> Trajectory {
+        self.trajectories[id].clone()
+    }
+
+    //
+    // Getter for trajectories
+    //
+    pub fn get_trajectories_position_at_period(&self, period: usize) -> Vec<f64> {
+        let mut positions = Vec::new();
+        for trajectory in self.trajectories.iter() {
+            let mut trajectory_positions = trajectory.get_positions_at_period_as_f64s(period);
+            positions.append(&mut trajectory_positions);
+        }
+        return positions;
+    }
+
+    //
+    // Getter for number of particle getting disabled in the tick
+    //
+    pub fn get_particles_to_disable_indexes_length(&self) -> usize {
+        self.particles_to_disable_indexes.len()
+    }
 }
 
 //
@@ -543,29 +613,49 @@ impl Universe {
     //
     fn advance_verlet(&mut self, delta_time: f64) {
         for particle in &mut self.particles {
-            particle.reset_forces();
+            if particle.is_enabled() {
+                particle.reset_forces();
+            } else {
+                // Do nothing
+            }
         }
         let particles = self.particles.clone();
         for particle in &mut self.particles {
-            particle.add_gravity_forces(
-                & particles,
-                self.gravitational_constant,
-                self.width,
-                self.height,
-                self.minimal_distance_for_gravity
-            );
+            if particle.is_enabled() {
+                particle.add_gravity_forces(
+                    & particles,
+                    self.gravitational_constant,
+                    self.width,
+                    self.height,
+                    self.minimal_distance_for_gravity
+                );
+            } else {
+                // Do nothing
+            }
         }
         for particle in &mut self.particles {
-            particle.update_acceleration();
+            if particle.is_enabled() {
+                particle.update_acceleration();
+            } else {
+                // Do nothing
+            }
         }
         for particle in &mut self.particles {
-            particle.update_position_verlet(delta_time);
+            if particle.is_enabled() {
+                particle.update_position_verlet(delta_time);
+            } else {
+                // Do nothing
+            }
         }
         for particle in &mut self.particles {
-            particle.recenter(
-                self.width,
-                self.height
-            );
+            if particle.is_enabled() {
+                particle.recenter(
+                    self.width,
+                    self.height
+                );
+            } else {
+                // Do nothing
+            }
         }
     }
 
@@ -577,6 +667,25 @@ impl Universe {
         let stabiliser = (10.0_f64).powi(self.stabiliser_power);
         for particle in &mut self.particles {
             particle.stabilise_position(stabiliser);
+        }
+    }
+
+    //
+    // Update trajectories
+    //
+    fn update_trajectories(&mut self) {
+        let step = self.step;
+        for index in 0..self.trajectories.len() {
+            if self.particles[index].is_fixed() || !self.particles[index].is_enabled() {
+                // Do nothing
+            } else {
+                let coordinates = self.particles[index].get_coordinates();
+                self.trajectories[index].add_position(
+                    coordinates.0,
+                    coordinates.1,
+                    step
+                );
+            }
         }
     }
 
@@ -603,8 +712,8 @@ impl Universe {
         self.intersections.clear();
         for (link_index, link) in self.links.iter().enumerate() {
             for (particle_index, particle) in self.particles.iter().enumerate() {
-                if self.links[link_index].has_particle(particle_index) {
-                    // NTD
+                if self.links[link_index].has_particle(particle_index) || !particle.is_enabled() {
+                    // Do nothing
                 } else {
                     let p1_coordinates = particle.get_coordinates();
                     let p1_old_coordinates = particle.get_old_coordinates();
@@ -684,32 +793,53 @@ impl Universe {
     // Treat detected collisions using the specified collision behavior
     //
     fn treat_collisions(& mut self) {
-        match & self.collision_behavior {
-            CollisionBehavior::DoNothing => {
-                // NTD
-            },
-            CollisionBehavior::DestroyParticles => {
-                for collision in self.collisions.iter() {
-                    let p1_index = (*collision).get_particle_1_index();
-                    self.particles_to_destroy_indexes.push(p1_index);
-                    let p2_index = (*collision).get_particle_2_index();
+        for collision in self.collisions.iter() {
+            let p1_index = (*collision).get_particle_1_index();
+            let p2_index = (*collision).get_particle_2_index();
+            let p1_collision_behavior = self.particles[p1_index].get_collision_behavior();
+            let p2_collision_behavior = self.particles[p2_index].get_collision_behavior();
+            match (&self.collision_behavior, p1_collision_behavior, p2_collision_behavior) {
+                (CollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing) => {
+                    // NTD
+                },
+                (CollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DisableSelf) => {
+                    self.particles_to_disable_indexes.push(p2_index);
+                },
+                (CollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DestroySelf) => {
                     self.particles_to_destroy_indexes.push(p2_index);
-                    let mut links_to_destroy_indexes = self.particle_index_to_links_indexes[p1_index].clone();
-                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes);
-                    let mut links_to_destroy_indexes_2 = self.particle_index_to_links_indexes[p2_index].clone();
-                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes_2);
-                }
-            },
-            CollisionBehavior::CreateLink => {
-                for collision in self.collisions.iter() {
-                    let p1_index = (*collision).get_particle_1_index();
-                    let p2_index = (*collision).get_particle_2_index();
+                },
+                (CollisionBehavior::DoNothing, ParticleCollisionBehavior::DisableSelf, ParticleCollisionBehavior::DoNothing) => {
+                    self.particles_to_disable_indexes.push(p1_index);
+                },
+                (CollisionBehavior::DoNothing, ParticleCollisionBehavior::DisableSelf, ParticleCollisionBehavior::DisableSelf) => {
+                    self.particles_to_disable_indexes.push(p1_index);
+                    self.particles_to_disable_indexes.push(p2_index);
+                },
+                (CollisionBehavior::DestroyParticles, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing) => {
+                    self.particles_to_destroy_indexes.push(p1_index);
+                    self.particles_to_destroy_indexes.push(p2_index);
+                },
+                (CollisionBehavior::CreateLink, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing) => {
                     self.links_to_create.push((p1_index, p2_index));
+                },
+                (collision_behavior, p1_collision_behavior, p2_collision_behavior) => {
+                    console_error!("Treat collision for ({}, {}, {}) not implemented",
+                        collision_behavior.as_string(),
+                        p1_collision_behavior.as_string(),
+                        p2_collision_behavior.as_string()
+                    );
                 }
-            },
-            CollisionBehavior::MergeParticles => {
-                panic!("Treat collision for CollisionBehavior::MergeParticles not implemented")
             }
+        }
+    }
+
+    //
+    // Reset links
+    //
+    fn reset_links(&mut self) {
+        self.links.clear();
+        for indexes in &mut self.particle_index_to_links_indexes {
+            indexes.clear();
         }
     }
 
@@ -740,6 +870,19 @@ impl Universe {
     }
 
     //
+    // Disable particles programmed to be disabled
+    //
+    fn disable_particles(& mut self) {
+        // Remove duplicates
+        self.particles_to_disable_indexes.sort();
+        self.particles_to_disable_indexes.dedup();
+        // Disable particles
+        for particle_to_disable_index in self.particles_to_disable_indexes.iter().rev() {
+            self.particles[*particle_to_disable_index].disable();
+        }
+    }
+
+    //
     // Destroy particles
     //
     fn destroy_particles(& mut self) {
@@ -748,14 +891,19 @@ impl Universe {
         self.particles_to_destroy_indexes.dedup();
         // Destroy particles
         for particle_to_destroy_index in self.particles_to_destroy_indexes.iter().rev() {
+            // Add links to destroy
+            let mut links_to_destroy_indexes = self.particle_index_to_links_indexes[*particle_to_destroy_index].clone();
+            self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes);
+            // Destroy particles
             self.particles.remove(*particle_to_destroy_index);
+            self.trajectories.remove(*particle_to_destroy_index);
             // Destroy references
             for (i, link) in self.links.clone().iter().enumerate() {
                 let p1_index = link.get_p1_index();
                 if p1_index > *particle_to_destroy_index {
                     self.links[i].decrease_p1_index();
                 } else if p1_index == *particle_to_destroy_index {
-                    panic!("Link #{} with reference to destroyed particle #{}",
+                    console_warning!("Link #{} with reference to destroyed particle #{}",
                         i,
                         *particle_to_destroy_index
                     );
@@ -766,7 +914,7 @@ impl Universe {
                 if p2_index > *particle_to_destroy_index {
                     self.links[i].decrease_p2_index();
                 } else if p2_index == *particle_to_destroy_index {
-                    panic!("Link #{} with reference to destroyed particle #{}",
+                    console_warning!("Link #{} with reference to destroyed particle #{}",
                         i,
                         *particle_to_destroy_index
                     );
@@ -847,8 +995,11 @@ impl Universe {
         self.particles.push(Particle::new(
             self.particle_counter
         ));
-        self.particle_counter += 1;
+        self.trajectories.push(Trajectory::new(
+            self.particle_counter
+        ));
         self.particle_index_to_links_indexes.push(Vec::new());
+        self.particle_counter += 1;
     }
 
     //
@@ -859,6 +1010,10 @@ impl Universe {
             console_error!("Cannot add link : particle #{} does not exist", p1_index);
         } else if p2_index >= self.particles.len() {
             console_error!("Cannot add link : particle #{} does not exist", p2_index);
+        } else if p1_index >= self.particle_index_to_links_indexes.len() {
+            console_error!("Cannot add link : particle_index_to_links_indexes #{} does not exist", p1_index);
+        } else if p2_index >= self.particle_index_to_links_indexes.len() {
+            console_error!("Cannot add link : particle_index_to_links_indexes #{} does not exist", p2_index);
         } else {
             self.links.push(Link::new(
                 p1_index,

@@ -1,5 +1,46 @@
 //
-// Helper struct 
+// Collision happens when two particles collide
+//
+#[derive(Copy, Clone)]
+pub enum ParticleCollisionBehavior {
+    DoNothing,
+    DisableSelf,
+    DestroySelf
+}
+
+//
+// Implement convertion function for Algorithm
+//
+impl ParticleCollisionBehavior {
+
+    //
+    // Convert from String to ParticleCollisionBehavior
+    //
+    fn from_string(value: String) -> ParticleCollisionBehavior {
+        match value.as_ref() {
+            "do-nothing" => ParticleCollisionBehavior::DoNothing,
+            "disable-self" => ParticleCollisionBehavior::DisableSelf,
+            "destroy-self" => ParticleCollisionBehavior::DestroySelf,
+            _ => {
+                panic!("Unknown CollisionBehavior : {}", value);
+            }
+        }
+    }
+
+    //
+    // Convert ParticleCollisionBehavior to String
+    //
+    pub fn as_string(&self) -> String {
+        match self {
+            ParticleCollisionBehavior::DoNothing => "do-nothing".to_string(),
+            ParticleCollisionBehavior::DisableSelf => "disable-self".to_string(),
+            ParticleCollisionBehavior::DestroySelf => "destroy-self".to_string()
+        }
+    }
+}
+
+//
+// Helper struct
 //
 struct ValueWithDistance {
     value: f64,
@@ -32,7 +73,9 @@ pub struct Particle {
     speed_x: f64,
     speed_y: f64,
     id: u32,
-    is_fixed: bool
+    is_fixed: bool,
+    collision_behavior: ParticleCollisionBehavior,
+    is_enabled: bool
 }
 
 //
@@ -58,8 +101,19 @@ impl Particle {
             id: id,
             speed_x: 0.0,
             speed_y: 0.0,
-            is_fixed: false
+            is_fixed: false,
+            collision_behavior: ParticleCollisionBehavior::DoNothing,
+            is_enabled: true
         }
+    }
+
+    //
+    // Checks whether two particles collide
+    //
+    pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
+        let distance_squared_centers = Particle::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
+        let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
+        return distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled();
     }
 
     //
@@ -70,10 +124,16 @@ impl Particle {
         self.x = json_parsed["x"].as_f64().unwrap_or(self.x);
         self.y = json_parsed["y"].as_f64().unwrap_or(self.y);
         self.diameter = json_parsed["diameter"].as_f64().unwrap_or(self.diameter);
-        self.old_x = self.x;
-        self.old_y = self.y;
+        self.old_x = json_parsed["old_x"].as_f64().unwrap_or(self.x);
+        self.old_y = json_parsed["old_y"].as_f64().unwrap_or(self.y);
         self.mass = json_parsed["mass"].as_f64().unwrap_or(self.mass);
         self.is_fixed = json_parsed["fixed"].as_bool().unwrap_or(self.is_fixed);
+        self.is_enabled = json_parsed["enabled"].as_bool().unwrap_or(self.is_enabled);
+        if json_parsed["collision_behavior"].to_string() != "null".to_string() {
+            self.collision_behavior = ParticleCollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
+        } else {
+            // Do nothing
+        }
      }
 
     //
@@ -98,9 +158,8 @@ impl Particle {
         if self.is_fixed {
             // NTD
         } else {
-    
             for particle in particles {
-                if particle.id != self.id {
+                if particle.id != self.id && particle.is_enabled() {
                     let clones_coordinates = Particle::get_boxing_clones_coordinates(
                         self.x,
                         self.y,
@@ -185,18 +244,24 @@ impl Particle {
         let x_min = -x_max;
         let y_max = world_height / 2.0;
         let y_min = -y_max;
-        let mut x = self.x + x_max - x_min - x_min;
-        while x > x_max - x_min {
-            x -= x_max - x_min;
+        if self.x < x_min {
+            self.x += world_width;
+            self.old_x += world_width;
+        } else if self.x > x_max {
+            self.x -= world_width;
+            self.old_x -= world_width;
+        } else {
+            // Do nothing
         }
-        x += x_min;
-        let mut y = self.y + y_max - y_min - y_min;
-        while y > y_max - y_min {
-            y -= y_max - y_min;
+        if self.y < y_min {
+            self.y += world_height;
+            self.old_y += world_height;
+        } else if self.y > y_max {
+            self.y -= world_height;
+            self.old_y -= world_height;
+        } else {
+            // Do nothing
         }
-        y += y_min;
-        self.x = x;
-        self.y = y;
     }
 
     //
@@ -223,12 +288,31 @@ impl Particle {
     }
 
     //
-    // Checks whether two particles collide
+    // Disable the Particle
     //
-    pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
-        let distance_squared_centers = Particle::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
-        let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
-        return distance_squared_centers < radiuses_squared && p1.id != p2.id;
+    pub fn disable(&mut self) {
+        self.is_enabled = false;
+    }
+
+    //
+    // Getter for is_fixed field
+    //
+    pub fn is_fixed(& self) -> bool {
+        self.is_fixed
+    }
+
+    //
+    // Getter for is_enabled
+    //
+    pub fn is_enabled(& self) -> bool {
+        self.is_enabled
+    }
+
+    //
+    // Getter for collision_behavior
+    //
+    pub fn get_collision_behavior(&self) -> ParticleCollisionBehavior {
+        self.collision_behavior
     }
 }
 

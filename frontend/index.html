@@ -14,8 +14,8 @@
     </head>
     <body>
         <div class="top">
-            <h1>Gravitle</h1>
-            <h1>-</h1>
+            <a href=""><h1>Gravitle</h1></a>
+            <span class="grow"></span>
             <a href="https://github.com/loicbourgois/gravitle"><h1>GitHub</h1></a>
         </div>
         <div class="content">
@@ -26,18 +26,20 @@
                 <pre id="infos">
                 </pre>
                 <div class="buttons">
-                    <button id="button-reload">Reload</button>
+                    <button id="button-start">Run</button>
+                    <button id="button-stop">Pause</button>
                     <button id="button-step">Step</button>
-                    <button id="button-start">Start</button>
-                    <button id="button-stop">Stop</button>
                 </div>
                 <div class="buttons">
-                <p>Samples</p>
                     <button id="button-heart">♥</button>
                     <button id="button-diamond">◆</button>
                     <button id="button-club">♣</button>
                     <button id="button-spade">♠</button>
                     <button id="button-example-5">V</button>
+                </div>
+                <div class="buttons space-croquet">
+                    <button id="button-space-croquet">Space Croquet</button>
+                    <span class="instructions">Click and drag on canvas</br>Launching particles</br>Destroy all the links</span>
                 </div>
                 <div>
                     <div class="outer-input">
@@ -50,7 +52,7 @@
                     </div>
                     <div class="outer-input">
                         <p>G</p>
-                        <input id="input-g" value="6.674">
+                        <input id="input-g" value="66.74">
                     </div>
                     <div class="outer-input">
                         <p>Particles</p>
@@ -60,6 +62,11 @@
                 <div class="buttons">
                     <button id="button-randomize">Randomize</button>
                     <button id="button-symetry">Symetry</button>
+                </div>
+            </div>
+            <div class="right">
+                <div class="top-right">
+                    <button id="button-reload">Load JSON</button>
                 </div>
                 <textarea id="json"></textarea>
             </div>
