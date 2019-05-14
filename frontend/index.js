@@ -3,6 +3,7 @@ import {
 } from 'gravitle';
 import { memory } from "gravitle/gravitle_bg";
 
+const fps_infos = document.getElementById('fps-infos');
 const infos = document.getElementById('infos');
 const reloadButton = document.getElementById('button-reload');
 const stepButton = document.getElementById('button-step');
@@ -54,6 +55,8 @@ let time = null;
 let delta = null;
 let last = null;
 let mouse_positions = null;
+const frame_gaps = [];
+let last_now = null;
 
 randomizeButton.addEventListener('click', () => {
     randomize();
@@ -147,7 +150,24 @@ canvas.addEventListener('mouseup', (event) => {
 const renderLoop = () => {
     infos.textContent = universe.get_infos();
     draw();
+    updateFps();
     requestAnimationFrame(renderLoop);
+}
+
+const updateFps = () => {
+    const gap = Date.now() - last_now;
+    last_now = Date.now();
+    frame_gaps.push(gap);
+    while(frame_gaps.length > 100) {
+        frame_gaps.shift();
+    }
+    let gaps_sum = 0.0;
+    const count = frame_gaps.length;
+    for (let i = 0 ; i < count ; i+=1) {
+        gaps_sum += frame_gaps[i];
+    }
+    const fps = 1.0 / (gaps_sum / count / 1000.0);
+    fps_infos.textContent = "FPS : " + fps.toFixed(0);
 };
 
 const draw = () => {
@@ -906,5 +926,6 @@ const launchParticle = (mouse_position) => {
 }
 
 heart();
+last_now = Date.now();
 requestAnimationFrame(renderLoop);
 

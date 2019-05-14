@@ -36,7 +36,7 @@ wasm-pack publish
 
 ## Backlog
 
-[ ] Display FPS
+[x] Display FPS
 [ ] Display or hide trajectories
 [ ] Display or hide gravitational field
 [ ] Use webgl for rendering
