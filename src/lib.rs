@@ -373,6 +373,27 @@ impl Universe {
     }
 
     //
+    // Setter for gravitational_constant
+    //
+    pub fn set_gravitational_constant(&mut self, gravitational_constant: f64) {
+        self.gravitational_constant = gravitational_constant;
+    }
+
+    //
+    // Setter for gravitational_constant
+    //
+    pub fn set_width(&mut self, width: f64) {
+        self.width = width;
+    }
+
+    //
+    // Setter for gravitational_constant
+    //
+    pub fn set_height(&mut self, height: f64) {
+        self.height = height;
+    }
+
+    //
     // Returns a String representation of the Universe
     //
     pub fn get_infos(&self) -> String {

@@ -103,6 +103,27 @@ spaceCroquetButton.addEventListener('click', () => {
     spaceCroquet();
 });
 
+inputG.addEventListener('change', () => {
+    const conf = JSON.parse(jsonTextarea.value);
+    conf.gravitational_constant = parseFloat(inputG.value);
+    universe.set_gravitational_constant(conf.gravitational_constant);
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+});
+
+inputWidth.addEventListener('change', () => {
+    const conf = JSON.parse(jsonTextarea.value);
+    conf.width = parseFloat(inputWidth.value);
+    universe.set_width(conf.width);
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+});
+
+inputHeight.addEventListener('change', () => {
+    const conf = JSON.parse(jsonTextarea.value);
+    conf.height = parseFloat(inputHeight.value);
+    universe.set_height(conf.height);
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+});
+
 canvas.addEventListener('mousedown', (event) => {
     mouse_positions = {};
     mouse_positions.down = getMousePos(canvas, event);
@@ -673,7 +694,7 @@ const spaceCroquet = () => {
     const checkpointLength = conf.width / 8;
     const innerRadius = checkpointLength / 2;
     const zoneRadius = innerRadius + maxDiameter / 2;
-    for (let i = 0 ; i < 3 ; i += 1) {
+    for (let i = 0 ; i < parseFloat(inputCount.value) / 2.0 ; i += 1) {
         let x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
         let y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
         let i = 1000;
@@ -805,6 +826,12 @@ function getRandomIntInclusive(min, max) {
 }
 
 const reload = () => {
+    // Reload parameters values fro json
+    const parsedJson = JSON.parse(jsonTextarea.value);
+    inputWidth.value = parsedJson.width;
+    inputHeight.value = parsedJson.height;
+    inputG.value = parsedJson.gravitational_constant;
+    // Reload universe
     stop();
     universe.reset();
     launchers.length = 0;
