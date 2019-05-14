@@ -35,7 +35,7 @@ button:hover {
     cursor: pointer;
 }
 
-button:disabled {
+button:disabled, button:active {
     background: var(--color-main-dark);
     color: var(--color-main-middle);
     border: solid 1px var(--color-main-middle);
