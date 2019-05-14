@@ -37,7 +37,7 @@ wasm-pack publish
 ## Backlog
 
 [x] Display FPS
-[ ] Display or hide trajectories
+[x] Display or hide trajectories
 [ ] Display or hide gravitational field
 [ ] Use webgl for rendering
 [ ] Add popup for finishing a space croquet

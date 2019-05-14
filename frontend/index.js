@@ -23,12 +23,17 @@ const inputWidth = document.getElementById('input-width');
 const inputHeight = document.getElementById('input-height');
 const inputG = document.getElementById('input-g');
 
+const inputTrajectoriesPeriod = document.getElementById('input-trajectories-period');
+const buttonTrajectoriesOn = document.getElementById('button-trajectories-on');
+const buttonTrajectoriesOff = document.getElementById('button-trajectories-off');
+
 const canvas = document.getElementById('canvas');
 canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
 
 let MODE = null;
+let SHOW_TRAJECTORIES = null;
 
 const BASE_CONF = Object.freeze({
     width: 200,
@@ -106,6 +111,14 @@ spaceCroquetButton.addEventListener('click', () => {
     spaceCroquet();
 });
 
+buttonTrajectoriesOn.addEventListener('click', () => {
+    trajectoriesOn();
+});
+
+buttonTrajectoriesOff.addEventListener('click', () => {
+    trajectoriesOff();
+});
+
 inputG.addEventListener('change', () => {
     const conf = JSON.parse(jsonTextarea.value);
     conf.gravitational_constant = parseFloat(inputG.value);
@@ -177,11 +190,28 @@ const draw = () => {
     } else {
         // Do nothing
     }
-    drawTrajectories(4);
+    const period = parseInt(inputTrajectoriesPeriod.value);
+    if (SHOW_TRAJECTORIES === true && period > 0) {
+        drawTrajectories(period);
+    } else {
+        // DO nothing
+    }
     drawSegments();
     drawParticles();
     drawMouseInteraction();
 };
+
+const trajectoriesOn = () => {
+    buttonTrajectoriesOn.disabled = true;
+    buttonTrajectoriesOff.disabled = false;
+    SHOW_TRAJECTORIES = true;
+}
+
+const trajectoriesOff = () => {
+    buttonTrajectoriesOn.disabled = false;
+    buttonTrajectoriesOff.disabled = true;
+    SHOW_TRAJECTORIES = false;
+}
 
 const drawLaunchers = () => {
     context.strokeStyle = "#888";
@@ -925,6 +955,7 @@ const launchParticle = (mouse_position) => {
     }
 }
 
+trajectoriesOff();
 heart();
 last_now = Date.now();
 requestAnimationFrame(renderLoop);
