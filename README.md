@@ -34,3 +34,12 @@ wasm-pack test --headless --firefox
 wasm-pack publish
 ```
 
+## Backlog
+
+[ ] Display FPS
+[ ] Display or hide trajectories
+[ ] Display or hide gravitational field
+[ ] Use webgl for rendering
+[ ] Add popup for finishing a space croquet
+[ ] Implement spring like behavior for links
+
