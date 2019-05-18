@@ -259,8 +259,8 @@ impl Particle {
     // Add drag forces
     //
     pub fn add_drag_forces(&mut self, drag_coefficient: f64) {
-        self.forces_x -= drag_coefficient * self.speed_x * self.speed_x * self.speed_x.signum();
-        self.forces_y -= drag_coefficient * self.speed_y * self.speed_y * self.speed_y.signum();
+        self.forces_x -= drag_coefficient * self.speed_x * self.speed_x.abs();
+        self.forces_y -= drag_coefficient * self.speed_y * self.speed_y.abs();
     }
 
     //
