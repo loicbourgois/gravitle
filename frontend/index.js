@@ -3,6 +3,8 @@ import {
 } from 'gravitle';
 import { memory } from "gravitle/gravitle_bg";
 
+import * as Examples from './examples.js';
+
 const fps_infos = document.getElementById('fps-infos');
 const infos = document.getElementById('infos');
 const reloadButton = document.getElementById('button-reload');
@@ -17,6 +19,7 @@ const spaceCroquetButton = document.getElementById('button-space-croquet');
 const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
 const buttonExample5 = document.getElementById('button-example-5');
+const buttonExample6 = document.getElementById('button-example-6');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -44,9 +47,14 @@ const BASE_CONF = Object.freeze({
     algorithm: 'verlet',
     intersection_behavior: 'do-nothing',
     collision_behavior: 'do-nothing',
+    default_link_length: 10,
+    default_link_strengh: 1000,
+    drag_coefficient: 0.0,
+    wrap_around: true,
     stabilise_positions_enabled: false,
     stabiliser_power: 10,
-    particles: []
+    particles: [],
+    links: []
 });
 
 let space_croquet_links = null;
@@ -105,6 +113,10 @@ spadeButton.addEventListener('click', () => {
 
 buttonExample5.addEventListener('click', () => {
     loadExample5();
+});
+
+buttonExample6.addEventListener('click', () => {
+    loadExample6();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -249,7 +261,7 @@ const drawTrajectories = (period) => {
 const drawSegments = () => {
     const linksPointer = universe.get_links();
     const linksCount = universe.get_links_count();
-    const LINK_SIZE = 5;
+    const LINK_SIZE = 7;
     const links = new Float64Array(memory.buffer, linksPointer, linksCount * LINK_SIZE);
     const universeWidth = universe.get_width();
     const universeHeight = universe.get_height();
@@ -367,311 +379,42 @@ const tickMultiple = () => {
 
 const heart = () => {
     MODE = null;
-    const conf = jsonCopy(BASE_CONF);
-    conf.particles = [
-        {
-            "x": 0,
-            "y": 20
-        }, {
-            "x": 10,
-            "y": 30
-        }, {
-            "x": 20,
-            "y": 30
-        }, {
-            "x": 30,
-            "y": 20
-        }, {
-            "x": 20,
-            "y": 5
-        }, {
-            "x": 10,
-            "y": -10
-        }, {
-            "x": 0,
-            "y": -20
-        }, {
-            "x": -10,
-            "y": 30
-        }, {
-            "x": -20,
-            "y": 30
-        }, {
-            "x": -30,
-            "y": 20
-        }, {
-            "x": -20,
-            "y": 5
-        }, {
-            "x": -10,
-            "y": -10
-        }, {
-            "x": 0,
-            "y": -35
-        }
-    ];
-    conf.stabilise_positions_enabled = true;
+    const conf = Examples.get_example_1_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 };
 
 const diamond = () => {
     MODE = null;
-    const conf = jsonCopy(BASE_CONF);
-    conf.particles = [
-        {
-            "x": -30,
-            "y": -40,
-            "fixed": false
-        }, {
-            "x": -30,
-            "y": -41,
-            "fixed": false
-        }, {
-            "x": 0,
-            "y": 41,
-            "fixed": false
-        }, {
-            "x": 20,
-            "y": 20,
-            "fixed": true
-        }, {
-            "x": 20,
-            "y": -20,
-            "fixed": true
-        }, {
-            "x": -20,
-            "y": 20,
-            "fixed": true
-        }, {
-            "x": -20,
-            "y": -20,
-            "fixed": true
-        }, {
-            "x": 0,
-            "y": 40,
-            "fixed": true
-        }, {
-            "x": 0,
-            "y": -40,
-            "fixed": true
-        }, {
-            "x": 40,
-            "y": 0,
-            "fixed": true
-        }, {
-            "x": -40,
-            "y": 0,
-            "fixed": true
-        }
-    ];
+    const conf = Examples.get_example_2_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 };
 
 const club = () => {
     MODE = null;
-    const conf = jsonCopy(BASE_CONF);
-    conf.particles = [
-        {
-            "x": 0.01,
-            "y": -25,
-            "fixed": false
-        },
-        {
-            "x": 10,
-            "y": -35,
-            "fixed": false
-        },
-        {
-            "x": -10,
-            "y": -35,
-            "fixed": false
-        },
-        {
-            "x": 0,
-            "y": 40,
-            "fixed": true,
-            "diameter": 5,
-            "mass": 5
-        },
-        {
-            "x": 40,
-            "y": -10,
-            "fixed": true,
-            "diameter": 5,
-            "mass": 5
-        },
-        {
-            "x": -40,
-            "y": -10,
-            "fixed": true,
-            "diameter": 5,
-            "mass": 5
-        }
-    ];
+    const conf = Examples.get_example_3_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
 
 const spade = () => {
     MODE = null;
-    const conf = jsonCopy(BASE_CONF);
-    conf.intersection_behavior = 'destroy-link';
-    conf.particles = [
-        {
-            "x": 0,
-            "y": 35
-        },
-        {
-            "x": 10,
-            "y": 25,
-            "fixed": true
-        },
-        {
-            "x": -10,
-            "y": 25,
-            "fixed": true
-        },{
-            "x": 15,
-            "y": 15,
-            "fixed": true
-        },
-        {
-            "x": -15,
-            "y": 15,
-            "fixed": true
-        },{
-            "x": 20,
-            "y": 5,
-            "fixed": true
-        },
-        {
-            "x": -20,
-            "y": 5,
-            "fixed": true
-        },{
-            "x": 15,
-            "y": 0,
-            "fixed": true
-        },
-        {
-            "x": -15,
-            "y": 0,
-            "fixed": true
-        },{
-            "x": 5,
-            "y": -5,
-            "fixed": true
-        },
-        {
-            "x": -5,
-            "y": -5,
-            "fixed": true
-        },{
-            "x": 10,
-            "y": -10,
-            "fixed": true
-        },
-        {
-            "x": -10,
-            "y": -10,
-            "fixed": true
-        }
-    ];
-    conf.links = [
-        {
-            "p1_index": 1,
-            "p2_index": 2
-        }, {
-            "p1_index": 3,
-            "p2_index": 4
-        }, {
-            "p1_index": 5,
-            "p2_index": 6
-        }, {
-            "p1_index": 7,
-            "p2_index": 8
-        }, {
-            "p1_index": 9,
-            "p2_index": 10
-        }, {
-            "p1_index": 11,
-            "p2_index": 12
-        }
-    ];
+    const conf = Examples.get_example_4_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
 
 const loadExample5 = () => {
     MODE = null;
-    const conf = jsonCopy(BASE_CONF);
-    conf.intersection_behavior = 'destroy-particle';
-    conf.particles = [
-        {
-            "x": 0,
-            "y": 0
-        },
-        {
-            "x": -10,
-            "y": 30,
-            "fixed": true
-        },
-        {
-            "x": 10,
-            "y": 30,
-            "fixed": true
-        },
-        {
-            "x": -10,
-            "y": -10,
-            "fixed": true
-        },
-        {
-            "x": 10,
-            "y": -10,
-            "fixed": true
-        },
-        {
-            "x": -40,
-            "y": 35,
-            "fixed": false
-        },
-        {
-            "x": 40,
-            "y": 35,
-            "fixed": false
-        },
-        {
-            "x": -50,
-            "y": 30,
-            "fixed": true
-        },
-        {
-            "x": 50,
-            "y": 30,
-            "fixed": true
-        }
-    ];
-    conf.links = [
-        {
-            "p1_index": 0,
-            "p2_index": 1
-        },
-        {
-            "p1_index": 0,
-            "p2_index": 2
-        },
-        {
-            "p1_index": 3,
-            "p2_index": 4
-        },
-        {
-            "p1_index": 5,
-            "p2_index": 6
-        }
-    ];
+    const conf = Examples.get_example_5_conf(jsonCopy(BASE_CONF));
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const loadExample6 = () => {
+    MODE = null;
+    const conf = Examples.get_example_6_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
@@ -704,6 +447,7 @@ const symetry = () => {
     const conf = getParameterizedConf();
     conf.stabilise_positions_enabled = true;
     conf.stabiliser_power = 10;
+    conf.default_link_strengh = 0;
     conf.intersection_behavior = 'destroy-link';
     conf.collision_behavior = 'create-link';
     const particles = [];

@@ -7,6 +7,8 @@ pub struct Link {
     y1: f64,
     x2: f64,
     y2: f64,
+    length: f64,
+    strengh: f64,
     p1_index: usize,
     p2_index: usize
 }
@@ -19,16 +21,27 @@ impl Link {
     //
     // Constructor
     //
-    pub fn new(p1_index: usize, p2_index: usize) -> Link {
+    pub fn new(p1_index: usize, p2_index: usize, length: f64, strengh: f64) -> Link {
         Link {
             p1_index,
             p2_index,
             x1: 0.0,
             y1: 0.0,
             x2: 0.0,
-            y2: 0.0
+            y2: 0.0,
+            length,
+            strengh
         }
     }
+
+    //
+    // Load
+    //
+    pub fn load_from_json(&mut self, json_string: String) {
+        let json_parsed = &json::parse(&json_string).unwrap();
+        self.length = json_parsed["length"].as_f64().unwrap_or(self.length);
+        self.strengh = json_parsed["strengh"].as_f64().unwrap_or(self.strengh);
+     }
 
     //
     // Decrease the index of particle p1
@@ -85,5 +98,19 @@ impl Link {
     //
     pub fn get_p2_index(&self) -> usize {
         self.p2_index
+    }
+
+    //
+    // Getter for length
+    //
+    pub fn get_length(&self) -> f64 {
+        self.length
+    }
+
+    //
+    // Getter for strengh
+    //
+    pub fn get_strengh(&self) -> f64 {
+        self.strengh
     }
 }

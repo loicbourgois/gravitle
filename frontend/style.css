@@ -24,14 +24,14 @@ body {
 
 button {
     border-radius: 1px;
-    background: var(--color-main-light);
+    background: var(--color-main-middle);
     padding: 0.5rem 1rem;
     color: var(--color-main-dark);
     border: solid 1px var(--color-main-middle);
 }
 
 button:hover {
-    background: var(--color-main-middle);
+    background: var(--color-main-light);
     cursor: pointer;
 }
 

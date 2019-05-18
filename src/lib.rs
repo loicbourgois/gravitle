@@ -205,7 +205,11 @@ pub struct Universe {
     links_to_create: Vec<(usize, usize)>,
     stabiliser_power: i32,
     stabilise_positions_enabled: bool,
-    trajectories: Vec<Trajectory>
+    trajectories: Vec<Trajectory>,
+    default_link_length: f64,
+    default_link_strengh: f64,
+    drag_coefficient: f64,
+    wrap_around: bool
 }
 
 //
@@ -243,7 +247,11 @@ impl Universe {
             links_to_create: Vec::new(),
             stabiliser_power: 10,
             stabilise_positions_enabled: false,
-            trajectories: Vec::new()
+            trajectories: Vec::new(),
+            default_link_length: 10.0,
+            default_link_strengh: 100.0,
+            drag_coefficient: 0.5,
+            wrap_around: true
         }
     }
 
@@ -258,6 +266,10 @@ impl Universe {
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
         self.stabiliser_power = json_parsed["stabiliser_power"].as_i32().unwrap_or(self.stabiliser_power);
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
+        self.default_link_length = json_parsed["default_link_length"].as_f64().unwrap_or(self.default_link_length);
+        self.default_link_strengh = json_parsed["default_link_strengh"].as_f64().unwrap_or(self.default_link_strengh);
+        self.drag_coefficient = json_parsed["drag_coefficient"].as_f64().unwrap_or(self.drag_coefficient);
+        self.wrap_around = json_parsed["wrap_around"].as_bool().unwrap_or(self.wrap_around);
         self.stabilise_positions_enabled = json_parsed["stabilise_positions_enabled"]
             .as_bool()
             .unwrap_or(self.stabilise_positions_enabled);
@@ -300,9 +312,29 @@ impl Universe {
         self.particles_to_disable_indexes.clear();
         self.links_to_destroy_indexes.clear();
         self.links_to_create.clear();
+        self.reset_forces();
+        if self.wrap_around {
+            self.add_gravity_forces_wrap_around();
+        } else {
+            self.add_gravity_forces();
+        }
+        self.add_link_forces();
+        self.add_drag_forces();
+        self.update_acceleration();
         match self.algorithm {
-            Algorithm::Euler => self.advance_euler(self.get_delta_time()),
-            Algorithm::Verlet => self.advance_verlet(self.get_delta_time())
+            Algorithm::Euler => {
+                self.update_speed_euler(self.get_delta_time());
+                self.update_position_euler(self.get_delta_time());
+            },
+            Algorithm::Verlet => {
+                self.update_position_verlet(self.get_delta_time());
+                self.update_speed_verlet(self.get_delta_time());
+            }
+        }
+        if self.wrap_around {
+            self.recenter();
+        } else {
+            // Do nothing
         }
         match self.stabilise_positions_enabled {
             true => {
@@ -360,6 +392,9 @@ impl Universe {
             let p1_id = json_parsed[i]["p1_index"].as_usize().unwrap();
             let p2_id = json_parsed[i]["p2_index"].as_usize().unwrap();
             self.add_link(p1_id, p2_id);
+            let last_index = self.links.len() - 1;
+            let json_string = json_parsed[i].to_string();
+            self.links[last_index].load_from_json(json_string);
         }
     }
 
@@ -562,49 +597,67 @@ impl fmt::Display for Universe {
 impl Universe {
 
     //
-    // Advance using Euler method
+    // Update speed using Euler method
     //
-    // See Wikipedia for explanation
-    // https://en.wikipedia.org/wiki/Euler_method
-    //
-    fn advance_euler(&mut self, delta_time: f64) {
+    fn update_speed_euler(&mut self, delta_time: f64) {
         for particle in &mut self.particles {
-            particle.reset_forces();
-        }
-        let particles = self.particles.clone();
-        for particle in &mut self.particles {
-            particle.add_gravity_forces(
-                & particles,
-                self.gravitational_constant,
-                self.width,
-                self.height,
-                self.minimal_distance_for_gravity
-            );
-        }
-        for particle in &mut self.particles {
-            particle.update_acceleration();
-        }
-        for particle in &mut self.particles {
-            particle.update_speed(delta_time);
-        }
-        for particle in &mut self.particles {
-            particle.update_position_euler(delta_time);
-        }
-        for particle in &mut self.particles {
-            particle.recenter(
-                self.width,
-                self.height
-            );
+            if particle.is_enabled() {
+                particle.update_speed_euler(delta_time);
+            } else {
+                // Do nothing
+            }
         }
     }
 
     //
-    // Advance using Verlet Integration
+    // Update speed for Verlet mode
+    //
+    fn update_speed_verlet(&mut self, delta_time: f64) {
+        for particle in &mut self.particles {
+            if particle.is_enabled() {
+                particle.update_speed_verlet(delta_time);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Update position using Euler method
+    //
+    // See Wikipedia for explanation
+    // https://en.wikipedia.org/wiki/Euler_method
+    //
+    fn update_position_euler(&mut self, delta_time: f64) {
+        for particle in &mut self.particles {
+            if particle.is_enabled() {
+                particle.update_position_euler(delta_time);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Update position using Verlet Integration
     //
     // See wikipedia for explanation
     // https://en.wikipedia.org/wiki/Verlet_integration#Verlet_integration_(without_velocities)
     //
-    fn advance_verlet(&mut self, delta_time: f64) {
+    fn update_position_verlet(&mut self, delta_time: f64) {
+        for particle in &mut self.particles {
+            if particle.is_enabled() {
+                particle.update_position_verlet(delta_time);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Reset forces for the tick
+    //
+    fn reset_forces(&mut self) {
         for particle in &mut self.particles {
             if particle.is_enabled() {
                 particle.reset_forces();
@@ -612,10 +665,34 @@ impl Universe {
                 // Do nothing
             }
         }
+    }
+
+    //
+    // Add gravity forces
+    //
+    fn add_gravity_forces (&mut self) {
         let particles = self.particles.clone();
         for particle in &mut self.particles {
             if particle.is_enabled() {
                 particle.add_gravity_forces(
+                    & particles,
+                    self.gravitational_constant,
+                    self.minimal_distance_for_gravity
+                );
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Add gravity forces when wrap_around is enabled
+    //
+    fn add_gravity_forces_wrap_around (&mut self) {
+        let particles = self.particles.clone();
+        for particle in &mut self.particles {
+            if particle.is_enabled() {
+                particle.add_gravity_forces_wrap_around(
                     & particles,
                     self.gravitational_constant,
                     self.width,
@@ -626,6 +703,54 @@ impl Universe {
                 // Do nothing
             }
         }
+    }
+
+    //
+    // Add forces from links
+    //
+    // Uses Hooke's law
+    // See https://en.wikipedia.org/wiki/Hooke's_law#Formal_definition
+    //
+    fn add_link_forces(&mut self) {
+        for link in self.links.iter() {
+            let p1_index = link.get_p1_index();
+            let p2_index = link.get_p2_index();
+            let p1 = & self.particles[p1_index];
+            let p2 = & self.particles[p2_index];
+            if p1.is_enabled() && p2.is_enabled() {
+                let forces = Particle::get_link_forces(p1, p2, link);
+                let force_x = forces.0 / 2.0;
+                let force_y = forces.1 / 2.0;
+                self.particles[p1_index].add_force(force_x, force_y);
+                self.particles[p2_index].add_force(-force_x, -force_y);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Add drag forces
+    //
+    // Uses a simplified version of the Drag equation
+    // Only takes into account a drag coefficient and the velocity of particles
+    //
+    // See https://en.wikipedia.org/wiki/Drag_equation
+    //
+    fn add_drag_forces(&mut self) {
+        for particle in &mut self.particles {
+            if particle.is_enabled() {
+                particle.add_drag_forces(self.drag_coefficient);
+            } else {
+                // Do nothing
+            }
+        }
+    }
+
+    //
+    // Update acceleration
+    //
+    fn update_acceleration(&mut self) {
         for particle in &mut self.particles {
             if particle.is_enabled() {
                 particle.update_acceleration();
@@ -633,13 +758,13 @@ impl Universe {
                 // Do nothing
             }
         }
-        for particle in &mut self.particles {
-            if particle.is_enabled() {
-                particle.update_position_verlet(delta_time);
-            } else {
-                // Do nothing
-            }
-        }
+    }
+
+    //
+    // Recenter particles if they got outside the Universe
+    // and wrap_around is enabled
+    //
+    fn recenter(&mut self) {
         for particle in &mut self.particles {
             if particle.is_enabled() {
                 particle.recenter(
@@ -654,7 +779,7 @@ impl Universe {
 
     //
     // Stabilize positions by removing last decimals for each coordinate
-    // Useful for conserving symetries
+    // Useful for conserving symetries for a longer period
     //
     fn stabilise_positions(&mut self) {
         let stabiliser = (10.0_f64).powi(self.stabiliser_power);
@@ -1010,7 +1135,9 @@ impl Universe {
         } else {
             self.links.push(Link::new(
                 p1_index,
-                p2_index
+                p2_index,
+                self.default_link_length,
+                self.default_link_strengh
             ));
             self.particle_index_to_links_indexes[p1_index].push(self.links.len() - 1);
             self.particle_index_to_links_indexes[p2_index].push(self.links.len() - 1);

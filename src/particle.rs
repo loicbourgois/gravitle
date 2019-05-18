@@ -1,3 +1,4 @@
+use crate::link::Link;
 //
 // Collision happens when two particles collide
 //
@@ -55,7 +56,7 @@ struct Point {
     y: f64
 }
 
-const FLOAT_COMPARE_MARGIN : f64 = std::f64::MIN_POSITIVE;
+const FLOAT_COMPARE_MARGIN : f64 = 0.0000000001;
 
 //
 // Particle definition
@@ -119,7 +120,7 @@ impl Particle {
     }
 
     //
-    // Load
+    // Load from JSON
     //
     pub fn load_from_json(&mut self, json_string: String) {
         let json_parsed = &json::parse(&json_string).unwrap();
@@ -148,8 +149,9 @@ impl Particle {
 
     //
     // Add gravity forces exerced on the Particle by the rest of the Particles
+    // in a Universe with wrap_around enabled
     //
-    pub fn add_gravity_forces(
+    pub fn add_gravity_forces_wrap_around (
             & mut self,
             particles: &[Particle],
             gravitational_constant: f64,
@@ -170,7 +172,7 @@ impl Particle {
                         world_width,
                         world_height
                     );
-                    for clone in clones_coordinates {
+                    for clone in clones_coordinates.iter() {
                         let distance = Particle::get_distance(
                             self.x, self.y,
                             clone.x, clone.y
@@ -185,14 +187,80 @@ impl Particle {
                         let delta_y = self.y - clone.y;
                         let force_x = delta_x * force;
                         let force_y = delta_y * force;
-                        self.forces_x += force_x;
-                        self.forces_y += force_y;
+                        self.add_force(force_x, force_y);
                     }
                 } else {
                     // NTD
                 }
             }
         }
+    }
+
+    //
+    // Add gravity forces for a standard Universe
+    //
+    pub fn add_gravity_forces(
+            & mut self,
+            particles: &[Particle],
+            gravitational_constant: f64,
+            minimal_distance_for_gravity: f64
+    ) {
+        if self.is_fixed {
+            // NTD
+        } else {
+            for particle in particles {
+                if particle.id != self.id && particle.is_enabled() {
+                        let distance = Particle::get_distance(
+                            self.x, self.y,
+                            particle.x, particle.y
+                        );
+                        let force = if distance > minimal_distance_for_gravity {
+                            - gravitational_constant * self.mass * particle.mass / (distance * distance)
+                        } else {
+                            // Particles are too close, which can result in instability
+                            0.0
+                        };
+                        let delta_x = self.x - particle.x;
+                        let delta_y = self.y - particle.y;
+                        let force_x = delta_x * force;
+                        let force_y = delta_y * force;
+                        self.add_force(force_x, force_y);
+                } else {
+                    // NTD
+                }
+            }
+        }
+    }
+
+    //
+    // Add a force to the particle
+    //
+    pub fn add_force(&mut self, force_x: f64, force_y: f64) {
+        self.forces_x += force_x;
+        self.forces_y += force_y;
+    }
+
+    //
+    // Get forces applied by a link between two particles
+    //
+    pub fn get_link_forces(p1: & Particle,  p2: & Particle, link: & Link) -> (f64, f64) {
+        let delta_length = Particle::get_distance(p1.x, p1.y, p2.x, p2.y) - link.get_length();
+        let unit_vector = Particle::get_normalized_vector(
+            p1.x, p1.y,
+            p2.x, p2.y
+        );
+        let strengh = link.get_strengh();
+        let force_x = unit_vector.0 * delta_length * strengh;
+        let force_y = unit_vector.1 * delta_length * strengh;
+        (force_x, force_y)
+    }
+
+    //
+    // Add drag forces
+    //
+    pub fn add_drag_forces(&mut self, drag_coefficient: f64) {
+        self.forces_x -= drag_coefficient * self.speed_x * self.speed_x * self.speed_x.signum();
+        self.forces_y -= drag_coefficient * self.speed_y * self.speed_y * self.speed_y.signum();
     }
 
     //
@@ -206,17 +274,43 @@ impl Particle {
     //
     // Update the speed of the Particle
     //
-    pub fn update_speed(&mut self, delta_time: f64) {
-        self.speed_x += self.acceleration_x * delta_time;
-        self.speed_y += self.acceleration_y * delta_time;
+    pub fn update_speed_euler(&mut self, delta_time: f64) {
+        if self.is_fixed {
+            self.speed_x = 0.0;
+            self.speed_y = 0.0;
+        } else {
+            self.speed_x += self.acceleration_x * delta_time;
+            self.speed_y += self.acceleration_y * delta_time;
+        }
+    }
+
+    //
+    // Update the speed of the Particle
+    //
+    pub fn update_speed_verlet(&mut self, delta_time: f64) {
+        if self.is_fixed {
+            self.speed_x = 0.0;
+            self.speed_y = 0.0;
+        } else {
+            self.speed_x = (self.x - self.old_x ) / delta_time;
+            self.speed_y = (self.y - self.old_y ) / delta_time;
+        }
     }
 
     //
     // Update the position of the Particle using the Euler Algorithm
     //
     pub fn update_position_euler(&mut self, delta_time: f64) {
-        self.x += self.speed_x * delta_time;
-        self.y += self.speed_y * delta_time;
+        let current_x = self.x;
+        let current_y = self.y;
+        if self.is_fixed {
+            // Do nothing
+        } else {
+            self.x += self.speed_x * delta_time;
+            self.y += self.speed_y * delta_time;
+        }
+        self.old_x = current_x;
+        self.old_y = current_y;
     }
 
     //
@@ -225,12 +319,14 @@ impl Particle {
     pub fn update_position_verlet(&mut self, delta_time: f64) {
         let current_x = self.x;
         let current_y = self.y;
-        let new_x = 2.0 * current_x - self.old_x + self.acceleration_x * delta_time * delta_time ;
-        let new_y = 2.0 * current_y - self.old_y + self.acceleration_y * delta_time * delta_time ;
+        if self.is_fixed {
+            // Do nothing
+        } else {
+            self.x = 2.0 * current_x - self.old_x + self.acceleration_x * delta_time * delta_time;
+            self.y = 2.0 * current_y - self.old_y + self.acceleration_y * delta_time * delta_time;
+        }
         self.old_x = current_x;
         self.old_y = current_y;
-        self.x = new_x;
-        self.y = new_y;
     }
 
     //
@@ -342,6 +438,18 @@ impl Particle {
     }
 
     //
+    // Helper function to get a normalized vector
+    //
+    fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> (f64, f64) {
+        let length = Particle::get_distance(x1, y1, x2, y2);
+        let delta_x = x2 - x1;
+        let delta_y = y2 - y1;
+        let x = delta_x / length;
+        let y = delta_y / length;
+        (x, y)
+    }
+
+    //
     // Get cloned points based on p1
     // boxing a point p2
     // where p1 clones are translation of p1
@@ -353,63 +461,70 @@ impl Particle {
             x1: f64, y1: f64,
             x2: f64, y2: f64,
             width: f64, height: f64
-    ) -> Vec<Point> {
-        let mut clones = Vec::new();
-        let ws = [-width, 0.0, width];
-        let hs = [-height, 0.0, height];
-        let mut xs = Vec::new();
-        let mut ys = Vec::new();
-        for w in ws.iter() {
-            let x = x2 + w;
-            let distance_squared = Particle::get_distance_squared(x1, 0.0, x, 0.0);
-            xs.push( ValueWithDistance {
-                value: x,
-                d: distance_squared
-            });
-        }
-        for h in hs.iter() {
-            let y = y2 + h;
-            let distance_squared = Particle::get_distance_squared(0.0, y1, 0.0, y);
-            ys.push( ValueWithDistance {
-                value: y,
-                d: distance_squared
-            });
-        }
+    ) -> [Point; 4] {
+        let mut xs = [
+            ValueWithDistance {
+                value: x2 - width,
+                d: Particle::get_distance_squared(x1, 0.0, x2 - width, 0.0)
+            },
+            ValueWithDistance {
+                value: x2,
+                d: Particle::get_distance_squared(x1, 0.0, x2, 0.0)
+            },
+            ValueWithDistance {
+                value: x2 + width,
+                d: Particle::get_distance_squared(x1, 0.0, x2 + width, 0.0)
+            }
+        ];
+        let mut ys = [
+            ValueWithDistance {
+                value: y2 - height,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 - height)
+            },
+            ValueWithDistance {
+                value: y2,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2)
+            },
+            ValueWithDistance {
+                value: y2 + height,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 + height)
+            }
+        ];
         // Order by ascending distance
         xs.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
         ys.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
+        let x_average = (x1+x2)/2.0;
+        let y_average = (y1+y2)/2.0;
         //
-        if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
-            // NTD
+        if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
+            return [
+                Point {x: x_average, y: y_average},
+                Point {x: x_average, y: y_average},
+                Point {x: x_average, y: y_average},
+                Point {x: x_average, y: y_average}
+            ];
         } else if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
-            for _ in 0..2 {
-                for i in 0..2 {
-                    clones.push(Point {
-                        x: x1,
-                        y: ys[i].value
-                    });
-                }
-            }
+            return [
+                Point {x: x_average, y: ys[0].value},
+                Point {x: x_average, y: ys[0].value},
+                Point {x: x_average, y: ys[1].value},
+                Point {x: x_average, y: ys[1].value}
+            ];
         } else if (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
-            for _ in 0..2 {
-                for i in 0..2 {
-                    clones.push(Point {
-                        x: xs[i].value,
-                        y: y1
-                    });
-                }
-            }
+            return [
+                Point {x: xs[0].value, y: y_average},
+                Point {x: xs[0].value, y: y_average},
+                Point {x: xs[1].value, y: y_average},
+                Point {x: xs[1].value, y: y_average}
+            ];
         } else {
-            for i in 0..2 {
-                for j in 0..2 {
-                    clones.push(Point {
-                        x: xs[i].value,
-                        y: ys[j].value
-                    });
-                }
-            }
+            return [
+                Point {x: xs[0].value, y: ys[0].value},
+                Point {x: xs[0].value, y: ys[1].value},
+                Point {x: xs[1].value, y: ys[0].value},
+                Point {x: xs[1].value, y: ys[1].value}
+            ];
         }
-        clones
     }
 }
 

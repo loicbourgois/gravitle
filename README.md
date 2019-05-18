@@ -41,5 +41,5 @@ wasm-pack publish
 [ ] Display or hide gravitational field
 [ ] Use webgl for rendering
 [ ] Add popup for finishing a space croquet
-[ ] Implement spring like behavior for links
+[x] Implement spring like behavior for links
 
