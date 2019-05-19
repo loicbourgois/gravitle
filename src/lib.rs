@@ -551,6 +551,28 @@ impl Universe {
     pub fn get_particles_to_disable_indexes_length(&self) -> usize {
         self.particles_to_disable_indexes.len()
     }
+
+    //
+    // Get a grid representing the gravitational forces exerced
+    // throughout the Universe
+    //
+    pub fn get_gravitational_grid(&self, width: usize, height: usize) -> Vec<f64> {
+        let mass = 1.0;
+        let mut grid = vec![0.0; width*height];
+        let w64 = width as f64;
+        let h64 = height as f64;
+        for i in 0..width {
+            let x = (self.width / w64 ) * i as f64
+                + (self.width / w64 ) / 2.0 - self.width / 2.0;
+            for j in 0..height {
+                let y = (self.height / h64 ) * j as f64
+                    + (self.height / h64 ) / 2.0 - self.height / 2.0;
+                grid[i*width + j] =
+                    self.get_absolute_gravitational_field_at(x, y, mass);
+            }
+        }
+        grid
+    }
 }
 
 //
@@ -1202,6 +1224,38 @@ impl Universe {
     }
 
     //
+    // Get absolute forces exerced at a point in the Universe
+    // by all the particles in that Universe
+    //
+    fn get_absolute_gravitational_field_at(&self, x: f64, y: f64, mass: f64) -> f64 {
+        let mut field = (0.0, 0.0);
+        for particle in self.particles.iter() {
+            if particle.is_enabled() {
+                let particle_gravitational_forces = if self.wrap_around {
+                    particle.get_gravitational_force_wrap_around(
+                        x, y, mass,
+                        self.width, self.height,
+                        self.minimal_distance_for_gravity,
+                        self.gravitational_constant
+                    )
+                } else {
+                    particle.get_gravitational_force(
+                        x, y, mass,
+                        self.minimal_distance_for_gravity,
+                        self.gravitational_constant
+                    )
+                };
+                field.0 += particle_gravitational_forces.0;
+                field.1 += particle_gravitational_forces.1;
+            } else {
+                // Do nothing
+            }
+        }
+        let a = field.0 * field.0 + field.1 * field.1;
+        a.sqrt()
+    }
+
+    //
     // Helper function to get the time from a web browser
     //
     fn now() -> f64 {
@@ -1210,5 +1264,20 @@ impl Universe {
             .performance()
             .expect("should have a Performance")
             .now()
+    }
+}
+
+//
+// Unit tests
+//
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_get_absolute_gravitational_field_at() {
+        let universe = Universe::new();
+        let field = universe.get_absolute_gravitational_field_at(-2.0, 3.0);
+        assert_eq!(field, 0.0);
     }
 }

@@ -32,6 +32,10 @@ const inputTrajectoriesPeriod = document.getElementById('input-trajectories-peri
 const buttonTrajectoriesOn = document.getElementById('button-trajectories-on');
 const buttonTrajectoriesOff = document.getElementById('button-trajectories-off');
 
+const inputGravitationalFieldResolution = document.getElementById('input-gravitational-field-resolution');
+const buttonGravitationalFieldOn = document.getElementById('button-gravitational-field-on');
+const buttonGravitationalFieldOff = document.getElementById('button-gravitational-field-off');
+
 const canvas = document.getElementById('canvas');
 canvas.height = 1000;
 canvas.width = 1000;
@@ -39,6 +43,7 @@ const context = canvas.getContext("2d");
 
 let MODE = null;
 let SHOW_TRAJECTORIES = null;
+let SHOW_GRAVITATIONAL_FIELD = null;
 
 const BASE_CONF = Object.freeze({
     width: 200,
@@ -53,7 +58,7 @@ const BASE_CONF = Object.freeze({
     default_link_length: 10,
     default_link_strengh: 1000,
     drag_coefficient: 0.0,
-    wrap_around: true,
+    wrap_around: false,
     stabilise_positions_enabled: false,
     stabiliser_power: 10,
     particles: [],
@@ -142,6 +147,14 @@ buttonTrajectoriesOff.addEventListener('click', () => {
     trajectoriesOff();
 });
 
+buttonGravitationalFieldOn.addEventListener('click', () => {
+    gravitationalFieldOn();
+});
+
+buttonGravitationalFieldOff.addEventListener('click', () => {
+    gravitationalFieldOff();
+});
+
 inputG.addEventListener('change', () => {
     const conf = JSON.parse(jsonTextarea.value);
     conf.gravitational_constant = parseFloat(inputG.value);
@@ -208,6 +221,12 @@ const updateFps = () => {
 
 const draw = () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    const gravitational_field_resolution = parseInt(inputGravitationalFieldResolution.value);
+    if (SHOW_GRAVITATIONAL_FIELD === true && gravitational_field_resolution > 0) {
+        drawGravitationalGrid(gravitational_field_resolution);
+    } else {
+        // Do nothing
+    }
     if (MODE === 'SPACE-CROQUET') {
         drawLaunchers();
     } else {
@@ -217,7 +236,7 @@ const draw = () => {
     if (SHOW_TRAJECTORIES === true && period > 0) {
         drawTrajectories(period);
     } else {
-        // DO nothing
+        // Do nothing
     }
     drawSegments();
     drawParticles();
@@ -235,6 +254,46 @@ const trajectoriesOff = () => {
     buttonTrajectoriesOff.disabled = true;
     SHOW_TRAJECTORIES = false;
 }
+
+const gravitationalFieldOn = () => {
+    buttonGravitationalFieldOn.disabled = true;
+    buttonGravitationalFieldOff.disabled = false;
+    SHOW_GRAVITATIONAL_FIELD = true;
+}
+
+const gravitationalFieldOff = () => {
+    buttonGravitationalFieldOn.disabled = false;
+    buttonGravitationalFieldOff.disabled = true;
+    SHOW_GRAVITATIONAL_FIELD = false;
+}
+
+const drawGravitationalGrid = (resolution) => {
+    const width = resolution;
+    const height = resolution;
+    const grid = universe.get_gravitational_grid(width, height);
+    let max = -Infinity;
+    let min = Infinity;
+    for (let i = 0 ; i < grid.length ; i++) {
+        grid[i] = Math.sqrt(grid[i]);
+        if (grid[i] < min) {
+            min = grid[i];
+        }
+        if (grid[i] > max) {
+            max = grid[i];
+        }
+    }
+    for (let i = 0 ; i < width ; i += 1) {
+        for (let j = 0 ; j < height ; j += 1) {
+            const value = (grid[i * width + j] - min) / (max-min) * 255;
+            context.fillStyle = `rgba(${value}, ${value}, ${value}, 1)`;
+            context.fillRect(i * canvas.width / width,
+                (height-1-j) * canvas.height / height,
+                canvas.width / width,
+                canvas.height / height
+            );
+        }
+    }
+};
 
 const drawLaunchers = () => {
     context.strokeStyle = "#888";
@@ -725,6 +784,7 @@ const launchParticle = (mouse_position) => {
 }
 
 trajectoriesOff();
+gravitationalFieldOff();
 heart();
 last_now = Date.now();
 requestAnimationFrame(renderLoop);

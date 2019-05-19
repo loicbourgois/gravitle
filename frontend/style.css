@@ -2,6 +2,7 @@
     --color-main-light: #eee;
     --color-main-middle: #999;
     --color-main-dark: #222;
+    --color-main-black: #000;
     --color-main-text: var(--color-main-light);
     --color-main-background: var(--color-main-dark);
     --color-button: var(--color-main-dark);
@@ -101,7 +102,7 @@ input {
 }
 
 .canvas {
-    background: #333;
+    background: var(--color-main-dark);
     max-height: 100%;
     max-width: 100%;
 }

@@ -167,31 +167,16 @@ impl Particle {
         } else {
             for particle in particles {
                 if particle.id != self.id && particle.is_enabled() {
-                    let clones_coordinates = Particle::get_boxing_clones_coordinates(
-                        self.x,
-                        self.y,
+                    let force = self.get_gravitational_force_wrap_around(
                         particle.x,
                         particle.y,
+                        particle.mass,
                         world_width,
-                        world_height
+                        world_height,
+                        minimal_distance_for_gravity,
+                        gravitational_constant
                     );
-                    for clone in clones_coordinates.iter() {
-                        let distance = Particle::get_distance(
-                            self.x, self.y,
-                            clone.x, clone.y
-                        );
-                        let force = if distance > minimal_distance_for_gravity {
-                            - gravitational_constant * self.mass * particle.mass / (distance * distance)
-                        } else {
-                            // Particles are too close, which can result in instability
-                            0.0
-                        };
-                        let delta_x = self.x - clone.x;
-                        let delta_y = self.y - clone.y;
-                        let force_x = delta_x * force;
-                        let force_y = delta_y * force;
-                        self.add_force(force_x, force_y);
-                    }
+                    self.add_force(force.0, force.1);
                 } else {
                     // NTD
                 }
@@ -424,6 +409,67 @@ impl Particle {
     pub fn get_collision_behavior(&self) -> ParticleCollisionBehavior {
         self.collision_behavior
     }
+
+    //
+    // Get gravitational forces exerced by one particle on another particle
+    //
+    pub fn get_gravitational_force(
+            &self,
+            x: f64,
+            y: f64,
+            mass: f64,
+            minimal_distance_for_gravity: f64,
+            gravitational_constant: f64
+    ) -> (f64, f64) {
+        let distance = Particle::get_distance(
+            self.x, self.y,
+            x, y
+        );
+        let force = if distance > minimal_distance_for_gravity {
+            - gravitational_constant * self.mass * mass / (distance * distance)
+        } else {
+            // Particles are too close, which can result in instability
+            0.0
+        };
+        let delta_x = self.x - x;
+        let delta_y = self.y - y;
+        let force_x = delta_x * force;
+        let force_y = delta_y * force;
+        (force_x, force_y)
+    }
+
+    //
+    // Get gravitational forces exerced by one particle on another particle
+    // if wrap around is enabled
+    //
+    pub fn get_gravitational_force_wrap_around(
+            &self,
+            x: f64,
+            y: f64,
+            mass: f64,
+            universe_width: f64,
+            universe_height: f64,
+            minimal_distance_for_gravity: f64,
+            gravitational_constant: f64
+    ) -> (f64, f64) {
+        let mut forces = (0.0, 0.0);
+        let clones_coordinates = Particle::get_wrap_around_clones_coordinates(
+            self.x,
+            self.y,
+            x,
+            y,
+            universe_width,
+            universe_height
+        );
+        for clone in clones_coordinates.iter() {
+            let force = self.get_gravitational_force(
+                clone.x, clone.y, mass, minimal_distance_for_gravity, gravitational_constant
+            );
+            forces.0 += force.0;
+            forces.1 += force.1;
+        }
+        return forces;
+    }
 }
 
 //
@@ -453,7 +499,8 @@ impl Particle {
     //
     // Helper function to get a normalized vector
     //
-    // Returns None if the length of the initial vector inferior or equal to 0
+    // Returns None if the length of the initial vector
+    // is inferior or equal to 0
     //
     fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<(f64, f64)> {
         let length = Particle::get_distance(x1, y1, x2, y2);
@@ -476,7 +523,7 @@ impl Particle {
     //
     // Used to compute gravity through the visible edges of the Universe.
     //
-    fn get_boxing_clones_coordinates(
+    fn get_wrap_around_clones_coordinates(
             x1: f64, y1: f64,
             x2: f64, y2: f64,
             width: f64, height: f64

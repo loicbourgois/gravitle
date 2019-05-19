@@ -38,7 +38,7 @@ wasm-pack publish
 
 [x] Display FPS
 [x] Display or hide trajectories
-[ ] Display or hide gravitational field
+[x] Display or hide gravitational field
 [ ] Use webgl for rendering
 [ ] Add popup for finishing a space croquet
 [x] Implement spring like behavior for links
