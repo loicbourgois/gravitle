@@ -2,6 +2,7 @@
 mod link;
 mod intersection;
 mod collision;
+mod link_intersection;
 mod particle;
 mod trajectory;
 
@@ -12,6 +13,7 @@ use wasm_bindgen::prelude::*;
 
 use link::Link;
 use intersection::Intersection;
+use link_intersection::LinkIntersection;
 use particle::Particle;
 use collision::Collision;
 use trajectory::Trajectory;
@@ -106,6 +108,34 @@ impl IntersectionBehavior {
 }
 
 //
+// Link intersection happens when two links intersect
+//
+enum LinkIntersectionBehavior {
+    DoNothing,
+    DestroyLinks
+}
+
+//
+// IntersectionBehavior
+//
+impl LinkIntersectionBehavior {
+
+    //
+    // Convert from String to IntersectionBehavior
+    //
+    fn from_string(value: String) -> LinkIntersectionBehavior {
+        match value.as_ref() {
+            "do-nothing" => LinkIntersectionBehavior::DoNothing,
+            "destroy-links" => LinkIntersectionBehavior::DestroyLinks,
+            _ => {
+                console_error!("Unknown LinkIntersectionBehavior : {}", value);
+                panic!("Unknown LinkIntersectionBehavior : {}", value);
+            }
+        }
+    }
+}
+
+//
 // Algorithm used to advance by one step
 //
 enum Algorithm {
@@ -151,11 +181,13 @@ pub struct Universe {
     links: Vec<Link>,
     intersections: Vec<Intersection>,
     collisions: Vec<Collision>,
+    link_intersections: Vec<LinkIntersection>,
     tick_durations: Vec<f64>,
     tick_average_duration: f64,
     particle_index_to_links_indexes: Vec<Vec<usize>>,
     intersection_behavior: IntersectionBehavior,
     collision_behavior: CollisionBehavior,
+    link_intersection_behavior: LinkIntersectionBehavior,
     links_to_destroy_indexes: Vec<usize>,
     particles_to_destroy_indexes: Vec<usize>,
     particles_to_disable_indexes: Vec<usize>,
@@ -193,11 +225,13 @@ impl Universe {
             links: Vec::new(),
             intersections: Vec::new(),
             collisions: Vec::new(),
+            link_intersections: Vec::new(),
             tick_durations: Vec::new(),
             tick_average_duration: 0.0,
             particle_index_to_links_indexes: Vec::new(),
             intersection_behavior: IntersectionBehavior::DoNothing,
             collision_behavior: CollisionBehavior::DoNothing,
+            link_intersection_behavior: LinkIntersectionBehavior::DoNothing,
             links_to_destroy_indexes: Vec::new(),
             particles_to_destroy_indexes: Vec::new(),
             particles_to_disable_indexes: Vec::new(),
@@ -235,13 +269,20 @@ impl Universe {
         } else {
             // Do nothing
         }
-        if json_parsed["intersection_behavior"].to_string()  != "null" {
+        if json_parsed["intersection_behavior"].to_string() != "null" {
             self.intersection_behavior = IntersectionBehavior::from_string(json_parsed["intersection_behavior"].to_string());
         } else {
             // Do nothing
         }
-        if json_parsed["collision_behavior"].to_string()  != "null" {
+        if json_parsed["collision_behavior"].to_string() != "null" {
             self.collision_behavior = CollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
+        } else {
+            // Do nothing
+        }
+        if json_parsed["link_intersection_behavior"].to_string() != "null" {
+            self.link_intersection_behavior = LinkIntersectionBehavior::from_string(
+                json_parsed["link_intersection_behavior"].to_string()
+            );
         } else {
             // Do nothing
         }
@@ -305,8 +346,10 @@ impl Universe {
         self.update_links_coordinates();
         self.compute_tick_intersections();
         self.compute_tick_collisions();
+        self.compute_tick_link_intersections();
         self.treat_intersections();
         self.treat_collisions();
+        self.treat_link_intersections();
         self.create_links();
         self.disable_particles();
         self.destroy_particles();
@@ -840,6 +883,46 @@ impl Universe {
     }
 
     //
+    // List link intersections happening during the current tick
+    //
+    fn compute_tick_link_intersections (& mut self) {
+        self.link_intersections.clear();
+        for (i, link_1) in self.links.iter().enumerate() {
+            for (j, link_2) in self.links.iter().enumerate() {
+                let p1_1_index = link_1.get_p1_index();
+                let p1_2_index = link_1.get_p2_index();
+                let p2_1_index = link_2.get_p1_index();
+                let p2_2_index = link_2.get_p2_index();
+                if p1_1_index != p2_1_index
+                        && p1_1_index != p2_2_index
+                        && p1_2_index != p2_1_index
+                        && p1_2_index != p2_2_index {
+                    let c1 = link_1.get_coordinates();
+                    let c2 = link_2.get_coordinates();
+                    let links_intersection_option = Universe::get_intersect(
+                        (c1.0, c1.1),
+                        (c1.2, c1.3),
+                        (c2.0, c2.1),
+                        (c2.2, c2.3)
+                    );
+                    match links_intersection_option {
+                        Some(links_intersection) => {
+                            self.link_intersections.push(LinkIntersection::new(
+                                links_intersection.0, links_intersection.1, i, j
+                            ));
+                        },
+                        None => {
+                            // Do nothing
+                        }
+                    }
+                } else {
+                    // Do nothing
+                }
+            }
+        }
+    }
+
+    //
     // Treat detected intersections using the specified intersection behavior
     //
     fn treat_intersections(& mut self) {
@@ -903,6 +986,23 @@ impl Universe {
                         p1_collision_behavior.as_string(),
                         p2_collision_behavior.as_string()
                     );
+                }
+            }
+        }
+    }
+
+    //
+    // Treat detected link intersections using the specified behavior
+    //
+    fn treat_link_intersections(&mut self) {
+        for link_intersection in self.link_intersections.iter() {
+            match &self.link_intersection_behavior {
+                LinkIntersectionBehavior::DoNothing => {
+                    // Do nothing
+                },
+                LinkIntersectionBehavior::DestroyLinks => {
+                    self.links_to_destroy_indexes.push(link_intersection.get_link_1_index());
+                    self.links_to_destroy_indexes.push(link_intersection.get_link_2_index());
                 }
             }
         }
@@ -1033,7 +1133,7 @@ impl Universe {
     }
 
     //
-    // Helper method to find if two links intersect
+    // Helper method to find if two segments intersect
     //
     fn get_intersect(
             p1: (f64, f64),
@@ -1041,19 +1141,19 @@ impl Universe {
             p3: (f64, f64),
             p4: (f64, f64)
     ) -> Option<(f64, f64)> {
-        let link_1 = LineInterval::line_segment(
+        let segment_1 = LineInterval::line_segment(
             Line::new(
                 geo::Point::new(p1.0, p1.1),
                 geo::Point::new(p2.0, p2.1)
             )
         );
-        let link_2 = LineInterval::line_segment(
+        let segment_2 = LineInterval::line_segment(
             Line::new(
                 geo::Point::new(p3.0, p3.1),
                 geo::Point::new(p4.0, p4.1)
             )
         );
-        match link_1.relate(&link_2).unique_intersection() {
+        match segment_1.relate(&segment_2).unique_intersection() {
             Some(intersect) => {
                 Some((intersect.x(), intersect.y()))
             },

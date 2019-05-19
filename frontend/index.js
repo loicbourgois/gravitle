@@ -21,6 +21,7 @@ const spadeButton = document.getElementById('button-spade');
 const buttonExample5 = document.getElementById('button-example-5');
 const buttonExample6 = document.getElementById('button-example-6');
 const buttonExample7 = document.getElementById('button-example-7');
+const buttonExample8 = document.getElementById('button-example-8');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -48,6 +49,7 @@ const BASE_CONF = Object.freeze({
     algorithm: 'verlet',
     intersection_behavior: 'do-nothing',
     collision_behavior: 'do-nothing',
+    link_intersection_behavior: 'do-nothing',
     default_link_length: 10,
     default_link_strengh: 1000,
     drag_coefficient: 0.0,
@@ -122,6 +124,10 @@ buttonExample6.addEventListener('click', () => {
 
 buttonExample7.addEventListener('click', () => {
     loadExample7();
+});
+
+buttonExample8.addEventListener('click', () => {
+    loadExample8();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -427,6 +433,13 @@ const loadExample6 = () => {
 const loadExample7 = () => {
     MODE = null;
     const conf = Examples.get_example_7_conf(jsonCopy(BASE_CONF));
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const loadExample8 = () => {
+    MODE = null;
+    const conf = Examples.get_example_8_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
