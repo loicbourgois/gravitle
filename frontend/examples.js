@@ -367,11 +367,33 @@ const get_example_6_conf = (conf) => {
     return conf;
 }
 
+const get_example_7_conf = (conf) => {
+    conf.collision_behavior = 'create-link';
+    conf.intersection_behavior = 'destroy-link';
+    conf.gravitational_constant = 100;
+    conf.default_link_length = 10;
+    conf.default_link_strengh = 1000;
+    conf.drag_coefficient = 1;
+    conf.stabilise_positions_enabled = false;
+    conf.particles = [
+        {
+            "x": 0,
+            "y": 0
+        },
+        {
+            "x": 0,
+            "y": 0
+        }
+    ];
+    return conf;
+}
+
 export {
     get_example_1_conf,
     get_example_2_conf,
     get_example_3_conf,
     get_example_4_conf,
     get_example_5_conf,
-    get_example_6_conf
+    get_example_6_conf,
+    get_example_7_conf
 };

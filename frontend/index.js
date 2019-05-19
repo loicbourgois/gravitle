@@ -20,6 +20,7 @@ const clubButton = document.getElementById('button-club');
 const spadeButton = document.getElementById('button-spade');
 const buttonExample5 = document.getElementById('button-example-5');
 const buttonExample6 = document.getElementById('button-example-6');
+const buttonExample7 = document.getElementById('button-example-7');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -117,6 +118,10 @@ buttonExample5.addEventListener('click', () => {
 
 buttonExample6.addEventListener('click', () => {
     loadExample6();
+});
+
+buttonExample7.addEventListener('click', () => {
+    loadExample7();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -415,6 +420,13 @@ const loadExample5 = () => {
 const loadExample6 = () => {
     MODE = null;
     const conf = Examples.get_example_6_conf(jsonCopy(BASE_CONF));
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
+const loadExample7 = () => {
+    MODE = null;
+    const conf = Examples.get_example_7_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }

@@ -1,3 +1,4 @@
+use crate::utils;
 use crate::link::Link;
 //
 // Collision happens when two particles collide
@@ -57,6 +58,8 @@ struct Point {
 }
 
 const FLOAT_COMPARE_MARGIN : f64 = 0.0000000001;
+const DEFAULT_LINK_FORCE_X : f64 = 0.0;
+const DEFAULT_LINK_FORCE_Y : f64 = 0.0000000001;
 
 //
 // Particle definition
@@ -245,13 +248,23 @@ impl Particle {
     //
     pub fn get_link_forces(p1: & Particle,  p2: & Particle, link: & Link) -> (f64, f64) {
         let delta_length = Particle::get_distance(p1.x, p1.y, p2.x, p2.y) - link.get_length();
-        let unit_vector = Particle::get_normalized_vector(
+        let strengh = link.get_strengh();
+        let unit_vector_option = Particle::get_normalized_vector(
             p1.x, p1.y,
             p2.x, p2.y
         );
-        let strengh = link.get_strengh();
-        let force_x = unit_vector.0 * delta_length * strengh;
-        let force_y = unit_vector.1 * delta_length * strengh;
+        let force_x;
+        let force_y;
+        match unit_vector_option {
+            Some(unit_vector) => {
+                force_x = unit_vector.0 * delta_length * strengh;
+                force_y = unit_vector.1 * delta_length * strengh;
+            },
+            None => {
+                force_x = DEFAULT_LINK_FORCE_X * delta_length * strengh;
+                force_y = DEFAULT_LINK_FORCE_Y * delta_length * strengh;
+            }
+        }
         (force_x, force_y)
     }
 
@@ -440,13 +453,19 @@ impl Particle {
     //
     // Helper function to get a normalized vector
     //
-    fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> (f64, f64) {
+    // Returns None if the length of the initial vector inferior or equal to 0
+    //
+    fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<(f64, f64)> {
         let length = Particle::get_distance(x1, y1, x2, y2);
         let delta_x = x2 - x1;
         let delta_y = y2 - y1;
-        let x = delta_x / length;
-        let y = delta_y / length;
-        (x, y)
+        if length > 0.0 {
+            let x = delta_x / length;
+            let y = delta_y / length;
+            Some((x, y))
+        } else {
+            None
+        }
     }
 
     //

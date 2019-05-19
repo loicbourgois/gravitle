@@ -1,4 +1,4 @@
-mod utils;
+#[macro_use] mod utils;
 mod link;
 mod intersection;
 mod collision;
@@ -23,56 +23,13 @@ use std::mem;
 use line_intersection::{LineInterval};
 use geo::{Line};
 
+//
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
+//
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
-//
-// Bind `console.log` manually, without the help of `web_sys`.
-//
-#[wasm_bindgen]
-extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-    fn error(s: &str);
-}
-
-//
-// Log a message to the browser console
-//
-macro_rules! console_log {
-    // Note that this is using the `log` function imported above during
-    // `bare_bones`
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-//
-// Log an error message to the browser console
-//
-macro_rules! console_warning {
-    // Note that this is using the `log` function imported above during
-    // `bare_bones`
-    ($($t:tt)*) => {
-        let message = &format_args!($($t)*).to_string();
-        log(&format_args!("[Warning] {}", message).to_string());
-    }
-}
-
-//
-// Log an error message to the browser console
-//
-macro_rules! console_error {
-    // Note that this is using the `log` function imported above during
-    // `bare_bones`
-    ($($t:tt)*) => {
-        let message = &format_args!($($t)*).to_string();
-        log(&format_args!("[Error] {}", message).to_string());
-    }
-}
 
 //
 // Collision happens when two particles collide
