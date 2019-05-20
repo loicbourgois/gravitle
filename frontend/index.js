@@ -77,7 +77,10 @@ let delta = null;
 let last = null;
 let mouse_positions = null;
 const frame_gaps = [];
+const frame_lengths = [];
 let last_now = null;
+let average_fps = 0.0;
+let average_frame_length = 0.0;
 
 randomizeButton.addEventListener('click', () => {
     randomize();
@@ -197,11 +200,32 @@ canvas.addEventListener('mouseup', (event) => {
 });
 
 const renderLoop = () => {
+    // Setup analytics
+    const start = Date.now();
+    // Render
+    fps_infos.textContent = `FPS : ${average_fps.toFixed(0)}\n`
+        + `Frame : ${average_frame_length.toFixed(2)} ms`;
     infos.textContent = universe.get_infos();
     draw();
-    updateFps();
     requestAnimationFrame(renderLoop);
+    // Update analytics
+    updateFps();
+    updateFrameLength(start);
 }
+
+const updateFrameLength = (start) => {
+    const frame_length = Date.now() - start;
+    frame_lengths.push(frame_length);
+    while(frame_lengths.length > 100) {
+        frame_lengths.shift();
+    }
+    let frame_lengths_sum = 0.0;
+    const count = frame_lengths.length;
+    for (let i = 0 ; i < count ; i += 1) {
+        frame_lengths_sum += frame_lengths[i];
+    }
+    average_frame_length = frame_lengths_sum / count;
+};
 
 const updateFps = () => {
     const gap = Date.now() - last_now;
@@ -215,8 +239,7 @@ const updateFps = () => {
     for (let i = 0 ; i < count ; i+=1) {
         gaps_sum += frame_gaps[i];
     }
-    const fps = 1.0 / (gaps_sum / count / 1000.0);
-    fps_infos.textContent = "FPS : " + fps.toFixed(0);
+    average_fps = 1.0 / (gaps_sum / count / 1000.0);
 };
 
 const draw = () => {
@@ -273,13 +296,17 @@ const drawGravitationalGrid = (resolution) => {
     const grid = universe.get_gravitational_grid(width, height);
     let max = -Infinity;
     let min = Infinity;
-    for (let i = 0 ; i < grid.length ; i++) {
+    for (let i = 0, l = grid.length ; i < l ; i++) {
         grid[i] = Math.sqrt(grid[i]);
         if (grid[i] < min) {
             min = grid[i];
+        } else {
+            // Do nothing
         }
         if (grid[i] > max) {
             max = grid[i];
+        } else {
+            // Do nothing
         }
     }
     for (let i = 0 ; i < width ; i += 1) {
