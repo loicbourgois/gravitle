@@ -305,6 +305,7 @@ const get_example_6_conf = (conf) => {
     conf.default_link_strengh = 1000;
     conf.drag_coefficient = 1;
     conf.stabilise_positions_enabled = false;
+    conf.wrap_around = true;
     conf.particles = [
         {
             "x": 0,
@@ -392,6 +393,7 @@ const get_example_8_conf = (conf) => {
     conf.collision_behavior = 'create-link';
     conf.link_intersection_behavior = 'destroy-links';
     conf.drag_coefficient = 1;
+    conf.gravitational_constant = 1000;
     conf.particles = [
         {
             x: 0.1,

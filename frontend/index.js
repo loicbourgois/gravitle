@@ -26,6 +26,7 @@ const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
 const inputHeight = document.getElementById('input-height');
+const inputDeltaTime = document.getElementById('input-delta-time');
 const inputG = document.getElementById('input-g');
 
 const inputTrajectoriesPeriod = document.getElementById('input-trajectories-period');
@@ -66,6 +67,7 @@ const BASE_CONF = Object.freeze({
 });
 
 let space_croquet_links = null;
+const SPACE_CROQUET_LINK_COUNT = 4;
 
 const universe = Universe.new();
 universe.load_from_json(JSON.stringify(BASE_CONF));
@@ -176,6 +178,13 @@ inputHeight.addEventListener('change', () => {
     const conf = JSON.parse(jsonTextarea.value);
     conf.height = parseFloat(inputHeight.value);
     universe.set_height(conf.height);
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+});
+
+inputDeltaTime.addEventListener('change', () => {
+    const conf = JSON.parse(jsonTextarea.value);
+    conf.delta_time = parseFloat(inputDeltaTime.value);
+    universe.set_delta_time(conf.delta_time);
     jsonTextarea.value = JSON.stringify(conf, null, 4);
 });
 
@@ -590,7 +599,7 @@ const symetry = () => {
 
 const spaceCroquet = () => {
     MODE = 'SPACE-CROQUET';
-    const conf = getParameterizedConf();
+    const conf = jsonCopy(BASE_CONF);
     conf.intersection_behavior = 'destroy-link';
     const particles = [];
     const links = [];
@@ -599,7 +608,7 @@ const spaceCroquet = () => {
     const checkpointLength = conf.width / 8;
     const innerRadius = checkpointLength / 2;
     const zoneRadius = innerRadius + maxDiameter / 2;
-    for (let i = 0 ; i < parseFloat(inputCount.value) / 2.0 ; i += 1) {
+    for (let i = 0 ; i < SPACE_CROQUET_LINK_COUNT ; i += 1) {
         let x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
         let y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
         let i = 1000;
@@ -708,6 +717,7 @@ const getParameterizedConf = () => {
     const conf = jsonCopy(BASE_CONF);
     conf.width = parseFloat(inputWidth.value);
     conf.height = parseFloat(inputHeight.value);
+    conf.delta_time = parseFloat(inputDeltaTime.value);
     conf.gravitational_constant = parseFloat(inputG.value);
     return conf;
 }
@@ -735,6 +745,7 @@ const reload = () => {
     const parsedJson = JSON.parse(jsonTextarea.value);
     inputWidth.value = parsedJson.width;
     inputHeight.value = parsedJson.height;
+    inputDeltaTime.value = parsedJson.delta_time;
     inputG.value = parsedJson.gravitational_constant;
     // Reload universe
     stop();

@@ -429,6 +429,13 @@ impl Universe {
     }
 
     //
+    // Setter for delta_time
+    //
+    pub fn set_delta_time(&mut self, delta_time: f64) {
+        self.delta_time = delta_time;
+    }
+
+    //
     // Returns a String representation of the Universe
     //
     pub fn get_infos(&self) -> String {
