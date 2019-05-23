@@ -67,11 +67,12 @@ a:hover > h1 {
     color: var(--color-main-middle);
 }
 
-input {
+input, select {
     height: 100%;
     background: var(--color-main-dark);
     border: solid 1px var(--color-main-middle);
-    padding: 0.5rem;
+    width: 15em;
+    padding: 0.5em;
 }
 
 .content {
@@ -87,14 +88,6 @@ input {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.right {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 0;
 }
 
 .buttons {
@@ -137,6 +130,26 @@ input {
     padding-left: 0.5rem;
 }
 
-.top-right {
+.panel-top {
     padding-bottom: 1rem;
+}
+
+.options {
+    overflow-y: scroll;
+    padding-right: 1rem;
+}
+
+.outer-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 0;
+    padding-left: 1rem;
+}
+
+.center-panel {
+    display: flex;
+    flex-direction: column;
+    margin: 0 1rem;
 }

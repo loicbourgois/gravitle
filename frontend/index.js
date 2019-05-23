@@ -28,6 +28,18 @@ const inputWidth = document.getElementById('input-width');
 const inputHeight = document.getElementById('input-height');
 const inputDeltaTime = document.getElementById('input-delta-time');
 const inputG = document.getElementById('input-g');
+const buttonGenerateSpaceship = document.getElementById('button-spaceship');
+const selectAlgorithm = document.getElementById('select-algorithm');
+const selectCollisionBehavior = document.getElementById('select-collision-behavior');
+const selectIntersectionBehavior = document.getElementById('select-intersection-behavior');
+const selectLinkIntersectionBehavior = document.getElementById('select-link-intersection-behavior');
+const selectWrapAround = document.getElementById('select-wrap-around');
+const selectStabilisePositionsEnabled = document.getElementById('select-stabilise-positions-enabled');
+const inputMinimalDistanceForGravity = document.getElementById('input-minimal-distance-for-gravity');
+const inputDefaultLinkLength = document.getElementById('input-default-link-length');
+const inputDefaultLinkStrengh = document.getElementById('input-default-link-strengh');
+const inputDragCoefficient = document.getElementById('input-drag-coefficient');
+const inputStabilisePower = document.getElementById('input-stabiliser-power');
 
 const inputTrajectoriesPeriod = document.getElementById('input-trajectories-period');
 const buttonTrajectoriesOn = document.getElementById('button-trajectories-on');
@@ -47,19 +59,19 @@ let SHOW_TRAJECTORIES = null;
 let SHOW_GRAVITATIONAL_FIELD = null;
 
 const BASE_CONF = Object.freeze({
+    algorithm: 'verlet',
+    collision_behavior: 'do-nothing',
+    intersection_behavior: 'do-nothing',
+    link_intersection_behavior: 'do-nothing',
+    wrap_around: false,
     width: 200,
     height: 200,
     delta_time: 0.01,
     gravitational_constant: 66.74,
-    minimal_distance_for_gravity: 0.1,
-    algorithm: 'verlet',
-    intersection_behavior: 'do-nothing',
-    collision_behavior: 'do-nothing',
-    link_intersection_behavior: 'do-nothing',
+    minimal_distance_for_gravity: 1.0,
     default_link_length: 10,
-    default_link_strengh: 1000,
+    default_link_strengh: 100,
     drag_coefficient: 0.0,
-    wrap_around: false,
     stabilise_positions_enabled: false,
     stabiliser_power: 10,
     particles: [],
@@ -160,32 +172,68 @@ buttonGravitationalFieldOff.addEventListener('click', () => {
     gravitationalFieldOff();
 });
 
+buttonGenerateSpaceship.addEventListener('click', () => {
+    generateSpaceship();
+});
+
+selectAlgorithm.addEventListener('change', () => {
+    updateConf();
+});
+
+selectCollisionBehavior.addEventListener('change', () => {
+    updateConf();
+});
+
+selectIntersectionBehavior.addEventListener('change', () => {
+    updateConf();
+});
+
+selectLinkIntersectionBehavior.addEventListener('change', () => {
+    updateConf();
+});
+
+selectWrapAround.addEventListener('change', () => {
+    updateConf();
+});
+
 inputG.addEventListener('change', () => {
-    const conf = JSON.parse(jsonTextarea.value);
-    conf.gravitational_constant = parseFloat(inputG.value);
-    universe.set_gravitational_constant(conf.gravitational_constant);
-    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    updateConf();
 });
 
 inputWidth.addEventListener('change', () => {
-    const conf = JSON.parse(jsonTextarea.value);
-    conf.width = parseFloat(inputWidth.value);
-    universe.set_width(conf.width);
-    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    updateConf();
 });
 
 inputHeight.addEventListener('change', () => {
-    const conf = JSON.parse(jsonTextarea.value);
-    conf.height = parseFloat(inputHeight.value);
-    universe.set_height(conf.height);
-    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    updateConf();
 });
 
 inputDeltaTime.addEventListener('change', () => {
-    const conf = JSON.parse(jsonTextarea.value);
-    conf.delta_time = parseFloat(inputDeltaTime.value);
-    universe.set_delta_time(conf.delta_time);
-    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    updateConf();
+});
+
+selectStabilisePositionsEnabled.addEventListener('change', () => {
+    updateConf();
+});
+
+inputMinimalDistanceForGravity.addEventListener('change', () => {
+    updateConf();
+});
+
+inputDefaultLinkLength.addEventListener('change', () => {
+    updateConf();
+});
+
+inputDefaultLinkStrengh.addEventListener('change', () => {
+    updateConf();
+});
+
+inputDragCoefficient.addEventListener('change', () => {
+    updateConf();
+});
+
+inputStabilisePower.addEventListener('change', () => {
+    updateConf();
 });
 
 canvas.addEventListener('mousedown', (event) => {
@@ -207,6 +255,75 @@ canvas.addEventListener('mouseup', (event) => {
     launchParticle(mouse_positions);
     mouse_positions = null;
 });
+
+const updateConf = () => {
+    const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
+    universe.set_algorithm_from_string(conf.algorithm);
+    universe.set_gravitational_constant(conf.gravitational_constant);
+    universe.set_width(conf.width);
+    universe.set_height(conf.height);
+    universe.set_delta_time(conf.delta_time);
+    universe.set_collision_behavior_from_string(conf.collision_behavior);
+    universe.set_intersection_behavior_from_string(conf.intersection_behavior);
+    universe.set_link_intersection_behavior_from_string(conf.link_intersection_behavior);
+    universe.set_wrap_around(conf.wrap_around);
+    universe.set_stabilise_positions_enabled(conf.stabilise_positions_enabled);
+    universe.set_minimal_distance_for_gravity(conf.minimal_distance_for_gravity);
+    universe.set_default_link_length(conf.default_link_length);
+    universe.set_default_link_strengh(conf.default_link_strengh);
+    universe.set_drag_coefficient(conf.drag_coefficient);
+    universe.set_stabiliser_power(conf.stabiliser_power);
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+}
+
+const getParameterizedConf = (conf) => {
+    conf.algorithm = selectAlgorithm.options[selectAlgorithm.selectedIndex].value;
+    conf.gravitational_constant = parseFloat(inputG.value);
+    conf.width = parseFloat(inputWidth.value);
+    conf.height = parseFloat(inputHeight.value);
+    conf.delta_time = parseFloat(inputDeltaTime.value);
+    conf.collision_behavior = selectCollisionBehavior.options[selectCollisionBehavior.selectedIndex].value;
+    conf.intersection_behavior = selectIntersectionBehavior.options[selectIntersectionBehavior.selectedIndex].value;
+    conf.link_intersection_behavior = selectLinkIntersectionBehavior.options[selectLinkIntersectionBehavior.selectedIndex].value;
+    conf.wrap_around = selectWrapAround.options[selectWrapAround.selectedIndex].value === 'true';
+    conf.stabilise_positions_enabled =
+        selectStabilisePositionsEnabled.options[selectStabilisePositionsEnabled.selectedIndex].value === 'true';
+    conf.minimal_distance_for_gravity = parseFloat(inputMinimalDistanceForGravity.value);
+    conf.default_link_length = parseFloat(inputDefaultLinkLength.value);
+    conf.default_link_strengh = parseFloat(inputDefaultLinkStrengh.value);
+    conf.drag_coefficient = parseFloat(inputDragCoefficient.value);
+    conf.stabiliser_power = parseInt(inputStabilisePower.value);
+    return conf;
+}
+
+const reload = () => {
+    // Reload parameters values fro json
+    const parsedJson = JSON.parse(jsonTextarea.value);
+    selectAlgorithm.value = parsedJson.algorithm;
+    inputWidth.value = parsedJson.width;
+    inputHeight.value = parsedJson.height;
+    inputDeltaTime.value = parsedJson.delta_time;
+    inputG.value = parsedJson.gravitational_constant;
+    selectCollisionBehavior.value = parsedJson.collision_behavior;
+    selectIntersectionBehavior.value = parsedJson.intersection_behavior;
+    selectLinkIntersectionBehavior.value = parsedJson.link_intersection_behavior;
+    selectWrapAround.value = parsedJson.wrap_around;
+    selectStabilisePositionsEnabled.value = parsedJson.stabilise_positions_enabled;
+    inputMinimalDistanceForGravity.value = parsedJson.minimal_distance_for_gravity;
+    inputDefaultLinkLength.value = parsedJson.default_link_length;
+    inputDefaultLinkStrengh.value = parsedJson.default_link_strengh;
+    inputDragCoefficient.value = parsedJson.drag_coefficient;
+    inputStabilisePower.value = parsedJson.stabiliser_power;
+    // Reload universe
+    stop();
+    universe.reset();
+    launchers.length = 0;
+    interval = null;
+    time = null;
+    delta = null;
+    universe.load_from_json(jsonTextarea.value);
+    start();
+};
 
 const renderLoop = () => {
     // Setup analytics
@@ -541,11 +658,11 @@ const loadExample8 = () => {
 
 const randomize = () => {
     MODE = null;
-    const conf = getParameterizedConf();
+    const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
     const particles = [];
     for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 1) {
-        const x = getRandomIntInclusive(- conf.width / 10, conf.width / 10);
-        const y = getRandomIntInclusive(- conf.height / 5, conf.height / 5);
+        const x = getRandomNumber(- conf.width / 5, conf.width / 5);
+        const y = getRandomNumber(- conf.height / 5, conf.height / 5);
         const mass = getRandomNumber(0.5, 5.0);
         const fixed = false;
         const diameter = mass;
@@ -558,22 +675,18 @@ const randomize = () => {
         });
     }
     conf.particles = particles;
+    conf.links = [];
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
 
 const symetry = () => {
     MODE = 'SYMETRY';
-    const conf = getParameterizedConf();
-    conf.stabilise_positions_enabled = true;
-    conf.stabiliser_power = 10;
-    conf.default_link_strengh = 0;
-    conf.intersection_behavior = 'destroy-link';
-    conf.collision_behavior = 'create-link';
+    const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
     const particles = [];
-    for (let i = 0 ; i < parseFloat(inputCount.value) / 2 ; i += 1) {
-        const x = getRandomIntInclusive(- conf.width / 10, conf.width / 10);
-        const y = getRandomIntInclusive(- conf.height / 5, conf.height / 5);
+    for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 2) {
+        const x = getRandomNumber(- conf.width / 5, conf.width / 5);
+        const y = getRandomNumber(- conf.height / 5, conf.height / 5);
         const mass = getRandomNumber(0.5, 5.0);
         const fixed = false;
         const diameter = mass;
@@ -593,6 +706,7 @@ const symetry = () => {
         });
     }
     conf.particles = particles;
+    conf.links = [];
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reload();
 }
@@ -601,6 +715,7 @@ const spaceCroquet = () => {
     MODE = 'SPACE-CROQUET';
     const conf = jsonCopy(BASE_CONF);
     conf.intersection_behavior = 'destroy-link';
+    conf.wrap_around = true;
     const particles = [];
     const links = [];
     const zones = [];
@@ -680,6 +795,61 @@ const spaceCroquet = () => {
     reload();
 }
 
+const generateSpaceship = () => {
+    MODE = 'SPACE-SHIP';
+    const conf = jsonCopy(BASE_CONF);
+    conf.collision_behavior = 'create-link';
+    conf.intersection_behavior = 'do-nothing';
+    conf.link_intersection_behavior = 'do-nothing';
+    conf.gravitational_constant = 10;
+    conf.default_link_length = 10;
+    conf.default_link_strengh = 1000;
+    conf.drag_coefficient = 1;
+    conf.wrap_around = false;
+    conf.stabilise_positions_enabled = false;
+    conf.stabiliser_power = 10;
+    conf.minimal_distance_for_gravity = 1.0;
+    const COUNT = 16;
+    const DIVISOR = 30;
+    const particles = [];
+    const minDiameter = 4.0;
+    const maxDiameter = 5.0;
+    const MASS = 1.0;
+    const diameter = getRandomNumber(minDiameter, maxDiameter);
+    particles.push({
+        x: 0,
+        y: 0,
+        mass: MASS,
+        diameter: diameter
+    });
+    particles.push({
+        x: 0,
+        y: 0,
+        mass: MASS,
+        diameter: diameter
+    });
+    for (let i = 2 ; i < COUNT ; i += 2) {
+        const x = getRandomNumber(- conf.width / DIVISOR, conf.width / DIVISOR);
+        const y = getRandomNumber(- conf.height / DIVISOR, conf.height / DIVISOR);
+        const diameter = getRandomNumber(minDiameter, maxDiameter);
+        particles.push({
+            x: x,
+            y: y,
+            mass: MASS,
+            diameter: diameter
+        });
+        particles.push({
+            x: -x,
+            y: y,
+            mass: MASS,
+            diameter: diameter
+        });
+    }
+    conf.particles = particles;
+    jsonTextarea.value = JSON.stringify(conf, null, 4);
+    reload();
+}
+
 const getCoordinateRotatedAround = (center, point, angle) => {
     const angleRad = (angle) * (Math.PI / 180);
     return {
@@ -713,15 +883,6 @@ const get_distance_squared = (x1, y1, x2, y2) => {
     return delta_x * delta_x + delta_y * delta_y;
 }
 
-const getParameterizedConf = () => {
-    const conf = jsonCopy(BASE_CONF);
-    conf.width = parseFloat(inputWidth.value);
-    conf.height = parseFloat(inputHeight.value);
-    conf.delta_time = parseFloat(inputDeltaTime.value);
-    conf.gravitational_constant = parseFloat(inputG.value);
-    return conf;
-}
-
 const jsonCopy = (object) => {
     return JSON.parse(JSON.stringify(object));
 }
@@ -739,24 +900,6 @@ function getRandomIntInclusive(min, max) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
-const reload = () => {
-    // Reload parameters values fro json
-    const parsedJson = JSON.parse(jsonTextarea.value);
-    inputWidth.value = parsedJson.width;
-    inputHeight.value = parsedJson.height;
-    inputDeltaTime.value = parsedJson.delta_time;
-    inputG.value = parsedJson.gravitational_constant;
-    // Reload universe
-    stop();
-    universe.reset();
-    launchers.length = 0;
-    interval = null;
-    time = null;
-    delta = null;
-    universe.load_from_json(jsonTextarea.value);
-    start();
-};
 
 const getIndex = (row, column) => {
     return row * width + column;

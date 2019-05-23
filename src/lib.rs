@@ -251,7 +251,8 @@ impl Universe {
     //
     pub fn load_from_json(&mut self, json_string: String) {
         let json_parsed = &json::parse(&json_string).unwrap();
-        self.width = json_parsed["minimal_distance_for_gravity"].as_f64().unwrap_or(self.minimal_distance_for_gravity);
+        self.minimal_distance_for_gravity =
+            json_parsed["minimal_distance_for_gravity"].as_f64().unwrap_or(self.minimal_distance_for_gravity);
         self.width = json_parsed["width"].as_f64().unwrap_or(self.width);
         self.height = json_parsed["height"].as_f64().unwrap_or(self.height);
         self.delta_time = json_parsed["delta_time"].as_f64().unwrap_or(self.delta_time);
@@ -264,34 +265,11 @@ impl Universe {
         self.stabilise_positions_enabled = json_parsed["stabilise_positions_enabled"]
             .as_bool()
             .unwrap_or(self.stabilise_positions_enabled);
-        if json_parsed["algorithm"].to_string()  != "null" {
-            self.algorithm = Algorithm::from_string(json_parsed["algorithm"].to_string());
-        } else {
-            // Do nothing
-        }
-        if json_parsed["intersection_behavior"].to_string() != "null" {
-            self.intersection_behavior = IntersectionBehavior::from_string(json_parsed["intersection_behavior"].to_string());
-        } else {
-            // Do nothing
-        }
-        if json_parsed["collision_behavior"].to_string() != "null" {
-            self.collision_behavior = CollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
-        } else {
-            // Do nothing
-        }
-        if json_parsed["link_intersection_behavior"].to_string() != "null" {
-            self.link_intersection_behavior = LinkIntersectionBehavior::from_string(
-                json_parsed["link_intersection_behavior"].to_string()
-            );
-        } else {
-            // Do nothing
-        }
-        self.particles = Vec::new();
-        let particles_data = &json_parsed["particles"];
-        for i in 0..particles_data.len() {
-            let particle_json_string = & particles_data[i];
-            self.add_particle_json(particle_json_string.to_string());
-        }
+        self.set_algorithm_from_string(json_parsed["algorithm"].to_string());
+        self.set_collision_behavior_from_string(json_parsed["collision_behavior"].to_string());
+        self.set_intersection_behavior_from_string(json_parsed["intersection_behavior"].to_string());
+        self.set_link_intersection_behavior_from_string(json_parsed["link_intersection_behavior"].to_string());
+        self.set_particles_json((&json_parsed["particles"]).to_string());
         self.set_links_json((&json_parsed["links"]).to_string());
     }
 
@@ -311,11 +289,7 @@ impl Universe {
         self.links_to_destroy_indexes.clear();
         self.links_to_create.clear();
         self.reset_forces();
-        if self.wrap_around {
-            self.add_gravity_forces_wrap_around();
-        } else {
-            self.add_gravity_forces();
-        }
+        self.add_gravity_forces();
         self.add_link_forces();
         self.add_drag_forces();
         self.update_acceleration();
@@ -334,13 +308,10 @@ impl Universe {
         } else {
             // Do nothing
         }
-        match self.stabilise_positions_enabled {
-            true => {
-                self.stabilise_positions();
-            },
-            false => {
-                // Do nothing
-            }
+        if self.stabilise_positions_enabled {
+            self.stabilise_positions();
+        } else {
+            // Do nothing
         }
         self.update_trajectories();
         self.update_links_coordinates();
@@ -377,9 +348,20 @@ impl Universe {
     //
     pub fn reset(&mut self) {
         self.step = 0;
-        self.particles = Vec::new();
-        self.trajectories = Vec::new();
+        self.reset_particles();
         self.reset_links();
+    }
+
+    //
+    // Reset particles and set them from json
+    //
+    pub fn set_particles_json(&mut self, json_string: String ) {
+        self.reset_particles();
+        let particles_data = &json::parse(&json_string).unwrap();
+        for i in 0..particles_data.len() {
+            let particle_json_string = & particles_data[i];
+            self.add_particle_json(particle_json_string.to_string());
+        }
     }
 
     //
@@ -405,6 +387,101 @@ impl Universe {
         self.add_particle();
         let last_index = self.particles.len() - 1;
         self.particles[last_index].load_from_json(json_string);
+    }
+
+    //
+    // Setter for algorithm
+    //
+    pub fn set_algorithm_from_string(&mut self, algorithm_string: String) {
+        if algorithm_string != "null" {
+            self.algorithm = Algorithm::from_string(algorithm_string);
+        } else {
+            // Do nothing
+        }
+    }
+
+    //
+    // Setter for collision_behavior
+    //
+    pub fn set_collision_behavior_from_string(&mut self, collision_behavior_string: String) {
+        if collision_behavior_string != "null" {
+            self.collision_behavior = CollisionBehavior::from_string(collision_behavior_string);
+        } else {
+            // Do nothing
+        }
+    }
+
+    //
+    // Setter for intersection_behavior
+    //
+    pub fn set_intersection_behavior_from_string(&mut self, intersection_behavior_string: String) {
+        if intersection_behavior_string != "null" {
+            self.intersection_behavior = IntersectionBehavior::from_string(intersection_behavior_string);
+        } else {
+            // Do nothing
+        }
+    }
+
+    //
+    // Setter for link_intersection_behavior
+    //
+    pub fn set_link_intersection_behavior_from_string(&mut self, link_intersection_behavior_string: String) {
+        if link_intersection_behavior_string != "null" {
+            self.link_intersection_behavior = LinkIntersectionBehavior::from_string(
+                link_intersection_behavior_string
+            );
+        } else {
+            // Do nothing
+        }
+    }
+
+    //
+    // Setter for wrap_around
+    //
+    pub fn set_wrap_around(&mut self, wrap_around: bool) {
+        self.wrap_around = wrap_around;
+    }
+
+    //
+    // Setter for minimal_distance_for_gravity
+    //
+    pub fn set_minimal_distance_for_gravity(&mut self, minimal_distance_for_gravity: f64) {
+        self.minimal_distance_for_gravity = minimal_distance_for_gravity;
+    }
+
+    //
+    // Setter for default_link_length
+    //
+    pub fn set_default_link_length(&mut self, default_link_length: f64) {
+        self.default_link_length = default_link_length;
+    }
+
+    //
+    // Setter for default_link_strengh
+    //
+    pub fn set_default_link_strengh(&mut self, default_link_strengh: f64) {
+        self.default_link_strengh = default_link_strengh;
+    }
+
+    //
+    // Setter for drag_coefficient
+    //
+    pub fn set_drag_coefficient(&mut self, drag_coefficient: f64) {
+        self.drag_coefficient = drag_coefficient;
+    }
+
+    //
+    // Setter for stabilise_positions_enabled
+    //
+    pub fn set_stabilise_positions_enabled(&mut self, stabilise_positions_enabled: bool) {
+        self.stabilise_positions_enabled = stabilise_positions_enabled;
+    }
+
+    //
+    // Setter for stabiliser_power
+    //
+    pub fn set_stabiliser_power(&mut self, stabiliser_power: i32) {
+        self.stabiliser_power = stabiliser_power;
     }
 
     //
@@ -583,44 +660,6 @@ impl Universe {
 }
 
 //
-// Implements the Display trait for Universe
-//
-impl fmt::Display for Universe {
-
-    //
-    // Format the Universe as a String
-    //
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if writeln!(f, "Size : {} x {}", self.width, self.height).is_ok() {
-            // NTD
-        } else {
-            console_error!("Could not write");
-        }
-        if writeln!(f, "Step : {}", self.step).is_ok() {
-            // NTD
-        } else {
-            console_error!("Could not write");
-        }
-        if writeln!(f, "Tick : {:.2} ms", self.tick_average_duration).is_ok() {
-            // NTD
-        } else {
-            console_error!("Could not write");
-        }
-        if writeln!(f, "Particles : {:.2}", self.particles.len()).is_ok() {
-            // NTD
-        } else {
-            console_error!("Could not write");
-        }
-        if writeln!(f, "Links : {:.2}", self.links.len()).is_ok() {
-            // NTD
-        } else {
-            console_error!("Could not write");
-        }
-        Ok(())
-    }
-}
-
-//
 // Private methods
 //
 impl Universe {
@@ -700,6 +739,17 @@ impl Universe {
     // Add gravity forces
     //
     fn add_gravity_forces (&mut self) {
+        if self.wrap_around {
+            self.add_gravity_forces_wrap_around();
+        } else {
+            self.add_gravity_forces_no_wrap_around();
+        }
+    }
+
+    //
+    // Add gravity forces when wrap_around is disabled
+    //
+    fn add_gravity_forces_no_wrap_around (&mut self) {
         let particles = self.particles.clone();
         for particle in &mut self.particles {
             if particle.is_enabled() {
@@ -1038,6 +1088,15 @@ impl Universe {
     }
 
     //
+    // Reset particles
+    //
+    fn reset_particles(&mut self) {
+        self.particles.clear();
+        self.trajectories.clear();
+        self.particle_index_to_links_indexes.clear();
+    }
+
+    //
     // Reset links
     //
     fn reset_links(&mut self) {
@@ -1195,6 +1254,10 @@ impl Universe {
     //
     // Add a Particle to the Universe
     //
+    // Add the particle itself
+    // Add an empty trajectory for the particle
+    // Add an empty list of links indexes for the particle.
+    //
     fn add_particle(&mut self) {
         self.particles.push(Particle::new(
             self.particle_counter
@@ -1271,6 +1334,44 @@ impl Universe {
             .performance()
             .expect("should have a Performance")
             .now()
+    }
+}
+
+//
+// Implements the Display trait for Universe
+//
+impl fmt::Display for Universe {
+
+    //
+    // Format the Universe as a String
+    //
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if writeln!(f, "Size : {} x {}", self.width, self.height).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        if writeln!(f, "Step : {}", self.step).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        if writeln!(f, "Tick : {:.2} ms", self.tick_average_duration).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        if writeln!(f, "Particles : {:.2}", self.particles.len()).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        if writeln!(f, "Links : {:.2}", self.links.len()).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        Ok(())
     }
 }
 
