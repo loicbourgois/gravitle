@@ -154,7 +154,7 @@ impl Particle {
     // Add gravity forces exerced on the Particle by the rest of the Particles
     // in a Universe with wrap_around enabled
     //
-    pub fn add_gravity_forces_wrap_around (
+    pub fn add_gravity_forces_wrap_around_fixed_clone_count (
             & mut self,
             particles: &[Particle],
             gravitational_constant: f64,
@@ -167,7 +167,37 @@ impl Particle {
         } else {
             for particle in particles {
                 if particle.id != self.id && particle.is_enabled() {
-                    let force = self.get_gravitational_force_wrap_around(
+                    let force = self.get_gravitational_force_wrap_around_fixed_clone_count(
+                        particle.x,
+                        particle.y,
+                        particle.mass,
+                        world_width,
+                        world_height,
+                        minimal_distance_for_gravity,
+                        gravitational_constant
+                    );
+                    self.add_force(force.0, force.1);
+                } else {
+                    // NTD
+                }
+            }
+        }
+    }
+
+    pub fn add_gravity_forces_wrap_around_variable_clone_count (
+            & mut self,
+            particles: &[Particle],
+            gravitational_constant: f64,
+            world_width: f64,
+            world_height: f64,
+            minimal_distance_for_gravity: f64
+    ) {
+        if self.is_fixed {
+            // NTD
+        } else {
+            for particle in particles {
+                if particle.id != self.id && particle.is_enabled() {
+                    let force = self.get_gravitational_force_wrap_around_variable_clone_count(
                         particle.x,
                         particle.y,
                         particle.mass,
@@ -442,7 +472,7 @@ impl Particle {
     // Get gravitational forces exerced by one particle on another particle
     // if wrap around is enabled
     //
-    pub fn get_gravitational_force_wrap_around(
+    pub fn get_gravitational_force_wrap_around_fixed_clone_count(
             &self,
             x: f64,
             y: f64,
@@ -453,7 +483,7 @@ impl Particle {
             gravitational_constant: f64
     ) -> (f64, f64) {
         let mut forces = (0.0, 0.0);
-        let clones_coordinates = Particle::get_wrap_around_clones_coordinates(
+        let clones_coordinates = Particle::get_wrap_around_clones_coordinates_fixed_count(
             self.x,
             self.y,
             x,
@@ -467,6 +497,42 @@ impl Particle {
             );
             forces.0 += force.0;
             forces.1 += force.1;
+        }
+        return forces;
+    }
+
+    pub fn get_gravitational_force_wrap_around_variable_clone_count(
+            &self,
+            x: f64,
+            y: f64,
+            mass: f64,
+            universe_width: f64,
+            universe_height: f64,
+            minimal_distance_for_gravity: f64,
+            gravitational_constant: f64
+    ) -> (f64, f64) {
+        let mut forces = (0.0, 0.0);
+        let clones_coordinates = Particle::get_wrap_around_clones_coordinates_variable_count(
+            self.x,
+            self.y,
+            x,
+            y,
+            universe_width,
+            universe_height
+        );
+        for clone_option in clones_coordinates.iter() {
+            match clone_option {
+                Some(clone) => {
+                    let force = self.get_gravitational_force(
+                        clone.x, clone.y, mass, minimal_distance_for_gravity, gravitational_constant
+                    );
+                    forces.0 += force.0;
+                    forces.1 += force.1;
+                },
+                None => {
+                    // Do nothing
+                }
+            }
         }
         return forces;
     }
@@ -523,7 +589,7 @@ impl Particle {
     //
     // Used to compute gravity through the visible edges of the Universe.
     //
-    fn get_wrap_around_clones_coordinates(
+    fn get_wrap_around_clones_coordinates_fixed_count(
             x1: f64, y1: f64,
             x2: f64, y2: f64,
             width: f64, height: f64
@@ -572,15 +638,15 @@ impl Particle {
         } else if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
             return [
                 Point {x: x_average, y: ys[0].value},
-                Point {x: x_average, y: ys[0].value},
                 Point {x: x_average, y: ys[1].value},
+                Point {x: x_average, y: ys[0].value},
                 Point {x: x_average, y: ys[1].value}
             ];
         } else if (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
             return [
                 Point {x: xs[0].value, y: y_average},
-                Point {x: xs[0].value, y: y_average},
                 Point {x: xs[1].value, y: y_average},
+                Point {x: xs[0].value, y: y_average},
                 Point {x: xs[1].value, y: y_average}
             ];
         } else {
@@ -589,6 +655,76 @@ impl Particle {
                 Point {x: xs[0].value, y: ys[1].value},
                 Point {x: xs[1].value, y: ys[0].value},
                 Point {x: xs[1].value, y: ys[1].value}
+            ];
+        }
+    }
+
+    fn get_wrap_around_clones_coordinates_variable_count(
+            x1: f64, y1: f64,
+            x2: f64, y2: f64,
+            width: f64, height: f64
+    ) -> [Option<Point>; 4] {
+        let mut xs = [
+            ValueWithDistance {
+                value: x2 - width,
+                d: Particle::get_distance_squared(x1, 0.0, x2 - width, 0.0)
+            },
+            ValueWithDistance {
+                value: x2,
+                d: Particle::get_distance_squared(x1, 0.0, x2, 0.0)
+            },
+            ValueWithDistance {
+                value: x2 + width,
+                d: Particle::get_distance_squared(x1, 0.0, x2 + width, 0.0)
+            }
+        ];
+        let mut ys = [
+            ValueWithDistance {
+                value: y2 - height,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 - height)
+            },
+            ValueWithDistance {
+                value: y2,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2)
+            },
+            ValueWithDistance {
+                value: y2 + height,
+                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 + height)
+            }
+        ];
+        // Order by ascending distance
+        xs.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
+        ys.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
+        let x_average = (x1+x2)/2.0;
+        let y_average = (y1+y2)/2.0;
+        //
+        if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
+            return [
+                Some(Point {x: x_average, y: y_average}),
+                None,
+                None,
+                None
+            ];
+        } else if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN {
+            return [
+                Some(Point {x: x_average, y: ys[0].value}),
+                Some(Point {x: x_average, y: ys[1].value}),
+                None,
+                None
+            ];
+        } else if (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
+            return [
+                Some(Point {x: xs[0].value, y: y_average}),
+                Some(Point {x: xs[1].value, y: y_average}),
+                None,
+                None
+            ];
+        } else {
+            return [
+                Some(Point {x: xs[0].value, y: ys[0].value}),
+                Some(Point {x: xs[0].value, y: ys[1].value}),
+                Some(Point {x: xs[1].value, y: ys[0].value}),
+                Some(Point {x: xs[1].value, y: ys[1].value})
             ];
         }
     }

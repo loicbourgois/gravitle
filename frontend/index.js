@@ -34,6 +34,7 @@ const selectCollisionBehavior = document.getElementById('select-collision-behavi
 const selectIntersectionBehavior = document.getElementById('select-intersection-behavior');
 const selectLinkIntersectionBehavior = document.getElementById('select-link-intersection-behavior');
 const selectWrapAround = document.getElementById('select-wrap-around');
+const selectFixedCloneCount = document.getElementById('select-fixed-clone-count');
 const selectStabilisePositionsEnabled = document.getElementById('select-stabilise-positions-enabled');
 const inputMinimalDistanceForGravity = document.getElementById('input-minimal-distance-for-gravity');
 const inputDefaultLinkLength = document.getElementById('input-default-link-length');
@@ -64,6 +65,7 @@ const BASE_CONF = Object.freeze({
     intersection_behavior: 'do-nothing',
     link_intersection_behavior: 'do-nothing',
     wrap_around: false,
+    fixed_clone_count: true,
     width: 200,
     height: 200,
     delta_time: 0.01,
@@ -196,6 +198,10 @@ selectWrapAround.addEventListener('change', () => {
     updateConf();
 });
 
+selectFixedCloneCount.addEventListener('change', () => {
+    updateConf();
+});
+
 inputG.addEventListener('change', () => {
     updateConf();
 });
@@ -267,6 +273,7 @@ const updateConf = () => {
     universe.set_intersection_behavior_from_string(conf.intersection_behavior);
     universe.set_link_intersection_behavior_from_string(conf.link_intersection_behavior);
     universe.set_wrap_around(conf.wrap_around);
+    universe.set_fixed_clone_count(conf.fixed_clone_count);
     universe.set_stabilise_positions_enabled(conf.stabilise_positions_enabled);
     universe.set_minimal_distance_for_gravity(conf.minimal_distance_for_gravity);
     universe.set_default_link_length(conf.default_link_length);
@@ -286,6 +293,7 @@ const getParameterizedConf = (conf) => {
     conf.intersection_behavior = selectIntersectionBehavior.options[selectIntersectionBehavior.selectedIndex].value;
     conf.link_intersection_behavior = selectLinkIntersectionBehavior.options[selectLinkIntersectionBehavior.selectedIndex].value;
     conf.wrap_around = selectWrapAround.options[selectWrapAround.selectedIndex].value === 'true';
+    conf.fixed_clone_count = selectFixedCloneCount.options[selectFixedCloneCount.selectedIndex].value === 'true';
     conf.stabilise_positions_enabled =
         selectStabilisePositionsEnabled.options[selectStabilisePositionsEnabled.selectedIndex].value === 'true';
     conf.minimal_distance_for_gravity = parseFloat(inputMinimalDistanceForGravity.value);
@@ -308,6 +316,7 @@ const reload = () => {
     selectIntersectionBehavior.value = parsedJson.intersection_behavior;
     selectLinkIntersectionBehavior.value = parsedJson.link_intersection_behavior;
     selectWrapAround.value = parsedJson.wrap_around;
+    selectFixedCloneCount.value = parsedJson.fixed_clone_count;
     selectStabilisePositionsEnabled.value = parsedJson.stabilise_positions_enabled;
     inputMinimalDistanceForGravity.value = parsedJson.minimal_distance_for_gravity;
     inputDefaultLinkLength.value = parsedJson.default_link_length;
@@ -438,7 +447,7 @@ const drawGravitationalGrid = (resolution) => {
     for (let i = 0 ; i < width ; i += 1) {
         for (let j = 0 ; j < height ; j += 1) {
             const value = (grid[i * width + j] - min) / (max-min) * 255;
-            context.fillStyle = `rgba(${value}, ${value}, ${value}, 1)`;
+            context.fillStyle = `rgba(${value*.9}, ${value*.9}, ${value}, 1)`;
             context.fillRect(i * canvas.width / width,
                 (height-1-j) * canvas.height / height,
                 canvas.width / width,
@@ -491,7 +500,7 @@ const drawSegments = () => {
     const unitX = canvas.width / universeWidth;
     const unitY = canvas.height / universeHeight;
     context.strokeStyle = "#eee";
-    context.lineWidth = 4;
+    context.lineWidth = 2;
     for (let id = 0 ; id < linksCount ; id += 1 ) {
         let i = id * LINK_SIZE;
         const p1 = getPositionFromUniverseToCanvas({
@@ -517,7 +526,7 @@ const drawParticles = () => {
     const unitX = canvas.width / universe.get_width();
     const unitY = canvas.height / universe.get_height();
     context.strokeStyle = "#FFF";
-    context.lineWidth = 4;
+    context.lineWidth = 2;
     for (let i = 0 ; i < particles.length ; i+= PARTICLE_SIZE ) {
         const position = getPositionFromUniverseToCanvas({
             x: particles[i + 0],
@@ -542,7 +551,7 @@ const drawMouseInteraction = () => {
         const unitX = canvas.width / universe.get_width();
         const diameter = (unitX / 2);
         context.strokeStyle = "#eef";
-        context.lineWidth = 4;
+        context.lineWidth = 2;
         context.beginPath();
         context.arc(
             mouse_positions.down.x,
@@ -805,7 +814,6 @@ const generateSpaceship = () => {
     conf.default_link_length = 10;
     conf.default_link_strengh = 1000;
     conf.drag_coefficient = 1;
-    conf.wrap_around = false;
     conf.stabilise_positions_enabled = false;
     conf.stabiliser_power = 10;
     conf.minimal_distance_for_gravity = 1.0;

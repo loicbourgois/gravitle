@@ -198,7 +198,8 @@ pub struct Universe {
     default_link_length: f64,
     default_link_strengh: f64,
     drag_coefficient: f64,
-    wrap_around: bool
+    wrap_around: bool,
+    fixed_clone_count: bool
 }
 
 //
@@ -242,7 +243,8 @@ impl Universe {
             default_link_length: 10.0,
             default_link_strengh: 100.0,
             drag_coefficient: 0.5,
-            wrap_around: true
+            wrap_around: true,
+            fixed_clone_count: true
         }
     }
 
@@ -262,6 +264,7 @@ impl Universe {
         self.default_link_strengh = json_parsed["default_link_strengh"].as_f64().unwrap_or(self.default_link_strengh);
         self.drag_coefficient = json_parsed["drag_coefficient"].as_f64().unwrap_or(self.drag_coefficient);
         self.wrap_around = json_parsed["wrap_around"].as_bool().unwrap_or(self.wrap_around);
+        self.fixed_clone_count = json_parsed["fixed_clone_count"].as_bool().unwrap_or(self.fixed_clone_count);
         self.stabilise_positions_enabled = json_parsed["stabilise_positions_enabled"]
             .as_bool()
             .unwrap_or(self.stabilise_positions_enabled);
@@ -510,6 +513,13 @@ impl Universe {
     //
     pub fn set_delta_time(&mut self, delta_time: f64) {
         self.delta_time = delta_time;
+    }
+
+    //
+    // Setter for fixed_clone_count
+    //
+    pub fn set_fixed_clone_count(&mut self, fixed_clone_count: bool) {
+        self.fixed_clone_count = fixed_clone_count;
     }
 
     //
@@ -771,13 +781,23 @@ impl Universe {
         let particles = self.particles.clone();
         for particle in &mut self.particles {
             if particle.is_enabled() {
-                particle.add_gravity_forces_wrap_around(
-                    & particles,
-                    self.gravitational_constant,
-                    self.width,
-                    self.height,
-                    self.minimal_distance_for_gravity
-                );
+                if self.fixed_clone_count {
+                    particle.add_gravity_forces_wrap_around_fixed_clone_count(
+                        & particles,
+                        self.gravitational_constant,
+                        self.width,
+                        self.height,
+                        self.minimal_distance_for_gravity
+                    );
+                } else {
+                    particle.add_gravity_forces_wrap_around_variable_clone_count(
+                        & particles,
+                        self.gravitational_constant,
+                        self.width,
+                        self.height,
+                        self.minimal_distance_for_gravity
+                    );
+                }
             } else {
                 // Do nothing
             }
@@ -1301,19 +1321,31 @@ impl Universe {
         let mut field = (0.0, 0.0);
         for particle in self.particles.iter() {
             if particle.is_enabled() {
-                let particle_gravitational_forces = if self.wrap_around {
-                    particle.get_gravitational_force_wrap_around(
-                        x, y, mass,
-                        self.width, self.height,
-                        self.minimal_distance_for_gravity,
-                        self.gravitational_constant
-                    )
-                } else {
-                    particle.get_gravitational_force(
-                        x, y, mass,
-                        self.minimal_distance_for_gravity,
-                        self.gravitational_constant
-                    )
+                let particle_gravitational_forces;
+                match (self.wrap_around, self.fixed_clone_count) {
+                    (true, true) => {
+                        particle_gravitational_forces = particle.get_gravitational_force_wrap_around_fixed_clone_count(
+                            x, y, mass,
+                            self.width, self.height,
+                            self.minimal_distance_for_gravity,
+                            self.gravitational_constant
+                        );
+                    },
+                    (true, false) => {
+                        particle_gravitational_forces = particle.get_gravitational_force_wrap_around_variable_clone_count(
+                            x, y, mass,
+                            self.width, self.height,
+                            self.minimal_distance_for_gravity,
+                            self.gravitational_constant
+                        );
+                    },
+                    (false, _) => {
+                        particle_gravitational_forces = particle.get_gravitational_force(
+                            x, y, mass,
+                            self.minimal_distance_for_gravity,
+                            self.gravitational_constant
+                        );
+                    }
                 };
                 field.0 += particle_gravitational_forces.0;
                 field.1 += particle_gravitational_forces.1;
