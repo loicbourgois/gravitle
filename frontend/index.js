@@ -5,7 +5,8 @@ import { memory } from "gravitle/gravitle_bg";
 
 import * as Examples from './examples.js';
 import * as render from './render.js';
-import * as tests from './tests.js';
+import * as Tests from './tests.js';
+import * as utils from './utils.js';
 
 const fps_infos = document.getElementById('fps-infos');
 const infos = document.getElementById('infos');
@@ -24,7 +25,6 @@ const buttonExample5 = document.getElementById('button-example-5');
 const buttonExample6 = document.getElementById('button-example-6');
 const buttonExample7 = document.getElementById('button-example-7');
 const buttonExample8 = document.getElementById('button-example-8');
-const buttonTest9 = document.getElementById('button-test-9');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -45,6 +45,8 @@ const inputDefaultLinkLength = document.getElementById('input-default-link-lengt
 const inputDefaultLinkStrengh = document.getElementById('input-default-link-strengh');
 const inputDragCoefficient = document.getElementById('input-drag-coefficient');
 const inputStabilisePower = document.getElementById('input-stabiliser-power');
+const selectTest = document.getElementById('select-test');
+const buttonRunTest = document.getElementById('button-run-test');
 
 const inputTrajectoriesPeriod = document.getElementById('input-trajectories-period');
 const buttonTrajectoriesOn = document.getElementById('button-trajectories-on');
@@ -63,26 +65,13 @@ let MODE = null;
 let SHOW_TRAJECTORIES = null;
 let SHOW_GRAVITATIONAL_FIELD = null;
 
-const BASE_CONF = Object.freeze({
-    algorithm: 'verlet',
-    collision_behavior: 'do-nothing',
-    intersection_behavior: 'do-nothing',
-    link_intersection_behavior: 'do-nothing',
-    wrap_around: false,
-    wrap_around_behavior: 'do-nothing',
-    fixed_clone_count: true,
-    width: 200,
-    height: 200,
-    delta_time: 0.01,
-    gravitational_constant: 66.74,
-    minimal_distance_for_gravity: 1.0,
-    default_link_length: 10,
-    default_link_strengh: 100,
-    drag_coefficient: 0.0,
-    stabilise_positions_enabled: false,
-    stabiliser_power: 10,
-    particles: [],
-    links: []
+const BASE_CONF = utils.get_base_conf_copy();
+const tests = Tests.get_tests();
+tests.forEach(test => {
+    let option = document.createElement('option');
+    option.appendChild(document.createTextNode(test.title));
+    option.value = test.id;
+    selectTest.appendChild(option);
 });
 
 let space_croquet_links = null;
@@ -159,8 +148,8 @@ buttonExample8.addEventListener('click', () => {
     loadExample8();
 });
 
-buttonTest9.addEventListener('click', () => {
-    loadTest9();
+buttonRunTest.addEventListener('click', () => {
+    runTest();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -521,8 +510,9 @@ const loadExample8 = () => {
     reloadFromJSON();
 }
 
-const loadTest9 = () => {
-    const test = tests.get_test_9(jsonCopy(BASE_CONF));
+const runTest = () => {
+    const testId = selectTest.options[selectTest.selectedIndex].value;
+    const test = Tests.get_test_by_id(testId);
     MODE = test.id;
     jsonTextarea.value = JSON.stringify(test.conf, null, 4);
     reloadFromJSON();

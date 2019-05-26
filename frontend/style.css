@@ -153,3 +153,7 @@ input, select {
     flex-direction: column;
     margin: 0 1rem;
 }
+
+.select-test {
+    width: auto;
+}

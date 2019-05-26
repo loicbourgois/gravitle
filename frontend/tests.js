@@ -1,9 +1,11 @@
+import * as utils from './utils.js';
+
 //
 // Contains a list of Universe configurations used to test the different
 // features of Gravitle.
 //
 
-const get_test_9 = (conf) => {
+const get_test_9 = () => {
     const test = {
         id: 'test_9',
         title: 'Triangle wrapping around',
@@ -14,7 +16,7 @@ const get_test_9 = (conf) => {
             Links should then be destroyed when they intersect and be created
             again when two particle collides.
         `,
-        conf: conf
+        conf: utils.get_base_conf_copy()
     };
     test.conf.wrap_around = true;
     test.conf.drag_coefficient = 0.001;
@@ -56,6 +58,27 @@ const get_test_9 = (conf) => {
     return test;
 };
 
+const get_tests = () => {
+    let list = [];
+    list.push(get_test_9());
+    return list;
+};
+
+const get_test_by_id = (id) => {
+    let tests = get_tests();
+    let return_test = null;
+    tests.forEach(test => {
+        if (test.id === id) {
+            return_test = test;
+        } else {
+            // Do nothing
+        }
+    });
+    return return_test;
+};
+
 export {
-    get_test_9
+    get_test_9,
+    get_test_by_id,
+    get_tests
 };
