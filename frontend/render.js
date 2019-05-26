@@ -97,25 +97,17 @@ const drawTrajectories = (universe, context, period) => {
 }
 
 const drawSegments = (universe, context, memory) => {
-    const linksPointer = universe.get_links();
-    const linksCount = universe.get_links_count();
-    const LINK_SIZE = 7;
-    const links = new Float64Array(memory.buffer, linksPointer, linksCount * LINK_SIZE);
-    const universeWidth = universe.get_width();
-    const universeHeight = universe.get_height();
-    const unitX = canvas.width / universeWidth;
-    const unitY = canvas.height / universeHeight;
+    const link_coordinates = universe.get_links_coordinates_to_draw();
     context.strokeStyle = "#eee";
     context.lineWidth = 2;
-    for (let id = 0 ; id < linksCount ; id += 1 ) {
-        let i = id * LINK_SIZE;
+    for (let i = 0, l = link_coordinates.length ; i < l ; i += 4 ) {
         const p1 = getPositionFromUniverseToCanvas(universe, {
-            x: links[i + 0],
-            y: links[i + 1]
+            x: link_coordinates[i + 0],
+            y: link_coordinates[i + 1]
         });
         const p2 = getPositionFromUniverseToCanvas(universe, {
-            x: links[i + 2],
-            y: links[i + 3]
+            x: link_coordinates[i + 2],
+            y: link_coordinates[i + 3]
         });
         context.beginPath();
         context.moveTo(p1.x, p1.y);
@@ -127,7 +119,7 @@ const drawSegments = (universe, context, memory) => {
 const drawParticles = (universe, context, memory) => {
     const particlesPointer = universe.get_particles();
     const particlesCount = universe.get_particles_count();
-    const PARTICLE_SIZE = 13;
+    const PARTICLE_SIZE = 14;
     const particles = new Float64Array(memory.buffer, particlesPointer, particlesCount * PARTICLE_SIZE);
     const unitX = canvas.width / universe.get_width();
     const unitY = canvas.height / universe.get_height();

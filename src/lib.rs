@@ -3,8 +3,10 @@ mod link;
 mod intersection;
 mod collision;
 mod link_intersection;
+mod link_to_create;
 mod particle;
 mod trajectory;
+mod wrap_around;
 
 extern crate web_sys;
 extern crate wasm_bindgen;
@@ -18,6 +20,8 @@ use particle::Particle;
 use collision::Collision;
 use trajectory::Trajectory;
 use particle::ParticleCollisionBehavior;
+use link_to_create::LinkToCreate;
+use wrap_around::WrapAround;
 
 use std::fmt;
 use std::mem;
@@ -136,6 +140,35 @@ impl LinkIntersectionBehavior {
 }
 
 //
+// Wrap around happens when a moving particle goe outside the universe
+// and teleports on the other edge.
+//
+enum WrapAroundBehavior {
+    DoNothing,
+    DestroyLinks
+}
+
+//
+// WrapAroundBehavior
+//
+impl WrapAroundBehavior {
+
+    //
+    // Convert from String to IntersectionBehavior
+    //
+    fn from_string(value: String) -> WrapAroundBehavior {
+        match value.as_ref() {
+            "do-nothing" => WrapAroundBehavior::DoNothing,
+            "destroy-links" => WrapAroundBehavior::DestroyLinks,
+            _ => {
+                console_error!("Unknown WrapAroundBehavior : {}", value);
+                panic!("Unknown WrapAroundBehavior : {}", value);
+            }
+        }
+    }
+}
+
+//
 // Algorithm used to advance by one step
 //
 enum Algorithm {
@@ -181,6 +214,7 @@ pub struct Universe {
     links: Vec<Link>,
     intersections: Vec<Intersection>,
     collisions: Vec<Collision>,
+    wrap_arounds: Vec<WrapAround>,
     link_intersections: Vec<LinkIntersection>,
     tick_durations: Vec<f64>,
     tick_average_duration: f64,
@@ -188,10 +222,11 @@ pub struct Universe {
     intersection_behavior: IntersectionBehavior,
     collision_behavior: CollisionBehavior,
     link_intersection_behavior: LinkIntersectionBehavior,
+    wrap_around_behavior: WrapAroundBehavior,
+    links_to_create: Vec<LinkToCreate>,
     links_to_destroy_indexes: Vec<usize>,
     particles_to_destroy_indexes: Vec<usize>,
     particles_to_disable_indexes: Vec<usize>,
-    links_to_create: Vec<(usize, usize)>,
     stabiliser_power: i32,
     stabilise_positions_enabled: bool,
     trajectories: Vec<Trajectory>,
@@ -227,16 +262,18 @@ impl Universe {
             intersections: Vec::new(),
             collisions: Vec::new(),
             link_intersections: Vec::new(),
+            wrap_arounds: Vec::new(),
             tick_durations: Vec::new(),
             tick_average_duration: 0.0,
             particle_index_to_links_indexes: Vec::new(),
             intersection_behavior: IntersectionBehavior::DoNothing,
             collision_behavior: CollisionBehavior::DoNothing,
             link_intersection_behavior: LinkIntersectionBehavior::DoNothing,
+            wrap_around_behavior: WrapAroundBehavior::DoNothing,
+            links_to_create: Vec::new(),
             links_to_destroy_indexes: Vec::new(),
             particles_to_destroy_indexes: Vec::new(),
             particles_to_disable_indexes: Vec::new(),
-            links_to_create: Vec::new(),
             stabiliser_power: 10,
             stabilise_positions_enabled: false,
             trajectories: Vec::new(),
@@ -272,6 +309,7 @@ impl Universe {
         self.set_collision_behavior_from_string(json_parsed["collision_behavior"].to_string());
         self.set_intersection_behavior_from_string(json_parsed["intersection_behavior"].to_string());
         self.set_link_intersection_behavior_from_string(json_parsed["link_intersection_behavior"].to_string());
+        self.set_wrap_around_behavior_from_string(json_parsed["wrap_around_behavior"].to_string());
         self.set_particles_json((&json_parsed["particles"]).to_string());
         self.set_links_json((&json_parsed["links"]).to_string());
     }
@@ -291,6 +329,7 @@ impl Universe {
         self.particles_to_disable_indexes.clear();
         self.links_to_destroy_indexes.clear();
         self.links_to_create.clear();
+        self.wrap_arounds.clear();
         self.reset_forces();
         self.add_gravity_forces();
         self.add_link_forces();
@@ -307,7 +346,8 @@ impl Universe {
             }
         }
         if self.wrap_around {
-            self.recenter();
+            self.compute_wrap_arounds();
+            self.treat_wrap_arounds();
         } else {
             // Do nothing
         }
@@ -432,6 +472,19 @@ impl Universe {
         if link_intersection_behavior_string != "null" {
             self.link_intersection_behavior = LinkIntersectionBehavior::from_string(
                 link_intersection_behavior_string
+            );
+        } else {
+            // Do nothing
+        }
+    }
+
+    //
+    // Setter for wrap_around_behavior
+    //
+    pub fn set_wrap_around_behavior_from_string(&mut self, wrap_around_behavior_string: String) {
+        if wrap_around_behavior_string != "null" {
+            self.wrap_around_behavior = WrapAroundBehavior::from_string(
+                wrap_around_behavior_string
             );
         } else {
             // Do nothing
@@ -667,6 +720,42 @@ impl Universe {
         }
         grid
     }
+
+    //
+    //
+    //
+    pub fn get_links_coordinates_to_draw(&self) -> Vec<f64> {
+        let mut coordinates = Vec::new();
+        if self.wrap_around {
+            for link in self.links.iter() {
+                if link.is_enabled() {
+                    let cycle_deltas = Particle::get_cycle_deltas(
+                        self.particles[link.get_p1_index()],
+                        self.particles[link.get_p2_index()]
+                    );
+                    if cycle_deltas[0] == 0 && cycle_deltas[1] == 0 {
+                        coordinates.extend_from_slice(& link.get_coordinates());
+                    } else {
+                        coordinates.extend_from_slice(& link.get_coordinates_cycled(
+                            (cycle_deltas[0] - link.get_initial_cycle_delta_x()) as f64 * self.width,
+                            (cycle_deltas[1] - link.get_initial_cycle_delta_y()) as f64 * self.height
+                        ));
+                    }
+                } else {
+                    // Do nothing
+                }
+            }
+        } else {
+            for link in self.links.iter() {
+                if link.is_enabled() {
+                    coordinates.extend_from_slice(&link.get_coordinates());
+                } else {
+                    // Do nothing
+                }
+            }
+        }
+        coordinates
+    }
 }
 
 //
@@ -812,16 +901,24 @@ impl Universe {
     //
     fn add_link_forces(&mut self) {
         for link in self.links.iter() {
-            let p1_index = link.get_p1_index();
-            let p2_index = link.get_p2_index();
-            let p1 = & self.particles[p1_index];
-            let p2 = & self.particles[p2_index];
-            if p1.is_enabled() && p2.is_enabled() {
-                let forces = Particle::get_link_forces(p1, p2, link);
-                let force_x = forces.0 / 2.0;
-                let force_y = forces.1 / 2.0;
-                self.particles[p1_index].add_force(force_x, force_y);
-                self.particles[p2_index].add_force(-force_x, -force_y);
+            if link.is_enabled() {
+                let p1_index = link.get_p1_index();
+                let p2_index = link.get_p2_index();
+                let p1 = & self.particles[p1_index];
+                let p2 = & self.particles[p2_index];
+                if p1.is_enabled() && p2.is_enabled() {
+                    let forces = if self.wrap_around {
+                        Particle::get_link_forces_wrap_around_enabled(p1, p2, link, self.width, self.height)
+                    } else {
+                        Particle::get_link_forces_wrap_around_disabled(p1, p2, link)
+                    };
+                    let force_x = forces.0 / 2.0;
+                    let force_y = forces.1 / 2.0;
+                    self.particles[p1_index].add_force(force_x, force_y);
+                    self.particles[p2_index].add_force(-force_x, -force_y);
+                } else {
+                    // Do nothing
+                }
             } else {
                 // Do nothing
             }
@@ -863,15 +960,43 @@ impl Universe {
     // Recenter particles if they got outside the Universe
     // and wrap_around is enabled
     //
-    fn recenter(&mut self) {
-        for particle in &mut self.particles {
+    fn compute_wrap_arounds(&mut self) {
+        let x_max = self.width * 0.5;
+        let x_min = -x_max;
+        let y_max = self.height * 0.5;
+        let y_min = -y_max;
+        for (particle_index, particle) in self.particles.iter().enumerate() {
+            let xy = particle.get_coordinates();
             if particle.is_enabled() {
-                particle.recenter(
-                    self.width,
-                    self.height
-                );
+                if xy.0 < x_min || xy.0 > x_max || xy.1 < y_min || xy.1 > y_max {
+                    self.wrap_arounds.push(WrapAround::new(particle_index));
+                } else {
+                    // Do nothing
+                }
             } else {
                 // Do nothing
+            }
+        }
+    }
+
+    //
+    // Treat wrap arounds
+    //
+    fn treat_wrap_arounds(& mut self) {
+        for wrap_around in self.wrap_arounds.iter() {
+            let particle_index = wrap_around.get_particle_index();
+            self.particles[particle_index].wrap_around(
+                self.width,
+                self.height
+            );
+            match & self.wrap_around_behavior {
+                WrapAroundBehavior::DoNothing => {
+                    // Do nothing
+                },
+                WrapAroundBehavior::DestroyLinks => {
+                    let mut links_to_destroy_indexes = self.particle_index_to_links_indexes[particle_index].clone();
+                    self.links_to_destroy_indexes.append(&mut links_to_destroy_indexes);
+                }
             }
         }
     }
@@ -929,16 +1054,19 @@ impl Universe {
         self.intersections.clear();
         for (link_index, link) in self.links.iter().enumerate() {
             for (particle_index, particle) in self.particles.iter().enumerate() {
-                if self.links[link_index].has_particle(particle_index) || !particle.is_enabled() {
+                if self.links[link_index].has_particle(particle_index) 
+                    || particle.is_enabled() == false
+                    || self.links[link_index].is_enabled() == false
+                {
                     // Do nothing
                 } else {
                     let p1_coordinates = particle.get_coordinates();
                     let p1_old_coordinates = particle.get_old_coordinates();
                     let coordinates = link.get_coordinates();
-                    let x3 = coordinates.0;
-                    let y3 = coordinates.1;
-                    let x4 = coordinates.2;
-                    let y4 = coordinates.3;
+                    let x3 = coordinates[0];
+                    let y3 = coordinates[1];
+                    let x4 = coordinates[2];
+                    let y4 = coordinates[3];
                     match Universe::get_intersect(
                         p1_coordinates,
                         p1_old_coordinates,
@@ -988,31 +1116,35 @@ impl Universe {
         self.link_intersections.clear();
         for (i, link_1) in self.links.iter().enumerate() {
             for (j, link_2) in self.links.iter().enumerate() {
-                let p1_1_index = link_1.get_p1_index();
-                let p1_2_index = link_1.get_p2_index();
-                let p2_1_index = link_2.get_p1_index();
-                let p2_2_index = link_2.get_p2_index();
-                if p1_1_index != p2_1_index
-                        && p1_1_index != p2_2_index
-                        && p1_2_index != p2_1_index
-                        && p1_2_index != p2_2_index {
-                    let c1 = link_1.get_coordinates();
-                    let c2 = link_2.get_coordinates();
-                    let links_intersection_option = Universe::get_intersect(
-                        (c1.0, c1.1),
-                        (c1.2, c1.3),
-                        (c2.0, c2.1),
-                        (c2.2, c2.3)
-                    );
-                    match links_intersection_option {
-                        Some(links_intersection) => {
-                            self.link_intersections.push(LinkIntersection::new(
-                                links_intersection.0, links_intersection.1, i, j
-                            ));
-                        },
-                        None => {
-                            // Do nothing
+                if link_1.is_enabled() && link_2.is_enabled() {
+                    let p1_1_index = link_1.get_p1_index();
+                    let p1_2_index = link_1.get_p2_index();
+                    let p2_1_index = link_2.get_p1_index();
+                    let p2_2_index = link_2.get_p2_index();
+                    if p1_1_index != p2_1_index
+                            && p1_1_index != p2_2_index
+                            && p1_2_index != p2_1_index
+                            && p1_2_index != p2_2_index {
+                        let c1 = link_1.get_coordinates();
+                        let c2 = link_2.get_coordinates();
+                        let links_intersection_option = Universe::get_intersect(
+                            (c1[0], c1[1]),
+                            (c1[2], c1[3]),
+                            (c2[0], c2[1]),
+                            (c2[2], c2[3])
+                        );
+                        match links_intersection_option {
+                            Some(links_intersection) => {
+                                self.link_intersections.push(LinkIntersection::new(
+                                    links_intersection.0, links_intersection.1, i, j
+                                ));
+                            },
+                            None => {
+                                // Do nothing
+                            }
                         }
+                    } else {
+                        // Do nothing
                     }
                 } else {
                     // Do nothing
@@ -1077,7 +1209,7 @@ impl Universe {
                     self.particles_to_destroy_indexes.push(p2_index);
                 },
                 (CollisionBehavior::CreateLink, ParticleCollisionBehavior::DoNothing, ParticleCollisionBehavior::DoNothing) => {
-                    self.links_to_create.push((p1_index, p2_index));
+                    self.links_to_create.push(LinkToCreate::new(p1_index, p2_index));
                 },
                 (collision_behavior, p1_collision_behavior, p2_collision_behavior) => {
                     console_error!("Treat collision for ({}, {}, {}) not implemented",
@@ -1123,6 +1255,24 @@ impl Universe {
         self.links.clear();
         for indexes in &mut self.particle_index_to_links_indexes {
             indexes.clear();
+        }
+    }
+
+    //
+    // Create links if they do not already exist
+    //
+    fn create_links(& mut self) {
+        //self.links_to_create.sort();
+        //self.links_to_create.dedup();
+        //
+        for link_to_create in self.links_to_create.clone().iter() {
+            let particle_1_index = link_to_create.get_particle_1_index();
+            let particle_2_index = link_to_create.get_particle_2_index();
+            if self.link_between_particles_exists(particle_1_index, particle_2_index) {
+                // Do nothing
+            } else {
+                self.add_link(particle_1_index, particle_2_index);
+            }
         }
     }
 
@@ -1209,22 +1359,6 @@ impl Universe {
     }
 
     //
-    // Create links if they do not already exist
-    //
-    fn create_links(& mut self) {
-        self.links_to_create.sort();
-        self.links_to_create.dedup();
-        //
-        for link_to_create in self.links_to_create.clone().iter() {
-            if self.link_between_particles_exists(link_to_create.0, link_to_create.1) {
-                // Do nothing
-            } else {
-                self.add_link(link_to_create.0, link_to_create.1);
-            }
-        }
-    }
-
-    //
     // Check whether or not a link already exists between two particles
     //
     fn link_between_particles_exists(& self, p1_index: usize, p2_index: usize) -> bool {
@@ -1302,11 +1436,17 @@ impl Universe {
         } else if p2_index >= self.particle_index_to_links_indexes.len() {
             console_error!("Cannot add link : particle_index_to_links_indexes #{} does not exist", p2_index);
         } else {
+            let cycle_deltas = Particle::get_cycle_deltas(
+                self.particles[p1_index],
+                self.particles[p2_index]
+            );
             self.links.push(Link::new(
                 p1_index,
                 p2_index,
                 self.default_link_length,
-                self.default_link_strengh
+                self.default_link_strengh,
+                cycle_deltas[0],
+                cycle_deltas[1]
             ));
             self.particle_index_to_links_indexes[p1_index].push(self.links.len() - 1);
             self.particle_index_to_links_indexes[p2_index].push(self.links.len() - 1);

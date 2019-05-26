@@ -1,5 +1,5 @@
-use crate::utils;
 use crate::link::Link;
+
 //
 // Collision happens when two particles collide
 //
@@ -81,7 +81,9 @@ pub struct Particle {
     id: u32,
     is_fixed: bool,
     collision_behavior: ParticleCollisionBehavior,
-    is_enabled: bool
+    is_enabled: bool,
+    cycle_x: i32,
+    cycle_y: i32
 }
 
 //
@@ -109,7 +111,9 @@ impl Particle {
             speed_y: 0.0,
             is_fixed: false,
             collision_behavior: ParticleCollisionBehavior::DoNothing,
-            is_enabled: true
+            is_enabled: true,
+            cycle_x: 0,
+            cycle_y: 0
         }
     }
 
@@ -259,14 +263,34 @@ impl Particle {
     }
 
     //
-    // Get forces applied by a link between two particles
+    // Get forces applied by a link between two particles if wrap around
+    // is disabled
     //
-    pub fn get_link_forces(p1: & Particle,  p2: & Particle, link: & Link) -> (f64, f64) {
-        let delta_length = Particle::get_distance(p1.x, p1.y, p2.x, p2.y) - link.get_length();
+    pub fn get_link_forces_wrap_around_disabled(
+            p1: & Particle,  p2: & Particle, link: & Link) -> (f64, f64) {
+        Particle::get_link_forces_wrap_around_enabled(p1, p2, link, 0.0, 0.0)
+    }
+
+    //
+    // Get forces applied by a link between two particles if wrap around
+    // is enabled
+    //
+    pub fn get_link_forces_wrap_around_enabled(
+            p1: & Particle,  p2: & Particle,
+            link: & Link,
+            universe_width: f64, universe_height: f64) -> (f64, f64)
+    {
+        let cycle_x_delta = p2.cycle_x - p1.cycle_x - link.get_initial_cycle_delta_x();
+        let cycle_y_delta = p2.cycle_y - p1.cycle_y - link.get_initial_cycle_delta_y();
+        let x1 = p1.x;
+        let y1 = p1.y;
+        let x2 = p2.x + cycle_x_delta as f64 * universe_width;
+        let y2 = p2.y + cycle_y_delta as f64 * universe_height;
+        let delta_length = Particle::get_distance(x1, y1, x2, y2) - link.get_length();
         let strengh = link.get_strengh();
         let unit_vector_option = Particle::get_normalized_vector(
-            p1.x, p1.y,
-            p2.x, p2.y
+            x1, y1,
+            x2, y2
         );
         let force_x;
         let force_y;
@@ -360,30 +384,34 @@ impl Particle {
     //
     // Recenter a particle if it got outside the Universe
     //
-    pub fn recenter(
+    pub fn wrap_around (
             &mut self,
             world_width: f64,
             world_height: f64
     ) {
-        let x_max = world_width / 2.0;
+        let x_max = world_width * 0.5;
         let x_min = -x_max;
-        let y_max = world_height / 2.0;
+        let y_max = world_height * 0.5;
         let y_min = -y_max;
         if self.x < x_min {
             self.x += world_width;
             self.old_x += world_width;
+            self.cycle_x -= 1;
         } else if self.x > x_max {
             self.x -= world_width;
             self.old_x -= world_width;
+            self.cycle_x += 1;
         } else {
             // Do nothing
         }
         if self.y < y_min {
             self.y += world_height;
             self.old_y += world_height;
+            self.cycle_y -= 1;
         } else if self.y > y_max {
             self.y -= world_height;
             self.old_y -= world_height;
+            self.cycle_y += 1;
         } else {
             // Do nothing
         }
@@ -535,6 +563,13 @@ impl Particle {
             }
         }
         return forces;
+    }
+
+    //
+    // Get delta cyle between two particles
+    //
+    pub fn get_cycle_deltas(p1: Particle, p2: Particle) -> [i32; 2] {
+        [p2.cycle_x - p1.cycle_x, p2.cycle_y - p1.cycle_y]
     }
 }
 

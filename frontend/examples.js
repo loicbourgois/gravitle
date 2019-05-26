@@ -225,8 +225,6 @@ const get_example_4_conf = (conf) => {
     return conf;
 }
 
-
-
 const get_example_5_conf = (conf) => {
     conf.intersection_behavior = 'destroy-particle';
     conf.default_link_strengh = 0.0;

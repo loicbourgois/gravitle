@@ -5,6 +5,7 @@ import { memory } from "gravitle/gravitle_bg";
 
 import * as Examples from './examples.js';
 import * as render from './render.js';
+import * as tests from './tests.js';
 
 const fps_infos = document.getElementById('fps-infos');
 const infos = document.getElementById('infos');
@@ -23,6 +24,7 @@ const buttonExample5 = document.getElementById('button-example-5');
 const buttonExample6 = document.getElementById('button-example-6');
 const buttonExample7 = document.getElementById('button-example-7');
 const buttonExample8 = document.getElementById('button-example-8');
+const buttonTest9 = document.getElementById('button-test-9');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -37,6 +39,7 @@ const selectLinkIntersectionBehavior = document.getElementById('select-link-inte
 const selectWrapAround = document.getElementById('select-wrap-around');
 const selectFixedCloneCount = document.getElementById('select-fixed-clone-count');
 const selectStabilisePositionsEnabled = document.getElementById('select-stabilise-positions-enabled');
+const selectWrapAroundBehavior = document.getElementById('select-wrap-around-behavior');
 const inputMinimalDistanceForGravity = document.getElementById('input-minimal-distance-for-gravity');
 const inputDefaultLinkLength = document.getElementById('input-default-link-length');
 const inputDefaultLinkStrengh = document.getElementById('input-default-link-strengh');
@@ -66,6 +69,7 @@ const BASE_CONF = Object.freeze({
     intersection_behavior: 'do-nothing',
     link_intersection_behavior: 'do-nothing',
     wrap_around: false,
+    wrap_around_behavior: 'do-nothing',
     fixed_clone_count: true,
     width: 200,
     height: 200,
@@ -108,7 +112,7 @@ symetryButton.addEventListener('click', () => {
 });
 
 reloadButton.addEventListener('click', () => {
-    reload();
+    reloadFromJSON();
 });
 
 stepButton.addEventListener('click', () => {
@@ -153,6 +157,10 @@ buttonExample7.addEventListener('click', () => {
 
 buttonExample8.addEventListener('click', () => {
     loadExample8();
+});
+
+buttonTest9.addEventListener('click', () => {
+    loadTest9();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -200,6 +208,10 @@ selectWrapAround.addEventListener('change', () => {
 });
 
 selectFixedCloneCount.addEventListener('change', () => {
+    updateConf();
+});
+
+selectWrapAroundBehavior.addEventListener('change', () => {
     updateConf();
 });
 
@@ -281,6 +293,7 @@ const updateConf = () => {
     universe.set_default_link_strengh(conf.default_link_strengh);
     universe.set_drag_coefficient(conf.drag_coefficient);
     universe.set_stabiliser_power(conf.stabiliser_power);
+    universe.set_wrap_around_behavior_from_string(conf.wrap_around_behavior);
     jsonTextarea.value = JSON.stringify(conf, null, 4);
 }
 
@@ -302,10 +315,11 @@ const getParameterizedConf = (conf) => {
     conf.default_link_strengh = parseFloat(inputDefaultLinkStrengh.value);
     conf.drag_coefficient = parseFloat(inputDragCoefficient.value);
     conf.stabiliser_power = parseInt(inputStabilisePower.value);
+    conf.wrap_around_behavior = selectWrapAroundBehavior.options[selectWrapAroundBehavior.selectedIndex].value;
     return conf;
 }
 
-const reload = () => {
+const reloadFromJSON = () => {
     // Reload parameters values fro json
     const parsedJson = JSON.parse(jsonTextarea.value);
     selectAlgorithm.value = parsedJson.algorithm;
@@ -324,6 +338,7 @@ const reload = () => {
     inputDefaultLinkStrengh.value = parsedJson.default_link_strengh;
     inputDragCoefficient.value = parsedJson.drag_coefficient;
     inputStabilisePower.value = parsedJson.stabiliser_power;
+    selectWrapAroundBehavior.value = parsedJson.wrap_around_behavior;
     // Reload universe
     stop();
     universe.reset();
@@ -454,56 +469,63 @@ const heart = () => {
     MODE = null;
     const conf = Examples.get_example_1_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 };
 
 const diamond = () => {
     MODE = null;
     const conf = Examples.get_example_2_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 };
 
 const club = () => {
     MODE = null;
     const conf = Examples.get_example_3_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const spade = () => {
     MODE = null;
     const conf = Examples.get_example_4_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const loadExample5 = () => {
     MODE = null;
     const conf = Examples.get_example_5_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const loadExample6 = () => {
     MODE = null;
     const conf = Examples.get_example_6_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const loadExample7 = () => {
     MODE = null;
     const conf = Examples.get_example_7_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const loadExample8 = () => {
     MODE = null;
     const conf = Examples.get_example_8_conf(jsonCopy(BASE_CONF));
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
+}
+
+const loadTest9 = () => {
+    const test = tests.get_test_9(jsonCopy(BASE_CONF));
+    MODE = test.id;
+    jsonTextarea.value = JSON.stringify(test.conf, null, 4);
+    reloadFromJSON();
 }
 
 const randomize = () => {
@@ -527,7 +549,7 @@ const randomize = () => {
     conf.particles = particles;
     conf.links = [];
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const symetry = () => {
@@ -558,7 +580,7 @@ const symetry = () => {
     conf.particles = particles;
     conf.links = [];
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const spaceCroquet = () => {
@@ -642,7 +664,7 @@ const spaceCroquet = () => {
     conf.links = links;
     space_croquet_links = links;
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const generateSpaceship = () => {
@@ -658,6 +680,7 @@ const generateSpaceship = () => {
     conf.stabilise_positions_enabled = false;
     conf.stabiliser_power = 10;
     conf.minimal_distance_for_gravity = 1.0;
+    conf.wrap_around = true;
     const COUNT = 16;
     const DIVISOR = 30;
     const particles = [];
@@ -696,7 +719,7 @@ const generateSpaceship = () => {
     }
     conf.particles = particles;
     jsonTextarea.value = JSON.stringify(conf, null, 4);
-    reload();
+    reloadFromJSON();
 }
 
 const getCoordinateRotatedAround = (center, point, angle) => {

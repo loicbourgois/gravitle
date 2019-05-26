@@ -10,7 +10,10 @@ pub struct Link {
     length: f64,
     strengh: f64,
     p1_index: usize,
-    p2_index: usize
+    p2_index: usize,
+    enabled: bool,
+    initial_cycle_delta_x: i32,
+    initial_cycle_delta_y: i32
 }
 
 //
@@ -21,7 +24,8 @@ impl Link {
     //
     // Constructor
     //
-    pub fn new(p1_index: usize, p2_index: usize, length: f64, strengh: f64) -> Link {
+    pub fn new(p1_index: usize, p2_index: usize, length: f64, strengh: f64,
+            initial_cycle_delta_x: i32, initial_cycle_delta_y: i32) -> Link {
         Link {
             p1_index,
             p2_index,
@@ -30,12 +34,15 @@ impl Link {
             x2: 0.0,
             y2: 0.0,
             length,
-            strengh
+            strengh,
+            enabled: true,
+            initial_cycle_delta_x,
+            initial_cycle_delta_y
         }
     }
 
     //
-    // Load
+    // Load link parameters from JSON
     //
     pub fn load_from_json(&mut self, json_string: String) {
         let json_parsed = &json::parse(&json_string).unwrap();
@@ -82,8 +89,19 @@ impl Link {
     //
     // Getter for x1, y1, x2, y2
     //
-    pub fn get_coordinates(& self) -> (f64, f64, f64, f64) {
-        (self.x1, self.y1, self.x2, self.y2)
+    pub fn get_coordinates(& self) -> [f64; 4] {
+        [self.x1, self.y1, self.x2, self.y2]
+    }
+
+    //
+    // Get cycled coordinates
+    // Useful for drawing if wrap around is enabled
+    //
+    pub fn get_coordinates_cycled(& self, dx: f64, dy: f64) -> [f64; 8] {
+        [
+            self.x1, self.y1, self.x2 + dx, self.y2 + dy,
+            self.x1 - dx, self.y1 - dy, self.x2, self.y2
+        ]
     }
 
     //
@@ -112,5 +130,26 @@ impl Link {
     //
     pub fn get_strengh(&self) -> f64 {
         self.strengh
+    }
+
+    //
+    // Getter for enabled
+    //
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    //
+    // Getter for initial_cycle_delta_x
+    //
+    pub fn get_initial_cycle_delta_x(&self) -> i32 {
+        self.initial_cycle_delta_x
+    }
+
+    //
+    // Getter for initial_cycle_delta_y
+    //
+    pub fn get_initial_cycle_delta_y(&self) -> i32 {
+        self.initial_cycle_delta_y
     }
 }
