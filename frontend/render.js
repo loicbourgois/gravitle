@@ -97,9 +97,9 @@ const drawTrajectories = (universe, context, period) => {
 }
 
 const drawSegments = (universe, context, memory) => {
-    const link_coordinates = universe.get_links_coordinates_to_draw();
-    context.strokeStyle = "#eee";
+    context.strokeStyle = '#eee';
     context.lineWidth = 2;
+    const link_coordinates = universe.get_links_coordinates_to_draw();
     for (let i = 0, l = link_coordinates.length ; i < l ; i += 4 ) {
         const p1 = getPositionFromUniverseToCanvas(universe, {
             x: link_coordinates[i + 0],
@@ -108,6 +108,23 @@ const drawSegments = (universe, context, memory) => {
         const p2 = getPositionFromUniverseToCanvas(universe, {
             x: link_coordinates[i + 2],
             y: link_coordinates[i + 3]
+        });
+        context.beginPath();
+        context.moveTo(p1.x, p1.y);
+        context.lineTo(p2.x, p2.y);
+        context.stroke();
+    }
+    context.strokeStyle = '#88f';
+    context.lineWidth = 8;
+    const link_coordinates_thrusting = universe.get_thrusting_links_coordinates_to_draw();
+    for (let i = 0, l = link_coordinates_thrusting.length ; i < l ; i += 4 ) {
+        const p1 = getPositionFromUniverseToCanvas(universe, {
+            x: link_coordinates_thrusting[i + 0],
+            y: link_coordinates_thrusting[i + 1]
+        });
+        const p2 = getPositionFromUniverseToCanvas(universe, {
+            x: link_coordinates_thrusting[i + 2],
+            y: link_coordinates_thrusting[i + 3]
         });
         context.beginPath();
         context.moveTo(p1.x, p1.y);

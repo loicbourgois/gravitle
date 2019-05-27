@@ -1,3 +1,5 @@
+use crate::point::Point;
+
 //
 // Link between two particles
 //
@@ -13,7 +15,10 @@ pub struct Link {
     p2_index: usize,
     enabled: bool,
     initial_cycle_delta_x: i32,
-    initial_cycle_delta_y: i32
+    initial_cycle_delta_y: i32,
+    thrust_force: f64,
+    thrust_activated: bool,
+    coordinates_cycled: [f64; 8]
 }
 
 //
@@ -37,7 +42,10 @@ impl Link {
             strengh,
             enabled: true,
             initial_cycle_delta_x,
-            initial_cycle_delta_y
+            initial_cycle_delta_y,
+            thrust_force: 0.0,
+            thrust_activated: false,
+            coordinates_cycled: [0.0; 8]
         }
     }
 
@@ -48,7 +56,32 @@ impl Link {
         let json_parsed = &json::parse(&json_string).unwrap();
         self.length = json_parsed["length"].as_f64().unwrap_or(self.length);
         self.strengh = json_parsed["strengh"].as_f64().unwrap_or(self.strengh);
+        self.thrust_force = json_parsed["thrust_force"].as_f64().unwrap_or(self.strengh);
      }
+
+    //
+    // Get the thrust vector, following the normal of the link
+    //
+    pub fn get_thrust_forces(&self, coordinates_cycled: [f64;8]) -> Option<(f64, f64)> {
+        let dx = coordinates_cycled[2] - coordinates_cycled[0];
+        let dy = coordinates_cycled[3] - coordinates_cycled[1];
+        let normal_1 = (-dy, dx);
+        let normal_2 = (dy, -dx);
+        let normalized_normal_option = Point::get_normalized_vector(
+            0.0, 0.0, normal_1.0, normal_1.1
+        );
+        match normalized_normal_option {
+            Some(normalized_normal) => {
+                return Some((
+                    normalized_normal.0 * self.thrust_force,
+                    normalized_normal.1 * self.thrust_force
+                ));
+            },
+            None => {
+                return None;
+            }
+        }
+    }
 
     //
     // Decrease the index of particle p1
@@ -97,11 +130,15 @@ impl Link {
     // Get cycled coordinates
     // Useful for drawing if wrap around is enabled
     //
-    pub fn get_coordinates_cycled(& self, dx: f64, dy: f64) -> [f64; 8] {
-        [
-            self.x1, self.y1, self.x2 + dx, self.y2 + dy,
-            self.x1 - dx, self.y1 - dy, self.x2, self.y2
-        ]
+    pub fn get_coordinates_cycled(&self) -> [f64; 8] {
+        self.coordinates_cycled
+    }
+
+    //
+    // Setter for coordinates_cycled
+    //
+    pub fn set_coordinates_cycled(&mut self, coordinates_cycled: [f64; 8] ) {
+        self.coordinates_cycled = coordinates_cycled;
     }
 
     //
@@ -151,5 +188,33 @@ impl Link {
     //
     pub fn get_initial_cycle_delta_y(&self) -> i32 {
         self.initial_cycle_delta_y
+    }
+
+    //
+    // Activate_thrust
+    //
+    pub fn activate_thrust(&mut self) {
+        self.thrust_activated = true;
+    }
+
+    //
+    // Deactivate thrust
+    //
+    pub fn deactivate_thrust(&mut self) {
+        self.thrust_activated = false;
+    }
+
+    //
+    // Setter for thrust_force
+    //
+    pub fn set_thrust_force(&mut self, thrust_force: f64) {
+        self.thrust_force = thrust_force;
+    }
+
+    //
+    // Getter for thrust_activated
+    //
+    pub fn is_thrust_activated(&self) -> bool {
+        self.thrust_activated
     }
 }

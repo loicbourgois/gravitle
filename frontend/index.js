@@ -47,6 +47,7 @@ const inputDragCoefficient = document.getElementById('input-drag-coefficient');
 const inputStabilisePower = document.getElementById('input-stabiliser-power');
 const selectTest = document.getElementById('select-test');
 const buttonRunTest = document.getElementById('button-run-test');
+const testDescription = document.getElementById('test-description');
 
 const inputTrajectoriesPeriod = document.getElementById('input-trajectories-period');
 const buttonTrajectoriesOn = document.getElementById('button-trajectories-on');
@@ -60,6 +61,7 @@ const canvas = document.getElementById('canvas');
 canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
+let bindings = {};
 
 let MODE = null;
 let SHOW_TRAJECTORIES = null;
@@ -116,9 +118,6 @@ stopButton.addEventListener('click', () => {
     stop();
 });
 
-heartButton.addEventListener('click', () => {
-    heart();
-});
 
 diamondButton.addEventListener('click', () => {
     diamond();
@@ -204,6 +203,10 @@ selectWrapAroundBehavior.addEventListener('change', () => {
     updateConf();
 });
 
+selectTest.addEventListener('change', () => {
+    selectTestChange();
+});
+
 inputG.addEventListener('change', () => {
     updateConf();
 });
@@ -263,6 +266,22 @@ canvas.addEventListener('mouseup', (event) => {
     launchParticle(mouse_positions);
     mouse_positions = null;
 });
+
+const keyup = (e) => {
+    if (bindings && bindings[e.key]) {
+        universe.deactivate_thrust_for_links(bindings[e.key].link_indexes);
+    } else {
+        // Do nothing
+    }
+};
+
+const keydown = (e) => {
+    if (bindings && bindings[e.key]) {
+        universe.activate_thrust_for_links(bindings[e.key].link_indexes);
+    } else {
+        // Do nothing
+    }
+};
 
 const updateConf = () => {
     const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
@@ -510,10 +529,17 @@ const loadExample8 = () => {
     reloadFromJSON();
 }
 
-const runTest = () => {
+const selectTestChange = () => {
     const testId = selectTest.options[selectTest.selectedIndex].value;
     const test = Tests.get_test_by_id(testId);
+    testDescription.innerHTML = test.description;
+}
+
+const runTest = (testId_) => {
+    const testId = testId_ ? testId_ : selectTest.options[selectTest.selectedIndex].value;
+    const test = Tests.get_test_by_id(testId);
     MODE = test.id;
+    bindings = test.bindings;
     jsonTextarea.value = JSON.stringify(test.conf, null, 4);
     reloadFromJSON();
 }
@@ -815,9 +841,15 @@ const launchParticle = (mouse_position) => {
     }
 }
 
+heartButton.addEventListener('click', heart);
+document.addEventListener('keyup', keyup);
+document.addEventListener('keydown', keydown);
+
 trajectoriesOff();
 gravitationalFieldOff();
 heart();
 last_now = Date.now();
 requestAnimationFrame(renderLoop);
-
+selectTestChange();
+runTest('test_10');
+canvas.focus();

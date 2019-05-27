@@ -1,4 +1,5 @@
 use crate::link::Link;
+use crate::point::Point;
 
 //
 // Collision happens when two particles collide
@@ -47,14 +48,6 @@ impl ParticleCollisionBehavior {
 struct ValueWithDistance {
     value: f64,
     d: f64
-}
-
-//
-// Represent 2d coordinates
-//
-struct Point {
-    x: f64,
-    y: f64
 }
 
 const FLOAT_COMPARE_MARGIN : f64 = 0.0000000001;
@@ -121,7 +114,7 @@ impl Particle {
     // Checks whether two particles collide
     //
     pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
-        let distance_squared_centers = Particle::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
+        let distance_squared_centers = Point::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
         let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
         distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled()
     }
@@ -232,7 +225,7 @@ impl Particle {
         } else {
             for particle in particles {
                 if particle.id != self.id && particle.is_enabled() {
-                        let distance = Particle::get_distance(
+                        let distance = Point::get_distance(
                             self.x, self.y,
                             particle.x, particle.y
                         );
@@ -286,9 +279,9 @@ impl Particle {
         let y1 = p1.y;
         let x2 = p2.x + cycle_x_delta as f64 * universe_width;
         let y2 = p2.y + cycle_y_delta as f64 * universe_height;
-        let delta_length = Particle::get_distance(x1, y1, x2, y2) - link.get_length();
+        let delta_length = Point::get_distance(x1, y1, x2, y2) - link.get_length();
         let strengh = link.get_strengh();
-        let unit_vector_option = Particle::get_normalized_vector(
+        let unit_vector_option = Point::get_normalized_vector(
             x1, y1,
             x2, y2
         );
@@ -479,7 +472,7 @@ impl Particle {
             minimal_distance_for_gravity: f64,
             gravitational_constant: f64
     ) -> (f64, f64) {
-        let distance = Particle::get_distance(
+        let distance = Point::get_distance(
             self.x, self.y,
             x, y
         );
@@ -579,44 +572,6 @@ impl Particle {
 impl Particle {
 
     //
-    // Helper function to get a distance squared
-    //
-    fn get_distance_squared(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-        let delta_x = x1 - x2;
-        let delta_y = y1 - y2;
-        delta_x * delta_x + delta_y * delta_y
-    }
-
-    //
-    // Helper function to get a distance
-    //
-    fn get_distance(
-            x1: f64, y1: f64,
-            x2: f64, y2: f64
-    ) -> f64 {
-        Particle::get_distance_squared(x1, y1, x2, y2).sqrt()
-    }
-
-    //
-    // Helper function to get a normalized vector
-    //
-    // Returns None if the length of the initial vector
-    // is inferior or equal to 0
-    //
-    fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<(f64, f64)> {
-        let length = Particle::get_distance(x1, y1, x2, y2);
-        let delta_x = x2 - x1;
-        let delta_y = y2 - y1;
-        if length > 0.0 {
-            let x = delta_x / length;
-            let y = delta_y / length;
-            Some((x, y))
-        } else {
-            None
-        }
-    }
-
-    //
     // Get cloned points based on p1
     // boxing a point p2
     // where p1 clones are translation of p1
@@ -632,29 +587,29 @@ impl Particle {
         let mut xs = [
             ValueWithDistance {
                 value: x2 - width,
-                d: Particle::get_distance_squared(x1, 0.0, x2 - width, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2 - width, 0.0)
             },
             ValueWithDistance {
                 value: x2,
-                d: Particle::get_distance_squared(x1, 0.0, x2, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2, 0.0)
             },
             ValueWithDistance {
                 value: x2 + width,
-                d: Particle::get_distance_squared(x1, 0.0, x2 + width, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2 + width, 0.0)
             }
         ];
         let mut ys = [
             ValueWithDistance {
                 value: y2 - height,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 - height)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2 - height)
             },
             ValueWithDistance {
                 value: y2,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2)
             },
             ValueWithDistance {
                 value: y2 + height,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 + height)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2 + height)
             }
         ];
         // Order by ascending distance
@@ -702,29 +657,29 @@ impl Particle {
         let mut xs = [
             ValueWithDistance {
                 value: x2 - width,
-                d: Particle::get_distance_squared(x1, 0.0, x2 - width, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2 - width, 0.0)
             },
             ValueWithDistance {
                 value: x2,
-                d: Particle::get_distance_squared(x1, 0.0, x2, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2, 0.0)
             },
             ValueWithDistance {
                 value: x2 + width,
-                d: Particle::get_distance_squared(x1, 0.0, x2 + width, 0.0)
+                d: Point::get_distance_squared(x1, 0.0, x2 + width, 0.0)
             }
         ];
         let mut ys = [
             ValueWithDistance {
                 value: y2 - height,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 - height)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2 - height)
             },
             ValueWithDistance {
                 value: y2,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2)
             },
             ValueWithDistance {
                 value: y2 + height,
-                d: Particle::get_distance_squared(0.0, y1, 0.0, y2 + height)
+                d: Point::get_distance_squared(0.0, y1, 0.0, y2 + height)
             }
         ];
         // Order by ascending distance
@@ -823,7 +778,7 @@ mod tests {
         let x2: f64 = 1.0;
         let y2: f64 = 2.0;
         let d: f64 = 5.0;
-        let d2: f64 = Particle::get_distance_squared(x1, y1, x2, y2);
+        let d2: f64 = Point::get_distance_squared(x1, y1, x2, y2);
         assert_eq!(d, d2);
     }
 
@@ -834,7 +789,7 @@ mod tests {
         let x2: f64 = -4.0;
         let y2: f64 = 0.0;
         let d: f64 = 4.0;
-        let d2: f64 = Particle::get_distance(x1, y1, x2, y2);
+        let d2: f64 = Point::get_distance(x1, y1, x2, y2);
         assert_eq!(d, d2);
     }
 
