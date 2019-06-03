@@ -233,6 +233,7 @@ pub struct Universe {
     trajectories: Vec<Trajectory>,
     default_link_length: f64,
     default_link_strengh: f64,
+    default_link_thrust_force: f64,
     drag_coefficient: f64,
     wrap_around: bool,
     fixed_clone_count: bool
@@ -280,6 +281,7 @@ impl Universe {
             trajectories: Vec::new(),
             default_link_length: 10.0,
             default_link_strengh: 100.0,
+            default_link_thrust_force: 100.0,
             drag_coefficient: 0.5,
             wrap_around: true,
             fixed_clone_count: true
@@ -300,6 +302,7 @@ impl Universe {
         self.gravitational_constant = json_parsed["gravitational_constant"].as_f64().unwrap_or(self.gravitational_constant);
         self.default_link_length = json_parsed["default_link_length"].as_f64().unwrap_or(self.default_link_length);
         self.default_link_strengh = json_parsed["default_link_strengh"].as_f64().unwrap_or(self.default_link_strengh);
+        self.default_link_thrust_force = json_parsed["default_link_thrust_force"].as_f64().unwrap_or(self.default_link_thrust_force);
         self.drag_coefficient = json_parsed["drag_coefficient"].as_f64().unwrap_or(self.drag_coefficient);
         self.wrap_around = json_parsed["wrap_around"].as_bool().unwrap_or(self.wrap_around);
         self.fixed_clone_count = json_parsed["fixed_clone_count"].as_bool().unwrap_or(self.fixed_clone_count);
@@ -520,6 +523,13 @@ impl Universe {
     //
     pub fn set_default_link_strengh(&mut self, default_link_strengh: f64) {
         self.default_link_strengh = default_link_strengh;
+    }
+
+    //
+    // Setter for default_link_thrust_force
+    //
+    pub fn set_default_link_thrust_force(&mut self, default_link_thrust_force: f64) {
+        self.default_link_thrust_force = default_link_thrust_force;
     }
 
     //
@@ -819,6 +829,48 @@ impl Universe {
                 console_warning!("Cannot deactivate thrust : link #{} doesn't exist.", link_index);
             }
         }
+    }
+
+    //
+    // Getter for step
+    //
+    pub fn get_step(&self) -> u32 {
+        self.step
+    }
+
+    //
+    // Given two particle indexes, try to find the corresponding link index.
+    // Returns None if no link could be found.
+    //
+    pub fn get_link_index_from_particles_indexes(&self, particle_index_1: usize, particle_index_2: usize) -> Option<usize> {
+        for (link_index, link) in self.links.iter().enumerate() {
+            if link.has_particle(particle_index_1) && link.has_particle(particle_index_2) {
+                return Some(link_index);
+            } else {
+                // Do nothing
+            }
+        }
+        return None;
+    }
+
+    //
+    // Get both x and y coordinates of all particles in a single Vec.
+    //
+    pub fn get_particle_coordinates(&self) -> Vec<f64> {
+        let mut coordinates = vec![0.0; self.particles.len() * 2];
+        for (particle_index, particle) in self.particles.iter().enumerate() {
+            let i = particle_index * 2;
+            coordinates[i] = particle.get_x();
+            coordinates[i+1] = particle.get_y();
+        }
+        coordinates
+    }
+
+    //
+    // Get all 4 coordinates for a link given its index
+    //
+    pub fn get_link_coordinates_for_link(&self, link_index: usize) -> Vec<f64> {
+        self.links[link_index].get_coordinates().to_vec()
     }
 }
 
@@ -1582,6 +1634,7 @@ impl Universe {
                 p2_index,
                 self.default_link_length,
                 self.default_link_strengh,
+                self.default_link_thrust_force,
                 cycle_deltas[0],
                 cycle_deltas[1]
             ));

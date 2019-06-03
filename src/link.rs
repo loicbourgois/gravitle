@@ -30,6 +30,7 @@ impl Link {
     // Constructor
     //
     pub fn new(p1_index: usize, p2_index: usize, length: f64, strengh: f64,
+            thrust_force: f64,
             initial_cycle_delta_x: i32, initial_cycle_delta_y: i32) -> Link {
         Link {
             p1_index,
@@ -43,7 +44,7 @@ impl Link {
             enabled: true,
             initial_cycle_delta_x,
             initial_cycle_delta_y,
-            thrust_force: 0.0,
+            thrust_force,
             thrust_activated: false,
             coordinates_cycled: [0.0; 8]
         }

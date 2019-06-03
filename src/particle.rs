@@ -427,6 +427,20 @@ impl Particle {
     }
 
     //
+    // Getter for x current coordinates
+    //
+    pub fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    //
+    // Getter for y current coordinates
+    //
+    pub fn get_y(&self) -> f64 {
+        self.y
+    }
+
+    //
     // Getter for old coordinates
     //
     pub fn get_old_coordinates(& self) -> (f64, f64) {

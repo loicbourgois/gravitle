@@ -62,6 +62,8 @@ canvas.height = 1000;
 canvas.width = 1000;
 const context = canvas.getContext("2d");
 let bindings = {};
+const LOAD_BINDINGS_FOR_SPACESHIP_STEP = 200;
+const MIN_DELTA_X_FOR_SPACESHIP_LINK = 2.0;
 
 let MODE = null;
 let SHOW_TRAJECTORIES = null;
@@ -457,6 +459,12 @@ const tick = () => {
     universe.tick();
     if (universe.get_particles_to_disable_indexes_length() && MODE === 'SPACE-CROQUET') {
         universe.set_links_json(JSON.stringify(space_croquet_links));
+    } else if (MODE === 'SPACE-SHIP') {
+        if (universe.get_step() === LOAD_BINDINGS_FOR_SPACESHIP_STEP) {
+            loadBindingsForSpaceship();
+        } else {
+            // Do nothing
+        }
     } else {
         // Do nothing
     }
@@ -689,16 +697,16 @@ const generateSpaceship = () => {
     conf.collision_behavior = 'create-link';
     conf.intersection_behavior = 'do-nothing';
     conf.link_intersection_behavior = 'do-nothing';
-    conf.gravitational_constant = 10;
+    conf.gravitational_constant = 1;
     conf.default_link_length = 10;
     conf.default_link_strengh = 1000;
     conf.drag_coefficient = 1;
     conf.stabilise_positions_enabled = false;
-    conf.stabiliser_power = 10;
     conf.minimal_distance_for_gravity = 1.0;
     conf.wrap_around = true;
-    const COUNT = 16;
-    const DIVISOR = 30;
+    conf.default_link_thrust_force = 1000.0;
+    const COUNT = 20;
+    const DIVISOR = 20;
     const particles = [];
     const minDiameter = 4.0;
     const maxDiameter = 5.0;
@@ -710,22 +718,10 @@ const generateSpaceship = () => {
         mass: MASS,
         diameter: diameter
     });
-    particles.push({
-        x: 0,
-        y: 0,
-        mass: MASS,
-        diameter: diameter
-    });
     for (let i = 2 ; i < COUNT ; i += 2) {
         const x = getRandomNumber(- conf.width / DIVISOR, conf.width / DIVISOR);
         const y = getRandomNumber(- conf.height / DIVISOR, conf.height / DIVISOR);
         const diameter = getRandomNumber(minDiameter, maxDiameter);
-        particles.push({
-            x: x,
-            y: y,
-            mass: MASS,
-            diameter: diameter
-        });
         particles.push({
             x: -x,
             y: y,
@@ -733,9 +729,20 @@ const generateSpaceship = () => {
             diameter: diameter
         });
     }
+    const l = particles.length;
+    for (let i = l-1 ; i >= 0 ; i -= 1) {
+        const particle = particles[i];
+        particles.push({
+            x: -particle.x,
+            y: particle.y,
+            mass: particle.mass,
+            diameter: particle.diameter
+        });
+    }
     conf.particles = particles;
     jsonTextarea.value = JSON.stringify(conf, null, 4);
     reloadFromJSON();
+    bindings = {};
 }
 
 const getCoordinateRotatedAround = (center, point, angle) => {
@@ -839,6 +846,62 @@ const launchParticle = (mouse_position) => {
     } else {
         // Do nothing
     }
+}
+
+const loadBindingsForSpaceship = () => {
+    const coordinates = universe.get_particle_coordinates();
+    const ids_and_squared_lengths = [];
+    for (let i = 0, l = coordinates.length, s = 2 ; i < l ; i += s) {
+        const id = i / s;
+        const x = coordinates[i + 0];
+        const y = coordinates[i + 1];
+        if (y < -1.0 && Math.abs(x) > 0.5) {
+            ids_and_squared_lengths.push({
+                id: id,
+                length_squared: x*x + y*y
+            });
+        } else {
+            // Do nothing
+        }
+    }
+    ids_and_squared_lengths.sort((a,b) => {
+        if ( a.length_squared < b.length_squared ) {
+            return -1;
+        } else if ( a.length_squared > b.length_squared ){
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+    bindings = {};
+    for (let i = 0, l = ids_and_squared_lengths.length-1, s = 2 ; i < l ; i += s) {
+        for (let j = 0 ; j < l ; j += s) {
+            if (i != j) {
+                const link_index_1 = universe.get_link_index_from_particles_indexes(
+                    ids_and_squared_lengths[i+0].id, ids_and_squared_lengths[j+0].id);
+                const link_index_2 = universe.get_link_index_from_particles_indexes(
+                    ids_and_squared_lengths[i+1].id, ids_and_squared_lengths[j+1].id);
+                let link1_coordinates = universe.get_link_coordinates_for_link(link_index_1);
+                let dx = Math.abs(link1_coordinates[0] - link1_coordinates[2])
+                if (link_index_1 && link_index_2 && dx > MIN_DELTA_X_FOR_SPACESHIP_LINK) {
+                    bindings = {
+                        'e' : {
+                            link_indexes : [link_index_2]
+                        },
+                        'r' : {
+                            link_indexes : [link_index_1]
+                        }
+                    };
+                    break;
+                } else {
+                    // Do nothing
+                }
+            } else {
+                // Do nothing
+            }
+        }
+    }
+    console.log(bindings);
 }
 
 heartButton.addEventListener('click', heart);
