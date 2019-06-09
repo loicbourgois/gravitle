@@ -3,7 +3,6 @@ import {
 } from 'gravitle';
 import { memory } from "gravitle/gravitle_bg";
 
-import * as Examples from './examples.js';
 import * as render from './render.js';
 import * as Tests from './tests.js';
 import * as utils from './utils.js';
@@ -14,17 +13,9 @@ const reloadButton = document.getElementById('button-reload');
 const stepButton = document.getElementById('button-step');
 const startButton = document.getElementById('button-start');
 const stopButton = document.getElementById('button-stop');
-const heartButton = document.getElementById('button-heart');
-const diamondButton = document.getElementById('button-diamond');
 const randomizeButton = document.getElementById('button-randomize');
 const symetryButton = document.getElementById('button-symetry');
 const spaceCroquetButton = document.getElementById('button-space-croquet');
-const clubButton = document.getElementById('button-club');
-const spadeButton = document.getElementById('button-spade');
-const buttonExample5 = document.getElementById('button-example-5');
-const buttonExample6 = document.getElementById('button-example-6');
-const buttonExample7 = document.getElementById('button-example-7');
-const buttonExample8 = document.getElementById('button-example-8');
 const jsonTextarea = document.getElementById('json');
 const inputCount = document.getElementById('input-count');
 const inputWidth = document.getElementById('input-width');
@@ -56,6 +47,7 @@ const buttonTrajectoriesOff = document.getElementById('button-trajectories-off')
 const inputGravitationalFieldResolution = document.getElementById('input-gravitational-field-resolution');
 const buttonGravitationalFieldOn = document.getElementById('button-gravitational-field-on');
 const buttonGravitationalFieldOff = document.getElementById('button-gravitational-field-off');
+const testsDiv = document.getElementById('tests');
 
 const canvas = document.getElementById('canvas');
 canvas.height = 1000;
@@ -72,10 +64,19 @@ let SHOW_GRAVITATIONAL_FIELD = null;
 const BASE_CONF = utils.get_base_conf_copy();
 const tests = Tests.get_tests();
 tests.forEach(test => {
-    let option = document.createElement('option');
-    option.appendChild(document.createTextNode(test.title));
-    option.value = test.id;
-    selectTest.appendChild(option);
+    const a = document.createElement('a');
+    const linkText = document.createTextNode(test.title);
+    a.appendChild(linkText);
+    a.title = test.title;
+    a.href = `?test=${test.id}`;
+    testsDiv.appendChild(a);
+    a.addEventListener('click', (event) => {
+        const url = new URL(event.target.href);
+        const test_id = url.searchParams.get('test');
+        runTest(test_id);
+        event.preventDefault();
+        window.history.pushState({}, document.title, event.target.href);
+    });
 });
 
 let space_croquet_links = null;
@@ -118,39 +119,6 @@ startButton.addEventListener('click', () => {
 
 stopButton.addEventListener('click', () => {
     stop();
-});
-
-
-diamondButton.addEventListener('click', () => {
-    diamond();
-});
-
-clubButton.addEventListener('click', () => {
-    club();
-});
-
-spadeButton.addEventListener('click', () => {
-    spade();
-});
-
-buttonExample5.addEventListener('click', () => {
-    loadExample5();
-});
-
-buttonExample6.addEventListener('click', () => {
-    loadExample6();
-});
-
-buttonExample7.addEventListener('click', () => {
-    loadExample7();
-});
-
-buttonExample8.addEventListener('click', () => {
-    loadExample8();
-});
-
-buttonRunTest.addEventListener('click', () => {
-    runTest();
 });
 
 spaceCroquetButton.addEventListener('click', () => {
@@ -205,9 +173,9 @@ selectWrapAroundBehavior.addEventListener('change', () => {
     updateConf();
 });
 
-selectTest.addEventListener('change', () => {
+/*selectTest.addEventListener('change', () => {
     selectTestChange();
-});
+});*/
 
 inputG.addEventListener('change', () => {
     updateConf();
@@ -537,18 +505,12 @@ const loadExample8 = () => {
     reloadFromJSON();
 }
 
-const selectTestChange = () => {
-    const testId = selectTest.options[selectTest.selectedIndex].value;
-    const test = Tests.get_test_by_id(testId);
-    testDescription.innerHTML = test.description;
-}
-
-const runTest = (testId_) => {
-    const testId = testId_ ? testId_ : selectTest.options[selectTest.selectedIndex].value;
+const runTest = (testId) => {
     const test = Tests.get_test_by_id(testId);
     MODE = test.id;
     bindings = test.bindings;
     jsonTextarea.value = JSON.stringify(test.conf, null, 4);
+    testDescription.innerHTML = test.description;
     reloadFromJSON();
 }
 
@@ -904,15 +866,16 @@ const loadBindingsForSpaceship = () => {
     console.log(bindings);
 }
 
-heartButton.addEventListener('click', heart);
 document.addEventListener('keyup', keyup);
 document.addEventListener('keydown', keydown);
 
 trajectoriesOff();
 gravitationalFieldOff();
-heart();
+runTest('test_10');
 last_now = Date.now();
 requestAnimationFrame(renderLoop);
-selectTestChange();
-runTest('test_10');
+const url = new URL(window.location.href);
+const param_test = url.searchParams.get('test');
+const test_id = param_test ? param_test : 'test_10';
+runTest(test_id);
 canvas.focus();

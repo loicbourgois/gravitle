@@ -5,6 +5,484 @@ import * as utils from './utils.js';
 // features of Gravitle.
 //
 
+const get_test_1 = (conf) => {
+    const test = {
+        id: 'heart',
+        title: 'Heart',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.stabilise_positions_enabled = true;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 20
+        }, {
+            "x": 10,
+            "y": 30
+        }, {
+            "x": 20,
+            "y": 30
+        }, {
+            "x": 30,
+            "y": 20
+        }, {
+            "x": 20,
+            "y": 5
+        }, {
+            "x": 10,
+            "y": -10
+        }, {
+            "x": 0,
+            "y": -20
+        }, {
+            "x": -10,
+            "y": 30
+        }, {
+            "x": -20,
+            "y": 30
+        }, {
+            "x": -30,
+            "y": 20
+        }, {
+            "x": -20,
+            "y": 5
+        }, {
+            "x": -10,
+            "y": -10
+        }, {
+            "x": 0,
+            "y": -35
+        }
+    ];
+    return test;
+}
+
+const get_test_2 = (conf) => {
+    const test = {
+        id: 'diamond',
+        title: 'Diamond',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.particles = [
+        {
+            "x": -30,
+            "y": -40,
+            "fixed": false
+        }, {
+            "x": -30,
+            "y": -41,
+            "fixed": false
+        }, {
+            "x": 0,
+            "y": 41,
+            "fixed": false
+        }, {
+            "x": 20,
+            "y": 20,
+            "fixed": true
+        }, {
+            "x": 20,
+            "y": -20,
+            "fixed": true
+        }, {
+            "x": -20,
+            "y": 20,
+            "fixed": true
+        }, {
+            "x": -20,
+            "y": -20,
+            "fixed": true
+        }, {
+            "x": 0,
+            "y": 40,
+            "fixed": true
+        }, {
+            "x": 0,
+            "y": -40,
+            "fixed": true
+        }, {
+            "x": 40,
+            "y": 0,
+            "fixed": true
+        }, {
+            "x": -40,
+            "y": 0,
+            "fixed": true
+        }
+    ];
+    return test;
+}
+
+const get_test_3 = (conf) => {
+    const test = {
+        id: 'club',
+        title: 'Club',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.particles = [
+        {
+            "x": 0.01,
+            "y": -25,
+            "fixed": false
+        },
+        {
+            "x": 10,
+            "y": -35,
+            "fixed": false
+        },
+        {
+            "x": -10,
+            "y": -35,
+            "fixed": false
+        },
+        {
+            "x": 0,
+            "y": 40,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        },
+        {
+            "x": 40,
+            "y": -10,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        },
+        {
+            "x": -40,
+            "y": -10,
+            "fixed": true,
+            "diameter": 5,
+            "mass": 5
+        }
+    ];
+    return test;
+};
+
+const get_test_4 = (conf) => {
+    const test = {
+        id: 'spade',
+        title: 'Spade',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.intersection_behavior = 'destroy-link';
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 35
+        },
+        {
+            "x": 10,
+            "y": 25,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": 25,
+            "fixed": true
+        },{
+            "x": 15,
+            "y": 15,
+            "fixed": true
+        },
+        {
+            "x": -15,
+            "y": 15,
+            "fixed": true
+        },{
+            "x": 20,
+            "y": 5,
+            "fixed": true
+        },
+        {
+            "x": -20,
+            "y": 5,
+            "fixed": true
+        },{
+            "x": 15,
+            "y": 0,
+            "fixed": true
+        },
+        {
+            "x": -15,
+            "y": 0,
+            "fixed": true
+        },{
+            "x": 5,
+            "y": -5,
+            "fixed": true
+        },
+        {
+            "x": -5,
+            "y": -5,
+            "fixed": true
+        },{
+            "x": 10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": -10,
+            "fixed": true
+        }
+    ];
+    test.conf.links = [
+        {
+            "p1_index": 1,
+            "p2_index": 2
+        }, {
+            "p1_index": 3,
+            "p2_index": 4
+        }, {
+            "p1_index": 5,
+            "p2_index": 6
+        }, {
+            "p1_index": 7,
+            "p2_index": 8
+        }, {
+            "p1_index": 9,
+            "p2_index": 10
+        }, {
+            "p1_index": 11,
+            "p2_index": 12
+        }
+    ];
+    return test;
+}
+
+const get_test_5 = (conf) => {
+    const test = {
+        id: 'v',
+        title: 'Test V',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.intersection_behavior = 'destroy-particle';
+    test.conf.default_link_strengh = 0.0;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 0
+        },
+        {
+            "x": -10,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": 10,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": -10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": 10,
+            "y": -10,
+            "fixed": true
+        },
+        {
+            "x": -40,
+            "y": 35,
+            "fixed": false
+        },
+        {
+            "x": 40,
+            "y": 35,
+            "fixed": false
+        },
+        {
+            "x": -50,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": 50,
+            "y": 30,
+            "fixed": true
+        }
+    ];
+    test.conf.links = [
+        {
+            "p1_index": 0,
+            "p2_index": 1
+        },
+        {
+            "p1_index": 0,
+            "p2_index": 2
+        },
+        {
+            "p1_index": 3,
+            "p2_index": 4
+        },
+        {
+            "p1_index": 5,
+            "p2_index": 6
+        }
+    ];
+    return test;
+}
+
+const get_test_6 = (conf) => {
+    const test = {
+        id: 'test_6',
+        title: 'Test 6',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.collision_behavior = 'create-link';
+    test.conf.intersection_behavior = 'destroy-link';
+    test.conf.gravitational_constant = 100;
+    test.conf.default_link_length = 10;
+    test.conf.default_link_strengh = 1000;
+    test.conf.drag_coefficient = 1;
+    test.conf.stabilise_positions_enabled = false;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 0,
+            "fixed": true
+        },
+        {
+            "x": 30,
+            "y": 0,
+            "fixed": true
+        },
+        {
+            "x": -30,
+            "y": 0,
+            "fixed": true
+        },
+        {
+            "x": 0,
+            "y": 30,
+            "fixed": true
+        },
+        {
+            "x": 0,
+            "y": -30,
+            "fixed": true
+        },
+        {
+            "x": 20,
+            "y": 20
+        },
+        {
+            "x": 20,
+            "y": -20
+        },
+        {
+            "x": -20,
+            "y": 20
+        },
+        {
+            "x": -20,
+            "y": -20
+        },
+        {
+            "x": 0,
+            "y": 20
+        },
+        {
+            "x": 0,
+            "y": -20
+        },
+        {
+            "x": 20,
+            "y": 0
+        },
+        {
+            "x": -20,
+            "y": 0
+        }
+    ];
+    return test;
+}
+
+const get_test_7 = (conf) => {
+    const test = {
+        id: 'test_7',
+        title: 'Test 7',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.collision_behavior = 'create-link';
+    test.conf.intersection_behavior = 'destroy-link';
+    test.conf.gravitational_constant = 100;
+    test.conf.default_link_length = 10;
+    test.conf.default_link_strengh = 1000;
+    test.conf.drag_coefficient = 1;
+    test.conf.stabilise_positions_enabled = false;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 0
+        },
+        {
+            "x": 0,
+            "y": 0
+        }
+    ];
+    return test;
+}
+
+const get_test_8 = (conf) => {
+    const test = {
+        id: 'test_8',
+        title: 'Test 8',
+        description: `
+            .
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.collision_behavior = 'create-link';
+    test.conf.link_intersection_behavior = 'destroy-links';
+    test.conf.drag_coefficient = 1;
+    test.conf.gravitational_constant = 100;
+    test.conf.particles = [
+        {
+            x: 0.1,
+            y: 0
+        },
+        {
+            x: 0.2,
+            y: 0
+        },
+        {
+            x: 0.3,
+            y: 0.1
+        },
+        {
+            x: 4,
+            y: 0
+        }
+    ];
+    return test;
+}
+
 const get_test_9 = () => {
     const test = {
         id: 'test_9',
@@ -74,6 +552,7 @@ const get_test_10 = () => {
         title: 'Small spaceship',
         description: `
             Use [E, R, T] or [1, 2, 3] or [4, 5, 6] to move.
+            Don't get hit.
         `,
         conf: utils.get_base_conf_copy(),
         bindings: {
@@ -107,8 +586,9 @@ const get_test_10 = () => {
         }
     };
     test.conf.wrap_around = true;
-    test.conf.drag_coefficient = 0.1;
-    test.conf.collision_behavior = 'create-link';
+    test.conf.width = 300;
+    test.conf.height = 300;
+    test.conf.drag_coefficient = 0.025;
     test.conf.intersection_behavior = 'destroy-link';
     test.conf.link_intersection_behavior = 'destroy-links';
     test.conf.default_link_strengh = 1000.0;
@@ -123,7 +603,8 @@ const get_test_10 = () => {
         {x: 10, y: 0},
         {x: 20, y: 0},
         {x: -5, y: -5},
-        {x: 5, y: -5}
+        {x: 5, y: -5},
+        {x: 0, y: -100, diameter: 5, mass:5 }
     ];
     const THRUST = 100.0;
     test.conf.links = [
@@ -233,8 +714,16 @@ const get_test_11 = () => {
 
 const get_tests = () => {
     let list = [];
-    list.push(get_test_10());
+    list.push(get_test_1());
+    list.push(get_test_2());
+    list.push(get_test_3());
+    list.push(get_test_4());
+    list.push(get_test_5());
+    list.push(get_test_6());
+    list.push(get_test_7());
+    list.push(get_test_8());
     list.push(get_test_9());
+    list.push(get_test_10());
     list.push(get_test_11());
     return list;
 };
