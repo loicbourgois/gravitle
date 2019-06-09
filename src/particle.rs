@@ -1,5 +1,6 @@
 use crate::link::Link;
 use crate::point::Point;
+use crate::segment::Segment;
 
 //
 // Collision happens when two particles collide
@@ -427,6 +428,16 @@ impl Particle {
     }
 
     //
+    // Returns current coordinates as a Point
+    //
+    pub fn get_coordinates_as_point(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y
+        }
+    }
+
+    //
     // Getter for x current coordinates
     //
     pub fn get_x(&self) -> f64 {
@@ -445,6 +456,18 @@ impl Particle {
     //
     pub fn get_old_coordinates(& self) -> (f64, f64) {
         (self.old_x, self.old_y)
+    }
+
+    //
+    // Returns both old and current coordinates as a single segment.
+    //
+    pub fn get_coordinates_as_segment(& self) -> Segment {
+        Segment {
+            x1: self.old_x,
+            y1: self.old_y,
+            x2: self.x,
+            y2: self.y
+        }
     }
 
     //
@@ -505,7 +528,8 @@ impl Particle {
 
     //
     // Get gravitational forces exerced by one particle on another particle
-    // if wrap around is enabled
+    // if wrap around is enabled.
+    // Always requires 4 clones.
     //
     pub fn get_gravitational_force_wrap_around_fixed_clone_count(
             &self,
@@ -536,6 +560,11 @@ impl Particle {
         return forces;
     }
 
+    //
+    // Get gravitational forces exerced by one particle on another particle
+    // if wrap around is enabled.
+    // Works with a variable number of clones.
+    //
     pub fn get_gravitational_force_wrap_around_variable_clone_count(
             &self,
             x: f64,
@@ -577,6 +606,13 @@ impl Particle {
     //
     pub fn get_cycle_deltas(p1: Particle, p2: Particle) -> [i32; 2] {
         [p2.cycle_x - p1.cycle_x, p2.cycle_y - p1.cycle_y]
+    }
+
+    //
+    // Returns the particle's radius.
+    //
+    pub fn get_radius(&self) -> f64 {
+        self.diameter * 0.5
     }
 }
 
@@ -663,6 +699,10 @@ impl Particle {
         }
     }
 
+    //
+    // Returns coordinates for clones of this point given the width and height
+    // of the Universe.
+    //
     fn get_wrap_around_clones_coordinates_variable_count(
             x1: f64, y1: f64,
             x2: f64, y2: f64,

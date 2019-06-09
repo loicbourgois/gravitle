@@ -109,6 +109,7 @@ const get_test_10 = () => {
     test.conf.wrap_around = true;
     test.conf.drag_coefficient = 0.1;
     test.conf.collision_behavior = 'create-link';
+    test.conf.intersection_behavior = 'destroy-link';
     test.conf.link_intersection_behavior = 'destroy-links';
     test.conf.default_link_strengh = 1000.0;
     test.conf.particles = [
@@ -194,10 +195,47 @@ const get_test_10 = () => {
     return test;
 };
 
+const get_test_11 = () => {
+    const test = {
+        id: 'test_11',
+        title: 'Particle link intersection',
+        description: `
+            A particle is fixed at the center. A link comes from the right.
+            When the moving link intersect with the fixed particle, the link
+            is destroyed.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.intersection_behavior = 'destroy-link';
+    test.conf.particles = [
+        {
+            x: 1,
+            y: 0,
+            fixed: true
+        },
+        {
+            x: 20,
+            y: -5
+        },
+        {
+            x: 20,
+            y: 5
+        }
+    ];
+    test.conf.links = [
+        {
+            p1_index: 1,
+            p2_index: 2
+        }
+    ];
+    return test;
+};
+
 const get_tests = () => {
     let list = [];
     list.push(get_test_10());
     list.push(get_test_9());
+    list.push(get_test_11());
     return list;
 };
 

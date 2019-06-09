@@ -1,4 +1,5 @@
 use crate::point::Point;
+use crate::segment::Segment;
 
 //
 // Link between two particles
@@ -128,11 +129,41 @@ impl Link {
     }
 
     //
+    // Returns x1, y1, x2, y2 as a segment
+    //
+    pub fn get_coordinates_as_segment(& self) -> Segment {
+        Segment {
+            x1: self.x1,
+            y1: self.y1,
+            x2: self.x2,
+            y2: self.y2
+        }
+    }
+
+    //
     // Get cycled coordinates
     // Useful for drawing if wrap around is enabled
     //
     pub fn get_coordinates_cycled(&self) -> [f64; 8] {
         self.coordinates_cycled
+    }
+
+    //
+    // Returns cycled coordinates as 2 segments
+    // Useful to handle cases where a links wrap around the Universe.
+    //
+    pub fn get_cycled_coordinates_as_segments(&self) -> [Segment; 2] {
+        [Segment {
+            x1: self.coordinates_cycled[0],
+            y1: self.coordinates_cycled[1],
+            x2: self.coordinates_cycled[2],
+            y2: self.coordinates_cycled[3]
+        }, Segment {
+            x1: self.coordinates_cycled[4],
+            y1: self.coordinates_cycled[5],
+            x2: self.coordinates_cycled[6],
+            y2: self.coordinates_cycled[7]
+        }]
     }
 
     //

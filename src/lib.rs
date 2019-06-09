@@ -8,6 +8,7 @@ mod particle;
 mod trajectory;
 mod wrap_around;
 mod point;
+mod segment;
 
 extern crate web_sys;
 extern crate wasm_bindgen;
@@ -23,6 +24,8 @@ use trajectory::Trajectory;
 use particle::ParticleCollisionBehavior;
 use link_to_create::LinkToCreate;
 use wrap_around::WrapAround;
+use segment::Segment;
+use point::Point;
 
 use std::fmt;
 use std::mem;
@@ -1221,38 +1224,60 @@ impl Universe {
         self.intersections.clear();
         for (link_index, link) in self.links.iter().enumerate() {
             for (particle_index, particle) in self.particles.iter().enumerate() {
-                if self.links[link_index].has_particle(particle_index) 
+                if self.links[link_index].has_particle(particle_index)
                     || particle.is_enabled() == false
                     || self.links[link_index].is_enabled() == false
                 {
                     // Do nothing
                 } else {
-                    let p1_coordinates = particle.get_coordinates();
-                    let p1_old_coordinates = particle.get_old_coordinates();
-                    let coordinates = link.get_coordinates();
-                    let x3 = coordinates[0];
-                    let y3 = coordinates[1];
-                    let x4 = coordinates[2];
-                    let y4 = coordinates[3];
-                    match Universe::get_intersect(
-                        p1_coordinates,
-                        p1_old_coordinates,
-                        (x3, y3),
-                        (x4, y4)
-                    ) {
-                        Some(intersect) => {
-                            self.intersections.push(
-                                Intersection::new(
-                                    intersect.0,
-                                    intersect.1,
-                                    link_index,
-                                    particle_index
-                                )
-                            );
-                        },
-                        None => {
-                            // NTD
+                    let mut intersection_found = false;
+                    let link_segments = link.get_cycled_coordinates_as_segments();
+                    for link_segment in link_segments.iter() {
+                        match Universe::approximate_segment_circle_intersection(
+                            link_segment,
+                            particle.get_coordinates_as_point(),
+                            particle.get_radius()
+                        ) {
+                            Some(intersection_point) => {
+                                self.intersections.push(
+                                    Intersection::new(
+                                        intersection_point.x,
+                                        intersection_point.y,
+                                        link_index,
+                                        particle_index
+                                    )
+                                );
+                                intersection_found = true;
+                                break;
+                            },
+                            None => {
+                                // Do nothing
+                            }
                         }
+                    }
+                    if intersection_found == false {
+                        for link_segment in link_segments.iter() {
+                            match Universe::get_segments_intersection(
+                                & particle.get_coordinates_as_segment(),
+                                link_segment
+                            ) {
+                                Some(intersection_point) => {
+                                    self.intersections.push(
+                                        Intersection::new(
+                                            intersection_point.x,
+                                            intersection_point.y,
+                                            link_index,
+                                            particle_index
+                                        )
+                                    );
+                                },
+                                None => {
+                                    // NTD
+                                }
+                            }
+                        }
+                    } else {
+                        // Do nothing
                     }
                 }
             }
@@ -1592,6 +1617,88 @@ impl Universe {
                 None
             }
         }
+    }
+
+    //
+    // Helper method to find if two segments intersect
+    //
+    fn get_segments_intersection(s1: & Segment, s2: & Segment) -> Option<Point> {
+        let line_segment_1 = LineInterval::line_segment(
+            Line::new(
+                geo::Point::new(s1.x1, s1.y1),
+                geo::Point::new(s1.x2, s1.y2)
+            )
+        );
+        let line_segment_2 = LineInterval::line_segment(
+            Line::new(
+                geo::Point::new(s2.x1, s2.y1),
+                geo::Point::new(s2.x2, s2.y2)
+            )
+        );
+        match line_segment_1.relate(&line_segment_2).unique_intersection() {
+            Some(intersection) => {
+                Some(Point{x: intersection.x(), y: intersection.y()})
+            },
+            None    => {
+                None
+            }
+        }
+    }
+
+    //
+    // Returns an approximation of the intersection between a segment and a circle.
+    //
+    fn approximate_segment_circle_intersection(
+            segment: & Segment,
+            circle_center: Point,
+            circle_radius: f64
+    ) -> Option<Point> {
+        let closest_point_option = Universe::get_closest_point_on_segment(&circle_center, &segment);
+        match closest_point_option {
+            Some(closest_point) => {
+                let distance = Point::get_distance_2(&closest_point, &circle_center);
+                if distance <= circle_radius {
+                    Some(closest_point)
+                } else {
+                    None
+                }
+            },
+            None => {
+                None
+            }
+        }
+    }
+
+    //
+    // Returns the point closest to p.
+    // This point belongs to the segment s.
+    //
+    fn get_closest_point_on_segment(p: & Point, s: & Segment) -> Option<Point> {
+        let x_delta = s.x2 - s.x1;
+        let y_delta = s.y2 - s.y1;
+        if x_delta == 0.0 && y_delta == 0.0 {
+            return None;
+        } else {
+            // Do nothing
+        }
+        let u = ((p.x - s.x1) * x_delta + (p.y - s.y1) * y_delta) / (x_delta * x_delta + y_delta * y_delta);
+        let closest_point = if u < 0.0 {
+            Point {
+                x: s.x1,
+                y: s.y1
+            }
+        } else if u > 1.0 {
+            Point {
+                x: s.x2,
+                y: s.y2
+            }
+        } else {
+            Point {
+                x: s.x1 + u * x_delta,
+                y: s.y1 + u * y_delta
+            }
+        };
+        return Some(closest_point);
     }
 
     //
