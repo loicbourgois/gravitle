@@ -9,6 +9,7 @@ mod trajectory;
 mod wrap_around;
 mod point;
 mod segment;
+mod vector;
 
 extern crate web_sys;
 extern crate wasm_bindgen;
@@ -26,6 +27,7 @@ use link_to_create::LinkToCreate;
 use wrap_around::WrapAround;
 use segment::Segment;
 use point::Point;
+use vector::Vector;
 
 use std::fmt;
 use std::mem;
@@ -1031,10 +1033,10 @@ impl Universe {
                     } else {
                         Particle::get_link_forces_wrap_around_disabled(p1, p2, link)
                     };
-                    let force_x = forces.0 / 2.0;
-                    let force_y = forces.1 / 2.0;
-                    self.particles[p1_index].add_force(force_x, force_y);
-                    self.particles[p2_index].add_force(-force_x, -force_y);
+                    let force_x = forces.x * 0.5;
+                    let force_y = forces.y * 0.5;
+                    self.particles[p1_index].add_force(Vector{x: force_x, y: force_y});
+                    self.particles[p2_index].add_force(Vector{x:-force_x, y: -force_y});
                 } else {
                     // Do nothing
                 }
@@ -1053,13 +1055,11 @@ impl Universe {
                 let p1_index = link.get_p1_index();
                 let p2_index = link.get_p2_index();
                 let coordinates_cycled = link.get_coordinates_cycled();
-                let forces_option = link.get_thrust_forces(coordinates_cycled);
-                match forces_option {
-                    Some(forces) => {
-                        let force_x = forces.0;
-                        let force_y = forces.1;
-                        self.particles[p1_index].add_force(force_x, force_y);
-                        self.particles[p2_index].add_force(force_x, force_y);
+                let force_option = link.get_thrust_forces(coordinates_cycled);
+                match force_option {
+                    Some(force) => {
+                        self.particles[p1_index].add_force(force);
+                        self.particles[p2_index].add_force(force);
                     },
                     None => {
                         // Do nothing
@@ -1112,9 +1112,10 @@ impl Universe {
         let y_max = self.height * 0.5;
         let y_min = -y_max;
         for (particle_index, particle) in self.particles.iter().enumerate() {
-            let xy = particle.get_coordinates();
+            let point = particle.get_coordinates_as_point();
             if particle.is_enabled() {
-                if xy.0 < x_min || xy.0 > x_max || xy.1 < y_min || xy.1 > y_max {
+                if point.x < x_min || point.x > x_max
+                        || point.y < y_min || point.y > y_max {
                     self.wrap_arounds.push(WrapAround::new(particle_index));
                 } else {
                     // Do nothing
@@ -1167,10 +1168,10 @@ impl Universe {
             if self.particles[index].is_fixed() || !self.particles[index].is_enabled() {
                 // Do nothing
             } else {
-                let coordinates = self.particles[index].get_coordinates();
+                let coordinates = self.particles[index].get_coordinates_as_point();
                 self.trajectories[index].add_position(
-                    coordinates.0,
-                    coordinates.1,
+                    coordinates.x,
+                    coordinates.y,
                     step
                 );
             }
@@ -1182,13 +1183,13 @@ impl Universe {
     //
     fn update_links_coordinates(&mut self) {
         for link in &mut self.links {
-            let p1_coordinates = self.particles[link.get_p1_index()].get_coordinates();
-            let p2_coordinates = self.particles[link.get_p2_index()].get_coordinates();
+            let p1_coordinates = self.particles[link.get_p1_index()].get_coordinates_as_point();
+            let p2_coordinates = self.particles[link.get_p2_index()].get_coordinates_as_point();
             link.set_coordinates(
-                p1_coordinates.0,
-                p1_coordinates.1,
-                p2_coordinates.0,
-                p2_coordinates.1
+                p1_coordinates.x,
+                p1_coordinates.y,
+                p2_coordinates.x,
+                p2_coordinates.y
             );
         }
     }
@@ -1317,39 +1318,31 @@ impl Universe {
                             && p1_1_index != p2_2_index
                             && p1_2_index != p2_1_index
                             && p1_2_index != p2_2_index {
-                        let c1 = link_1.get_coordinates_cycled();
-                        let c2 = link_2.get_coordinates_cycled();
+                        let link_1_segments = link_1.get_cycled_coordinates_as_segments();
+                        let link_2_segments = link_2.get_cycled_coordinates_as_segments();
                         let links_intersection_options = [
-                            Universe::get_intersect(
-                                (c1[0], c1[1]),
-                                (c1[2], c1[3]),
-                                (c2[0], c2[1]),
-                                (c2[2], c2[3])
+                            Universe::get_segments_intersection(
+                                & link_1_segments[0],
+                                & link_2_segments[0]
                             ),
-                            Universe::get_intersect(
-                                (c1[0], c1[1]),
-                                (c1[2], c1[3]),
-                                (c2[4], c2[5]),
-                                (c2[6], c2[7])
+                            Universe::get_segments_intersection(
+                                & link_1_segments[0],
+                                & link_2_segments[1]
                             ),
-                            Universe::get_intersect(
-                                (c1[4], c1[5]),
-                                (c1[6], c1[7]),
-                                (c2[0], c2[1]),
-                                (c2[2], c2[3])
+                            Universe::get_segments_intersection(
+                                & link_1_segments[1],
+                                & link_2_segments[0]
                             ),
-                            Universe::get_intersect(
-                                (c1[4], c1[5]),
-                                (c1[6], c1[7]),
-                                (c2[4], c2[5]),
-                                (c2[6], c2[7])
+                            Universe::get_segments_intersection(
+                                & link_1_segments[1],
+                                & link_2_segments[1]
                             ),
                         ];
                         for links_intersection_option in links_intersection_options.iter() {
                             match links_intersection_option {
                                 Some(links_intersection) => {
                                     self.link_intersections.push(LinkIntersection::new(
-                                        links_intersection.0, links_intersection.1, i, j
+                                        links_intersection.x, links_intersection.y, i, j
                                     ));
                                 },
                                 None => {
@@ -1591,37 +1584,6 @@ impl Universe {
     //
     // Helper method to find if two segments intersect
     //
-    fn get_intersect(
-            p1: (f64, f64),
-            p2: (f64, f64),
-            p3: (f64, f64),
-            p4: (f64, f64)
-    ) -> Option<(f64, f64)> {
-        let segment_1 = LineInterval::line_segment(
-            Line::new(
-                geo::Point::new(p1.0, p1.1),
-                geo::Point::new(p2.0, p2.1)
-            )
-        );
-        let segment_2 = LineInterval::line_segment(
-            Line::new(
-                geo::Point::new(p3.0, p3.1),
-                geo::Point::new(p4.0, p4.1)
-            )
-        );
-        match segment_1.relate(&segment_2).unique_intersection() {
-            Some(intersect) => {
-                Some((intersect.x(), intersect.y()))
-            },
-            None    => {
-                None
-            }
-        }
-    }
-
-    //
-    // Helper method to find if two segments intersect
-    //
     fn get_segments_intersection(s1: & Segment, s2: & Segment) -> Option<Point> {
         let line_segment_1 = LineInterval::line_segment(
             Line::new(
@@ -1784,8 +1746,8 @@ impl Universe {
                         );
                     }
                 };
-                field.0 += particle_gravitational_forces.0;
-                field.1 += particle_gravitational_forces.1;
+                field.0 += particle_gravitational_forces.x;
+                field.1 += particle_gravitational_forces.y;
             } else {
                 // Do nothing
             }

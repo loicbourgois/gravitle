@@ -1,5 +1,6 @@
 use crate::point::Point;
 use crate::segment::Segment;
+use crate::vector::Vector;
 
 //
 // Link between two particles
@@ -64,7 +65,7 @@ impl Link {
     //
     // Get the thrust vector, following the normal of the link
     //
-    pub fn get_thrust_forces(&self, coordinates_cycled: [f64;8]) -> Option<(f64, f64)> {
+    pub fn get_thrust_forces(&self, coordinates_cycled: [f64;8]) -> Option<Vector> {
         let dx = coordinates_cycled[2] - coordinates_cycled[0];
         let dy = coordinates_cycled[3] - coordinates_cycled[1];
         let normal_1 = (-dy, dx);
@@ -74,10 +75,10 @@ impl Link {
         );
         match normalized_normal_option {
             Some(normalized_normal) => {
-                return Some((
-                    normalized_normal.0 * self.thrust_force,
-                    normalized_normal.1 * self.thrust_force
-                ));
+                return Some(Vector {
+                    x: normalized_normal.0 * self.thrust_force,
+                    y: normalized_normal.1 * self.thrust_force
+                });
             },
             None => {
                 return None;

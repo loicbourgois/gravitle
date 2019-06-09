@@ -1,6 +1,7 @@
 use crate::link::Link;
 use crate::point::Point;
 use crate::segment::Segment;
+use crate::vector::Vector;
 
 //
 // Collision happens when two particles collide
@@ -174,7 +175,7 @@ impl Particle {
                         minimal_distance_for_gravity,
                         gravitational_constant
                     );
-                    self.add_force(force.0, force.1);
+                    self.add_force(force);
                 } else {
                     // NTD
                 }
@@ -204,7 +205,7 @@ impl Particle {
                         minimal_distance_for_gravity,
                         gravitational_constant
                     );
-                    self.add_force(force.0, force.1);
+                    self.add_force(force);
                 } else {
                     // NTD
                 }
@@ -238,9 +239,8 @@ impl Particle {
                         };
                         let delta_x = self.x - particle.x;
                         let delta_y = self.y - particle.y;
-                        let force_x = delta_x * force;
-                        let force_y = delta_y * force;
-                        self.add_force(force_x, force_y);
+                        let force = Vector {x: delta_x * force, y: delta_y * force};
+                        self.add_force(force);
                 } else {
                     // NTD
                 }
@@ -251,9 +251,9 @@ impl Particle {
     //
     // Add a force to the particle
     //
-    pub fn add_force(&mut self, force_x: f64, force_y: f64) {
-        self.forces_x += force_x;
-        self.forces_y += force_y;
+    pub fn add_force(&mut self, force: Vector) {
+        self.forces_x += force.x;
+        self.forces_y += force.y;
     }
 
     //
@@ -261,7 +261,7 @@ impl Particle {
     // is disabled
     //
     pub fn get_link_forces_wrap_around_disabled(
-            p1: & Particle,  p2: & Particle, link: & Link) -> (f64, f64) {
+            p1: & Particle,  p2: & Particle, link: & Link) -> Vector {
         Particle::get_link_forces_wrap_around_enabled(p1, p2, link, 0.0, 0.0)
     }
 
@@ -272,7 +272,7 @@ impl Particle {
     pub fn get_link_forces_wrap_around_enabled(
             p1: & Particle,  p2: & Particle,
             link: & Link,
-            universe_width: f64, universe_height: f64) -> (f64, f64)
+            universe_width: f64, universe_height: f64) -> Vector
     {
         let cycle_x_delta = p2.cycle_x - p1.cycle_x - link.get_initial_cycle_delta_x();
         let cycle_y_delta = p2.cycle_y - p1.cycle_y - link.get_initial_cycle_delta_y();
@@ -298,7 +298,10 @@ impl Particle {
                 force_y = DEFAULT_LINK_FORCE_Y * delta_length * strengh;
             }
         }
-        (force_x, force_y)
+        Vector {
+            x: force_x,
+            y: force_y
+        }
     }
 
     //
@@ -421,13 +424,6 @@ impl Particle {
     }
 
     //
-    // Getter for current coordinates
-    //
-    pub fn get_coordinates(& self) -> (f64, f64) {
-        (self.x, self.y)
-    }
-
-    //
     // Returns current coordinates as a Point
     //
     pub fn get_coordinates_as_point(&self) -> Point {
@@ -454,8 +450,8 @@ impl Particle {
     //
     // Getter for old coordinates
     //
-    pub fn get_old_coordinates(& self) -> (f64, f64) {
-        (self.old_x, self.old_y)
+    pub fn get_old_coordinates_as_point(& self) -> Point {
+        Point{x: self.old_x, y:self.old_y}
     }
 
     //
@@ -508,7 +504,7 @@ impl Particle {
             mass: f64,
             minimal_distance_for_gravity: f64,
             gravitational_constant: f64
-    ) -> (f64, f64) {
+    ) -> Vector {
         let distance = Point::get_distance(
             self.x, self.y,
             x, y
@@ -523,7 +519,10 @@ impl Particle {
         let delta_y = self.y - y;
         let force_x = delta_x * force;
         let force_y = delta_y * force;
-        (force_x, force_y)
+        Vector {
+            x: force_x,
+            y: force_y
+        }
     }
 
     //
@@ -540,8 +539,8 @@ impl Particle {
             universe_height: f64,
             minimal_distance_for_gravity: f64,
             gravitational_constant: f64
-    ) -> (f64, f64) {
-        let mut forces = (0.0, 0.0);
+    ) -> Vector {
+        let mut forces = Vector{x: 0.0, y: 0.0};
         let clones_coordinates = Particle::get_wrap_around_clones_coordinates_fixed_count(
             self.x,
             self.y,
@@ -554,8 +553,8 @@ impl Particle {
             let force = self.get_gravitational_force(
                 clone.x, clone.y, mass, minimal_distance_for_gravity, gravitational_constant
             );
-            forces.0 += force.0;
-            forces.1 += force.1;
+            forces.x += force.x;
+            forces.y += force.y;
         }
         return forces;
     }
@@ -574,8 +573,8 @@ impl Particle {
             universe_height: f64,
             minimal_distance_for_gravity: f64,
             gravitational_constant: f64
-    ) -> (f64, f64) {
-        let mut forces = (0.0, 0.0);
+    ) -> Vector {
+        let mut forces = Vector{x: 0.0, y: 0.0};
         let clones_coordinates = Particle::get_wrap_around_clones_coordinates_variable_count(
             self.x,
             self.y,
@@ -590,8 +589,8 @@ impl Particle {
                     let force = self.get_gravitational_force(
                         clone.x, clone.y, mass, minimal_distance_for_gravity, gravitational_constant
                     );
-                    forces.0 += force.0;
-                    forces.1 += force.1;
+                    forces.x += force.x;
+                    forces.y += force.y;
                 },
                 None => {
                     // Do nothing
@@ -665,8 +664,8 @@ impl Particle {
         // Order by ascending distance
         xs.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
         ys.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
-        let x_average = (x1+x2)/2.0;
-        let y_average = (y1+y2)/2.0;
+        let x_average = (x1+x2) * 0.5;
+        let y_average = (y1+y2) * 0.5;
         //
         if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
             return [
@@ -739,8 +738,8 @@ impl Particle {
         // Order by ascending distance
         xs.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
         ys.sort_by(|a, b| a.d.partial_cmp(&b.d).unwrap());
-        let x_average = (x1+x2)/2.0;
-        let y_average = (y1+y2)/2.0;
+        let x_average = (x1+x2) * 0.5;
+        let y_average = (y1+y2) * 0.5;
         //
         if (x1 - x2).abs() < FLOAT_COMPARE_MARGIN && (y1 - y2).abs() < FLOAT_COMPARE_MARGIN {
             return [
