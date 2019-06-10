@@ -6,6 +6,7 @@ import { memory } from "gravitle/gravitle_bg";
 import * as render from './render.js';
 import * as Tests from './tests.js';
 import * as utils from './utils.js';
+import WebGLRenderer from './webgl-renderer.js';
 
 const fps_infos = document.getElementById('fps-infos');
 const infos = document.getElementById('infos');
@@ -52,7 +53,15 @@ const testsDiv = document.getElementById('tests');
 const canvas = document.getElementById('canvas');
 canvas.height = 1000;
 canvas.width = 1000;
-const context = canvas.getContext("2d");
+let context;
+const webgl_context = canvas.getContext("webgl2");
+let webgl_renderer;
+if (webgl_context) {
+    webgl_renderer = new WebGLRenderer(webgl_context);
+} else {
+    context = canvas.getContext("2d");
+}
+
 let bindings = {};
 const LOAD_BINDINGS_FOR_SPACESHIP_STEP = 200;
 const MIN_DELTA_X_FOR_SPACESHIP_LINK = 2.0;
@@ -172,10 +181,6 @@ selectFixedCloneCount.addEventListener('change', () => {
 selectWrapAroundBehavior.addEventListener('change', () => {
     updateConf();
 });
-
-/*selectTest.addEventListener('change', () => {
-    selectTestChange();
-});*/
 
 inputG.addEventListener('change', () => {
     updateConf();
@@ -335,23 +340,86 @@ const renderLoop = () => {
     fps_infos.textContent = `FPS : ${average_fps.toFixed(0)}\n`
         + `Frame : ${average_frame_length.toFixed(2)} ms`;
     infos.textContent = universe.get_infos();
-    render.draw(
-        context,
-        parseInt(inputGravitationalFieldResolution.value),
-        SHOW_GRAVITATIONAL_FIELD,
-        MODE,
-        parseInt(inputTrajectoriesPeriod.value),
-        SHOW_TRAJECTORIES,
-        universe,
-        memory,
-        mouse_positions,
-        launchers
-    );
+    const resolution = parseInt(inputGravitationalFieldResolution.value);
+    const period = parseInt(inputTrajectoriesPeriod.value);
+    if (webgl_renderer) {
+        webgl_renderer.render(
+            universe.get_links_coordinates_to_draw(),
+            universe.get_thrusting_links_coordinates_to_draw(),
+            universe.get_particles_data_to_draw(),
+            universe.get_gravitational_grid_squared_normalized(resolution, resolution),
+            resolution,
+            universe.get_width(),
+            universe.get_height(),
+            SHOW_GRAVITATIONAL_FIELD,
+            SHOW_TRAJECTORIES,
+            universe.get_trajectories_position_at_period(period),
+            launchers_data(launchers),
+            MODE === 'SPACE-CROQUET',
+            current_launcher_data(mouse_positions)
+        );
+    } else {
+        render.draw(
+            context,
+            parseInt(inputGravitationalFieldResolution.value),
+            SHOW_GRAVITATIONAL_FIELD,
+            MODE,
+            parseInt(inputTrajectoriesPeriod.value),
+            SHOW_TRAJECTORIES,
+            universe,
+            memory,
+            mouse_positions,
+            launchers
+        );
+    }
     requestAnimationFrame(renderLoop);
     // Update analytics
     updateFps();
     updateFrameLength(start);
 }
+
+const current_launcher_data = (mouse_positions) => {
+    let data = [];
+    if (mouse_positions) {
+        const p1 = get_position_from_canvas_to_universe(mouse_positions.down);
+        const p2 = get_position_from_canvas_to_universe(mouse_positions.up);
+        data.push(...[
+            p1.x,
+            p1.y,
+            p2.x,
+            p2.y
+        ]);
+    } else {
+        // Do nothing
+    }
+    return data;
+};
+
+const get_position_from_canvas_to_universe = (point) => {
+    const universe_width = universe.get_width();
+    const universe_height = universe.get_height();
+    const unit_x = canvas.width / universe_width;
+    const unit_y = canvas.height / universe_height;
+    return {
+        x: point.x / unit_x - universe_width * 0.5,
+        y: - point.y / unit_y + universe_height * 0.5
+    };
+};
+
+const launchers_data = (launchers) => {
+    let data = [];
+    for(let i = 0, l = launchers.length, c = 1 ; i < l ; i += c) {
+        const p1 = get_position_from_canvas_to_universe(launchers[i].down);
+        const p2 = get_position_from_canvas_to_universe(launchers[i].up);
+        data.push(...[
+            p1.x,
+            p1.y,
+            p2.x,
+            p2.y
+        ]);
+    }
+    return data;
+};
 
 const updateFrameLength = (start) => {
     const frame_length = Date.now() - start;

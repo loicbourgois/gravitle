@@ -424,6 +424,13 @@ impl Particle {
     }
 
     //
+    // Returns current coordinates
+    //
+    pub fn get_coordinates(&self) -> [f64; 2] {
+        [self.x, self.y]
+    }
+
+    //
     // Returns current coordinates as a Point
     //
     pub fn get_coordinates_as_point(&self) -> Point {
@@ -605,6 +612,13 @@ impl Particle {
     //
     pub fn get_cycle_deltas(p1: Particle, p2: Particle) -> [i32; 2] {
         [p2.cycle_x - p1.cycle_x, p2.cycle_y - p1.cycle_y]
+    }
+
+    //
+    // Returns the particle's diameter.
+    //
+    pub fn get_diameter(&self) -> f64 {
+        self.diameter
     }
 
     //

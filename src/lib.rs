@@ -740,6 +740,38 @@ impl Universe {
     }
 
     //
+    // Get a grid representing the gravitational forces exerced
+    // throughout the Universe.
+    // Values are squared and normalized for smoother feel.
+    //
+    pub fn get_gravitational_grid_squared_normalized(
+        &self,
+        width: usize,
+        height: usize
+    ) -> Vec<f64> {
+        let mut grid = self.get_gravitational_grid(width, height);
+        let mut max = -9999.0;
+        let mut min = 9999.0;
+        for i in 0..grid.len() {
+            grid[i] = grid[i].sqrt();
+            if grid[i] < min {
+                min = grid[i];
+            } else {
+                // Do nothing
+            }
+            if grid[i] > max {
+                max = grid[i];
+            } else {
+                // Do nothing
+            }
+        }
+        for i in 0..grid.len() {
+            grid[i] =(grid[i] - min) / (max-min);
+        }
+        grid
+    }
+
+    //
     // Get links coordinates used for drawing.
     // Different from real in Universe coordinates.
     // Useful in case of links wraping around the edge of the Universe.
@@ -808,6 +840,22 @@ impl Universe {
             }
         }
         coordinates
+    }
+
+    //
+    // Return particles coordinates.
+    //
+    pub fn get_particles_data_to_draw(&self) -> Vec<f64> {
+        let mut data = Vec::new();
+        for particle in self.particles.iter() {
+            if particle.is_enabled() {
+                data.extend_from_slice(&particle.get_coordinates());
+                data.push(particle.get_radius());
+            } else {
+                // Do nothing
+            }
+        }
+        data
     }
 
     //
