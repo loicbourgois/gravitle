@@ -1,0 +1,25 @@
+.canvas {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+}
+
+.popup {
+    margin: 8rem auto 0 auto;
+    text-align: center;
+}
+
+.popup > p {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.faded * {
+    color: transparent;
+    -webkit-transition: color 1000ms linear;
+    -ms-transition: color 1000ms linear;
+    transition: color 1000ms linear;
+}
