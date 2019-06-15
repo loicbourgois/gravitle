@@ -160,7 +160,7 @@ if (url.pathname.includes('index.html')) {
     const keyup = (e) => {
         if (bindings && bindings[e.key]) {
             universe.deactivate_thrust_for_links(bindings[e.key].link_indexes);
-            document.getElementById('popup').classList.add('faded');
+            hide_popup()
         } else {
             // Do nothing
         }
@@ -172,6 +172,13 @@ if (url.pathname.includes('index.html')) {
         } else {
             // Do nothing
         }
+    };
+
+    const hide_popup = () => {
+        document.getElementById('popup').classList.add('faded');
+        setTimeout(()=>{
+            document.getElementById('popup').classList.add('hidden');
+        }, 1500);
     };
 
     const touchstart = (e) => {
@@ -199,7 +206,7 @@ if (url.pathname.includes('index.html')) {
             } else {
                 universe.deactivate_thrust_for_links(bindings['right'].link_indexes);
             }
-            document.getElementById('popup').classList.add('faded');
+            hide_popup();
         }
     };
 
