@@ -11,7 +11,7 @@ import WebGLRenderer from './webgl-renderer.js';
 
 const url = new URL(window.location.href);
 
-if (url.pathname === '/index.html') {
+if (url.pathname.includes('index.html')) {
     const get_conf = () => {
         const conf = utils.get_base_conf_copy();
         conf.width = canvas.width * 0.5;
@@ -258,7 +258,7 @@ if (url.pathname === '/index.html') {
     let average_fps = 0.0;
     let average_frame_length = 0.0;
     start();
-} else if (url.pathname === '/playground.html') {
+} else if (url.pathname.includes('playground.html')) {
     const fps_infos = document.getElementById('fps-infos');
     const infos = document.getElementById('infos');
     const reloadButton = document.getElementById('button-reload');
