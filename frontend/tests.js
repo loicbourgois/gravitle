@@ -551,18 +551,36 @@ const get_test_10 = () => {
         id: 'test_10',
         title: 'Small spaceship',
         description: `
-            Use [E, R, T] or [1, 2, 3] or [4, 5, 6] to move.
+            Use [A, Z, E] or [Q, W, E] or [1, 2, 3] or [4, 5, 6] or [Left, Up, Right] to move.
             Don't get hit.
         `,
         conf: utils.get_base_conf_copy(),
         bindings: {
-            'e' : {
+            'ArrowLeft' : {
                 link_indexes : [0]
             },
-            'r' : {
+            'ArrowUp' : {
                 link_indexes : [1]
             },
-            't' : {
+            'ArrowRight' : {
+                link_indexes : [2]
+            },
+            'a' : {
+                link_indexes : [0]
+            },
+            'z' : {
+                link_indexes : [1]
+            },
+            'e' : {
+                link_indexes : [2]
+            },
+            'q' : {
+                link_indexes : [0]
+            },
+            'w' : {
+                link_indexes : [1]
+            },
+            'e' : {
                 link_indexes : [2]
             },
             '1' : {
@@ -592,6 +610,7 @@ const get_test_10 = () => {
     test.conf.intersection_behavior = 'destroy-link';
     test.conf.link_intersection_behavior = 'destroy-links';
     test.conf.default_link_strengh = 1000.0;
+    test.conf.default_link_thrust_force = 1000.0;
     test.conf.particles = [
         {x: -15, y: 5},
         {x: -5, y: 5},

@@ -642,7 +642,8 @@ export default class WebGLRenderer {
         this.webgl_context.uniform2f(
             this.trajectories_resolution_uniform_location,
             universe_width * 0.5,
-            universe_height * 0.5);
+            universe_height * 0.5
+        );
         this.webgl_context.drawArrays(this.webgl_context.POINTS, offset, data_count);
     }
 
@@ -689,7 +690,8 @@ export default class WebGLRenderer {
         this.webgl_context.uniform2f(
             this.launchers_resolution_uniform_location,
             universe_width * 0.5,
-            universe_height * 0.5);
+            universe_height * 0.5
+        );
         // call gl.drawArrays
         this.webgl_context.drawArrays(this.webgl_context.LINES, offset, data_count);
     }
@@ -737,7 +739,8 @@ export default class WebGLRenderer {
         this.webgl_context.uniform2f(
             this.current_launcher_resolution_uniform_location,
             universe_width * 0.5,
-            universe_height * 0.5);
+            universe_height * 0.5
+        );
         // call gl.drawArrays
         this.webgl_context.drawArrays(this.webgl_context.LINES, offset, data_count);
     }
@@ -745,7 +748,7 @@ export default class WebGLRenderer {
     //
     // Draw links
     //
-    draw_links(data, width, height) {
+    draw_links(data, universe_width, universe_height) {
         const links_data_count = data.length / 2;
         const size = 2;          // 2 components per iteration
         const type = this.webgl_context.FLOAT;   // the data is 32bit floats
@@ -778,7 +781,10 @@ export default class WebGLRenderer {
         // call gl.useProgram for the program needed to draw.
         this.webgl_context.useProgram(this.links_program);
         // setup uniforms for the thing you want to draw
-        this.webgl_context.uniform2f(this.links_resolution_uniform_location, width*0.5, height*0.5);
+        this.webgl_context.uniform2f(this.links_resolution_uniform_location,
+            universe_width * 0.5,
+            universe_height * 0.5
+        );
         // call gl.drawArrays
         this.webgl_context.drawArrays(this.webgl_context.LINES, offset, links_data_count);
     }
@@ -786,7 +792,7 @@ export default class WebGLRenderer {
     //
     // Draw particles
     //
-    draw_particles(data, width, height) {
+    draw_particles(data, universe_width, universe_height) {
         let data_positions = [];
         let data_centers = [];
         let data_radiuses = [];
@@ -903,8 +909,8 @@ export default class WebGLRenderer {
         // setup uniforms for the thing you want to draw
         this.webgl_context.uniform2f(
             this.particles_resolution_uniform_location,
-            width * 0.5,
-            height * 0.5
+            universe_width * 0.5,
+            universe_height * 0.5
         );
         // call gl.drawArrays
         this.webgl_context.drawArrays(

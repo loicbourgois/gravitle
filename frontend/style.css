@@ -3,7 +3,7 @@
     --color-main-middle: #999;
     --color-main-dark: #222;
     --color-main-black: #000;
-    --color-blue: #88f;
+    --color-blue: #08f;
     --color-main-text: var(--color-main-light);
     --color-main-background: var(--color-main-dark);
     --color-button: var(--color-main-dark);
@@ -73,6 +73,11 @@ a:hover > h1 {
 
 .top > a:hover {
     border-bottom: none;
+}
+
+.top > a {
+    width: 20rem;
+    text-align: center;
 }
 
 h2 {

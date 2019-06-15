@@ -87,7 +87,7 @@ impl Link {
         let json_parsed = &json::parse(&json_string).unwrap();
         self.length = json_parsed["length"].as_f64().unwrap_or(self.length);
         self.strengh = json_parsed["strengh"].as_f64().unwrap_or(self.strengh);
-        self.thrust_force = json_parsed["thrust_force"].as_f64().unwrap_or(self.strengh);
+        self.thrust_force = json_parsed["thrust_force"].as_f64().unwrap_or(self.thrust_force);
      }
 
     //
