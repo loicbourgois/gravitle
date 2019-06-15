@@ -7,12 +7,12 @@ import * as render from './render.js';
 import * as Tests from './tests.js';
 import * as utils from './utils.js';
 import WebGLRenderer from './webgl-renderer.js';
-import * as Index from './index.js';
+//import * as Index from './index.js';
 
 const url = new URL(window.location.href);
 
 if (url.pathname === '/index.html') {
-    Index.start();
+    //Index.start();
 } else if (url.pathname === '/playground.html') {
     const fps_infos = document.getElementById('fps-infos');
     const infos = document.getElementById('infos');

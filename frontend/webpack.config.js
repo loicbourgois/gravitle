@@ -12,9 +12,6 @@ module.exports = {
     new CopyWebpackPlugin([
         'index.html',
         'index.css',
-        'index.js',
-        'main.js',
-        'playground.js',
         'playground.html',
         'style.css',
         'android-chrome-48x48.png',
