@@ -14,6 +14,8 @@ mod vector;
 extern crate web_sys;
 extern crate wasm_bindgen;
 
+use std::cmp;
+
 use wasm_bindgen::prelude::*;
 
 use link::Link;
@@ -241,7 +243,8 @@ pub struct Universe {
     default_link_thrust_force: f64,
     drag_coefficient: f64,
     wrap_around: bool,
-    fixed_clone_count: bool
+    fixed_clone_count: bool,
+    max_link_history: usize
 }
 
 //
@@ -289,7 +292,8 @@ impl Universe {
             default_link_thrust_force: 100.0,
             drag_coefficient: 0.5,
             wrap_around: true,
-            fixed_clone_count: true
+            fixed_clone_count: true,
+            max_link_history: 1000
         }
     }
 
@@ -379,6 +383,7 @@ impl Universe {
         self.disable_particles();
         self.destroy_particles();
         self.destroy_links();
+        self.update_links_states();
         self.step += 1;
         //
         // Permormance analysis
@@ -840,6 +845,68 @@ impl Universe {
             }
         }
         coordinates
+    }
+
+    //
+    // Returns links states as Vector of f64
+    //
+    // Data is structured as follow :
+    //  x1 at step n
+    //  y1 at step n
+    //  x2 at step n
+    //  y2 at step n
+    //  x1 at step (n - 1)
+    //  y1 at step (n - 1)
+    //  x2 at step (n - 1)
+    //  y2 at step (n - 1)
+    //  is_thrusting, as a positive or negative f64
+    //  normalized_age, as a f64 in range [0.0, 1.0],
+    //      where 0.0 correspond to the current step
+    //      and 1.0 correspond to the history length
+    //
+    pub fn get_links_states (
+        &self,
+        history_length: usize,
+        period: usize
+    ) -> Vec<f64> {
+        let mut data = Vec::new();
+        for link in self.links.iter() {
+            let history = link.get_states(history_length, period);
+            let mut age = 0.0;
+            let mut i = 0;
+            let len = cmp::min(history.len(), history.len() - 1);
+            while i < len {
+                let state = history[i];
+                let state_2 = history[i+1];
+                let normalized_age = age / history_length as f64;
+                let data_tmp = [
+                    state.cycled_coordinates[0].x1,
+                    state.cycled_coordinates[0].y1,
+                    state.cycled_coordinates[0].x2,
+                    state.cycled_coordinates[0].y2,
+                    state_2.cycled_coordinates[0].x1,
+                    state_2.cycled_coordinates[0].y1,
+                    state_2.cycled_coordinates[0].x2,
+                    state_2.cycled_coordinates[0].y2,
+                    if state.thrust_activated { 1.0 } else {0.0},
+                    normalized_age,
+                    state.cycled_coordinates[1].x1,
+                    state.cycled_coordinates[1].y1,
+                    state.cycled_coordinates[1].x2,
+                    state.cycled_coordinates[1].y2,
+                    state_2.cycled_coordinates[1].x1,
+                    state_2.cycled_coordinates[1].y1,
+                    state_2.cycled_coordinates[1].x2,
+                    state_2.cycled_coordinates[1].y2,
+                    if state.thrust_activated { 1.0 } else {-1.0},
+                    normalized_age
+                ];
+                data.extend_from_slice(&data_tmp);
+                age = age + period as f64;
+                i += 1;
+            }
+        }
+        data
     }
 
     //
@@ -1802,6 +1869,15 @@ impl Universe {
         }
         let a = field.0 * field.0 + field.1 * field.1;
         a.sqrt()
+    }
+
+    //
+    // Prepend the latests links states
+    //
+    fn update_links_states(&mut self) {
+        for link in &mut self.links {
+            link.prepend_current_state(self.max_link_history, self.step);
+        }
     }
 
     //

@@ -148,6 +148,36 @@ const current_launcher_fragment_shader_source = `#version 300 es
     }
 `;
 
+const thrusting_links_trails_vertex_shader_source = `#version 300 es
+    in float a_thrust_activated;
+    in float a_age;
+    in vec2 a_position;
+    uniform vec2 u_resolution;
+    out float thrust_activated;
+    out float age;
+    void main() {
+        thrust_activated = a_thrust_activated;
+        age = a_age;
+        gl_Position = vec4(a_position / u_resolution, 0, 1);
+    }
+`;
+
+const thrusting_links_trails_fragment_shader_source = `#version 300 es
+    precision mediump float;
+    in float thrust_activated;
+    in float age;
+    out vec4 outColor;
+    void main() {
+        if (thrust_activated > 0.5) {
+            float transparency = (1.0 - age) * (1.0 - age) * (1.0 - age);
+            transparency *= 0.5;
+            outColor = vec4(0.0, 0.5, 1.0, transparency);
+        } else {
+            outColor = vec4(0.0, 1.0, 1.0, 0.0);
+        }
+    }
+`;
+
 //
 // Returns a compiled shader.
 //
@@ -216,20 +246,27 @@ export default class WebGLRenderer {
         webgl_context
     ) {
         this.webgl_context = webgl_context;
+        this.thrusting_link_history = [];
 
-        // Enable blending
+        //
+        // Setup blending
+        //
         this.webgl_context.enable(this.webgl_context.BLEND);
-
-        // Use additive blending to stack up drawings
+        // At first, used additive blending to stack up drawings
         // Source : https://stackoverflow.com/a/35544537
+        //this.webgl_context.blendFunc(
+        //    this.webgl_context.ONE,
+        //    this.webgl_context.ONE_MINUS_SRC_ALPHA
+        //);
+        // Now use another way, which looks better
         this.webgl_context.blendFunc(
-            this.webgl_context.ONE,
-            this.webgl_context.ONE_MINUS_SRC_ALPHA
+            this.webgl_context.SRC_ALPHA,
+            this.webgl_context.ONE
         );
 
-        //
+        ////////////////////////////////////////////////////////////////////////
         // Create all shaders and programs and look up locations
-        //
+        ////////////////////////////////////////////////////////////////////////
 
         //
         // Links init
@@ -365,6 +402,30 @@ export default class WebGLRenderer {
             'a_position');
         this.current_launcher_position_buffer = this.webgl_context.createBuffer();
         this.current_launcher_vao = this.webgl_context.createVertexArray();
+        //
+        // Thrusting links trails init
+        //
+        this.thrusting_links_trails_program = create_program_from_sources(
+            this.webgl_context,
+            thrusting_links_trails_vertex_shader_source,
+            thrusting_links_trails_fragment_shader_source
+        );
+        this.thrusting_links_trails_resolution_uniform_location = this.webgl_context.getUniformLocation(
+            this.thrusting_links_trails_program,
+            "u_resolution");
+        this.thrusting_links_trails_position_attribute_location = this.webgl_context.getAttribLocation(
+            this.thrusting_links_trails_program,
+            'a_position');
+        this.thrusting_links_trails_thrust_activated_attribute_location = this.webgl_context.getAttribLocation(
+            this.thrusting_links_trails_program,
+            'a_thrust_activated');
+        this.thrusting_links_trails_age_attribute_location = this.webgl_context.getAttribLocation(
+            this.thrusting_links_trails_program,
+            'a_age');
+        this.thrusting_links_trails_position_buffer = this.webgl_context.createBuffer();
+        this.thrusting_links_trails_thrust_activated_buffer = this.webgl_context.createBuffer();
+        this.thrusting_links_trails_age_buffer = this.webgl_context.createBuffer();
+        this.thrusting_links_trails_vao = this.webgl_context.createVertexArray();
     }
 
     //
@@ -374,7 +435,6 @@ export default class WebGLRenderer {
     //
     render (
         links_data,
-        thrusting_links_data,
         particles_data,
         gravitational_grid,
         gravitational_grid_resolution,
@@ -385,7 +445,8 @@ export default class WebGLRenderer {
         trajectories_data,
         launchers_data,
         DRAW_LAUNCHERS,
-        current_launcher_data
+        current_launcher_data,
+        links_state_data
     ) {
         //this.resize();
         this.clear();
@@ -427,15 +488,20 @@ export default class WebGLRenderer {
             universe_width,
             universe_height
         );
-        this.draw_thrusting_links(
-            thrusting_links_data,
-            universe_width,
-            universe_height
-        );
         this.draw_particles(
             particles_data,
             universe_width,
             universe_height
+        );
+        this.update_thrusting_link_trail_data(
+            links_state_data
+        );
+        this.draw_thrusting_links_trails(
+            this.thrusting_link_trails_positions_data,
+            universe_width,
+            universe_height,
+            this.thrusting_link_trails_thrust_activated_data,
+            this.thrusting_link_trails_age_data
         );
     }
 
@@ -717,47 +783,6 @@ export default class WebGLRenderer {
         this.webgl_context.drawArrays(this.webgl_context.LINES, offset, links_data_count);
     }
 
-    ///
-    // Draw thrusting links
-    //
-    draw_thrusting_links(data, width, height) {
-        const data_count = data.length / 2;
-        const size = 2;          // 2 components per iteration
-        const type = this.webgl_context.FLOAT;   // the data is 32bit floats
-        const normalize = false; // don't normalize the data
-        const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-        const offset = 0;        // start at the beginning of the buffer
-        // bind the vertex array for that thing : call gl.bindVertexArray
-        this.webgl_context.bindVertexArray(this.thrusting_links_vao);
-        // for each attribute call gl.bindBuffer, bufferData, gl.vertexAttribPointer, gl.enableVertexAttribArray
-        this.webgl_context.bindBuffer(
-            this.webgl_context.ARRAY_BUFFER,
-            this.thrusting_links_position_buffer
-        );
-        this.webgl_context.bufferData(
-            this.webgl_context.ARRAY_BUFFER,
-            new Float32Array(data),
-            this.webgl_context.STATIC_DRAW
-        );
-        this.webgl_context.vertexAttribPointer(
-            this.thrusting_links_position_attribute_location,
-            size,
-            type,
-            normalize,
-            stride,
-            offset
-        );
-        this.webgl_context.enableVertexAttribArray(
-            this.thrusting_links_position_attribute_location
-        );
-        // call gl.useProgram for the program needed to draw.
-        this.webgl_context.useProgram(this.thrusting_links_program);
-        // setup uniforms for the thing you want to draw
-        this.webgl_context.uniform2f(this.thrusting_links_resolution_uniform_location, width*0.5, height*0.5);
-        // call gl.drawArrays
-        this.webgl_context.drawArrays(this.webgl_context.LINES, offset, data_count);
-    }
-
     //
     // Draw particles
     //
@@ -917,6 +942,142 @@ export default class WebGLRenderer {
             canvas.width  = displayWidth;
             canvas.height = displayHeight;
         }
+    }
+
+    //
+    // Update data used to draw link trails 
+    //
+    update_thrusting_link_trail_data(
+        links_state_data
+    ) {
+        this.thrusting_link_trails_positions_data = [];
+        this.thrusting_link_trails_thrust_activated_data = [];
+        this.thrusting_link_trails_age_data = [];
+        for (let i = 0, l = links_state_data.length, c = 10 ; i < l ; i += c) {
+            this.thrusting_link_trails_positions_data.push(
+                // First triangle
+                links_state_data[i+2], links_state_data[i+3],
+                links_state_data[i], links_state_data[i+1],
+                links_state_data[i+4], links_state_data[i+5],
+                // Second triangle
+                links_state_data[i+4], links_state_data[i+5],
+                links_state_data[i+2], links_state_data[i+3],
+                links_state_data[i+6], links_state_data[i+7]
+            );
+            this.thrusting_link_trails_thrust_activated_data.push(
+                links_state_data[i+8],
+                links_state_data[i+8],
+                links_state_data[i+8],
+                links_state_data[i+8],
+                links_state_data[i+8],
+                links_state_data[i+8]
+            );
+            this.thrusting_link_trails_age_data.push(
+                links_state_data[i+9],
+                links_state_data[i+9],
+                links_state_data[i+9],
+                links_state_data[i+9],
+                links_state_data[i+9],
+                links_state_data[i+9]
+            );
+        }
+    }
+
+    //
+    // Draw thrusting links trails
+    //
+    draw_thrusting_links_trails(
+        positions_data,
+        universe_width,
+        universe_height,
+        thrust_activated_data,
+        age_data
+    ) {
+        const size = 2;
+        const type = this.webgl_context.FLOAT;   // the data is 32bit floats
+        const normalize = false; // don't normalize the data
+        const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        const offset = 0;        // start at the beginning of the buffer
+        const data_count = positions_data.length / size;
+        // bind the vertex array for that thing : call gl.bindVertexArray
+        this.webgl_context.bindVertexArray(this.thrusting_links_trails_vao);
+        // for each attribute call gl.bindBuffer, bufferData, gl.vertexAttribPointer, gl.enableVertexAttribArray
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.thrusting_links_trails_position_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(positions_data),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.thrusting_links_trails_position_attribute_location,
+            size,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.thrusting_links_trails_position_attribute_location
+        );
+        //
+        // Links thrust activated
+        //
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.thrusting_links_trails_thrust_activated_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(thrust_activated_data),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.thrusting_links_trails_thrust_activated_attribute_location,
+            1,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.thrusting_links_trails_thrust_activated_attribute_location
+        );
+        //
+        // Links thrust age
+        //
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.thrusting_links_trails_age_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(age_data),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.thrusting_links_trails_age_attribute_location,
+            1,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.thrusting_links_trails_age_attribute_location
+        );
+        // call gl.useProgram for the program needed to draw.
+        this.webgl_context.useProgram(this.thrusting_links_trails_program);
+        // setup uniforms for the thing you want to draw
+        this.webgl_context.uniform2f(
+            this.thrusting_links_trails_resolution_uniform_location,
+            universe_width * 0.5,
+            universe_height * 0.5
+        );
+        // call gl.drawArrays
+        this.webgl_context.drawArrays(this.webgl_context.TRIANGLES, offset, data_count);
     }
 }
 

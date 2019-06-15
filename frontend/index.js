@@ -342,10 +342,11 @@ const renderLoop = () => {
     infos.textContent = universe.get_infos();
     const resolution = parseInt(inputGravitationalFieldResolution.value);
     const period = parseInt(inputTrajectoriesPeriod.value);
+    const link_states_period = 1;
+    const link_states_history_length = 32;
     if (webgl_renderer) {
         webgl_renderer.render(
             universe.get_links_coordinates_to_draw(),
-            universe.get_thrusting_links_coordinates_to_draw(),
             universe.get_particles_data_to_draw(),
             SHOW_GRAVITATIONAL_FIELD ? universe.get_gravitational_grid_squared_normalized(resolution, resolution) : null,
             resolution,
@@ -356,7 +357,8 @@ const renderLoop = () => {
             SHOW_TRAJECTORIES ? universe.get_trajectories_position_at_period(period) : null,
             launchers_data(launchers),
             MODE === 'SPACE-CROQUET',
-            current_launcher_data(mouse_positions)
+            current_launcher_data(mouse_positions),
+            universe.get_links_states(link_states_history_length, link_states_period)
         );
     } else {
         render.draw(

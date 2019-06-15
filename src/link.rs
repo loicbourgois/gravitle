@@ -3,9 +3,35 @@ use crate::segment::Segment;
 use crate::vector::Vector;
 
 //
-// Link between two particles
+// Describes the state of a link at a given step
 //
 #[derive(Copy, Clone)]
+pub struct LinkState {
+    pub cycled_coordinates: [Segment; 2],
+    pub thrust_activated: bool,
+    step: u32
+}
+
+impl LinkState {
+    pub fn as_f64s(&self) -> [f64; 9] {
+        [
+            self.cycled_coordinates[0].x1,
+            self.cycled_coordinates[0].y1,
+            self.cycled_coordinates[0].x2,
+            self.cycled_coordinates[0].y2,
+            self.cycled_coordinates[1].x1,
+            self.cycled_coordinates[1].y1,
+            self.cycled_coordinates[1].x2,
+            self.cycled_coordinates[1].y2,
+            if self.thrust_activated { 1.0 } else {-1.0}
+        ]
+    }
+}
+
+//
+// Link between two particles
+//
+#[derive(Clone)]
 pub struct Link {
     x1: f64,
     y1: f64,
@@ -20,7 +46,8 @@ pub struct Link {
     initial_cycle_delta_y: i32,
     thrust_force: f64,
     thrust_activated: bool,
-    coordinates_cycled: [f64; 8]
+    coordinates_cycled: [f64; 8],
+    states: Vec<LinkState>
 }
 
 //
@@ -48,7 +75,8 @@ impl Link {
             initial_cycle_delta_y,
             thrust_force,
             thrust_activated: false,
-            coordinates_cycled: [0.0; 8]
+            coordinates_cycled: [0.0; 8],
+            states: Vec::new()
         }
     }
 
@@ -100,6 +128,34 @@ impl Link {
     //
     pub fn decrease_p2_index(&mut self) {
         self.p2_index -= 1;
+    }
+
+    //
+    // Add the current state of the link to the start of its states history
+    // Remove history that is too old according to max_history_size
+    //
+    pub fn prepend_current_state(&mut self, max_history_size: usize, step: u32) {
+        self.states.insert(0, LinkState {
+            cycled_coordinates: self.get_cycled_coordinates_as_segments(),
+            thrust_activated: self.thrust_activated,
+            step
+        });
+        self.states.truncate(max_history_size);
+    }
+
+    //
+    // Returns an history of the states of the link formated with
+    // history_length and period
+    //
+    pub fn get_states(&self, history_length: usize, period: usize) -> Vec<LinkState> {
+        let mut states = Vec::new();
+        let mut i = 0;
+        let len = self.states.len();
+        while i < history_length && i < len {
+            states.push(self.states[i]);
+            i += period
+        }
+        states
     }
 
     //
