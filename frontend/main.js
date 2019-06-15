@@ -174,8 +174,46 @@ if (url.pathname.includes('index.html')) {
         }
     };
 
+    const touchstart = (e) => {
+        const touches = e.changedTouches;
+        for (let i = 0 ; i < touches.length ; i += 1) {
+            const x = touches[i].clientX;
+            if (x < document.body.scrollWidth / 3.0) {
+                universe.activate_thrust_for_links(bindings['left'].link_indexes);
+            } else if (x < document.body.scrollWidth / 3.0 * 2.0) {
+                universe.activate_thrust_for_links(bindings['center'].link_indexes);
+            } else {
+                universe.activate_thrust_for_links(bindings['right'].link_indexes);
+            }
+        }
+    };
+
+    const touchend = (e) => {
+        const touches = e.changedTouches;
+        for (let i = 0 ; i < touches.length ; i += 1) {
+            const x = touches[i].clientX;
+            if (x < document.body.scrollWidth / 3.0) {
+                universe.deactivate_thrust_for_links(bindings['left'].link_indexes);
+            } else if (x < document.body.scrollWidth / 3.0 * 2.0) {
+                universe.deactivate_thrust_for_links(bindings['center'].link_indexes);
+            } else {
+                universe.deactivate_thrust_for_links(bindings['right'].link_indexes);
+            }
+            document.getElementById('popup').classList.add('faded');
+        }
+    };
+
     const get_bindings = () => {
         return {
+            'left' : {
+                link_indexes : [0]
+            },
+            'center' : {
+                link_indexes : [1]
+            },
+            'right' : {
+                link_indexes : [2]
+            },
             'ArrowLeft' : {
                 link_indexes : [0]
             },
@@ -229,6 +267,9 @@ if (url.pathname.includes('index.html')) {
 
     document.addEventListener('keyup', keyup);
     document.addEventListener('keydown', keydown);
+
+    document.body.addEventListener('touchstart', touchstart);
+    document.body.addEventListener('touchend', touchend);
 
     //
     // Setup
