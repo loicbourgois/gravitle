@@ -10,6 +10,7 @@
 .popup {
     margin: 8rem auto 0 auto;
     text-align: center;
+    z-index: -1;
 }
 
 .popup > p {
@@ -22,4 +23,8 @@
     -webkit-transition: color 1000ms linear;
     -ms-transition: color 1000ms linear;
     transition: color 1000ms linear;
+}
+
+.hidden {
+    display: none;
 }
