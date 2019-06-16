@@ -173,7 +173,7 @@ const thrusting_links_trails_fragment_shader_source = `#version 300 es
             transparency *= 0.5;
             outColor = vec4(0.0, 0.5, 1.0, transparency);
         } else {
-            outColor = vec4(0.0, 1.0, 1.0, 0.0);
+            outColor = vec4(0.0, 0.0, 0.0, 0.0);
         }
     }
 `;

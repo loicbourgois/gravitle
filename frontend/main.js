@@ -315,14 +315,12 @@ if (url.pathname.includes('index.html')) {
     const stopButton = document.getElementById('button-stop');
     const randomizeButton = document.getElementById('button-randomize');
     const symetryButton = document.getElementById('button-symetry');
-    const spaceCroquetButton = document.getElementById('button-space-croquet');
     const jsonTextarea = document.getElementById('json');
     const inputCount = document.getElementById('input-count');
     const inputWidth = document.getElementById('input-width');
     const inputHeight = document.getElementById('input-height');
     const inputDeltaTime = document.getElementById('input-delta-time');
     const inputG = document.getElementById('input-g');
-    const buttonGenerateSpaceship = document.getElementById('button-spaceship');
     const selectAlgorithm = document.getElementById('select-algorithm');
     const selectCollisionBehavior = document.getElementById('select-collision-behavior');
     const selectIntersectionBehavior = document.getElementById('select-intersection-behavior');
@@ -388,7 +386,6 @@ if (url.pathname.includes('index.html')) {
     });
 
     let space_croquet_links = null;
-    const SPACE_CROQUET_LINK_COUNT = 4;
 
     const universe = Universe.new();
     universe.load_from_json(JSON.stringify(BASE_CONF));
@@ -429,10 +426,6 @@ if (url.pathname.includes('index.html')) {
         stop();
     });
 
-    spaceCroquetButton.addEventListener('click', () => {
-        spaceCroquet();
-    });
-
     buttonTrajectoriesOn.addEventListener('click', () => {
         trajectoriesOn();
     });
@@ -447,10 +440,6 @@ if (url.pathname.includes('index.html')) {
 
     buttonGravitationalFieldOff.addEventListener('click', () => {
         gravitationalFieldOff();
-    });
-
-    buttonGenerateSpaceship.addEventListener('click', () => {
-        generateSpaceship();
     });
 
     selectAlgorithm.addEventListener('change', () => {
@@ -818,65 +807,14 @@ if (url.pathname.includes('index.html')) {
         time = now - delta;
     };
 
-    const heart = () => {
-        MODE = null;
-        const conf = Examples.get_example_1_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    };
-
-    const diamond = () => {
-        MODE = null;
-        const conf = Examples.get_example_2_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    };
-
-    const club = () => {
-        MODE = null;
-        const conf = Examples.get_example_3_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const spade = () => {
-        MODE = null;
-        const conf = Examples.get_example_4_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const loadExample5 = () => {
-        MODE = null;
-        const conf = Examples.get_example_5_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const loadExample6 = () => {
-        MODE = null;
-        const conf = Examples.get_example_6_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const loadExample7 = () => {
-        MODE = null;
-        const conf = Examples.get_example_7_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const loadExample8 = () => {
-        MODE = null;
-        const conf = Examples.get_example_8_conf(jsonCopy(BASE_CONF));
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
     const runTest = (testId) => {
         const test = Tests.get_test_by_id(testId);
-        MODE = test.id;
+        if (test.mode === 'SPACE-CROQUET') {
+            space_croquet_links = test.conf.links;
+        } else {
+            space_croquet_links = [];
+        }
+        MODE = test.mode ? test.mode : test.id;
         bindings = test.bindings;
         jsonTextarea.value = JSON.stringify(test.conf, null, 4);
         testDescription.innerHTML = test.description;
@@ -884,13 +822,13 @@ if (url.pathname.includes('index.html')) {
     }
 
     const randomize = () => {
-        MODE = null;
+        MODE = 'RANDOM';
         const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
         const particles = [];
         for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 1) {
-            const x = getRandomNumber(- conf.width / 5, conf.width / 5);
-            const y = getRandomNumber(- conf.height / 5, conf.height / 5);
-            const mass = getRandomNumber(0.5, 5.0);
+            const x = utils.get_random_number(- conf.width / 5, conf.width / 5);
+            const y = utils.get_random_number(- conf.height / 5, conf.height / 5);
+            const mass = utils.get_random_number(0.5, 5.0);
             const fixed = false;
             const diameter = mass;
             particles.push({
@@ -912,9 +850,9 @@ if (url.pathname.includes('index.html')) {
         const conf = getParameterizedConf(JSON.parse(jsonTextarea.value));
         const particles = [];
         for (let i = 0 ; i < parseFloat(inputCount.value) ; i += 2) {
-            const x = getRandomNumber(- conf.width / 5, conf.width / 5);
-            const y = getRandomNumber(- conf.height / 5, conf.height / 5);
-            const mass = getRandomNumber(0.5, 5.0);
+            const x = utils.get_random_number(- conf.width / 5, conf.width / 5);
+            const y = utils.get_random_number(- conf.height / 5, conf.height / 5);
+            const mass = utils.get_random_number(0.5, 5.0);
             const fixed = false;
             const diameter = mass;
             particles.push({
@@ -938,193 +876,8 @@ if (url.pathname.includes('index.html')) {
         reloadFromJSON();
     }
 
-    const spaceCroquet = () => {
-        MODE = 'SPACE-CROQUET';
-        const conf = jsonCopy(BASE_CONF);
-        conf.intersection_behavior = 'destroy-link';
-        conf.wrap_around = true;
-        const particles = [];
-        const links = [];
-        const zones = [];
-        const maxDiameter = 5.0;
-        const checkpointLength = conf.width / 8;
-        const innerRadius = checkpointLength / 2;
-        const zoneRadius = innerRadius + maxDiameter / 2;
-        for (let i = 0 ; i < SPACE_CROQUET_LINK_COUNT ; i += 1) {
-            let x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
-            let y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
-            let i = 1000;
-            while (isInZones(x, y, zones, zoneRadius) && i > 0) {
-                x = getRandomIntInclusive(- conf.width / 4, conf.width / 4);
-                y = getRandomIntInclusive(- conf.height / 4, conf.height / 4);
-                i -= 1;
-            }
-            if (i) {
-                zones.push({
-                    x: x,
-                    y: y,
-                    diameter: zoneRadius * 2,
-                    radius: zoneRadius,
-                    fixed: true
-                });
-            }
-        }
-        for (let i = 0 ; i < zones.length ; i += 1) {
-            const mass = getRandomNumber(maxDiameter, maxDiameter);
-            const fixed = true;
-            const diameter = mass;
-            const angle = getRandomIntInclusive(0, 359);
-            const p1 = getCoordinateRotatedAround(
-                {
-                    x: zones[i].x,
-                    y: zones[i].y
-                },
-                {
-                    x: zones[i].x + innerRadius,
-                    y: zones[i].y
-                },
-                angle
-            );
-            const p2 = getCoordinateRotatedAround(
-                {
-                    x: zones[i].x,
-                    y: zones[i].y
-                },
-                {
-                    x: zones[i].x - innerRadius,
-                    y: zones[i].y
-                },
-                angle
-            );
-            particles.push({
-                x: p1.x,
-                y: p1.y,
-                mass: mass,
-                fixed: fixed,
-                diameter: diameter
-            });
-            particles.push({
-                x: p2.x,
-                y: p2.y,
-                mass: mass,
-                fixed: fixed,
-                diameter: diameter
-            });
-            links.push({
-                "p1_index": i*2,
-                "p2_index": i*2+1
-            });
-        }
-        conf.particles = particles;
-        conf.links = links;
-        space_croquet_links = links;
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-    }
-
-    const generateSpaceship = () => {
-        MODE = 'SPACE-SHIP';
-        const conf = jsonCopy(BASE_CONF);
-        conf.collision_behavior = 'create-link';
-        conf.intersection_behavior = 'do-nothing';
-        conf.link_intersection_behavior = 'do-nothing';
-        conf.gravitational_constant = 1;
-        conf.default_link_length = 10;
-        conf.default_link_strengh = 1000;
-        conf.drag_coefficient = 1;
-        conf.stabilise_positions_enabled = false;
-        conf.minimal_distance_for_gravity = 1.0;
-        conf.wrap_around = true;
-        conf.default_link_thrust_force = 1000.0;
-        const COUNT = 20;
-        const DIVISOR = 20;
-        const particles = [];
-        const minDiameter = 4.0;
-        const maxDiameter = 5.0;
-        const MASS = 1.0;
-        const diameter = getRandomNumber(minDiameter, maxDiameter);
-        particles.push({
-            x: 0,
-            y: 0,
-            mass: MASS,
-            diameter: diameter
-        });
-        for (let i = 2 ; i < COUNT ; i += 2) {
-            const x = getRandomNumber(- conf.width / DIVISOR, conf.width / DIVISOR);
-            const y = getRandomNumber(- conf.height / DIVISOR, conf.height / DIVISOR);
-            const diameter = getRandomNumber(minDiameter, maxDiameter);
-            particles.push({
-                x: -x,
-                y: y,
-                mass: MASS,
-                diameter: diameter
-            });
-        }
-        const l = particles.length;
-        for (let i = l-1 ; i >= 0 ; i -= 1) {
-            const particle = particles[i];
-            particles.push({
-                x: -particle.x,
-                y: particle.y,
-                mass: particle.mass,
-                diameter: particle.diameter
-            });
-        }
-        conf.particles = particles;
-        jsonTextarea.value = JSON.stringify(conf, null, 4);
-        reloadFromJSON();
-        bindings = {};
-    }
-
-    const getCoordinateRotatedAround = (center, point, angle) => {
-        const angleRad = (angle) * (Math.PI / 180);
-        return {
-            x: Math.cos(angleRad) * (point.x - center.x) - Math.sin(angleRad) * (point.y - center.y) + center.x,
-            y: Math.sin(angleRad) * (point.x - center.x) + Math.cos(angleRad) * (point.y - center.y) + center.y
-        };
-    }
-
-    const isInZones = (x, y, zones, zoneRadius) => {
-        let r = false;
-        for (const index in zones) {
-            const zone = zones[index];
-            if (circlesCollide(x, y, zone.x, zone.y, zone.radius, zoneRadius)) {
-                r = true;
-            } else {
-                // Do nothing
-            }
-        }
-        return r;
-    }
-
-    const circlesCollide = (x1, y1, x2, y2, zoneRadius1, zoneRadius2) => {
-        const distance_squared_centers = get_distance_squared(x1, y1, x2, y2);
-        const diameters_squared = (zoneRadius1 + zoneRadius2) * (zoneRadius1 + zoneRadius2);
-        return distance_squared_centers < diameters_squared;
-    }
-
-    const get_distance_squared = (x1, y1, x2, y2) => {
-        const delta_x = x1 - x2;
-        const delta_y = y1 - y2;
-        return delta_x * delta_x + delta_y * delta_y;
-    }
-
     const jsonCopy = (object) => {
         return JSON.parse(JSON.stringify(object));
-    }
-
-    const getRandomBoolean = () => {
-        return Math.random() > 0.5;
-    }
-
-    const getRandomNumber = (min, max) => {
-        return Math.random() * (max - min) + min;
-    }
-
-    function getRandomIntInclusive(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     const getIndex = (row, column) => {
@@ -1216,10 +969,16 @@ if (url.pathname.includes('index.html')) {
                     let dx = Math.abs(link1_coordinates[0] - link1_coordinates[2])
                     if (link_index_1 && link_index_2 && dx > MIN_DELTA_X_FOR_SPACESHIP_LINK) {
                         bindings = {
-                            'e' : {
+                            'a' : {
                                 link_indexes : [link_index_2]
                             },
-                            'r' : {
+                            'z' : {
+                                link_indexes : [link_index_1]
+                            },
+                            'q' : {
+                                link_indexes : [link_index_2]
+                            },
+                            'w' : {
                                 link_indexes : [link_index_1]
                             }
                         };

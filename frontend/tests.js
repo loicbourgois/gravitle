@@ -731,6 +731,174 @@ const get_test_11 = () => {
     return test;
 };
 
+const get_test_12 = () => {
+    const test = {
+        id: 'test_12',
+        mode: 'SPACE-SHIP',
+        title: 'Spaceship generator',
+        description: `
+            After the 200th tick, try to move using [A, Z] or [Q, W].
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.particles = [];
+    test.conf.links = [];
+    test.conf.collision_behavior = 'create-link';
+    test.conf.intersection_behavior = 'do-nothing';
+    test.conf.link_intersection_behavior = 'do-nothing';
+    test.conf.gravitational_constant = 1;
+    test.conf.default_link_length = 10;
+    test.conf.default_link_strengh = 1000;
+    test.conf.drag_coefficient = 1;
+    test.conf.stabilise_positions_enabled = false;
+    test.conf.minimal_distance_for_gravity = 1.0;
+    test.conf.wrap_around = true;
+    test.conf.default_link_thrust_force = 1000.0;
+    const COUNT = 20;
+    const DIVISOR = 20;
+    const particles = [];
+    const minDiameter = 4.0;
+    const maxDiameter = 5.0;
+    const MASS = 1.0;
+    const diameter = utils.get_random_number(minDiameter, maxDiameter);
+    particles.push({
+        x: 0,
+        y: 0,
+        mass: MASS,
+        diameter: diameter
+    });
+    for (let i = 2 ; i < COUNT ; i += 2) {
+        const x = utils.get_random_number(
+            - test.conf.width / DIVISOR,
+            test.conf.width / DIVISOR);
+        const y = utils.get_random_number(
+            - test.conf.height / DIVISOR,
+            test.conf.height / DIVISOR);
+        const diameter = utils.get_random_number(minDiameter, maxDiameter);
+        particles.push({
+            x: x,
+            y: y,
+            mass: MASS,
+            diameter: diameter
+        });
+    }
+    const l = particles.length;
+    for (let i = l-1 ; i >= 0 ; i -= 1) {
+        const particle = particles[i];
+        particles.push({
+            x: -particle.x,
+            y: particle.y,
+            mass: particle.mass,
+            diameter: particle.diameter
+        });
+    }
+    test.conf.particles = particles;
+    return test;
+};
+
+const get_test_13 = () => {
+    const isInZones = (x, y, zones, zoneRadius) => {
+        let r = false;
+        for (const index in zones) {
+            const zone = zones[index];
+            if (utils.circles_collide(x, y, zone.x, zone.y, zone.radius, zoneRadius)) {
+                r = true;
+            } else {
+                // Do nothing
+            }
+        }
+        return r;
+    };
+
+    const test = {
+        id: 'test_13',
+        mode: 'SPACE-CROQUET',
+        title: 'Space croquet',
+        description: `
+            Click and drag on canvas, Launching particles, Destroy all the links.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.intersection_behavior = 'destroy-link';
+    test.conf.wrap_around = true;
+    const particles = [];
+    const links = [];
+    const zones = [];
+    const maxDiameter = 5.0;
+    const checkpointLength = test.conf.width / 8;
+    const innerRadius = checkpointLength / 2;
+    const zoneRadius = innerRadius + maxDiameter / 2;
+    const SPACE_CROQUET_LINK_COUNT = 4;
+    for (let i = 0 ; i < SPACE_CROQUET_LINK_COUNT ; i += 1) {
+        let x = utils.get_random_int_inclusive(- test.conf.width / 4, test.conf.width / 4);
+        let y = utils.get_random_int_inclusive(- test.conf.height / 4, test.conf.height / 4);
+        let i = 1000;
+        while (isInZones(x, y, zones, zoneRadius) && i > 0) {
+            x = utils.get_random_int_inclusive(- test.conf.width / 4, test.conf.width / 4);
+            y = utils.get_random_int_inclusive(- test.conf.height / 4, test.conf.height / 4);
+            i -= 1;
+        }
+        if (i) {
+            zones.push({
+                x: x,
+                y: y,
+                diameter: zoneRadius * 2,
+                radius: zoneRadius,
+                fixed: true
+            });
+        }
+    }
+    for (let i = 0 ; i < zones.length ; i += 1) {
+        const mass = utils.get_random_number(maxDiameter, maxDiameter);
+        const fixed = true;
+        const diameter = mass;
+        const angle = utils.get_random_int_inclusive(0, 359);
+        const p1 = utils.get_coordinate_rotated_around(
+            {
+                x: zones[i].x,
+                y: zones[i].y
+            },
+            {
+                x: zones[i].x + innerRadius,
+                y: zones[i].y
+            },
+            angle
+        );
+        const p2 = utils.get_coordinate_rotated_around(
+            {
+                x: zones[i].x,
+                y: zones[i].y
+            },
+            {
+                x: zones[i].x - innerRadius,
+                y: zones[i].y
+            },
+            angle
+        );
+        particles.push({
+            x: p1.x,
+            y: p1.y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+        particles.push({
+            x: p2.x,
+            y: p2.y,
+            mass: mass,
+            fixed: fixed,
+            diameter: diameter
+        });
+        links.push({
+            "p1_index": i*2,
+            "p2_index": i*2+1
+        });
+    }
+    test.conf.particles = particles;
+    test.conf.links = links;
+    return test;
+};
+
 const get_tests = () => {
     let list = [];
     list.push(get_test_1());
@@ -744,6 +912,8 @@ const get_tests = () => {
     list.push(get_test_9());
     list.push(get_test_10());
     list.push(get_test_11());
+    list.push(get_test_12());
+    list.push(get_test_13());
     return list;
 };
 
