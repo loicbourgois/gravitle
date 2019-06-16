@@ -1,36 +1,27 @@
-# Gravitle
+# [Gravitle](https://loicbourgois.github.io/gravitle/index.html)
 
-Particle based 2D engine for the web.
+2D soft body engine built with Rust for the web.
 
-## Examples
+## Try it
 
-* [Live Examples](https://loicbourgois.github.io/gravitle/index.html)
+* [Demo](https://loicbourgois.github.io/gravitle/index.html)
+* [Playground](https://loicbourgois.github.io/gravitle/playground.html)
 * [Sources](https://github.com/loicbourgois/gravitle/tree/master/frontend)
 
-## Useful commands
+## Get started
 
-**Deploy website**
+**Build the engine**
 ```
-./deploy.sh
-```
-
-**Build**
-```
-wasm-pack build
+wasm-pack build;
 ```
 
-**Unit tests**
+**Run the examples**
 ```
-cargo test
-```
-
-**Test in Headless Browsers**
-```
-wasm-pack test --headless --firefox
+cd frontend;
+npm start;
 ```
 
-**Publish to NPM**
+**Deploy to GitHub**
 ```
-wasm-pack publish
+./deploy.sh;
 ```
-
