@@ -68,7 +68,7 @@ pub struct Particle {
     forces_y: f64,
     acceleration_x: f64,
     acceleration_y: f64,
-    mass: f64,
+    pub mass: f64,
     old_x: f64,
     old_y: f64,
     speed_x: f64,
@@ -78,7 +78,9 @@ pub struct Particle {
     collision_behavior: ParticleCollisionBehavior,
     is_enabled: bool,
     cycle_x: i32,
-    cycle_y: i32
+    cycle_y: i32,
+    move_by_x: f64,
+    move_by_y: f64
 }
 
 //
@@ -108,7 +110,9 @@ impl Particle {
             collision_behavior: ParticleCollisionBehavior::DoNothing,
             is_enabled: true,
             cycle_x: 0,
-            cycle_y: 0
+            cycle_y: 0,
+            move_by_x: 0.0,
+            move_by_y: 0.0
         }
     }
 
@@ -119,6 +123,27 @@ impl Particle {
         let distance_squared_centers = Point::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
         let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
         distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled()
+    }
+
+    //
+    // Return the collisison point of two particles
+    //
+    pub fn particles_collision_point(p1: & Particle, p2: & Particle) -> Option<Point> {
+        let d_x = p2.x - p1.x;
+        let d_y = p2.y - p1.y;
+        let diameter_sum = p1.diameter + p2.diameter;
+        let v_option = Point::get_normalized_vector(p1.x, p1.y, p2.x, p2.y);
+        match v_option {
+            Some(unit_vector) => {
+                Some(Point{
+                    x: p1.x + (p1.diameter - (diameter_sum - d_x) * 0.5) * unit_vector.0,
+                    y: p1.y + (p1.diameter - (diameter_sum - d_y) * 0.5) * unit_vector.1
+                })
+            },
+            None => {
+                None
+            }
+        }
     }
 
     //
@@ -379,6 +404,31 @@ impl Particle {
     }
 
     //
+    // Reset move by at the begining of Universe.treat_particles_to_push()
+    //
+    pub fn reset_move_by(&mut self) {
+        self.move_by_x = 0.0;
+        self.move_by_y = 0.0;
+    }
+
+    //
+    // Add move bys if two particles collide and collision behavior is set to
+    // 'push-particles'.
+    //
+    pub fn add_to_move_by(&mut self, v: Vector) {
+        self.move_by_x += v.x;
+        self.move_by_y += v.y;
+    }
+
+    //
+    // Apply the previously added move bys.
+    //
+    pub fn apply_move_by(&mut self) {
+        self.x += self.move_by_x;
+        self.y += self.move_by_y;
+    }
+
+    //
     // Recenter a particle if it got outside the Universe
     //
     pub fn wrap_around (
@@ -441,6 +491,16 @@ impl Particle {
     }
 
     //
+    // Returns current coordinates as a Point
+    //
+    pub fn get_speed_as_vector(&self) -> Vector {
+        Vector {
+            x: self.speed_x,
+            y: self.speed_y
+        }
+    }
+
+    //
     // Getter for x current coordinates
     //
     pub fn get_x(&self) -> f64 {
@@ -459,6 +519,10 @@ impl Particle {
     //
     pub fn get_old_coordinates_as_point(& self) -> Point {
         Point{x: self.old_x, y:self.old_y}
+    }
+
+    pub fn can_move(& self) -> bool {
+        self.is_enabled && self.is_fixed == false
     }
 
     //
@@ -795,7 +859,7 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn test_get_boxing_clones_coordinates() {
+    pub fn test_get_wrap_around_clones_coordinates_fixed_count() {
         let x1: f64 = 0.0;
         let y1: f64 = 0.0;
         let x2: f64 = 1.0;
@@ -819,7 +883,7 @@ mod tests {
             x: -9.0,
             y: -6.0
         });
-        let clones2 = Particle::get_boxing_clones_coordinates(
+        let clones2 = Particle::get_wrap_around_clones_coordinates_fixed_count(
             x1,
             y1,
             x2,
@@ -882,5 +946,33 @@ mod tests {
         assert_eq!(false, Particle::particles_collide(&p1, &p1));
         assert_eq!(false, Particle::particles_collide(&p1, &p2));
         assert_eq!(true, Particle::particles_collide(&p1, &p3));
+    }
+
+    #[test]
+    pub fn test_particles_collision_point() {
+        let mut p1 = Particle::new(0);
+        p1.load_from_json(r#"{
+            "x": 0.0,
+            "y": 0.0,
+            "diameter": 4.0
+        }"#.to_string());
+        let mut p2 = Particle::new(1);
+        p2.load_from_json(r#"{
+            "x": 6.0,
+            "y": 0.0,
+            "diameter": 4.0
+        }"#.to_string());
+        let mut p3 = Particle::new(1);
+        p3.load_from_json(r#"{
+            "x": 6.0,
+            "y": 0.0,
+            "diameter": 3.0
+        }"#.to_string());
+        let collision = Particle::particles_collision_point(&p1, &p2).unwrap();
+        let collision_2 = Particle::particles_collision_point(&p1, &p3).unwrap();
+        assert_eq!(collision.x, 3.0);
+        assert_eq!(collision.y, 0.0);
+        assert_eq!(collision_2.x, 3.5);
+        assert_eq!(collision_2.y, 0.0);
     }
 }

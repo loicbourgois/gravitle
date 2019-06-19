@@ -14,6 +14,7 @@ const BASE_CONF = Object.freeze({
     default_link_length: 10.0,
     default_link_strengh: 100.0,
     default_link_thrust_force: 100.0,
+    default_push_force: 100.0,
     drag_coefficient: 0.0,
     stabilise_positions_enabled: false,
     stabiliser_power: 10,

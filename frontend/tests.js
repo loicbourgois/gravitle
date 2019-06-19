@@ -899,8 +899,44 @@ const get_test_13 = () => {
     return test;
 };
 
+const get_test_14 = () => {
+    const test = {
+        id: 'test_14',
+        mode: 'test_14',
+        title: 'Particle-Particle collision response',
+        description: `
+            Two particles move toward each other.
+            They bounce when colliding.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    const diameter = 20;
+    test.conf.collision_behavior = 'push-particles';
+    test.conf.gravitational_constant = 20.0;
+    test.conf.default_push_force = 100.0;
+    test.conf.drag_coefficient = 1.0;
+    test.conf.particles = [
+        {
+            x: -5,
+            y: 3,
+            diameter: diameter,
+            mass: diameter
+        },
+        {
+            x: 25,
+            y: 9,
+            diameter: diameter,
+            mass: diameter
+        }
+    ];
+    return test;
+};
+
 const get_tests = () => {
     let list = [];
+    list.push(get_test_10());
+    list.push(get_test_12());
+    list.push(get_test_13());
     list.push(get_test_1());
     list.push(get_test_2());
     list.push(get_test_3());
@@ -910,10 +946,8 @@ const get_tests = () => {
     list.push(get_test_7());
     list.push(get_test_8());
     list.push(get_test_9());
-    list.push(get_test_10());
     list.push(get_test_11());
-    list.push(get_test_12());
-    list.push(get_test_13());
+    list.push(get_test_14());
     return list;
 };
 

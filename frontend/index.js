@@ -1,10 +1,9 @@
-import { Universe } from 'gravitle';
-import WebGLRenderer from './webgl-renderer.js';
 import * as utils from './utils.js';
+import {
+    Universe
+} from 'gravitle';
+import WebGLRenderer from './webgl-renderer.js';
 
-//
-//
-//
 const get_conf = () => {
     const conf = utils.get_base_conf_copy();
     conf.width = canvas.width * 0.5;
@@ -153,7 +152,7 @@ const start = () => {
 const keyup = (e) => {
     if (bindings && bindings[e.key]) {
         universe.deactivate_thrust_for_links(bindings[e.key].link_indexes);
-        document.getElementById('popup').classList.add('faded');
+        hide_popup();
     } else {
         // Do nothing
     }
@@ -167,8 +166,58 @@ const keydown = (e) => {
     }
 };
 
+const hide_popup = () => {
+    if (document.getElementById('popup')) {
+        document.getElementById('popup').classList.add('faded');
+        setTimeout(()=>{
+            document.getElementById('popup').classList.add('hidden');
+        }, 1500);
+    } else {
+        // Do nothing
+    }
+    
+};
+
+const touchstart = (e) => {
+    const touches = e.changedTouches;
+    for (let i = 0 ; i < touches.length ; i += 1) {
+        const x = touches[i].clientX;
+        if (x < document.body.scrollWidth / 3.0) {
+            universe.activate_thrust_for_links(bindings['left'].link_indexes);
+        } else if (x < document.body.scrollWidth / 3.0 * 2.0) {
+            universe.activate_thrust_for_links(bindings['center'].link_indexes);
+        } else {
+            universe.activate_thrust_for_links(bindings['right'].link_indexes);
+        }
+    }
+};
+
+const touchend = (e) => {
+    const touches = e.changedTouches;
+    for (let i = 0 ; i < touches.length ; i += 1) {
+        const x = touches[i].clientX;
+        if (x < document.body.scrollWidth / 3.0) {
+            universe.deactivate_thrust_for_links(bindings['left'].link_indexes);
+        } else if (x < document.body.scrollWidth / 3.0 * 2.0) {
+            universe.deactivate_thrust_for_links(bindings['center'].link_indexes);
+        } else {
+            universe.deactivate_thrust_for_links(bindings['right'].link_indexes);
+        }
+        hide_popup();
+    }
+};
+
 const get_bindings = () => {
     return {
+        'left' : {
+            link_indexes : [0]
+        },
+        'center' : {
+            link_indexes : [1]
+        },
+        'right' : {
+            link_indexes : [2]
+        },
         'ArrowLeft' : {
             link_indexes : [0]
         },
@@ -222,6 +271,9 @@ const get_bindings = () => {
 
 document.addEventListener('keyup', keyup);
 document.addEventListener('keydown', keydown);
+
+document.body.addEventListener('touchstart', touchstart);
+document.body.addEventListener('touchend', touchend);
 
 //
 // Setup
