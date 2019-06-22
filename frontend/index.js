@@ -11,7 +11,7 @@ const get_conf = () => {
     conf.wrap_around = true;
     conf.drag_coefficient = 0.01;
     conf.collision_behavior = 'push-particles';
-    conf.default_link_strengh = 1000.0;
+    conf.default_link_strengh = 2000.0;
     conf.default_link_length = 16.0;
     conf.default_link_thrust_force = 1000.0;
     const diameter = 2.0;
