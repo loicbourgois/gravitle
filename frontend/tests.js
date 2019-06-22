@@ -10,7 +10,7 @@ const get_test_1 = (conf) => {
         id: 'heart',
         title: 'Heart',
         description: `
-            .
+            A heart collapses.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -65,7 +65,7 @@ const get_test_2 = (conf) => {
         id: 'diamond',
         title: 'Diamond',
         description: `
-            .
+            Two particles coming from the bottom help a third one to escape.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -124,7 +124,7 @@ const get_test_3 = (conf) => {
         id: 'club',
         title: 'Club',
         description: `
-            .
+            Three particles are static. Three particles move around them.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -174,7 +174,7 @@ const get_test_4 = (conf) => {
         id: 'spade',
         title: 'Spade',
         description: `
-            .
+            Coming from above, a particle destroys all the links.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -269,7 +269,8 @@ const get_test_5 = (conf) => {
         id: 'v',
         title: 'Test V',
         description: `
-            .
+            If a particle hits a link, the particle should be destroyed.
+            If particle forming links is destroyed, its links should be destroyed too.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -316,7 +317,7 @@ const get_test_5 = (conf) => {
             "fixed": true
         },
         {
-            "x": 50,
+            "x": 51,
             "y": 30,
             "fixed": true
         }
@@ -347,7 +348,7 @@ const get_test_6 = (conf) => {
         id: 'test_6',
         title: 'Test 6',
         description: `
-            .
+            8 particles move tomards the center and should form a perfect square.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -425,7 +426,7 @@ const get_test_7 = (conf) => {
         id: 'test_7',
         title: 'Test 7',
         description: `
-            .
+            Two particles at the exact same position should create a vertical link.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -452,9 +453,9 @@ const get_test_7 = (conf) => {
 const get_test_8 = (conf) => {
     const test = {
         id: 'test_8',
-        title: 'Test 8',
+        title: 'Intersecting links',
         description: `
-            .
+            Intersecting links should get destroyed.
         `,
         conf: utils.get_base_conf_copy()
     };
@@ -903,7 +904,7 @@ const get_test_14 = () => {
     const test = {
         id: 'test_14',
         mode: 'test_14',
-        title: 'Particle-Particle collision response',
+        title: 'Collision response',
         description: `
             Two particles move toward each other.
             They bounce when colliding.
@@ -966,7 +967,7 @@ const get_test_16 = () => {
     const test = {
         id: 'test_16',
         mode: 'test_16',
-        title: 'Particle-Particle collision response 2',
+        title: 'Collision response 2',
         description: `
             Two particles move toward each other.
             They bounce when colliding.
@@ -998,7 +999,7 @@ const get_test_17 = () => {
     const test = {
         id: 'test_17',
         mode: 'test_17',
-        title: 'Particle-Particle collision response 3',
+        title: 'Collision response 3',
         description: `
             Two particles starts on top of each other.
             Push response to collisions is activated, which makes this configuration impossible.
@@ -1046,8 +1047,8 @@ const get_tests = () => {
     list.push(get_test_8());
     list.push(get_test_9());
     list.push(get_test_11());
-    list.push(get_test_14());
     list.push(get_test_15());
+    list.push(get_test_14());
     list.push(get_test_16());
     list.push(get_test_17());
     return list;
