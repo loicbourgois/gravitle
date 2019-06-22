@@ -123,11 +123,12 @@ impl Particle {
 
     //
     // Checks whether two particles collide
+    // Only enabled particles can collide
     //
     pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
         let distance_squared_centers = Point::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
         let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
-        distance_squared_centers < radiuses_squared
+        distance_squared_centers < radiuses_squared && p1.is_enabled() && p2.is_enabled() && p1.id != p2.id
     }
 
     //
@@ -979,6 +980,33 @@ mod tests {
         assert_eq!(false, Particle::particles_collide(&p1, &p1));
         assert_eq!(false, Particle::particles_collide(&p1, &p2));
         assert_eq!(true, Particle::particles_collide(&p1, &p3));
+    }
+
+    #[test]
+    pub fn test_particles_collide_2() {
+        let mut p1 = Particle::new(0);
+        p1.load_from_json(r#"{
+            "x": 0.0,
+            "y": 0.0,
+            "diameter": 4.0
+        }"#.to_string());
+        let mut p2 = Particle::new(1);
+        p2.load_from_json(r#"{
+            "x": 2.0,
+            "y": 0.0,
+            "diameter": 4.0
+        }"#.to_string());
+        let mut p3 = Particle::new(1);
+        p3.load_from_json(r#"{
+            "x": 2.0,
+            "y": 0.0,
+            "diameter": 4.0,
+            "enabled": false
+        }"#.to_string());
+        let particles_collide_1 = Particle::particles_collide(&p1, &p2);
+        let particles_collide_2 = Particle::particles_collide(&p1, &p3);
+        assert_eq!(true, particles_collide_1);
+        assert_eq!(false, particles_collide_2);
     }
 
     #[test]
