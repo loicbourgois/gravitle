@@ -10,8 +10,7 @@ const get_conf = () => {
     conf.height = canvas.height * 0.5;
     conf.wrap_around = true;
     conf.drag_coefficient = 0.01;
-    conf.intersection_behavior = 'destroy-link';
-    conf.link_intersection_behavior = 'destroy-links';
+    conf.collision_behavior = 'push-particles';
     conf.default_link_strengh = 1000.0;
     conf.default_link_length = 16.0;
     conf.default_link_thrust_force = 1000.0;
