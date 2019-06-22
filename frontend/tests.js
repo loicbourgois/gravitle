@@ -932,6 +932,41 @@ const get_test_14 = () => {
     return test;
 };
 
+const get_test_15 = () => {
+    const test = {
+        id: 'test_15',
+        mode: 'test_15',
+        title: '512 particles',
+        description: `
+            512 free floating particles. The simulation should remain fluid.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.wrap_around = false;
+    test.conf.gravitational_constant = 5.12;
+    test.conf.width = 512;
+    test.conf.height = 512;
+    let particles = [];
+    for (let i = 0 ; i < 512 ; i += 1) {
+        const x = utils.get_random_number(- test.conf.width * 0.2, test.conf.width * 0.2);
+        const y = utils.get_random_number(- test.conf.height * 0.2, test.conf.height * 0.2);
+        const mass = utils.get_random_number(0.512, 5.12);
+        const diameter = mass;
+        particles.push({
+            x: x,
+            y: y,
+            mass: mass,
+            diameter: diameter
+        });
+    }
+    test.conf.particles = particles;
+    return test;
+};
+
+const get_default_test = () => {
+    return get_tests()[0].id;
+};
+
 const get_tests = () => {
     let list = [];
     list.push(get_test_10());
@@ -948,6 +983,7 @@ const get_tests = () => {
     list.push(get_test_9());
     list.push(get_test_11());
     list.push(get_test_14());
+    list.push(get_test_15());
     return list;
 };
 
@@ -965,7 +1001,7 @@ const get_test_by_id = (id) => {
 };
 
 export {
-    get_test_9,
     get_test_by_id,
-    get_tests
+    get_tests,
+    get_default_test
 };

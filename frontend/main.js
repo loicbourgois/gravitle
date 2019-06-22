@@ -703,15 +703,15 @@ if (url.pathname.includes('index.html')) {
 
     document.addEventListener('keyup', keyup);
     document.addEventListener('keydown', keydown);
-
+    const default_test_id = Tests.get_default_test();
     trajectoriesOff();
     gravitationalFieldOff();
-    runTest('test_10');
+    runTest(default_test_id);
     last_now = Date.now();
     requestAnimationFrame(renderLoop);
     const url = new URL(window.location.href);
     const param_test = url.searchParams.get('test');
-    const test_id = param_test ? param_test : 'test_10';
+    const test_id = param_test ? param_test : default_test_id;
     runTest(test_id);
     canvas.focus();
 } else {
