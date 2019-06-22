@@ -186,3 +186,11 @@ input, select {
 .tests > a {
     border-bottom: 1px solid var(--color-main-middle);
 }
+
+.left-panel {
+    overflow-y: auto;
+}
+
+.left-panel input {
+    width: 5rem;
+}
