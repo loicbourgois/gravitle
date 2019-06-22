@@ -80,7 +80,8 @@ pub struct Particle {
     cycle_x: i32,
     cycle_y: i32,
     move_by_x: f64,
-    move_by_y: f64
+    move_by_y: f64,
+    momentum: Vector
 }
 
 //
@@ -112,7 +113,11 @@ impl Particle {
             cycle_x: 0,
             cycle_y: 0,
             move_by_x: 0.0,
-            move_by_y: 0.0
+            move_by_y: 0.0,
+            momentum: Vector{
+                x:0.0,
+                y:0.0
+            }
         }
     }
 
@@ -122,7 +127,7 @@ impl Particle {
     pub fn particles_collide(p1: & Particle, p2: & Particle) -> bool {
         let distance_squared_centers = Point::get_distance_squared(p1.x, p1.y, p2.x, p2.y);
         let radiuses_squared = ((p1.diameter * 0.5) + (p2.diameter * 0.5)) * ((p1.diameter * 0.5) + (p2.diameter * 0.5));
-        distance_squared_centers < radiuses_squared && p1.id != p2.id && p1.is_enabled() && p2.is_enabled()
+        distance_squared_centers < radiuses_squared
     }
 
     //
@@ -521,6 +526,9 @@ impl Particle {
         Point{x: self.old_x, y:self.old_y}
     }
 
+    //
+    // Returns whether a particle can move or not
+    //
     pub fn can_move(& self) -> bool {
         self.is_enabled && self.is_fixed == false
     }
@@ -690,6 +698,31 @@ impl Particle {
     //
     pub fn get_radius(&self) -> f64 {
         self.diameter * 0.5
+    }
+
+    //
+    // Updates the particle's momentum
+    //
+    pub fn update_momentum(&mut self) {
+        self.momentum.x = self.speed_x * self.mass;
+        self.momentum.y = self.speed_y * self.mass;
+    }
+    
+    //
+    // Returns the particle's momentum
+    //
+    pub fn get_momentum(&self) -> Vector {
+        self.momentum
+    }
+
+    //
+    // Move the particle without affecting its speed
+    //
+    pub fn translate(&mut self, vector: Vector) {
+        self.x += vector.x;
+        self.y += vector.y;
+        self.old_x += vector.x;
+        self.old_y += vector.y;
     }
 }
 

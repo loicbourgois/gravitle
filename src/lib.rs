@@ -385,6 +385,7 @@ impl Universe {
         } else {
             // Do nothing
         }
+        self.update_momentum();
         self.update_trajectories();
         self.update_links_coordinates();
         self.update_links_coordinates_cycled();
@@ -1295,6 +1296,15 @@ impl Universe {
     }
 
     //
+    // Update each particle's momentum
+    //
+    fn update_momentum(&mut self) {
+        for particle in &mut self.particles {
+            particle.update_momentum();
+        }
+    }
+
+    //
     // Update trajectories
     //
     fn update_trajectories(&mut self) {
@@ -1431,7 +1441,7 @@ impl Universe {
         self.collisions.clear();
         for (i, particle_1) in self.particles.iter().enumerate() {
             for (j, particle_2) in self.particles.iter().enumerate() {
-                if j > i {
+                if i < j {
                     let particles_collide = Particle::particles_collide(particle_1, particle_2);
                     if particles_collide {
                         self.collisions.push(Collision::new(i, j));
@@ -1635,12 +1645,12 @@ impl Universe {
             let dv2 = n.multiplied(optimized_p * p1.mass);
             let dp1 = dv1.multiplied(self.get_delta_time());
             let dp2 = dv2.multiplied(self.get_delta_time());
-            if p1.can_move() && dp1.length() < p1.get_radius() {
+            if p1.can_move() {
                 self.particles[push.particle_1_index].add_to_move_by(dp1);
             } else {
                 // Do nothing
             }
-            if p2.can_move() && dp2.length() < p2.get_radius() {
+            if p2.can_move() {
                 self.particles[push.particle_2_index].add_to_move_by(dp2);
             } else {
                 // Do nothing
@@ -1648,6 +1658,25 @@ impl Universe {
         }
         for particle in &mut self.particles {
             particle.apply_move_by();
+        }
+        for push in self.particles_to_push.iter() {
+            let p1 = self.particles[push.particle_1_index];
+            let p2 = self.particles[push.particle_2_index];
+            let radiuses_length = p1.get_radius() + p2.get_radius();
+            let p1_to_p2 = Vector::new(
+                & self.particles[push.particle_1_index].get_coordinates_as_point(),
+                & self.particles[push.particle_2_index].get_coordinates_as_point()
+            );
+            let p1_to_p2_length = p1_to_p2.length();
+            if p1_to_p2_length < radiuses_length {
+                let delta_direction = p1_to_p2.normalized();
+                let delta_length = radiuses_length - p1_to_p2_length;
+                let delta = delta_direction.multiplied(delta_length);
+                self.particles[push.particle_1_index].translate(delta.multiplied(-0.5));
+                self.particles[push.particle_2_index].translate(delta.multiplied(0.5));
+            } else {
+                // Do nothing
+            }
         }
     }
 
@@ -1980,6 +2009,19 @@ impl Universe {
             .expect("should have a Performance")
             .now()
     }
+
+    //
+    // Returns the total momentum of the particles in the universe
+    //
+    fn get_momentum(& self) -> Vector {
+        let mut momentum = Vector{x:0.0, y:0.0};
+        for particle in self.particles.iter() {
+            let particle_momentum = particle.get_momentum();
+            momentum.x += particle_momentum.x;
+            momentum.y += particle_momentum.y;
+        }
+        momentum
+    }
 }
 
 //
@@ -2012,6 +2054,17 @@ impl fmt::Display for Universe {
             console_error!("Could not write");
         }
         if writeln!(f, "Links : {:.2}", self.links.len()).is_ok() {
+            // NTD
+        } else {
+            console_error!("Could not write");
+        }
+        let momentum = self.get_momentum();
+        if writeln!(f, "Momentum :\n\t{}{:.15}\n\t{}{:.15}",
+            if momentum.x >= 0.0 { "+" } else { "" },
+            momentum.x,
+            if momentum.y >= 0.0 { "+" } else { "" },
+            momentum.y
+        ).is_ok() {
             // NTD
         } else {
             console_error!("Could not write");

@@ -914,7 +914,6 @@ const get_test_14 = () => {
     test.conf.collision_behavior = 'push-particles';
     test.conf.gravitational_constant = 20.0;
     test.conf.default_push_force = 100.0;
-    test.conf.drag_coefficient = 1.0;
     test.conf.particles = [
         {
             x: -5,
@@ -963,6 +962,71 @@ const get_test_15 = () => {
     return test;
 };
 
+const get_test_16 = () => {
+    const test = {
+        id: 'test_16',
+        mode: 'test_16',
+        title: 'Particle-Particle collision response 2',
+        description: `
+            Two particles move toward each other.
+            They bounce when colliding.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    const diameter = 20;
+    test.conf.collision_behavior = 'push-particles';
+    test.conf.gravitational_constant = 20.0;
+    test.conf.default_push_force = 100.0;
+    test.conf.particles = [
+        {
+            x: -5,
+            y: 3,
+            diameter: 0.5,
+            mass: diameter
+        },
+        {
+            x: 25,
+            y: 9,
+            diameter: diameter,
+            mass: diameter
+        }
+    ];
+    return test;
+};
+
+const get_test_17 = () => {
+    const test = {
+        id: 'test_17',
+        mode: 'test_17',
+        title: 'Particle-Particle collision response 3',
+        description: `
+            Two particles starts on top of each other.
+            Push response to collisions is activated, which makes this configuration impossible.
+            The two particles are moved so they don't overlap anymore.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    const diameter = 20;
+    test.conf.collision_behavior = 'push-particles';
+    test.conf.gravitational_constant = 20.0;
+    test.conf.default_push_force = 100.0;
+    test.conf.particles = [
+        {
+            "x": 5,
+            "y": 0,
+            "diameter": 5,
+            "mass": 5
+        },
+        {
+            "x": 0,
+            "y": 0,
+            "diameter": 20,
+            "mass": 20
+        }
+    ];
+    return test;
+};
+
 const get_default_test = () => {
     return get_tests()[0].id;
 };
@@ -984,6 +1048,8 @@ const get_tests = () => {
     list.push(get_test_11());
     list.push(get_test_14());
     list.push(get_test_15());
+    list.push(get_test_16());
+    list.push(get_test_17());
     return list;
 };
 
