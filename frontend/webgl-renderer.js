@@ -83,25 +83,34 @@ const fragment_shader_gravitational_field_source = `#version 300 es
     }
 `;
 
-const trajectories_vertex_shader_source  = `#version 300 es
+const trajectories_vertex_shader_source = `#version 300 es
     in vec2 a_position;
+    in vec2 a_center;
+    in float a_radius;
     uniform vec2 u_resolution;
+    out vec2 position;
+    out vec2 center;
+    out float radius;
     void main() {
+        radius = a_radius;
+        position = a_position;
+        center = a_center;
         gl_Position = vec4(a_position / u_resolution, 0, 1);
     }
 `;
 
 const trajectories_fragment_shader_source = `#version 300 es
     precision mediump float;
-    out vec4 color_out;
+    in vec2 position;
+    in vec2 center;
+    in float radius;
+    out vec4 outColor;
     void main() {
-        float shade = 0.9;
-        color_out = vec4(
-            shade,
-            shade,
-            shade,
-            1
-        );
+        if (distance(center, position) < radius) {
+            outColor = vec4(.25, .25, .25, 1);
+        } else {
+            outColor = vec4(0, 0, 0, 0);
+        }
     }
 `;
 
@@ -368,7 +377,17 @@ export default class WebGLRenderer {
             this.trajectories_program,
             'a_position'
         );
+        this.trajectories_center_attribute_location = this.webgl_context.getAttribLocation(
+            this.trajectories_program,
+            'a_center'
+        );
+        this.trajectories_radius_attribute_location = this.webgl_context.getAttribLocation(
+            this.trajectories_program,
+            'a_radius'
+        );
         this.trajectories_position_buffer = this.webgl_context.createBuffer();
+        this.trajectories_center_buffer = this.webgl_context.createBuffer();
+        this.trajectories_radius_buffer = this.webgl_context.createBuffer();
         this.trajectories_vao = this.webgl_context.createVertexArray();
         //
         // Launchers init
@@ -611,20 +630,59 @@ export default class WebGLRenderer {
         universe_width,
         universe_height
     ) {
-        const size = 2;
-        const type = this.webgl_context.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        const data_count = trajectories.length / size;
+        let data_positions = [];
+        let data_centers = [];
+        let data_radiuses = [];
+        for (let i = 0, l = trajectories.length, c = 2 ; i < l ; i += c) {
+            const length = 0.5;
+            data_positions.push(...[
+                trajectories[i] - length, trajectories[i + 1] - length,
+                trajectories[i] + length, trajectories[i + 1] - length,
+                trajectories[i] - length, trajectories[i + 1] + length,
+                trajectories[i] + length, trajectories[i + 1] + length,
+                trajectories[i] + length, trajectories[i + 1] - length,
+                trajectories[i] - length, trajectories[i + 1] + length
+            ]);
+        }
+        for (let i = 0, l = trajectories.length, c = 2 ; i < l ; i += c) {
+            const length = 0;
+            data_centers.push(...[
+                trajectories[i] - length, trajectories[i + 1] - length,
+                trajectories[i] + length, trajectories[i + 1] - length,
+                trajectories[i] - length, trajectories[i + 1] + length,
+                trajectories[i] + length, trajectories[i + 1] + length,
+                trajectories[i] + length, trajectories[i + 1] - length,
+                trajectories[i] - length, trajectories[i + 1] + length
+            ]);
+        }
+        for (let i = 0, l = trajectories.length, c = 2 ; i < l ; i += c) {
+            const radius = 0.5;
+            data_radiuses.push(...[
+                radius,
+                radius,
+                radius,
+                radius,
+                radius,
+                radius
+            ]);
+        }
+        const data_count = data_positions.length / 2;
+        const size = 2;          // 2 components per iteration
+        const type = this.webgl_context.FLOAT;   // the data is 32bit floats
+        const normalize = false; // don't normalize the data
+        const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        const offset = 0;        // start at the beginning of the buffer
+        // bind the vertex array for that thing : call gl.bindVertexArray
         this.webgl_context.bindVertexArray(this.trajectories_vao);
+        // for each attribute call gl.bindBuffer, bufferData, gl.vertexAttribPointer, gl.enableVertexAttribArray
+        // Positions
         this.webgl_context.bindBuffer(
             this.webgl_context.ARRAY_BUFFER,
             this.trajectories_position_buffer
         );
         this.webgl_context.bufferData(
             this.webgl_context.ARRAY_BUFFER,
-            new Float32Array(trajectories),
+            new Float32Array(data_positions),
             this.webgl_context.STATIC_DRAW
         );
         this.webgl_context.vertexAttribPointer(
@@ -638,13 +696,62 @@ export default class WebGLRenderer {
         this.webgl_context.enableVertexAttribArray(
             this.trajectories_position_attribute_location
         );
+        // Center
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.trajectories_center_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_centers),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.trajectories_center_attribute_location,
+            size,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.trajectories_center_attribute_location
+        );
+        // Radii
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.trajectories_radius_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_radiuses),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.trajectories_radius_attribute_location,
+            1,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.trajectories_radius_attribute_location
+        );
+        // call gl.useProgram for the program needed to draw.
         this.webgl_context.useProgram(this.trajectories_program);
+        // setup uniforms for the thing you want to draw
         this.webgl_context.uniform2f(
             this.trajectories_resolution_uniform_location,
             universe_width * 0.5,
             universe_height * 0.5
         );
-        this.webgl_context.drawArrays(this.webgl_context.POINTS, offset, data_count);
+        // call gl.drawArrays
+        this.webgl_context.drawArrays(
+            this.webgl_context.TRIANGLES,
+            offset,
+            data_count
+        );
     }
 
     //
