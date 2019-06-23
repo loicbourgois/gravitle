@@ -98,15 +98,12 @@ impl Link {
         let dy = coordinates_cycled[3] - coordinates_cycled[1];
         let normal_1 = (-dy, dx);
         let normal_2 = (dy, -dx);
-        let normalized_normal_option = Point::get_normalized_vector(
+        let normalized_normal_option = Vector::get_normalized_vector(
             0.0, 0.0, normal_1.0, normal_1.1
         );
         match normalized_normal_option {
             Some(normalized_normal) => {
-                return Some(Vector {
-                    x: normalized_normal.0 * self.thrust_force,
-                    y: normalized_normal.1 * self.thrust_force
-                });
+                return Some(normalized_normal.multiplied(self.thrust_force));
             },
             None => {
                 return None;

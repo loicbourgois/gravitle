@@ -138,12 +138,12 @@ impl Particle {
         let d_x = p2.x - p1.x;
         let d_y = p2.y - p1.y;
         let diameter_sum = p1.diameter + p2.diameter;
-        let v_option = Point::get_normalized_vector(p1.x, p1.y, p2.x, p2.y);
+        let v_option = Vector::get_normalized_vector(p1.x, p1.y, p2.x, p2.y);
         match v_option {
             Some(unit_vector) => {
                 Some(Point{
-                    x: p1.x + (p1.diameter - (diameter_sum - d_x) * 0.5) * unit_vector.0,
-                    y: p1.y + (p1.diameter - (diameter_sum - d_y) * 0.5) * unit_vector.1
+                    x: p1.x + (p1.diameter - (diameter_sum - d_x) * 0.5) * unit_vector.x,
+                    y: p1.y + (p1.diameter - (diameter_sum - d_y) * 0.5) * unit_vector.y
                 })
             },
             None => {
@@ -313,7 +313,7 @@ impl Particle {
         let y2 = p2.y + cycle_y_delta as f64 * universe_height;
         let delta_length = Point::get_distance(x1, y1, x2, y2) - link.get_length();
         let strengh = link.get_strengh();
-        let unit_vector_option = Point::get_normalized_vector(
+        let unit_vector_option = Vector::get_normalized_vector(
             x1, y1,
             x2, y2
         );
@@ -321,8 +321,8 @@ impl Particle {
         let force_y;
         match unit_vector_option {
             Some(unit_vector) => {
-                force_x = unit_vector.0 * delta_length * strengh;
-                force_y = unit_vector.1 * delta_length * strengh;
+                force_x = unit_vector.x * delta_length * strengh;
+                force_y = unit_vector.y * delta_length * strengh;
             },
             None => {
                 force_x = DEFAULT_LINK_FORCE_X * delta_length * strengh;

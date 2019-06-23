@@ -63,4 +63,23 @@ impl Vector {
     pub fn dot(v1: Vector, v2: Vector) -> f64 {
         v1.x * v2.x + v1.y * v2.y
     }
+
+    //
+    // Helper function to get a normalized vector
+    //
+    // Returns None if the length of the initial vector
+    // is inferior or equal to 0
+    //
+    pub fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<Vector> {
+        let length = Point::get_distance(x1, y1, x2, y2);
+        let delta_x = x2 - x1;
+        let delta_y = y2 - y1;
+        if length > 0.0 {
+            let x = delta_x / length;
+            let y = delta_y / length;
+            Some(Vector{x, y})
+        } else {
+            None
+        }
+    }
 }

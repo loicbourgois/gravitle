@@ -13,25 +13,6 @@ pub struct Point {
 impl Point {
 
     //
-    // Helper function to get a normalized vector
-    //
-    // Returns None if the length of the initial vector
-    // is inferior or equal to 0
-    //
-    pub fn get_normalized_vector(x1: f64, y1: f64, x2: f64, y2: f64) -> Option<(f64, f64)> {
-        let length = Point::get_distance(x1, y1, x2, y2);
-        let delta_x = x2 - x1;
-        let delta_y = y2 - y1;
-        if length > 0.0 {
-            let x = delta_x / length;
-            let y = delta_y / length;
-            Some((x, y))
-        } else {
-            None
-        }
-    }
-
-    //
     // Returns a distance squared
     //
     pub fn get_distance_squared(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
