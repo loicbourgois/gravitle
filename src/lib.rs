@@ -1672,8 +1672,24 @@ impl Universe {
                 let delta_direction = p1_to_p2.normalized();
                 let delta_length = radiuses_length - p1_to_p2_length;
                 let delta = delta_direction.multiplied(delta_length);
-                self.particles[push.particle_1_index].translate(delta.multiplied(-0.5));
-                self.particles[push.particle_2_index].translate(delta.multiplied(0.5));
+                match (
+                    self.particles[push.particle_1_index].can_move(),
+                    self.particles[push.particle_2_index].can_move()
+                ) {
+                    (true, true) => {
+                        self.particles[push.particle_1_index].translate(delta.multiplied(-0.5));
+                        self.particles[push.particle_2_index].translate(delta.multiplied(0.5));
+                    },
+                    (true, false) => {
+                        self.particles[push.particle_1_index].translate(delta.multiplied(-1.0));
+                    },
+                    (false, true) => {
+                        self.particles[push.particle_2_index].translate(delta.multiplied(1.0));
+                    },
+                    (false, false) => {
+                        // Do nothing
+                    }
+                };
             } else {
                 // Do nothing
             }
