@@ -1,4 +1,3 @@
-use crate::point::Point;
 use crate::segment::Segment;
 use crate::vector::Vector;
 
@@ -88,6 +87,7 @@ impl Link {
         self.length = json_parsed["length"].as_f64().unwrap_or(self.length);
         self.strengh = json_parsed["strengh"].as_f64().unwrap_or(self.strengh);
         self.thrust_force = json_parsed["thrust_force"].as_f64().unwrap_or(self.thrust_force);
+        self.thrust_activated = json_parsed["thrust_activated"].as_bool().unwrap_or(self.thrust_activated);
      }
 
     //

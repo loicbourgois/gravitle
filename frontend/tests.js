@@ -1028,6 +1028,92 @@ const get_test_17 = () => {
     return test;
 };
 
+const get_test_18 = () => {
+    const test = {
+        id: 'test_18',
+        mode: 'test_18',
+        title: 'Around the world',
+        description: `
+            A big particle in the center.
+            An object moves around it.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.gravitational_constant = 20.0;
+    test.conf.default_link_thrust_force = 40.0;
+    test.conf.default_link_strengh = 1500.0;
+    test.conf.drag_coefficient = 0.1;
+    test.conf.collision_behavior = 'push-particles';
+    test.conf.wrap_around = true;
+    const diameter = 120;
+    const mass = 1500;
+    const radius = diameter * 0.5;
+    const altitude = 2.0;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": radius + altitude
+        }, {
+            "x": 10,
+            "y": radius + altitude
+        }, {
+            "x": -10,
+            "y": radius + altitude
+        }, {
+            "x": 5,
+            "y": radius + altitude + 5
+        }, {
+            "x": -5,
+            "y": radius + altitude + 5
+        }, {
+            "x": 0,
+            "y": 0,
+            "diameter": diameter,
+            "mass": mass,
+            "fixed": true
+        }, {
+            "x": radius * 0.9,
+            "y": 0,
+            "diameter": diameter * 0.2,
+            "mass": mass * 0.2,
+            "fixed": true
+        }, {
+            "x": -radius * 0.9,
+            "y": 0,
+            "diameter": diameter * 0.2,
+            "mass": mass * 0.2,
+            "fixed": true
+        }
+    ];
+    test.conf.links = [
+        {
+            p1_index: 0,
+            p2_index: 1
+        }, {
+            p1_index: 2,
+            p2_index: 0
+        }, {
+            p1_index: 4,
+            p2_index: 2,
+            thrust_activated: true,
+            thrust_force: 1000
+        }, {
+            p1_index: 0,
+            p2_index: 3
+        }, {
+            p1_index: 0,
+            p2_index: 4
+        }, {
+            p1_index: 1,
+            p2_index: 3
+        }, {
+            p1_index: 3,
+            p2_index: 4
+        }
+    ];
+    return test;
+};
+
 const get_default_test = () => {
     return get_tests()[0].id;
 };
@@ -1051,6 +1137,7 @@ const get_tests = () => {
     list.push(get_test_14());
     list.push(get_test_16());
     list.push(get_test_17());
+    list.push(get_test_18());
     return list;
 };
 
