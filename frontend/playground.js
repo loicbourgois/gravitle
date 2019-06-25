@@ -233,7 +233,16 @@ const start = () => {
 
     const keyup = (e) => {
         if (bindings && bindings[e.key]) {
-            universe.deactivate_thrust_for_links(bindings[e.key].link_indexes);
+            if (bindings[e.key].link_indexes) {
+                universe.deactivate_thrust_for_links(bindings[e.key].link_indexes);
+            } else {
+                // Do nothing
+            }
+            if (bindings[e.key].particle_indexes) {
+                universe.deactivate_thrust_for_particles(bindings[e.key].particle_indexes);
+            } else {
+                // Do nothing
+            }
         } else {
             // Do nothing
         }
@@ -241,7 +250,16 @@ const start = () => {
 
     const keydown = (e) => {
         if (bindings && bindings[e.key]) {
-            universe.activate_thrust_for_links(bindings[e.key].link_indexes);
+            if (bindings[e.key].link_indexes) {
+                universe.activate_thrust_for_links(bindings[e.key].link_indexes);
+            } else {
+                // Do nothing
+            }
+            if (bindings[e.key].particle_indexes) {
+                universe.activate_thrust_for_particles(bindings[e.key].particle_indexes);
+            } else {
+                // Do nothing
+            }
         } else {
             // Do nothing
         }

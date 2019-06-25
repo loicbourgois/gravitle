@@ -81,7 +81,9 @@ pub struct Particle {
     cycle_y: i32,
     move_by_x: f64,
     move_by_y: f64,
-    momentum: Vector
+    momentum: Vector,
+    thrust_force: f64,
+    thrust_activated: bool
 }
 
 //
@@ -117,7 +119,9 @@ impl Particle {
             momentum: Vector{
                 x:0.0,
                 y:0.0
-            }
+            },
+            thrust_force: 0.0,
+            thrust_activated: false
         }
     }
 
@@ -165,6 +169,8 @@ impl Particle {
         self.mass = json_parsed["mass"].as_f64().unwrap_or(self.mass);
         self.is_fixed = json_parsed["fixed"].as_bool().unwrap_or(self.is_fixed);
         self.is_enabled = json_parsed["enabled"].as_bool().unwrap_or(self.is_enabled);
+        self.thrust_force = json_parsed["thrust_force"].as_f64().unwrap_or(self.thrust_force);
+        self.thrust_activated = json_parsed["thrust_activated"].as_bool().unwrap_or(self.thrust_activated);
         if json_parsed["collision_behavior"].to_string() != "null" {
             self.collision_behavior = ParticleCollisionBehavior::from_string(json_parsed["collision_behavior"].to_string());
         } else {
@@ -724,6 +730,34 @@ impl Particle {
         self.y += vector.y;
         self.old_x += vector.x;
         self.old_y += vector.y;
+    }
+
+    //
+    // Getter for thrust_force
+    //
+    pub fn thrust_force(&self) -> f64 {
+        self.thrust_force
+    }
+
+    //
+    // Getter for thrust_activated
+    //
+    pub fn thrust_activated(&self) -> bool {
+        self.thrust_activated
+    }
+
+    //
+    // Set thrust_activated to true
+    //
+    pub fn activate_thrust(&mut self) {
+        self.thrust_activated = true;
+    }
+
+    //
+    // Set thrust_activated to false
+    //
+    pub fn deactivate_thrust(&mut self) {
+        self.thrust_activated = false;
     }
 }
 

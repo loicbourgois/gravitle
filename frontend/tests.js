@@ -1114,6 +1114,113 @@ const get_test_18 = () => {
     return test;
 };
 
+const get_test_19 = () => {
+    const test = {
+        id: 'test_19',
+        mode: 'test_19',
+        title: 'Thrusting particle',
+        description: `
+            A big particle in the center.
+            Smaller particles around it.
+        `,
+        conf: utils.get_base_conf_copy()
+    };
+    test.conf.collision_behavior = 'push-particles';
+    const diameter = 50;
+    const mass = 50;
+    const diameter_small = 1;
+    const mass_small = 1;
+    const thrust_force = 250000;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 0,
+            "diameter": diameter,
+            "mass": mass,
+            "thrust_force": thrust_force,
+            "thrust_activated": true
+        }, {
+            "x": 10,
+            "y": diameter * 0.85,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": 0,
+            "y": - diameter * 0.85,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": diameter * 0.85,
+            "y": 20,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": -diameter * 0.85,
+            "y": -5,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }
+    ];
+    return test;
+};
+
+const get_test_20 = () => {
+    const test = {
+        id: 'test_20',
+        mode: 'test_20',
+        title: 'Thrusting particle 2',
+        description: `
+            A big particle in the center.
+            Smaller particles around it.
+            You can activate thrust with [T].
+        `,
+        conf: utils.get_base_conf_copy(),
+        bindings: {
+            't' : {
+                particle_indexes : [0]
+            }
+        }
+    };
+    test.conf.collision_behavior = 'push-particles';
+    test.conf.drag_coefficient = 0.1;
+    const diameter = 50;
+    const mass = 50;
+    const diameter_small = 1;
+    const mass_small = 1;
+    const thrust_force = 250000;
+    test.conf.particles = [
+        {
+            "x": 0,
+            "y": 0,
+            "diameter": diameter,
+            "mass": mass,
+            "thrust_force": thrust_force,
+            "thrust_activated": false
+        }, {
+            "x": 1,
+            "y": diameter * 0.51,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": 0,
+            "y": - diameter * 0.51,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": diameter * 0.51,
+            "y": 2,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }, {
+            "x": -diameter * 0.51,
+            "y": -5,
+            "diameter": diameter_small,
+            "mass": mass_small
+        }
+    ];
+    return test;
+}
+
 const get_default_test = () => {
     return get_tests()[0].id;
 };
@@ -1138,6 +1245,8 @@ const get_tests = () => {
     list.push(get_test_16());
     list.push(get_test_17());
     list.push(get_test_18());
+    list.push(get_test_19());
+    list.push(get_test_20());
     return list;
 };
 

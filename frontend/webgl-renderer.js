@@ -30,14 +30,17 @@ const vertex_shader_particles_source = `#version 300 es
     in vec2 a_position;
     in vec2 a_center;
     in float a_radius;
+    in float a_thrust;
     uniform vec2 u_resolution;
     out vec2 position;
     out vec2 center;
     out float radius;
+    out float thrust;
     void main() {
         radius = a_radius;
         position = a_position;
         center = a_center;
+        thrust = a_thrust;
         gl_Position = vec4(a_position / u_resolution, 0, 1);
     }
 `;
@@ -47,12 +50,25 @@ const fragment_shader_particles_source = `#version 300 es
     in vec2 position;
     in vec2 center;
     in float radius;
+    in float thrust;
     out vec4 outColor;
     void main() {
-        if (distance(center, position) < radius && distance(center, position) > radius * 0.5) {
-            outColor = vec4(1, 1, 1, 1);
+        if (thrust > 0.0) {
+            if (distance(center, position) < radius && distance(center, position) > radius * 0.5) {
+                outColor = vec4(0.0, 0.5, 1.0, 1.0);
+            } else if (distance(center, position) > radius) {
+                float a = distance(center, position) - radius;
+                float transparency = 1.0 - a * 0.1;
+                outColor = vec4(0, 0.5, 1.0, transparency);
+            } else {
+                outColor = vec4(0, 0, 0, 0);
+            }
         } else {
-            outColor = vec4(0, 0, 0, 0);
+            if (distance(center, position) < radius && distance(center, position) > radius * 0.5) {
+                outColor = vec4(1, 1, 1, 1);
+            } else {
+                outColor = vec4(0, 0, 0, 0);
+            }
         }
     }
 `;
@@ -243,6 +259,11 @@ const create_program_from_sources = (
 }
 
 //
+// Size of a data point for a particle
+//
+const particle_data_point_size = 4;
+
+//
 // WebGL renderer.
 // Draws 
 //
@@ -334,9 +355,14 @@ export default class WebGLRenderer {
             this.particles_program,
             'a_radius'
         );
+        this.particles_thrust_attribute_location = this.webgl_context.getAttribLocation(
+            this.particles_program,
+            'a_thrust'
+        );
         this.particles_position_buffer = this.webgl_context.createBuffer();
         this.particles_center_buffer = this.webgl_context.createBuffer();
         this.particles_radius_buffer = this.webgl_context.createBuffer();
+        this.particles_thrust_buffer = this.webgl_context.createBuffer();
         this.particles_vao = this.webgl_context.createVertexArray();
         //
         // Init gravitational grid
@@ -899,33 +925,46 @@ export default class WebGLRenderer {
     //
     // Draw particles
     //
-    draw_particles(data, universe_width, universe_height) {
+    // data is formated as follow for each particle
+    //  position.x ;
+    //  position.y ;
+    //  radius ;
+    //  thrust_force or 0.0
+    //
+    draw_particles(
+        data,
+        universe_width,
+        universe_height
+    ) {
         let data_positions = [];
         let data_centers = [];
         let data_radiuses = [];
-        for (let i = 0, l = data.length, c = 3 ; i < l ; i += c) {
-            const length = data[i + 2];
+        let data_thrust = [];
+        for (let i = 0, l = data.length, c = particle_data_point_size ; i < l ; i += c) {
+            // Length for the side of a rendering rectangle for particles
+            // More than the actual radisu of the particle so thrusting effects
+            // can be added.
+            const side_half_length = data[i + 2] * 2.0;
             data_positions.push(...[
-                data[i] - length, data[i + 1] - length,
-                data[i] + length, data[i + 1] - length,
-                data[i] - length, data[i + 1] + length,
-                data[i] + length, data[i + 1] + length,
-                data[i] + length, data[i + 1] - length,
-                data[i] - length, data[i + 1] + length
+                data[i] - side_half_length, data[i + 1] - side_half_length,
+                data[i] + side_half_length, data[i + 1] - side_half_length,
+                data[i] - side_half_length, data[i + 1] + side_half_length,
+                data[i] + side_half_length, data[i + 1] + side_half_length,
+                data[i] + side_half_length, data[i + 1] - side_half_length,
+                data[i] - side_half_length, data[i + 1] + side_half_length
             ]);
         }
-        for (let i = 0, l = data.length, c = 3 ; i < l ; i += c) {
-            const length = 0;
+        for (let i = 0, l = data.length, c = particle_data_point_size ; i < l ; i += c) {
             data_centers.push(...[
-                data[i] - length, data[i + 1] - length,
-                data[i] + length, data[i + 1] - length,
-                data[i] - length, data[i + 1] + length,
-                data[i] + length, data[i + 1] + length,
-                data[i] + length, data[i + 1] - length,
-                data[i] - length, data[i + 1] + length
+                data[i], data[i + 1],
+                data[i], data[i + 1],
+                data[i], data[i + 1],
+                data[i], data[i + 1],
+                data[i], data[i + 1],
+                data[i], data[i + 1]
             ]);
         }
-        for (let i = 0, l = data.length, c = 3 ; i < l ; i += c) {
+        for (let i = 0, l = data.length, c = particle_data_point_size ; i < l ; i += c) {
             const radius = data[i + 2];
             data_radiuses.push(...[
                 radius,
@@ -934,6 +973,17 @@ export default class WebGLRenderer {
                 radius,
                 radius,
                 radius
+            ]);
+        }
+        for (let i = 0, l = data.length, c = particle_data_point_size ; i < l ; i += c) {
+            const thrust = data[i + 3];
+            data_thrust.push(...[
+                thrust,
+                thrust,
+                thrust,
+                thrust,
+                thrust,
+                thrust
             ]);
         }
         const data_count = data_positions.length / 2;
@@ -945,72 +995,90 @@ export default class WebGLRenderer {
         // bind the vertex array for that thing : call gl.bindVertexArray
         this.webgl_context.bindVertexArray(this.particles_vao);
         // for each attribute call gl.bindBuffer, bufferData, gl.vertexAttribPointer, gl.enableVertexAttribArray
-        if (true) {
-            this.webgl_context.bindBuffer(
-                this.webgl_context.ARRAY_BUFFER,
-                this.particles_position_buffer
-            );
-            this.webgl_context.bufferData(
-                this.webgl_context.ARRAY_BUFFER,
-                new Float32Array(data_positions),
-                this.webgl_context.STATIC_DRAW
-            );
-            this.webgl_context.vertexAttribPointer(
-                this.particles_position_attribute_location,
-                size,
-                type,
-                normalize,
-                stride,
-                offset
-            );
-            this.webgl_context.enableVertexAttribArray(
-                this.particles_position_attribute_location
-            );
-        }
-        if (true) {
-            this.webgl_context.bindBuffer(
-                this.webgl_context.ARRAY_BUFFER,
-                this.particles_center_buffer
-            );
-            this.webgl_context.bufferData(
-                this.webgl_context.ARRAY_BUFFER,
-                new Float32Array(data_centers),
-                this.webgl_context.STATIC_DRAW
-            );
-            this.webgl_context.vertexAttribPointer(
-                this.particles_center_attribute_location,
-                size,
-                type,
-                normalize,
-                stride,
-                offset
-            );
-            this.webgl_context.enableVertexAttribArray(
-                this.particles_center_attribute_location
-            );
-        }
-        if (true) {
-            this.webgl_context.bindBuffer(
-                this.webgl_context.ARRAY_BUFFER,
-                this.particles_radius_buffer
-            );
-            this.webgl_context.bufferData(
-                this.webgl_context.ARRAY_BUFFER,
-                new Float32Array(data_radiuses),
-                this.webgl_context.STATIC_DRAW
-            );
-            this.webgl_context.vertexAttribPointer(
-                this.particles_radius_attribute_location,
-                1,
-                type,
-                normalize,
-                stride,
-                offset
-            );
-            this.webgl_context.enableVertexAttribArray(
-                this.particles_radius_attribute_location
-            );
-        }
+        // Positions
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.particles_position_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_positions),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.particles_position_attribute_location,
+            size,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.particles_position_attribute_location
+        );
+        // Centers
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.particles_center_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_centers),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.particles_center_attribute_location,
+            size,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.particles_center_attribute_location
+        );
+        // Radiuses
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.particles_radius_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_radiuses),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.particles_radius_attribute_location,
+            1,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.particles_radius_attribute_location
+        );
+        // Thrust
+        this.webgl_context.bindBuffer(
+            this.webgl_context.ARRAY_BUFFER,
+            this.particles_thrust_buffer
+        );
+        this.webgl_context.bufferData(
+            this.webgl_context.ARRAY_BUFFER,
+            new Float32Array(data_thrust),
+            this.webgl_context.STATIC_DRAW
+        );
+        this.webgl_context.vertexAttribPointer(
+            this.particles_thrust_attribute_location,
+            1,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        this.webgl_context.enableVertexAttribArray(
+            this.particles_thrust_attribute_location
+        );
         // call gl.useProgram for the program needed to draw.
         this.webgl_context.useProgram(this.particles_program);
         // setup uniforms for the thing you want to draw
