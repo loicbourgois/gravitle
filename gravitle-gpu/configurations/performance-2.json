@@ -1,0 +1,108 @@
+{
+  "_comments": [
+    "MacBook Pro (15-inch, 2017), plugged in",
+    "390 ms without client",
+    "-- ms with client connected"
+  ],
+  "constants": {
+    "world_size": 100.0,
+    "width": 500.0,
+    "height": 500.0,
+    "delta_time_s": 0.01,
+    "grid_size": 40,
+    "default_diameter": 1.0,
+    "collision_push_rate": 0.01,
+    "default_mass": 1.0,
+    "gravity": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "serialize_unactive_particles": false,
+  "display_engine_logs": true,
+  "engine_logs_refresh": 1,
+  "durations_length": 10,
+  "gpu_id": 0,
+  "initial_max_speed_per_s": 0.0,
+  "multiplier": 1.0,
+  "port": 10001,
+  "address": "127.0.0.1",
+  "update_client_data": true,
+  "show_gpu_supported_features": false,
+  "initial_particle_count": 60000,
+  "min_particle_count": 60000,
+  "particles": [],
+  "default_particle_type": "energy",
+  "particle_definitions": {
+    "energy": {
+      "string_id": "energy",
+      "name": "Energy",
+      "short_name": "e"
+    },
+    "matter": {
+      "string_id": "matter",
+      "name": "Matter",
+      "short_name": "m"
+    },
+    "waste": {
+      "string_id": "waste",
+      "name": "Waste",
+      "short_name": "w"
+    },
+    "rock": {
+      "string_id": "rock",
+      "name": "Rock",
+      "short_name": "r"
+    },
+    "organic_matter": {
+      "string_id": "organic_matter",
+      "name": "Organic Matter",
+      "short_name": "om"
+    },
+    "bloop": {
+      "string_id": "bloop",
+      "name": "bloop",
+      "short_name": "bloop"
+    }
+  },
+  "alchemy": {
+    "collisions": [
+      {
+        "particles": ["energy", "energy"],
+        "response": {
+          "Transform": {
+            "particles": ["matter", "waste"]
+          }
+        }
+      }, {
+        "particles": ["waste", "waste"],
+        "response": {
+          "Transform": {
+            "particles": ["rock", "matter"]
+          }
+        }
+      }, {
+        "particles": ["energy", "matter"],
+        "response": {
+          "Transform": {
+            "particles": ["organic_matter", "waste"]
+          }
+        }
+      }, {
+        "particles": ["rock", "rock"],
+        "response": {
+          "Link": {
+            "strength": 1.0
+          }
+        }
+      }, {
+        "particles": ["organic_matter", "rock"],
+        "response": {
+          "Link": {
+            "strength": 1.0
+          }
+        }
+      }
+    ]
+  }
+}

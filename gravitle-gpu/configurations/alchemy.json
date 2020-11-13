@@ -1,0 +1,113 @@
+{
+  "constants": {
+    "world_size": 100.0,
+    "width": 20.0,
+    "height": 20.0,
+    "delta_time_s": 0.005,
+    "grid_size": 5,
+    "default_diameter": 1.0,
+    "collision_push_rate": 0.1,
+    "default_mass": 1.0,
+    "gravity": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "serialize_unactive_particles": false,
+  "gpu_id": 0,
+  "initial_max_speed_per_s": 0.0,
+  "display_engine_logs": false,
+  "multiplier": 1.0,
+  "port": 10001,
+  "address": "127.0.0.1",
+  "update_client_data": true,
+  "show_gpu_supported_features": false,
+  "initial_particle_count": 5,
+  "default_particle_type": "energy",
+  "particles": [
+    {
+      "type": "energy",
+      "x": 5.0,
+      "y": 10.0,
+      "velocity_per_s": {
+        "x": 1.0,
+        "y": 0.0
+      }
+    }, {
+      "type": "energy",
+      "x": 15.0,
+      "y": 10.0,
+      "velocity_per_s": {
+        "x": -1.0,
+        "y": 0.0
+      }
+    },{
+      "type": "energy",
+      "x": 5.0,
+      "y": 15.0,
+      "velocity_per_s": {
+        "x": 0.5,
+        "y": 0.0
+      }
+    }, {
+      "type": "matter",
+      "x": 15.0,
+      "y": 15.0,
+      "velocity_per_s": {
+        "x": -0.5,
+        "y": 0.0
+      }
+    }, {
+      "type": "matter",
+      "x": 10.1,
+      "y": 5.0,
+      "velocity_per_s": {
+        "x": 0.0,
+        "y": 0.0
+      }
+    }
+  ],
+  "particle_definitions": {
+    "energy": {
+      "string_id": "energy",
+      "name": "Energy",
+      "short_name": "E"
+    },
+    "matter": {
+      "string_id": "matter",
+      "name": "Matter",
+      "short_name": "M"
+    },
+    "organic_matter": {
+      "string_id": "organic_matter",
+      "name": "Organic matter",
+      "short_name": "Om"
+    }
+  },
+  "alchemy": {
+    "collisions": [
+      {
+        "particles": ["energy", "energy"],
+        "response": {
+          "Transform": {
+            "particles": ["matter"]
+          }
+        }
+      }, {
+        "particles": ["energy", "matter"],
+        "response": {
+          "Transform": {
+            "particles": ["organic_matter", "organic_matter"]
+          }
+        }
+      }, {
+        "particles": ["matter", "organic_matter"],
+        "response": {
+          "Link": {
+            "strength": 0.1
+          }
+        }
+      }
+    ]
+  }
+}

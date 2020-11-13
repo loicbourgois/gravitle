@@ -1,0 +1,108 @@
+{
+  "constants": {
+    "world_size": 100.0,
+    "width": 20.0,
+    "height": 20.0,
+    "delta_time_s": 0.01,
+    "grid_size": 5,
+    "default_diameter": 1.0,
+    "collision_push_rate": 0.1,
+    "default_mass": 1.0,
+    "gravity": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "serialize_unactive_particles": false,
+  "gpu_id": 0,
+  "initial_max_speed_per_s": 0.0,
+  "display_engine_logs": false,
+  "multiplier": 1.0,
+  "port": 10001,
+  "address": "127.0.0.1",
+  "update_client_data": true,
+  "show_gpu_supported_features": false,
+  "default_particle_type": "energy",
+  "engine_logs_refresh": 10,
+  "durations_length": 10,
+  "initial_particle_count": 0,
+  "min_particle_count": 0,
+  "particles": [{
+    "type": "thruster",
+    "x": 10.0,
+    "y": 10.0,
+    "velocity_per_s": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },{
+    "type": "metal",
+    "x": 10.8,
+    "y": 10.0,
+    "velocity_per_s": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },{
+    "type": "metal",
+    "x": 10.4,
+    "y": 10.2,
+    "velocity_per_s": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },{
+    "type": "thruster",
+    "x": 7.0,
+    "y": 7.0,
+    "velocity_per_s": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },{
+    "type": "metal",
+    "x": 7.0,
+    "y": 13.0,
+    "velocity_per_s": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  }],
+  "particle_definitions": {
+    "energy": {
+      "string_id": "energy",
+      "name": "energy",
+      "short_name": "energy",
+      "thrust": 0.0
+    },
+    "metal": {
+      "string_id": "metal",
+      "name": "Metal",
+      "short_name": "m",
+      "thrust": 0.0
+    },
+    "thruster": {
+      "string_id": "thruster",
+      "name": "Thruster",
+      "short_name": "th",
+      "thrust": 10.0
+    }
+  },
+  "alchemy": {
+    "collisions": [{
+      "particles": ["thruster", "metal"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["metal", "metal"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    }]
+  }
+}
