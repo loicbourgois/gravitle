@@ -2,7 +2,7 @@ const render = () => {
   if (document.getElementById('get_true_ping').checked) {
     return
   }
-  const zoom = parseFloat(document.querySelector("#slider_1").value) / 1000.0 * 9.0 + 1.0
+  const zoom = (parseFloat(document.querySelector("#slider_1").value) / 1000.0 * 9.0 + 1.0)
   if (!chunk.tick) {
     return
   }
@@ -28,26 +28,82 @@ const render = () => {
   const fps = fps_sum / fps_list.length;
   document.getElementById('fps').innerHTML = fps.toFixed(2);
   //
-  context_1.clearRect(0, 0, canvas_1.width, canvas_1.height)
-  context_2.clearRect(0, 0, canvas_2.width, canvas_2.height)
+  //context_1.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  //context_1.fillRect(0, 0, canvas_1.width, canvas_1.height);
+  context_1.clearRect(0, 0, canvas_1.width, canvas_1.height);
+  context_2.clearRect(0, 0, canvas_2.width, canvas_2.height);
+  {
+    const left = canvas_2.width * (center_x  - 0.5 / zoom)
+    const top = canvas_2.height * (center_y - 0.5  / zoom)
+    const width = canvas_2.width / zoom
+    const height = canvas_2.height / zoom
+    context_2.strokeStyle = '#fff'
+    context_2.beginPath();
+    context_2.rect(left, top, width, height);
+    context_2.stroke();
+  }
+  //
+  let pid_to_follow = -1;
+  if (document.getElementById('follow_camera').checked) {
+    pid_to_follow = 0;
+  }
   for (let particle_id in chunk.particles) {
-    const particle = chunk.particles[particle_id]
-    if (particle.a) {
-      //draw_body(canvas_1, x, y, d, zoom, center_x, center_y)
-      //draw_inactive(canvas_1, x, y, d, zoom, center_x, center_y)
-      draw_particle(particle, chunk, canvas_1, zoom, center_x, center_y);
-      //draw_body(canvas_2, x, y, d, 1.0, 0.5, 0.5)
-    } else {
-      if (conf.draw_inactive) {
-        const x = particle.x / chunk.constants.width;
-        const y = particle.y / chunk.constants.height;
-        const d = particle.d / chunk.constants.width;
-        draw_inactive(canvas_1, x, y, d, zoom, center_x, center_y)
+    const particle = chunk.particles[particle_id];
+    if (particle.pid == pid_to_follow) {
+        const p_x = particle.x / chunk.constants.width
+        const p_y = 1.0 - particle.y / chunk.constants.width
+        const v = {
+          x: center_x - p_x,
+          y: center_y - p_y
+        }
+        center_x = center_x - v.x * 0.02;
+        center_y = center_y - v.y * 0.02;
+      }
+  }
+  const cell_width = chunk.constants.width / chunk.constants.grid_size;
+  const cell_height = chunk.constants.height / chunk.constants.grid_size;
+  const i_min = Math.trunc( (center_x  - 0.5 / zoom) * chunk.constants.grid_size) - 1;
+  const j_min = Math.trunc( ((1.0-center_y)  - 0.5 / zoom) * chunk.constants.grid_size) - 1;
+  const i_max = Math.trunc( (center_x  + 0.5 / zoom) * chunk.constants.grid_size) + 2;
+  const j_max = Math.trunc( ((1.0-center_y)  + 0.5 / zoom) * chunk.constants.grid_size) + 2;
+  for (let ii = i_min ; ii < i_max ; ii++ ) {
+    for (let jj = j_min ; jj < j_max ; jj++ ) {
+      const i = (ii + chunk.constants.grid_size) % chunk.constants.grid_size;
+      const j = (jj + chunk.constants.grid_size) % chunk.constants.grid_size;
+      const left = (i * cell_width) / chunk.constants.width * canvas_2.width;
+      const bottom = canvas_2.height - (j * cell_height) / chunk.constants.height * canvas_2.height;
+      const width = cell_width / chunk.constants.width * canvas_2.width;
+      const height = cell_height / chunk.constants.height * canvas_2.height;
+      const top = bottom - height;
+      context_2.strokeStyle = '#f808'
+      context_2.beginPath();
+      context_2.rect(left, top, width, height);
+      context_2.stroke();
+      for (let k in chunk.grid[i][j]) {
+        const pid = chunk.grid[i][j][k];
+        const p = chunk.particles[pid];
+        if (p.e) {
+          draw_particle(p, chunk, canvas_1, zoom, center_x, center_y, ii-i, jj-j);
+          draw_particle_opac(p, chunk, canvas_2, 1.0, 0.5, 0.5);
+        }
       }
     }
   }
 }
-const draw_particle = (p, chunk, canvas, zoom, center_x, center_y) => {
+const draw_particle = (p, chunk, canvas, zoom, center_x, center_y, di, dj) => {
+
+  const x = p.x / chunk.constants.width + di*0.1;
+  const y = p.y / chunk.constants.height + dj*0.1;
+  const d = p.d / chunk.constants.width;
+  const pdid_str = chunk.pdid_to_string[p.pdid];
+  const c = conf.colors[pdid_str];
+  if (!c) {
+    log_x_time(`no color for ${pdid_str}`);
+  }
+  const a = 0.3 + p.a;
+  draw_disk(canvas, x, y, d, zoom, center_x, center_y, `rgba(${c.r*255.0}, ${c.g*255.0}, ${c.b*255.0}, ${a})`)
+}
+const draw_particle_opac = (p, chunk, canvas, zoom, center_x, center_y) => {
   const x = p.x / chunk.constants.width;
   const y = p.y / chunk.constants.height;
   const d = p.d / chunk.constants.width;
@@ -56,8 +112,15 @@ const draw_particle = (p, chunk, canvas, zoom, center_x, center_y) => {
   if (!c) {
     log_x_time(`no color for ${pdid_str}`);
   }
-  draw_disk(canvas, x, y, d, zoom, center_x, center_y, `rgba(${c.r*255.0}, ${c.g*255.0}, ${c.b*255.0}, 0.5)`)
+  const a = 0.9 + p.a;
+  draw_disk(canvas, x, y, d, zoom, center_x, center_y, `rgba(${c.r*255.0}, ${c.g*255.0}, ${c.b*255.0}, ${a})`)
 }
+
+
+
+
+
+
 
 const render_stats_distance = () => {
   let l = chunk.stats.length;

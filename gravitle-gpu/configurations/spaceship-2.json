@@ -1,0 +1,190 @@
+{
+  "constants": {
+    "world_size": 100.0,
+    "width": 300.0,
+    "height": 300.0,
+    "delta_time_s": 0.01,
+    "grid_size": 10,
+    "default_diameter": 1.0,
+    "collision_push_rate": 0.01,
+    "default_mass": 1.0,
+    "gravity": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "serialize_unactive_particles": false,
+  "gpu_id": 0,
+  "initial_max_speed_per_s": 0.0,
+  "display_engine_logs": false,
+  "multiplier": 1.0,
+  "port": 10001,
+  "address": "127.0.0.1",
+  "update_client_data": true,
+  "show_gpu_supported_features": false,
+  "default_particle_type": "energy",
+  "engine_logs_refresh": 10,
+  "durations_length": 10,
+  "initial_particle_count": 0,
+  "min_particle_count": 1000,
+  "particle_definitions": {
+    "energy": {
+      "string_id": "energy",
+      "name": "energy",
+      "short_name": "energy",
+      "thrust": 0.0
+    },
+    "organic_matter": {
+      "string_id": "organic_matter",
+      "name": "organic_matter",
+      "short_name": "organic_matter",
+      "thrust": 0.0
+    },
+    "matter": {
+      "string_id": "matter",
+      "name": "matter",
+      "short_name": "matter",
+      "thrust": 0.0
+    },
+    "metal": {
+      "string_id": "metal",
+      "name": "Metal",
+      "short_name": "m",
+      "thrust": 0.0
+    },
+    "thruster": {
+      "string_id": "thruster",
+      "name": "Thruster",
+      "short_name": "th",
+      "thrust": 1000.0
+    }
+  },
+  "alchemy": {
+    "collisions": [{
+      "particles": ["thruster", "metal"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["metal", "metal"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["thruster", "thruster"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["matter", "matter"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["organic_matter", "organic_matter"],
+      "response": {
+        "Link": {
+          "strength": 1.0
+        }
+      }
+    },{
+      "particles": ["energy", "energy"],
+      "response": {
+        "Transform": {
+          "particles": ["organic_matter", "matter"]
+        }
+      }
+    }]
+  },
+  "particles": [
+    {
+      "type": "thruster",
+      "x": 8.756756756756758,
+      "y": 10.075675675675676,
+      "velocity_per_s": {
+        "x": 0,
+        "y": 0
+      }
+    },{
+    "type": "thruster",
+    "x": 10.68108108108108,
+    "y": 10.248648648648649,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+
+  {
+    "type": "metal",
+    "x": 11.04864864864865,
+    "y": 11.091891891891892,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 8.237837837837837,
+    "y": 10.832432432432434,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 9.145945945945947,
+    "y": 10.91891891891892,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 10.11891891891892,
+    "y": 10.962162162162162,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 10.508108108108107,
+    "y": 11.762162162162163,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 9.6,
+    "y": 11.697297297297297,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  {
+    "type": "metal",
+    "x": 8.691891891891892,
+    "y": 11.632432432432434,
+    "velocity_per_s": {
+      "x": 0,
+      "y": 0
+    }
+  }
+]
+}

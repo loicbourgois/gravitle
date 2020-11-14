@@ -232,9 +232,11 @@ const start_render_loop = () => {
   log(`starting rendering`)
   render_loop()
 }
+let last_render_start_ms = Date.now();
 const render_loop = () => {
+  last_render_start_ms = Date.now();
   render()
-  setTimeout(render_loop, 0)
+  setTimeout(render_loop, 15 - (Date.now()-last_render_start_ms))
 }
 const tohhmmssms = (duration_second) => {
     var sec_num = parseInt(duration_second, 10);
@@ -305,4 +307,39 @@ document.querySelector('#use_distance_traveled_as_fitness_function').addEventLis
 document.querySelector('#use_distance_traveled_as_fitness_function_false').addEventListener('click', (event) => {
   data.socket_pairs[0].writer.send('use_distance_traveled_as_fitness_function_false')
 });
+const bindings = {
+  // key: pid
+  "a": [0],
+  "z": [1],
+}
+const set_activation = (pid, value) => {
+  let command_data = {
+    "SetActivation": {
+      "pid": pid,
+      "value": value,
+    }
+  }
+  let json_str = JSON.stringify(command_data);
+  data.socket_pairs[0].writer.send(json_str);
+}
+const keyup = (e) => {
+    if (bindings && bindings[e.key]) {
+      for (const i in bindings[e.key]) {
+        set_activation(bindings[e.key][i], 0.0);
+      }
+    } else {
+        // Do nothing
+    }
+};
+const keydown = (e) => {
+    if (bindings && bindings[e.key]) {
+      for (const i in bindings[e.key]) {
+        set_activation(bindings[e.key][i], 1.0);
+      }
+    } else {
+        // Do nothing
+    }
+};
+document.addEventListener('keyup', keyup);
+document.addEventListener('keydown', keydown);
 connect()

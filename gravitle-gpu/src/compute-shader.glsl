@@ -17,6 +17,7 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define consts push_constants
 struct Particle {
   uint pdid;
+  float activation;
   uint link_count;
   uint collision_pids [max_collision_per_particle];
   uint linked_pids [MAX_LINK_PER_PARTICLE];
@@ -121,8 +122,8 @@ void main() {
     vec2 ndv = normalize(delta_vector(pas_xy, pbs_xy));
     direction += ndv;
     vec2 dv = ndv * dl;
-    float strength = 1.0;
-    float damping = 0.5;
+    float strength = 10.0;
+    float damping = 0.8;
     pat.x -= dv.x * strength * consts.delta_time_s;
     pat.y -= dv.y * strength * consts.delta_time_s;
     pat.x_before -= dv.x * strength * damping * consts.delta_time_s;
@@ -132,7 +133,7 @@ void main() {
   vec2 thrust_force = vec2(0.0, 0.0);
   if (direction.x * direction.y != 0.0) {
     direction = normalize(direction);
-    thrust_force = direction * data.particle_definitions[pas.pdid].thrust * consts.delta_time_s;
+    thrust_force = direction * data.particle_definitions[pas.pdid].thrust * consts.delta_time_s * pas.activation;
   }
   // Compute gravity force
   vec2 gravity_force = vec2(
@@ -149,24 +150,24 @@ void main() {
   // Ground response
   if (pat.y < 0.0) {
     float dy = pat.y - pat.y_before;
-    pat.y = 0.0;
-    pat.y_before = pat.y + dy;
+    pat.y = consts.height;
+    pat.y_before = pat.y - dy;
   }
   if (pat.y > consts.height) {
     float dy = pat.y - pat.y_before;
-    pat.y = consts.height;
-    pat.y_before = pat.y + dy;
+    pat.y = 0.0;
+    pat.y_before = pat.y - dy;
   }
   // Walls response
   if (pat.x < 0.0) {
     float dx = pat.x - pat.x_before;
-    pat.x = 0.0;
-    pat.x_before = pat.x + dx;
+    pat.x = consts.width;
+    pat.x_before = pat.x - dx;
   }
   if (pat.x > consts.width) {
     float dx = pat.x - pat.x_before;
-    pat.x = consts.width;
-    pat.x_before = pat.x + dx;
+    pat.x = 0.0;
+    pat.x_before = pat.x - dx;
   }
   // Update velocity
   pat.velocity_x = (pat.x - pat.x_before) / consts.delta_time_s;

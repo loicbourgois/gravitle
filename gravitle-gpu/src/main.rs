@@ -54,6 +54,7 @@ const MAX_PARTICLE_DEFINITIONS: usize = 64;
 //#[repr(align(1))]
 pub struct GpuParticle {
     pub pdid: u32,
+    pub activation: f32,
     pub link_count: u32,
     pub collision_pids: [u32; MAX_COLLISION_PER_PARTICLE],
     pub linked_pids: [u32; MAX_LINK_PER_PARTICLE],
@@ -108,12 +109,16 @@ struct ParticleClientData {
     x: f32,
     y: f32,
     d: f32,
-    a: bool,
+    //enabled
+    e: bool,
+    // activation
+    a: f32,
     pdid: pdid,
+    pid: pid,
 }
 #[derive(Serialize, Deserialize)]
 struct ClientData {
-    particles: Vec<ParticleClientData>,
+    particles: HashMap<pid, ParticleClientData>,
     constants: Constants,
     tick: usize,
     momentum: Vec2,
@@ -122,6 +127,7 @@ struct ClientData {
     average_duration: u128,
     particle_definitions: HashMap<String, ParticleDefinition>,
     pdid_to_string: HashMap<pdid, String>,
+    grid: Vec<Vec<HashSet<pid>>>,
 }
 #[derive(Copy, Clone)]
 pub struct CollisionCell {
@@ -130,9 +136,7 @@ pub struct CollisionCell {
 }
 fn main() {
     println!("Blooper");
-    let configuration_str: String = env::var("blooper_configuration")
-        .unwrap()
-        .replace("\\\"", "\"");
+    let configuration_str: String = env::var("configuration").unwrap().replace("\\\"", "\"");
     let configuration: Configuration = serde_json::from_str(&configuration_str).unwrap();
     let instance =
         Instance::new(None, &InstanceExtensions::none(), None).expect("failed to create instance");
@@ -209,14 +213,21 @@ fn main() {
             let mut tick = 0;
             let client_data = "".to_string();
             let client_data_lock = Arc::new(RwLock::new(client_data));
+            let activations: HashMap<pid, f32> = HashMap::new();
+            let activations_lock = Arc::new(RwLock::new(activations));
             //
             // thread client
             //
             {
                 let client_data_lock_clone = Arc::clone(&client_data_lock);
+                let activations_lock_clone = Arc::clone(&activations_lock);
                 let configuration_clone = configuration.clone();
                 thread::spawn(move || {
-                    server::handle_websocket(client_data_lock_clone, configuration_clone);
+                    server::handle_websocket(
+                        client_data_lock_clone,
+                        configuration_clone,
+                        activations_lock_clone,
+                    );
                 });
             }
             let client_data_lock_clone = Arc::clone(&client_data_lock);
@@ -242,7 +253,7 @@ fn main() {
                         let gpu_buffer_read = data.gpu_buffer.read().unwrap();
                         for pid in data.active_particles.keys() {
                             let p_gpu = gpu_buffer_read.particles[*pid];
-                            if !p_gpu[i_source].x.is_finite() || !p_gpu[i_source].y.is_finite() {
+                            if !(p_gpu[i_source].x + p_gpu[i_source].y).is_finite() {
                                 particles_to_deactivate.insert(*pid);
                             }
                         }
@@ -280,6 +291,15 @@ fn main() {
                     match SystemTime::now().duration_since(start_time_collisison_grid) {
                         Ok(t) => durations_collision_grid.push(t.as_micros()),
                         Err(_) => println!("error getting elapsed time"),
+                    }
+                }
+                // activations
+                {
+                    let activations = activations_lock.read().unwrap().clone();
+                    let mut buffer_write = data.gpu_buffer.write().unwrap();
+                    for (pid, activation_value) in activations.iter() {
+                        buffer_write.particles[*pid][0].activation = *activation_value;
+                        buffer_write.particles[*pid][1].activation = *activation_value;
                     }
                 }
                 // gpu compute
@@ -507,19 +527,28 @@ fn main() {
                 let start_time_client_data = SystemTime::now();
                 if configuration.update_client_data {
                     let buffer_read = data.gpu_buffer.read().unwrap();
-                    let mut particles_client: Vec<ParticleClientData> = Vec::new();
+                    let mut particles_client: HashMap<pid, ParticleClientData> = HashMap::new();
                     let mut total_momentum = Vec2 { x: 0.0, y: 0.0 };
                     let mut absolute_momentum = Vec2 { x: 0.0, y: 0.0 };
                     let mut kinetic_energy = 0.0;
+                    let v: Vec<HashSet<pid>> = vec![HashSet::new(); constants.grid_size as usize];
+                    let mut grid: Vec<Vec<HashSet<pid>>> = vec![v; constants.grid_size as usize];
                     for (pid, p) in data.active_particles.iter() {
                         let p_gpu = buffer_read.particles[*pid];
-                        particles_client.push(ParticleClientData {
-                            x: p_gpu[i_target].x,
-                            y: p_gpu[i_target].y,
-                            d: p_gpu[i_target].d,
-                            a: p_gpu[i_target].is_active == 1,
-                            pdid: p.pdid,
-                        });
+                        particles_client.insert(
+                            *pid,
+                            ParticleClientData {
+                                x: p_gpu[i_target].x,
+                                y: p_gpu[i_target].y,
+                                d: p_gpu[i_target].d,
+                                e: p_gpu[i_target].is_active == 1,
+                                a: p_gpu[i_target].activation,
+                                pdid: p.pdid,
+                                pid: *pid,
+                            },
+                        );
+                        grid[p_gpu[i_target].grid_x as usize][p_gpu[i_target].grid_y as usize]
+                            .insert(p.pid);
                         total_momentum.x += p_gpu[i_target].momentum_x;
                         total_momentum.y += p_gpu[i_target].momentum_y;
                         absolute_momentum.x += p_gpu[i_target].momentum_x.abs();
@@ -529,15 +558,20 @@ fn main() {
                     if configuration.serialize_unactive_particles {
                         for pid in &data.inactive_particles {
                             let p_gpu = buffer_read.particles[*pid];
-                            particles_client.push(ParticleClientData {
-                                x: p_gpu[i_target].x,
-                                y: p_gpu[i_target].y,
-                                d: p_gpu[i_target].d,
-                                a: p_gpu[i_target].is_active == 1,
-                                // todo: use Nan for inactive particle
-                                // inactive particles can't have a pdid
-                                pdid: 0,
-                            });
+                            particles_client.insert(
+                                *pid,
+                                ParticleClientData {
+                                    x: p_gpu[i_target].x,
+                                    y: p_gpu[i_target].y,
+                                    d: p_gpu[i_target].d,
+                                    e: p_gpu[i_target].is_active == 1,
+                                    a: p_gpu[i_target].activation,
+                                    // todo: use Nan for inactive particle
+                                    // inactive particles can't have a pdid
+                                    pdid: 0,
+                                    pid: *pid,
+                                },
+                            );
                         }
                     }
                     let client_data = ClientData {
@@ -550,6 +584,7 @@ fn main() {
                         average_duration: average_duration,
                         particle_definitions: data.particle_definitions.clone(),
                         pdid_to_string: data.pdid_to_string.clone(),
+                        grid: grid,
                     };
                     *(client_data_lock_clone.write().unwrap()) =
                         serde_json::to_string(&client_data).unwrap().to_string();

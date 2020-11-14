@@ -37,32 +37,38 @@
     "energy": {
       "string_id": "energy",
       "name": "Energy",
-      "short_name": "e"
+      "short_name": "e",
+      "thrust": 0.0
     },
     "matter": {
       "string_id": "matter",
       "name": "Matter",
-      "short_name": "m"
+      "short_name": "m",
+      "thrust": 0.0
     },
     "waste": {
       "string_id": "waste",
       "name": "Waste",
-      "short_name": "w"
+      "short_name": "w",
+      "thrust": 0.0
     },
     "rock": {
       "string_id": "rock",
       "name": "Rock",
-      "short_name": "r"
+      "short_name": "r",
+      "thrust": 0.0
     },
     "organic_matter": {
       "string_id": "organic_matter",
       "name": "Organic Matter",
-      "short_name": "om"
+      "short_name": "om",
+      "thrust": 0.0
     },
     "bloop": {
       "string_id": "bloop",
       "name": "bloop",
-      "short_name": "bloop"
+      "short_name": "bloop",
+      "thrust": 0.0
     }
   },
   "alchemy": {

@@ -53,12 +53,7 @@ pub struct GpuData {
 pub struct GpuParticleDefinition {
     pub thrust: f32,
 }
-pub fn activate_particle(data: &mut Data, pdid: pdid) -> Option<pid> {
-    if data.inactive_particles.len() == 0 {
-        println!("not enough inactive particle");
-        return None;
-    }
-    let pid: pid = *data.inactive_particles.iter().next().unwrap();
+pub fn activate_particle_by_pid(data: &mut Data, pdid: pdid, pid: pid) -> Option<pid> {
     data.inactive_particles.remove(&pid);
     {
         let gpu_buffer = &mut data.gpu_buffer.write().unwrap();
@@ -93,6 +88,7 @@ pub fn activate_particle(data: &mut Data, pdid: pdid) -> Option<pid> {
                 kinetic_energy: 0.0,
                 padder: [0; PADDER_COUNT],
                 //pdid: pdid as u32,
+                activation: 0.0,
                 link_count: 0,
                 linked_pids: [0; MAX_LINK_PER_PARTICLE],
             };
@@ -106,6 +102,14 @@ pub fn activate_particle(data: &mut Data, pdid: pdid) -> Option<pid> {
         },
     );
     return Some(pid);
+}
+pub fn activate_particle(data: &mut Data, pdid: pdid) -> Option<pid> {
+    if data.inactive_particles.len() == 0 {
+        println!("not enough inactive particle");
+        return None;
+    }
+    let pid: pid = *data.inactive_particles.iter().next().unwrap();
+    return activate_particle_by_pid(data, pdid, pid);
 }
 pub fn create_default_particle(data: &mut Data) {
     let pdid_str: String = data.configuration.default_particle_type.clone();
@@ -200,9 +204,9 @@ pub fn load_data(
         collision_response_definitions: collision_response_definitions,
         links: HashMap::new(),
     };
-    for p in configuration.particles.iter() {
-        match activate_particle_str(&mut data, p.r#type.clone()) {
-            Some(pid) => {
+    for (pid, p) in configuration.particles.iter().enumerate() {
+        match activate_particle_str_by_pid(&mut data, p.r#type.clone(), pid) {
+            Some(_) => {
                 let gpu_buffer = &mut data.gpu_buffer.write().unwrap();
                 for i in 0..=1 {
                     gpu_buffer.particles[pid][i].x = p.x;
@@ -233,6 +237,10 @@ pub fn load_data(
 pub fn activate_particle_str(data: &mut Data, pdid_str: String) -> Option<pid> {
     let pdid: pdid = *data.string_to_pdid.get(&pdid_str).unwrap();
     return activate_particle(data, pdid);
+}
+pub fn activate_particle_str_by_pid(data: &mut Data, pdid_str: String, pid: pid) -> Option<pid> {
+    let pdid: pdid = *data.string_to_pdid.get(&pdid_str).unwrap();
+    return activate_particle_by_pid(data, pdid, pid);
 }
 pub fn deactivate_particle(data: &mut Data, pid: pid) {
     data.active_particles.remove(&pid);
@@ -287,6 +295,7 @@ fn get_random_particles(
             kinetic_energy: 0.0,
             padder: [0; PADDER_COUNT],
             link_count: 0,
+            activation: 0.0,
             linked_pids: [0; MAX_LINK_PER_PARTICLE],
             //pdid: 0,
             pdid: 0,
