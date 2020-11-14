@@ -15,17 +15,26 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define pas_xy vec2(pas.x, pas.y)
 #define pbs_xy vec2(pbs.x, pbs.y)
 #define consts push_constants
+struct Link {
+    uint pid;
+    // initial wrapping around delta
+    int iwad_x;
+    int iwad_y;
+    //float strength;
+    //float damping;
+};
 struct Particle {
   uint pdid;
   float activation;
+  ivec2 wrap_around;
   uint link_count;
   uint collision_pids [max_collision_per_particle];
-  uint linked_pids [MAX_LINK_PER_PARTICLE];
   float velocity_x;
   float velocity_y;
   float momentum_x;
   float momentum_y;
   uint is_active;
+  Link links [MAX_LINK_PER_PARTICLE];
   float d;
   float x;
   float y;
@@ -87,6 +96,7 @@ void main() {
   pat.y = pas.y;
   pat.x_before = pas.x;
   pat.y_before = pas.y;
+  pat.wrap_around = pas.wrap_around;
   // Collision detection
   vec2 force = vec2(0.0, 0.0);
   uint gi_min = pas.grid_x-1;
@@ -116,10 +126,15 @@ void main() {
   // Compute link
   vec2 direction = vec2(0.0, 0.0);
   for (uint i=0 ; i < pas.link_count ; i+=1) {
-    uint pid_b = pas.linked_pids[i];
+    uint pid_b = pas.links[i].pid;
     float l = (pas.d + pbs.d) * 0.5;
-    float dl = l - distance(pas_xy, pbs_xy);
-    vec2 ndv = normalize(delta_vector(pas_xy, pbs_xy));
+    vec2 asxy = pas_xy;
+    vec2 bsxy = pbs_xy + vec2(
+      float(pbs.wrap_around.x - pas.wrap_around.x - pas.links[i].iwad_x) * consts.width,
+      float(pbs.wrap_around.y - pas.wrap_around.y - pas.links[i].iwad_y) * consts.height
+    );
+    float dl = l - distance(asxy, bsxy);
+    vec2 ndv = normalize(delta_vector(asxy, bsxy));
     direction += ndv;
     vec2 dv = ndv * dl;
     float strength = 10.0;
@@ -152,22 +167,26 @@ void main() {
     float dy = pat.y - pat.y_before;
     pat.y = consts.height;
     pat.y_before = pat.y - dy;
+    pat.wrap_around.y -= 1;
   }
   if (pat.y > consts.height) {
     float dy = pat.y - pat.y_before;
     pat.y = 0.0;
     pat.y_before = pat.y - dy;
+    pat.wrap_around.y += 1;
   }
   // Walls response
   if (pat.x < 0.0) {
     float dx = pat.x - pat.x_before;
     pat.x = consts.width;
     pat.x_before = pat.x - dx;
+    pat.wrap_around.x -= 1;
   }
   if (pat.x > consts.width) {
     float dx = pat.x - pat.x_before;
     pat.x = 0.0;
     pat.x_before = pat.x - dx;
+    pat.wrap_around.x += 1;
   }
   // Update velocity
   pat.velocity_x = (pat.x - pat.x_before) / consts.delta_time_s;

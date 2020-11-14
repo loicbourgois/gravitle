@@ -8,6 +8,8 @@ use crate::CollisionCell;
 use crate::Configuration;
 use crate::GpuParticle;
 //use crate::Vec2;
+use crate::iVec2;
+use crate::GpuLink;
 use crate::MAX_COLLISION_PER_PARTICLE;
 use crate::MAX_COLLISION_TO_CHECK;
 use crate::MAX_GRID_SIZE;
@@ -88,9 +90,16 @@ pub fn activate_particle_by_pid(data: &mut Data, pdid: pdid, pid: pid) -> Option
                 kinetic_energy: 0.0,
                 padder: [0; PADDER_COUNT],
                 //pdid: pdid as u32,
+                wrap_around: iVec2 { x: 0, y: 0 },
                 activation: 0.0,
                 link_count: 0,
-                linked_pids: [0; MAX_LINK_PER_PARTICLE],
+                links: [GpuLink {
+                    /*strength: 10.0,
+                    damping: 0.8,*/
+                    iwad_x: 0,
+                    iwad_y: 0,
+                    pid: 0,
+                }; MAX_LINK_PER_PARTICLE],
             };
         }
     }
@@ -249,15 +258,36 @@ pub fn deactivate_particle(data: &mut Data, pid: pid) {
     gpu_buffer.particles[pid][0].is_active = 0;
     gpu_buffer.particles[pid][1].is_active = 0;
 }
-pub fn create_link(data: &mut Data, pida: pid, pidb: pid, link: Link) {
+pub fn create_link(data: &mut Data, pida: pid, pidb: pid, link: Link, i_target: usize) {
     data.links.insert((pida, pidb), link);
     let gpu_buffer = &mut data.gpu_buffer.write().unwrap();
     let a = gpu_buffer.particles[pida][0].link_count as usize;
     let b = gpu_buffer.particles[pidb][0].link_count as usize;
     for i in 0..=1 {
-        gpu_buffer.particles[pida][i].linked_pids[a] = pidb as u32;
+        gpu_buffer.particles[pida][i].links[a] = GpuLink {
+            //strength: 10.0,
+            //damping: 0.8,
+            // initial wrapping around delta
+            iwad_x: gpu_buffer.particles[pidb][i_target].wrap_around.x
+                - gpu_buffer.particles[pida][i_target].wrap_around.x,
+            iwad_y: gpu_buffer.particles[pidb][i_target].wrap_around.y
+                - gpu_buffer.particles[pida][i_target].wrap_around.y,
+
+            pid: pidb as u32,
+        };
         gpu_buffer.particles[pida][i].link_count += 1;
-        gpu_buffer.particles[pidb][i].linked_pids[b] = pida as u32;
+        //
+        gpu_buffer.particles[pidb][i].links[b] = GpuLink {
+            /*strength: 10.0,
+            damping: 0.8,*/
+            // initial wrapping around delta
+            iwad_x: gpu_buffer.particles[pida][i_target].wrap_around.x
+                - gpu_buffer.particles[pidb][i_target].wrap_around.x,
+            iwad_y: gpu_buffer.particles[pida][i_target].wrap_around.y
+                - gpu_buffer.particles[pidb][i_target].wrap_around.y,
+
+            pid: pida as u32,
+        };
         gpu_buffer.particles[pidb][i].link_count += 1;
     }
 }
@@ -296,8 +326,14 @@ fn get_random_particles(
             padder: [0; PADDER_COUNT],
             link_count: 0,
             activation: 0.0,
-            linked_pids: [0; MAX_LINK_PER_PARTICLE],
-            //pdid: 0,
+            wrap_around: iVec2 { x: 0, y: 0 },
+            links: [GpuLink {
+                /*strength: 10.0,
+                damping: 0.8,*/
+                iwad_x: 0,
+                iwad_y: 0,
+                pid: 0,
+            }; MAX_LINK_PER_PARTICLE],
             pdid: 0,
         };
         gpu_particles.push([gpu_particle, gpu_particle]);

@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 mod configuration;
 mod cs;
 mod data;
@@ -55,14 +55,15 @@ const MAX_PARTICLE_DEFINITIONS: usize = 64;
 pub struct GpuParticle {
     pub pdid: u32,
     pub activation: f32,
+    pub wrap_around: iVec2,
     pub link_count: u32,
     pub collision_pids: [u32; MAX_COLLISION_PER_PARTICLE],
-    pub linked_pids: [u32; MAX_LINK_PER_PARTICLE],
     pub velocity_x: f32,
     pub velocity_y: f32,
     pub momentum_x: f32,
     pub momentum_y: f32,
     pub is_active: u32,
+    pub links: [GpuLink; MAX_LINK_PER_PARTICLE],
     pub d: f32,
     pub x: f32,
     pub y: f32,
@@ -75,6 +76,15 @@ pub struct GpuParticle {
     pub collisions_count: u32,
     pub padder: [u32; PADDER_COUNT],
     //pub pdid: u32,
+}
+#[derive(Copy, Clone, Serialize, Deserialize)]
+pub struct GpuLink {
+    pub pid: u32,
+    pub iwad_x: i32,
+    pub iwad_y: i32,
+    //pub strength: f32,
+    //pub damping: f32,
+    // initial wrapping around delta
 }
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct Constants {
@@ -92,6 +102,12 @@ pub struct Constants {
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
+}
+#[derive(Copy, Clone, Serialize, Deserialize)]
+#[allow(non_camel_case_types)]
+pub struct iVec2 {
+    pub x: i32,
+    pub y: i32,
 }
 #[allow(dead_code)]
 struct PushConstants {
@@ -466,7 +482,7 @@ fn main() {
                     }
                 }
                 for ((pid_a, pid_b), crdlink) in links_to_create {
-                    create_link(&mut data, pid_a, pid_b, crdlink);
+                    create_link(&mut data, pid_a, pid_b, crdlink, i_target);
                 }
                 for pid in particles_to_deactivate {
                     deactivate_particle(&mut data, pid);
