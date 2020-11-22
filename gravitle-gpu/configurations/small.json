@@ -1,8 +1,8 @@
 {
   "constants": {
     "world_size": 100.0,
-    "width": 200.0,
-    "height": 200.0,
+    "width": 10.0,
+    "height": 10.0,
     "delta_time_s": 0.01,
     "grid_size": 20,
     "default_diameter": 1.0,
@@ -26,7 +26,7 @@
   "engine_logs_refresh": 10,
   "durations_length": 10,
   "initial_particle_count": 0,
-  "min_particle_count": 200,
+  "min_particle_count": 20,
   "particle_definitions": {
     "energy": {
       "string_id": "energy",

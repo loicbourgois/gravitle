@@ -1,96 +1,4 @@
 'use strict';
-const conf = {
-  'draw_inactive': false,
-  'colors': {
-    'energy': {
-      'r': 1.0,
-      'g': 1.0,
-      'b': 0.0
-    },
-    'rock': {
-      'r': 0.5,
-      'g': 0.3,
-      'b': 0.1
-    },
-    'matter': {
-      'r': 0.0,
-      'g': 0.9,
-      'b': 0.2
-    },
-    'organic_matter': {
-      'r': 0.0,
-      'g': 0.9,
-      'b': 0.9
-    },
-    'waste': {
-      'r': 0.8,
-      'g': 0.8,
-      'b': 0.8
-    },
-    'metal': {
-      'r': 1.0,
-      'g': 1.0,
-      'b': 0.7
-    },
-    'thruster': {
-      'r': 1.0,
-      'g': 0.7,
-      'b': 0.0
-    },
-    'health': '#8fa',
-    'body':   '#8cf',
-    'egg':    '#faa',
-    'body_up':'#8cf',
-    'travel': '#a88',
-    'link':   '#eee',
-    'best_dna_ever_by_distance_traveled': '#faa',
-    'best_dna_ever_by_age': '#afa',
-    'best_dna_alive_by_age': '#aaf',
-    'best_dna_alive_by_distance_traveled': '#ffa',
-    'averages': '#aaa',
-    'eye': {
-      'white': '#eee',
-      'black': '#111'
-    },
-    'mouth': {
-      'back': {
-        'r': 25.0,
-        'g': 70.0,
-        'b': 150.0
-      },
-      'top': {
-        'r': 25.0,
-        'g': 100.0,
-        'b': 255.0
-      }
-    },
-    'turbo': {
-      'back': {
-        'r': 192.0,
-        'g': 0.0,
-        'b': 0.0
-      },
-      'top': {
-        'r': 255.0,
-        'g': 255.0,
-        'b': 0.0
-      }
-    },
-    'line_of_sight': '#eea',
-    'vision_points': '#eea'
-  },
-  'urls': [
-    'ws://127.0.0.1:10001',
-  ],
-  'quotes': [
-    `Welcome to VWorld`,
-    `It's not a bug, it's a maladaptation to the current universe`,
-    `One too many is too many`,
-    `Value is at the edge`,
-    `Focus`,
-  ],
-  'health_diameter_ratio': 0.5,
-}
 {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
@@ -231,12 +139,22 @@ const check_latency_end = (socket_pair) => {
 const start_render_loop = () => {
   log(`starting rendering`)
   render_loop()
+  //start_render_loop_gl();
 }
 let last_render_start_ms = Date.now();
+let a = 0;
 const render_loop = () => {
   last_render_start_ms = Date.now();
-  render()
-  setTimeout(render_loop, 15 - (Date.now()-last_render_start_ms))
+  // TODO
+  // render_gl()
+  //if (!a) {
+    render()
+  //} else {
+    a = (a+1) % 2;
+  //}
+  requestAnimationFrame(render_loop)
+  //setTimeout(render_loop, 0)
+  //setTimeout(render_loop, 15 - (Date.now()-last_render_start_ms))
 }
 const tohhmmssms = (duration_second) => {
     var sec_num = parseInt(duration_second, 10);
@@ -265,12 +183,12 @@ let fps_list = []
 let chunk = {}
 //
 const canvas_1 = document.querySelector("#canvas_1")
-canvas_1.width = window.innerHeight
+canvas_1.width = window.innerWidth
 canvas_1.height = window.innerHeight
 const context_1 = canvas_1.getContext('2d')
 //
 const canvas_2 = document.querySelector("#canvas_2")
-canvas_2.width = 250;
+canvas_2.width = 300;
 canvas_2.height = canvas_2.width
 const context_2 = canvas_2.getContext('2d')
 let center_x = 0.5;
@@ -292,14 +210,14 @@ canvas_2.onmousemove = function(e){
 document.body.onmouseup = function(e){
   mousedown = false
 }
-const canvas_3 = document.querySelector("#canvas_3")
+/*const canvas_3 = document.querySelector("#canvas_3")
 canvas_3.width = 250;
 canvas_3.height = canvas_3.width
 const context_3 = canvas_3.getContext('2d')
 const canvas_4 = document.querySelector("#canvas_4")
 canvas_4.width = 250;
 canvas_4.height = canvas_4.width
-const context_4 = canvas_4.getContext('2d')
+const context_4 = canvas_4.getContext('2d')*/
 document.getElementById('show_health').checked = true
 document.querySelector('#use_distance_traveled_as_fitness_function').addEventListener('click', (event) => {
   data.socket_pairs[0].writer.send('use_distance_traveled_as_fitness_function')

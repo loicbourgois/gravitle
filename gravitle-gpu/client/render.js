@@ -32,12 +32,24 @@ const render = () => {
   //context_1.fillRect(0, 0, canvas_1.width, canvas_1.height);
   context_1.clearRect(0, 0, canvas_1.width, canvas_1.height);
   context_2.clearRect(0, 0, canvas_2.width, canvas_2.height);
+  //
   {
     const left = canvas_2.width * (center_x  - 0.5 / zoom)
     const top = canvas_2.height * (center_y - 0.5  / zoom)
     const width = canvas_2.width / zoom
     const height = canvas_2.height / zoom
-    context_2.strokeStyle = '#fff'
+    context_2.strokeStyle = '#ffff'
+    context_2.beginPath();
+    context_2.rect(left, top, width, height);
+    context_2.stroke();
+  }
+  // in view
+  {
+    const left = canvas_2.width * (center_x  - 0.5 / zoom)
+    const top = canvas_2.height * (center_y - 0.5  / zoom) - canvas_2.height * (canvas_1.height - canvas_1.width) * 0.5 / canvas_1.width / zoom;
+    const width = canvas_2.width / zoom
+    const height = canvas_2.height / zoom * canvas_1.height / canvas_1.width;
+    context_2.strokeStyle = '#ffff'
     context_2.beginPath();
     context_2.rect(left, top, width, height);
     context_2.stroke();
@@ -51,13 +63,19 @@ const render = () => {
     const particle = chunk.particles[particle_id];
     if (particle.pid == pid_to_follow) {
         const p_x = particle.x / chunk.constants.width
-        const p_y = 1.0 - particle.y / chunk.constants.width
+        const p_y = 1.0 - particle.y / chunk.constants.height
         const v = {
           x: center_x - p_x,
           y: center_y - p_y
         }
-        center_x = center_x - v.x * 0.02;
-        center_y = center_y - v.y * 0.02;
+        const d = Math.sqrt(v.x * v.x + v.y * v.y);
+        if (d > 0.5) {
+          center_x = center_x - Math.round(v.x * 0.95);
+          center_y = center_y - Math.round(v.y * 0.95);
+        } else {
+          center_x = center_x - v.x * 0.02;
+          center_y = center_y - v.y * 0.02;
+        }
       }
   }
   const cell_width = chunk.constants.width / chunk.constants.grid_size;
@@ -66,6 +84,10 @@ const render = () => {
   const j_min = Math.trunc( ((1.0-center_y)  - 0.5 / zoom) * chunk.constants.grid_size) - 1;
   const i_max = Math.trunc( (center_x  + 0.5 / zoom) * chunk.constants.grid_size) + 2;
   const j_max = Math.trunc( ((1.0-center_y)  + 0.5 / zoom) * chunk.constants.grid_size) + 2;
+
+
+  const max_particles_gl = 100;
+  let particles_gl_c = 0;
   for (let ii = i_min ; ii < i_max ; ii++ ) {
     for (let jj = j_min ; jj < j_max ; jj++ ) {
       const i = (ii + chunk.constants.grid_size) % chunk.constants.grid_size;
@@ -83,17 +105,47 @@ const render = () => {
         const pid = chunk.grid[i][j][k];
         const p = chunk.particles[pid];
         if (p.e) {
-          draw_particle(p, chunk, canvas_1, zoom, center_x, center_y, ii-i, jj-j);
+          draw_particle(p, chunk, canvas_1, zoom, center_x, center_y, ii-i, jj-j, 1.0 / parseFloat(chunk.constants.grid_size));
           draw_particle_opac(p, chunk, canvas_2, 1.0, 0.5, 0.5);
         }
+
+        const di = ii-i;
+        const dj = jj-j;
+        const rate = 1.0 / parseFloat(chunk.constants.grid_size);
+        if (particles_gl_c < max_particles_gl) {
+          let pid_gl = particles_gl_c * 4;
+          const x = 0.0;
+          const y = p.y / chunk.constants.height + dj*rate;
+          const p_gl = get_canvas_coord(canvas_1, x, y, zoom, center_x, center_y)
+          const radius_canvas = p.d * 0.5 * canvas_1.width * zoom;
+
+          uniforms.particles.values[pid_gl] = (p.x / chunk.constants.width) % 1* canvas_1.width
+          uniforms.particles.values[pid_gl+1] = (p.y / chunk.constants.height) % 1 * canvas_1.height
+          uniforms.particles.values[pid_gl+2] = 1.0;
+          uniforms.particles.values[pid_gl+3] = 0.0
+
+          if (particles_gl_c == 2) {
+            //console.log(p_gl.x)
+          }
+          particles_gl_c +=1;
+
+
+        }
+
       }
+
+
+
     }
   }
-}
-const draw_particle = (p, chunk, canvas, zoom, center_x, center_y, di, dj) => {
 
-  const x = p.x / chunk.constants.width + di*0.1;
-  const y = p.y / chunk.constants.height + dj*0.1;
+  //uniforms.particles.values = [0.0, 0.0, 100.0, 0.0, 100.0, 100.0, 1000.0, 0.0];
+
+}
+const draw_particle = (p, chunk, canvas, zoom, center_x, center_y, di, dj, rate) => {
+  const x = p.x / chunk.constants.width + di*rate;
+  const y = (p.y / chunk.constants.height + dj*rate)  ;
+
   const d = p.d / chunk.constants.width;
   const pdid_str = chunk.pdid_to_string[p.pdid];
   const c = conf.colors[pdid_str];
@@ -115,6 +167,46 @@ const draw_particle_opac = (p, chunk, canvas, zoom, center_x, center_y) => {
   const a = 0.9 + p.a;
   draw_disk(canvas, x, y, d, zoom, center_x, center_y, `rgba(${c.r*255.0}, ${c.g*255.0}, ${c.b*255.0}, ${a})`)
 }
+const draw_disk = (canvas, x, y, diameter, zoom, center_x, center_y, color) => {
+
+
+  const p = get_canvas_coord(canvas, x, y, zoom, center_x, center_y)
+  const radius_canvas = diameter * 0.5 * canvas.width * zoom;
+  if (p.x > canvas.width + radius_canvas
+    || p.x < - radius_canvas
+    || p.y > canvas.height + radius_canvas
+    || p.y < - radius_canvas)  {
+    return
+  }
+  const startAngle = 0;
+  const endAngle = Math.PI + (Math.PI * 360) * 0.5;
+  const context = canvas.getContext('2d')
+  context.beginPath();
+  context.arc(p.x, p.y, radius_canvas, startAngle, endAngle);
+  context.fillStyle = color;
+  context.fill();
+}
+
+const get_canvas_coord = (canvas, x, y, zoom, center_x, center_y) => {
+  y = 1.0 - y
+  x = x * zoom
+  x = x - center_x * zoom + 0.5
+  y = y * zoom
+  y = y - center_y * zoom + 0.5
+  return {
+    x: canvas.width * x,
+    y: canvas.height * y * canvas.width / canvas.height + (canvas.height - canvas.width) * 0.5
+  }
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -212,23 +304,7 @@ const draw_dotted_line = (x1, y1, x2, y2, zoom, color) => {
 const draw_link = (x1, y1, x2, y2, zoom) => {
   draw_line(x1, y1, x2, y2, zoom, conf.colors.link)
 }
-const draw_disk = (canvas, x, y, diameter, zoom, center_x, center_y, color) => {
-  const p = get_canvas_coord(canvas, x, y, zoom, center_x, center_y)
-  const radius_canvas = diameter * 0.5 * canvas.width * zoom;
-  if (p.x > canvas.width + radius_canvas
-    || p.x < - radius_canvas
-    || p.y > canvas.height + radius_canvas
-    || p.y < - radius_canvas)  {
-    return
-  }
-  const startAngle = 0;
-  const endAngle = Math.PI + (Math.PI * 360) * 0.5;
-  const context = canvas.getContext('2d')
-  context.beginPath();
-  context.arc(p.x, p.y, radius_canvas, startAngle, endAngle);
-  context.fillStyle = color;
-  context.fill();
-}
+
 const draw_eye = (canvas, x, y, diameter, zoom, center_x, center_y, particle_output) => {
   let g = 255.0;
   let r = 255.0 - 255.0 *  particle_output * 0.75;
@@ -288,15 +364,4 @@ const draw_output = (canvas, x, y, diameter, zoom, center_x, center_y, output) =
   // const a = 0.5;
   const color = `rgba(${r}, ${g}, ${b})`
   draw_disk(canvas, x, y, diameter*0.8, zoom, center_x, center_y, color)
-}
-const get_canvas_coord = (canvas, x, y, zoom, center_x, center_y) => {
-  y = 1.0 - y
-  x = x * zoom
-  x = x - center_x * zoom + 0.5
-  y = y * zoom
-  y = y - center_y * zoom + 0.5
-  return {
-    x: canvas.width * x,
-    y: canvas.height * y
-  }
 }

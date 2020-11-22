@@ -1,31 +1,6 @@
 'use strict';
 const conf = {
   'particles': {
-    'energy': {
-      'r': 1.0,
-      'g': 1.0,
-      'b': 0.0
-    },
-    'rock': {
-      'r': 0.5,
-      'g': 0.3,
-      'b': 0.1
-    },
-    'matter': {
-      'r': 0.0,
-      'g': 0.9,
-      'b': 0.2
-    },
-    'organic_matter': {
-      'r': 0.0,
-      'g': 0.9,
-      'b': 0.9
-    },
-    'waste': {
-      'r': 0.8,
-      'g': 0.8,
-      'b': 0.8
-    },
     'metal': {
       'r': 1.0,
       'g': 1.0,
@@ -36,9 +11,19 @@ const conf = {
       'g': 0.7,
       'b': 0.0
     },
+    'biometal': {
+      'r': 0.5,
+      'g': 0.9,
+      'b': 0.8
+    },
+    'eye': {
+      'r': 0.2,
+      'g': 0.9,
+      'b': 0.2
+    },
   },
 }
-const data = {
+let data = {
   "width": 20.0,
   "height": 20.0,
   "base_diameter": 1.0,
@@ -47,8 +32,11 @@ const data = {
     "y": 0.0,
   },
   "particles": [],
+  "particles_metadata": [],
 }
-console.log("plop");
+if (localStorage.getItem('data')) {
+  data = JSON.parse(localStorage.getItem('data'));
+}
 const canvas_1 = document.querySelector("#canvas_1")
 canvas_1.width = window.innerHeight
 canvas_1.height = window.innerHeight
@@ -59,8 +47,32 @@ canvas_1.onmousedown = function(e){
   const p = get_canvas_cursor_position(canvas_1, e)
   data.cursor.x = (p.x / canvas_1.width) * data.width;
   data.cursor.y = (1.0 - p.y / canvas_1.height) * data.height;
+  let particles_to_remove = [];
+  for (const i in data.particles) {
+    const p = data.particles[i];
+    const dv = {
+      x: p.x - data.cursor.x,
+      y: p.y - data.cursor.y,
+    }
+    const d = Math.sqrt(dv.x*dv.x+dv.y*dv.y);
+    if (d < data.base_diameter*0.5) {
+      particles_to_remove.unshift(i)
+    }
+  }
+  for (const i in particles_to_remove) {
+    const id = particles_to_remove[i];
+    data.particles.splice(id, 1);
+    data.particles_metadata.splice(id, 1);
+  }
+  if (particles_to_remove.length > 0) {
+    return;
+  }
+  data.particles_metadata.unshift({
+    "hilighted": false,
+  })
+  const type = document.querySelector("#particle_definition").value
   data.particles.unshift({
-    "type": "metal",
+    "type": type,
     "x": data.cursor.x,
     "y": data.cursor.y,
     "velocity_per_s": {
@@ -68,14 +80,25 @@ canvas_1.onmousedown = function(e){
       "y": 0.0
     }
   });
+  localStorage.setItem('data', JSON.stringify(data));
 }
-canvas_1.onmousemove = function(e){
-  //if (mousedown) {
-    const p = get_canvas_cursor_position(canvas_1, e)
-    data.cursor.x = (p.x / canvas_1.width) * data.width;
-    data.cursor.y = (1.0 - p.y / canvas_1.height) * data.height;
-    //console.log(data.cursor)
-  //}
+canvas_1.onmousemove = function(e) {
+  const p = get_canvas_cursor_position(canvas_1, e)
+  data.cursor.x = (p.x / canvas_1.width) * data.width;
+  data.cursor.y = (1.0 - p.y / canvas_1.height) * data.height;
+  for (const i in data.particles) {
+    const p = data.particles[i];
+    const dv = {
+      x: p.x - data.cursor.x,
+      y: p.y - data.cursor.y,
+    }
+    const d = Math.sqrt(dv.x*dv.x+dv.y*dv.y);
+    if (d < data.base_diameter*0.5) {
+      data.particles_metadata[i].hilighted = true;
+    } else {
+      data.particles_metadata[i].hilighted = false;
+    }
+  }
 }
 document.body.onmouseup = function(e){
   mousedown = false
@@ -89,7 +112,6 @@ const get_canvas_cursor_position = (canvas, event) => {
     y: y
   }
 }
-
 let center_x = 0.5;
 let center_y = 0.5
 let now_ms = Date.now();
@@ -118,24 +140,28 @@ const render = () => {
   context_1.clearRect(0, 0, canvas_1.width, canvas_1.height);
   //
   {
-    const color = 'rgba(255.0, 255.0, 255.0, 0.5)';
+    const color = 'rgba(255.0, 255.0, 255.0, 0.2)';
     draw_disk(canvas_1, data.cursor.x, data.cursor.y, data.base_diameter, zoom, center_x, center_y, color, data);
   }
   //
   for (const i in data.particles) {
     const p = data.particles[i];
-    const color = 'rgba(255.0, 100.0, 0.0, 0.8)';
+    const r = conf.particles[p.type].r * 255.0;
+    const g = conf.particles[p.type].g * 255.0;
+    const b = conf.particles[p.type].b * 255.0;
+    const color = `rgba(${r}, ${g}, ${b}, 0.5)`;
     draw_disk(canvas_1, p.x, p.y, data.base_diameter, zoom, center_x, center_y, color, data);
+    if (data.particles_metadata[i].hilighted) {
+      const color = `rgba(${r}, ${g}, ${b}, 0.8)`;
+      draw_disk(canvas_1, p.x, p.y, data.base_diameter, zoom, center_x, center_y, color, data);
+    }
   }
 }
-
 const log = (message) => {
   const textarea_logs = document.getElementById('logs')
   textarea_logs.value += message + '\n';
   textarea_logs.scrollTop = textarea_logs.scrollHeight;
 }
-
-
 const start_render_loop = () => {
   log(`starting rendering`)
   render_loop()
@@ -176,19 +202,3 @@ const get_canvas_coord = (canvas, x, y, zoom, center_x, center_y) => {
   }
 }
 start_render_loop();
-
-
-
-/*
-
-{
-  "type": "metal",
-  "x": 7.0,
-  "y": 13.0,
-  "velocity_per_s": {
-    "x": 0.0,
-    "y": 0.0
-  }
-}
-
-*/
