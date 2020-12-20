@@ -1,0 +1,70 @@
+{
+  "constants": {
+    "world_size": 100.0,
+    "width": 20.0,
+    "height": 20.0,
+    "delta_time_s": 0.01,
+    "grid_size": 5,
+    "default_diameter": 1.0,
+    "collision_push_rate": 0.1,
+    "default_mass": 1.0,
+    "gravity": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "serialize_unactive_particles": false,
+  "gpu_id": 0,
+  "initial_max_speed_per_s": 1.0,
+  "display_engine_logs": true,
+  "multiplier": 1.0,
+  "port": 10001,
+  "address": "127.0.0.1",
+  "update_client_data": true,
+  "show_gpu_supported_features": false,
+  "initial_particle_count": 50,
+  "default_particle_type": "energy",
+  "engine_logs_refresh": 10,
+  "min_particle_count": 0,
+  "durations_length": 10,
+  "particles": [],
+  "particle_definitions": {
+    "energy": {
+      "string_id": "energy",
+      "name": "energy",
+      "short_name": "energy",
+      "thrust": 0.0
+    },
+    "organic_matter": {
+      "string_id": "organic_matter",
+      "name": "Organic matter",
+      "short_name": "Om",
+      "thrust": 0.0
+    },
+    "matter": {
+      "string_id": "matter",
+      "name": "matter",
+      "short_name": "matter",
+      "thrust": 0.0
+    }
+  },
+  "alchemy": {
+    "collisions": [
+      {
+        "particles": ["energy", "energy"],
+        "response": {
+          "Transform": {
+            "particles": ["matter", "organic_matter"]
+          }
+        }
+      }, {
+        "particles": ["matter", "matter"],
+        "response": {
+          "Link": {
+            "strength": 0.1
+          }
+        }
+      }
+    ]
+  }
+}

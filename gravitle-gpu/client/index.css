@@ -1,0 +1,97 @@
+* {
+  border: 0;
+  margin: 0;
+  font-family: monospace;
+}
+
+#main {
+  display: flex;
+}
+
+#logs {
+  width: 32em;
+  background-color: #000;
+  color: #aaa;
+}
+p {
+  color: #aaa;
+}
+label {
+  color: #aaa;
+}
+
+body {
+  display: flex;
+  overflow: hidden;
+  background: #000;
+  height: 100vh;
+}
+
+canvas {
+  background: #0000;
+}
+
+#panels {
+  float: left;
+  position: absolute;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+#panels_spacer {
+  flex-grow: 1;
+}
+
+#canvases {
+  display: flex;
+}
+
+#canvas_1 {
+  background: #0af;
+  background: #20548c;
+  background: #000;
+  border: none;
+  height: 100vh;
+  width: 100vw;
+}
+
+#canvas_main {
+  height: 100vh;
+  width: 100vw;
+  background: #f8f4;
+  float: left;
+  position: absolute;
+  visibility: hidden;
+}
+
+#canvas_2, #canvas_3, #canvas_4 {
+  background: #0af;
+  background: #ff548c;
+  background: #0002;
+  border: none;
+}
+
+#sliders {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.slider_container {
+  display: flex;
+}
+#panel {
+  display: flex;
+  flex-direction: column;
+}
+#logs {
+  flex-grow: 1;
+  width: 40em;
+  background: #0000;
+}
+#panel_2 {
+  display: flex;
+  flex-direction: column;
+}
