@@ -1,4 +1,12 @@
+# Gravitle
+
+Particle only game engine.
+
 ```bash
-export gravitle_root_folder=$HOME/github/gravitle
-config=demo $gravitle_root_folder/scripts/gravitle-gpu.sh
+gravitle=$(pwd)/gravitle.sh
+$gravitle help
 ```
+
+## References
+- https://rustwasm.github.io/docs/book/game-of-life/implementing.html#rendering-to-canvas-directly-from-memory
+- https://developer.mozilla.org/en-US/docs/WebAssembly/Rust_to_wasm

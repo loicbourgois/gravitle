@@ -25,7 +25,7 @@ pub fn handle_websocket(
     let port = configuration.port;
     let host = format!("{}:{}", address, port);
     let server = TcpListener::bind(host.to_owned()).unwrap();
-    println!("server started");
+    println!("server started at {}", host);
     for stream in server.incoming() {
         println!("incoming");
         let client_data_lock_clone = Arc::clone(&client_data_lock);

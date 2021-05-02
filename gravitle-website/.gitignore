@@ -1,4 +1,5 @@
 node_modules
-/template/package-lock.json
-/template/Cargo.lock
-/template/git-clone
+/dist
+/target
+/pkg
+/wasm-pack.log
