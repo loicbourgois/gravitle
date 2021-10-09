@@ -714,7 +714,7 @@ impl Particle {
         self.momentum.x = self.speed_x * self.mass;
         self.momentum.y = self.speed_y * self.mass;
     }
-
+    
     //
     // Returns the particle's momentum
     //
