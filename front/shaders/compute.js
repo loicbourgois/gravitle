@@ -28,37 +28,7 @@ function get (x) {
 ${common(x)}
 ${linkings(kinds_count, links, materials)}
 ${inter_linkings(kinds_count, links, materials)}
-fn distance_wrap_around(a:vec2<f32>, b:vec2<f32>) -> f32{
-  let a2 =   (vec2<f32>(   fract(a.x + .25), fract(a.y + .25)  ));
-  let b2 =   (vec2<f32>(   fract(b.x + .25), fract(b.y + .25)  ));
-  let a3 =   (vec2<f32>(   fract(a.x + .5), fract(a.y + .5)  ));
-  let b3 =   (vec2<f32>(   fract(b.x + .5), fract(b.y + .5)  ));
-  return min( min ( distance(a,b), distance(a2,b2) ), distance(a3,b3));
-}
-fn delta_position_wrap_around(a:vec2<f32>, b:vec2<f32>) -> vec2<f32> {
-  let a2 =   (vec2<f32>(   fract(a.x + .25), fract(a.y + .25)  ));
-  let b2 =   (vec2<f32>(   fract(b.x + .25), fract(b.y + .25)  ));
-  let a3 =   (vec2<f32>(   fract(a.x + .5), fract(a.y + .5)  ));
-  let b3 =   (vec2<f32>(   fract(b.x + .5), fract(b.y + .5)  ));
-  let d1 = distance(a,b);
-  let d2 = distance(a2,b2);
-  let d3 = distance(a3,b3);
-  if (d1 < d2 ) {
-    if (d1 < d3) {
-      return a - b;
-    } else {
-     return a3 - b3;
-    }
-  }
-  else{
-    if (d2 < d3) {
-      return a2 - b2;
-    }
-  }
-  return a3 - b3;
-}
 let delta_time = ${1.0 / 60.0};
-let DIAMETER: f32 = ${2.0 / x.grid_width};
 [[group(0), binding(0)]] var<storage, read>   input     : Data;
 [[group(0), binding(1)]] var<storage, write>  output    : Data;
 [[stage(compute), workgroup_size(${x.workgroup_size}, ${x.workgroup_size})]]
@@ -99,6 +69,9 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     var dx_collision = 0.0;
     var dy_collision = 0.0;
     var linked_neighbours_delta = vec2<f32>(0.0, 0.0);
+
+    var links = p1.links;
+
     for (var i = 0 ; i < 24 ; i=i+1) {
       let p2id = neighboor_cell_id[i];
       if (input.cells[p2id].active == 1u && p2id != cell_id) {
@@ -106,17 +79,39 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
         let d = distance_wrap_around(vec2<f32>(p1.x, p1.y), vec2<f32>(p2.x, p2.y)) ;
         let delta_position = delta_position_wrap_around (vec2<f32>(p1.x, p1.y), vec2<f32>(p2.x, p2.y) );
         var link_strength = linking[p1.kind][p2.kind];
-
-
-
         if (p1.entity_id != p2.entity_id) {
           link_strength = link_strength * inter_linking[p1.kind][p2.kind];
         }
-        let do_linking = link_strength > 0.0001;
-        if (d < DIAMETER * 1.2 && do_linking ) {
+
+
+        if ( link_strength > 0.0001 && d < DIAMETER * 1.01 ) {
+          for (var k = 0 ; k < 6 ; k=k+1) {
+            if (links[k].active == 1u && links[k].cell_id == p2id) {
+              break;
+            } elseif (links[k].active == 0u) {
+              links[k].active = 1u;
+              links[k].cell_id = p2id;
+              break;
+            }
+          }
+        }
+
+        var linked = false;
+        for (var k = 0 ; k < 6 ; k=k+1) {
+          if (links[k].active == 1u && links[k].cell_id == p2id) {
+            linked = true;
+            break;
+          }
+        }
+
+
+
+
+
+        if ( linked ) {
           linked_neighbours_delta = linked_neighbours_delta + delta_position;
         }
-        if (d < DIAMETER * 1.2 ) {
+        if ( linked ) {
           attractions = attractions + 1u;
           forces = forces +  normalize(delta_position) *  (DIAMETER - d) * link_strength * 100.0;
         }
@@ -130,7 +125,7 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
           let distance_ = distance(vec2<f32>(0.0, 0.0), delta_position);
           let distance_squared = distance_ * distance_;
           let acceleration = delta_position * mass_factor * dot_vp / distance_squared;
-          if (do_linking) {
+          if (linked) {
             dx_collision = dx_collision - acceleration.x * 0.5;
             dy_collision = dy_collision - acceleration.y * 0.5;
           }
@@ -163,11 +158,6 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
         }
       }
     }
-
-    // if (p1.entity_id == 2u) {
-    //   charge = 1.0;
-    // }
-
     let acceleration = forces / p1.mass;
     let speed = vec2<f32>(p1.x, p1.y) - vec2<f32>(p1.x_old, p1.y_old)
       + acceleration * delta_time * delta_time
@@ -182,17 +172,15 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       u32(x * ${x.grid_width}.0),
       u32(y * ${x.grid_height}.0)
     ));
-
-    output.cells[cell_id_new].active = input.cells[cell_id].active;
-    output.cells[cell_id_new].kind = input.cells[cell_id].kind;
-    output.cells[cell_id_new].mass = input.cells[cell_id].mass;
-    output.cells[cell_id_new].links = input.cells[cell_id].links;
+    output.cells[cell_id_new].active = p1.active;
+    output.cells[cell_id_new].kind = p1.kind;
+    output.cells[cell_id_new].mass = p1.mass;
+    output.cells[cell_id_new].links = links;
     output.cells[cell_id_new].x = x;
     output.cells[cell_id_new].y = y;
     output.cells[cell_id_new].charge = charge;
     output.cells[cell_id_new].x_old = x_old;
     output.cells[cell_id_new].y_old = y_old;
-
     output.cells[cell_id].cell_id_new = cell_id_new;
   }
 }
@@ -200,5 +188,7 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
 }
 export {
   get,
-  materials
+  materials,
+  links,
+  kinds_count,
 }

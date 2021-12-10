@@ -3,8 +3,9 @@ import {
   len,
   assert,
 } from "./util";
-import * as compute_shader from "./shaders/compute";
 import * as compute_shader_reset from "./shaders/reset";
+import * as compute_shader from "./shaders/compute";
+import * as compute_shader_2 from "./shaders/compute_2";
 import {materials} from "./materials";
 const data_out = {}
 const data_in = []
@@ -21,8 +22,10 @@ const CELL_FIELD_ENTITY_ID = i++;
 const CELL_FIELD_CHARGE = i++;
 const CELL_FIELD_DEBUG = i++;
 const CELL_FIELD_CELL_ID_NEW = i++;
-const CELL_ATTRIBUTS_COUNT = i + 6*2;
-assert (CELL_ATTRIBUTS_COUNT === 11+6*2 && CELL_FIELD_ACTIVE === 0)
+const CELL_FIELD_LINKS = i;
+const links_max = 6;
+const CELL_ATTRIBUTS_COUNT = i + links_max*2;
+assert (CELL_ATTRIBUTS_COUNT === 11+links_max*2 && CELL_FIELD_ACTIVE === 0 && CELL_FIELD_LINKS === 11)
 function pull (x) {
   return data_out
 }
@@ -50,6 +53,12 @@ function add_particle(x) {
   x.buffer.setUint32(cell_id + CELL_FIELD_ENTITY_ID * 4,  x.entity_id,  little_endian)
   x.buffer.setFloat32(cell_id + CELL_FIELD_CHARGE * 4,    0.0,          little_endian)
   x.buffer.setFloat32(cell_id + CELL_FIELD_DEBUG * 4,     0.0,          little_endian)
+
+  for (let i = 0; i < links_max; i++) {
+    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * 2 + 0) * 4,     0,          little_endian)
+    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * 2 + 1) * 4,     0,          little_endian)
+  }
+
 }
 function add_ship(x) {
   for (let particle of ship({
@@ -218,6 +227,19 @@ async function serve(x) {
       }
     });
   }
+  if (x.compute_pipeline_2 === undefined) {
+    x.compute_pipeline_2 = x.device.createComputePipeline({
+      layout: x.device.createPipelineLayout({
+        bindGroupLayouts: [x.bind_group_layout]
+      }),
+      compute: {
+        module: x.device.createShaderModule({
+          code: compute_shader_2.get(x)
+        }),
+        entryPoint: "main"
+      }
+    });
+  }
   // Compute
   x.step = x.step + 1
   {
@@ -293,6 +315,18 @@ async function serve(x) {
     }
     const pass_encoder = command_encoder.beginComputePass();
     pass_encoder.setPipeline(x.compute_pipeline);
+    pass_encoder.setBindGroup(0, x.bind_group);
+    pass_encoder.dispatch(x.dispatch, x.dispatch);
+    pass_encoder.endPass();
+    command_encoder.copyBufferToBuffer(x.buffers.out, 0, x.buffers.in, 0 , buffer_size(x));
+    //command_encoder.copyBufferToBuffer(x.buffers.out, 0, x.buffers.read, 0 , buffer_size(x));
+    const gpu_commands = command_encoder.finish();
+    x.device.queue.submit([gpu_commands]);
+  }
+  {
+    const command_encoder = x.device.createCommandEncoder();
+    const pass_encoder = command_encoder.beginComputePass();
+    pass_encoder.setPipeline(x.compute_pipeline_2);
     pass_encoder.setBindGroup(0, x.bind_group);
     pass_encoder.dispatch(x.dispatch, x.dispatch);
     pass_encoder.endPass();

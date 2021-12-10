@@ -2,7 +2,6 @@ function linkings(kinds_count, links, materials) {
   const l = `var<private> linking: array<array<f32, ${kinds_count}>, ${kinds_count}> = array<array<f32, ${kinds_count}>, ${kinds_count}> (
 ${linkings2(kinds_count, links, materials)}
   );`
-  // console.log(l)
   return l
 }
 function linkings2(kinds_count, links, materials) {
