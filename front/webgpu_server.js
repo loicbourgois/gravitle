@@ -24,8 +24,9 @@ const CELL_FIELD_DEBUG = i++;
 const CELL_FIELD_CELL_ID_NEW = i++;
 const CELL_FIELD_LINKS = i;
 const links_max = 6;
-const CELL_ATTRIBUTS_COUNT = i + links_max*2;
-assert (CELL_ATTRIBUTS_COUNT === 11+links_max*2 && CELL_FIELD_ACTIVE === 0 && CELL_FIELD_LINKS === 11)
+const link_fields = 3;
+const CELL_ATTRIBUTS_COUNT = i + links_max*link_fields;
+assert (CELL_ATTRIBUTS_COUNT === 11+links_max*link_fields && CELL_FIELD_ACTIVE === 0 && CELL_FIELD_LINKS === 11)
 function pull (x) {
   return data_out
 }
@@ -55,8 +56,9 @@ function add_particle(x) {
   x.buffer.setFloat32(cell_id + CELL_FIELD_DEBUG * 4,     0.0,          little_endian)
 
   for (let i = 0; i < links_max; i++) {
-    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * 2 + 0) * 4,     0,          little_endian)
-    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * 2 + 1) * 4,     0,          little_endian)
+    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * link_fields + 0) * 4, 0, little_endian)
+    x.buffer.setUint32(cell_id + (CELL_FIELD_LINKS + i * link_fields + 1) * 4, 0, little_endian)
+    x.buffer.setFloat32(cell_id + (CELL_FIELD_LINKS + i * link_fields + 2) * 4, Math.random()*2.0-1.0, little_endian)
   }
 
 }
@@ -289,7 +291,7 @@ async function serve(x) {
           dy: d.dy,
           mass: 1.0,
           kind: x.materials[d.kind],
-          entity_id: 12
+          entity_id: 12,
         })
       }
     }

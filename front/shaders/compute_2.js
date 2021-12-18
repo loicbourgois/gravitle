@@ -22,12 +22,12 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       output.cells[cell_id].links[k].cell_id = new_cell_id;
       let p2id = new_cell_id;
       let p2 = input.cells[p2id];
-      if (p1.active == 1u && p2.active == 1u && p2id != cell_id) {
+      //if (p1.active == 1u && p2.active == 1u && p2id != cell_id) {
         let d = distance_wrap_around(vec2<f32>(p1.x, p1.y), vec2<f32>(p2.x, p2.y)) ;
         if (d > DIAMETER * 1.5) {
           output.cells[cell_id].links[k].active = 0u;
         }
-      }
+      //}
     }
   }
 }

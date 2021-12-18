@@ -42,7 +42,7 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   coloring_cell_ids[7] = down(cell_id);
   coloring_cell_ids[8] = right(down(cell_id));
   let pixel_point = vec2<f32>(f32(gid.x)/f32(${x.image_width}), f32(gid.y)/f32(${x.image_height}));
-  var d_max = 0.0;
+  var d_min = 999.0;
   var particle_kind = 0u;
   var particle_charge = 0.0;
   var particle_id = 0u;
@@ -53,9 +53,9 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     let particle_center = vec2<f32>(
       particle.x,
       particle.y);
-    let d = 1.0 - distance_( pixel_point, particle_center )*${x.grid_width}.0;
-    if (input.cells[particle_id_].active == 1u && d > d_max) {
-      d_max = d;
+    let d = distance_( pixel_point, particle_center )*${x.grid_width}.0;
+    if (input.cells[particle_id_].active == 1u && d < d_min) {
+      d_min = d;
       particle_kind = particle.kind;
       particle_id = particle_id_;
       particle_charge = particle.charge;
@@ -67,31 +67,31 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   var in_radar = 0u;
   let x1 = f32(gid.x) / ${x.image_width}.0;
   let y1 = f32(gid.y) / ${x.image_height}.0;
-  for (var i = -radius_radar ; i <= radius_radar ;   i=i+u) {
-    for (var j = -radius_radar ; j <= radius_radar ; j=j+u) {
-      let x2 = x1 + i;
-      let y2 = y1 + j;
-      let cid = fn_cell_id(
-        u32( fract(x2) * ${x.image_width}.0),
-        u32( fract(y2) * ${x.image_height}.0),
-        zoom);
-      let c = input.cells[cid];
-      let d = distance_(
-        vec2<f32>(x1, y1),
-        vec2<f32>(c.x, c.y)
-      );
-      if ( d <= f32(radius_radar) ) {
-        if (c.kind == ${x.materials.RADAR}u && c.active == 1u) {
-          in_radar = 1u;
-          break;
-        }
-      }
-    }
-    if (in_radar == 1u) {
-      break;
-    }
-  }
-  if (ok == 1u) {
+  // for (var i = -radius_radar ; i <= radius_radar ;   i=i+u) {
+  //   for (var j = -radius_radar ; j <= radius_radar ; j=j+u) {
+  //     let x2 = x1 + i;
+  //     let y2 = y1 + j;
+  //     let cid = fn_cell_id(
+  //       u32( fract(x2) * ${x.image_width}.0),
+  //       u32( fract(y2) * ${x.image_height}.0),
+  //       zoom);
+  //     let c = input.cells[cid];
+  //     let d = distance_(
+  //       vec2<f32>(x1, y1),
+  //       vec2<f32>(c.x, c.y)
+  //     );
+  //     if ( d <= f32(radius_radar) ) {
+  //       if (c.kind == ${x.materials.RADAR}u && c.active == 1u) {
+  //         in_radar = 1u;
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   if (in_radar == 1u) {
+  //     break;
+  //   }
+  // }
+  if (ok == 1u && d_min < 1.0) {
     output.pix[pix_id].a = 255u;
     if (particle_kind == ${x.materials.ROCK}u ) {
       output.pix[pix_id].r = 200u;
@@ -103,32 +103,37 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       output.pix[pix_id].b = 200u;
     } elseif (particle_kind == ${x.materials.CORE}u ) {
       output.pix[pix_id].r = 100u;
-      output.pix[pix_id].g = 255u;
-      output.pix[pix_id].b = 255u;
+      output.pix[pix_id].g = 100u;
+      output.pix[pix_id].b = 155u;
     } elseif (particle_kind == ${x.materials.METAL}u ) {
-      output.pix[pix_id].r = 200u;
-      output.pix[pix_id].g = 200u;
-      output.pix[pix_id].b = 200u;
+      output.pix[pix_id].r = 100u;
+      output.pix[pix_id].g = 100u;
+      output.pix[pix_id].b = 100u;
     } elseif (particle_kind == ${x.materials.TURBO}u ) {
       output.pix[pix_id].r = 255u;
       output.pix[pix_id].g = 100u;
       output.pix[pix_id].b = 0u;
     }
     elseif (particle_kind == ${x.materials.RADAR}u ) {
-      if (d_max < 0.25) {
-        output.pix[pix_id].r = 0u;
+        output.pix[pix_id].r = 200u;
         output.pix[pix_id].g = 0u;
-        output.pix[pix_id].b = 100u;
-      } else {
-        output.pix[pix_id].r = 0u + u32(255.0 * particle_charge) ;
-        output.pix[pix_id].g = 0u + u32(255.0 * particle_charge) ;
-        output.pix[pix_id].b = 100u;
-      }
+        output.pix[pix_id].b = 200u;
     }
     else {
       output.pix[pix_id].r = 255u;
       output.pix[pix_id].g = 0u;
       output.pix[pix_id].b = 255u;
+    }
+    if (d_min < 0.5) {
+      if (particle_charge > 0.0) {
+        output.pix[pix_id].r = 0u;
+        output.pix[pix_id].g = 0u + u32(255.0 * particle_charge) ;
+        output.pix[pix_id].b = 100u - u32(100.0 * particle_charge);
+      } else {
+        output.pix[pix_id].r = 0u + u32(255.0 * -particle_charge) ;
+        output.pix[pix_id].g = 0u + u32(155.0 * -particle_charge) ;
+        output.pix[pix_id].b = 100u - u32(100.0 * -particle_charge);
+      }
     }
   }
   elseif (in_radar == 1u) {
@@ -150,12 +155,12 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     output.pix[pix_id].a = 255u;
   }
 
-  if (p.debug > 0.5) {
-    output.pix[pix_id].r = 255u;
-    output.pix[pix_id].g = 0u;
-    output.pix[pix_id].b = 0u;
-    output.pix[pix_id].a = 255u;
-  }
+  // if (p.debug > 0.5) {
+  //   output.pix[pix_id].r = 255u;
+  //   output.pix[pix_id].g = 0u;
+  //   output.pix[pix_id].b = 0u;
+  //   output.pix[pix_id].a = 255u;
+  // }
 }
 `
 }

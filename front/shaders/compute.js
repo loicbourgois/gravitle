@@ -91,10 +91,12 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
             } elseif (links[k].active == 0u) {
               links[k].active = 1u;
               links[k].cell_id = p2id;
+              // links[k].weight = 1.0;
               break;
             }
           }
         }
+
 
         var linked = false;
         for (var k = 0 ; k < 6 ; k=k+1) {
@@ -103,9 +105,6 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
             break;
           }
         }
-
-
-
 
 
         if ( linked ) {
@@ -153,11 +152,29 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
             let charge_ = (d - radius_radar);
             // charge = max(charge, charge_);
             charge = max(charge, (radius_radar-d) / radius_radar) ;
-            //charge = 0.5;
           }
         }
       }
+    } elseif (p1.kind == ${x.materials.CORE}u) {
+      charge = 1.0;
+    } else {
+      var active_links = 0.0;
+      for (var k = 0 ; k < 6 ; k=k+1) {
+        if (links[k].active == 1u) {
+          active_links = active_links + 1.0;
+          charge = charge + links[k].weight * input.cells[links[k].cell_id].charge;
+        }
+      }
+      charge = min(1.0, max(charge, -1.0));
     }
+
+
+    let turbo = 0.0;
+    if (p1.kind == ${x.materials.TURBO}u && charge != 0.0) {
+       forces = forces - normalize(linked_neighbours_delta) * turbo * max(0.0, charge);
+    }
+
+
     let acceleration = forces / p1.mass;
     let speed = vec2<f32>(p1.x, p1.y) - vec2<f32>(p1.x_old, p1.y_old)
       + acceleration * delta_time * delta_time
@@ -172,9 +189,10 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       u32(x * ${x.grid_width}.0),
       u32(y * ${x.grid_height}.0)
     ));
-    output.cells[cell_id_new].active = p1.active;
-    output.cells[cell_id_new].kind = p1.kind;
-    output.cells[cell_id_new].mass = p1.mass;
+    output.cells[cell_id_new].active    = p1.active;
+    output.cells[cell_id_new].kind      = p1.kind;
+    output.cells[cell_id_new].mass      = p1.mass;
+    output.cells[cell_id_new].entity_id = p1.entity_id;
     output.cells[cell_id_new].links = links;
     output.cells[cell_id_new].x = x;
     output.cells[cell_id_new].y = y;

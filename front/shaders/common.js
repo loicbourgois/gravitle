@@ -4,6 +4,7 @@ function common (x) {
 struct Link {
   active: u32;
   cell_id: u32;
+  weight: f32;
 };
 struct Cell {
   active: u32;
