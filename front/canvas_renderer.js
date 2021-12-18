@@ -8,49 +8,63 @@ import {
 } from "./renderer_util";
 // import * as render_shader from "./shaders/render";
 // import {materials} from "./materials";
-function render(x) {
+function render(a) {
   const start = performance.now();
   // Render
-  // const canvas = document.getElementById("canvas");
-  // canvas.width  = x.image_width;
-  // canvas.height = x.image_height;
-  // canvas.style.width = window.innerWidth + "px";
-  // canvas.style.height = window.innerHeight + "px";
-  // const ctx = canvas.getContext("2d");
-
+  const definition = 0.25;
+  const canvas = document.getElementById("canvas");
+  canvas.width  = window.innerWidth*definition;
+  canvas.height = window.innerHeight*definition;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  const canvas_min = Math.min(canvas.width, canvas.height);
+  const canvas_max = Math.max(canvas.width, canvas.height);
+  const canvas_ratio = canvas_max / canvas_min;
+  const ctx = canvas.getContext("2d");
   const minimap = document.getElementById("minimap");
-  minimap.width  = x.image_width;
-  minimap.height = x.image_height;
-  // minimap.style.width = window.innerWidth + "px";
-  // minimap.style.height = window.innerHeight + "px";
+  minimap.width  = a.image_width;
+  minimap.height = a.image_height;
   const ctx_minimap = minimap.getContext("2d");
-
-  const server_data = x.pull();
+  const server_data = a.pull();
   if (len(server_data)) {
     const d = JSON.parse(server_data)
     if (d.step) {
       document.getElementById("p_step").innerHTML = `Step: ${ d.step } `
     }
-    const w = (minimap.width/d.width);
-    const h = (minimap.height/d.height);
+    document.getElementById("p_pids").innerHTML = `Particles: ${ d.pids.length } `
+    // console.log(d.parts)
+    // console.log(d.pids.length)
+
+    let zoom = 1.05 * (d.blocks/d.client_blocks)*canvas_ratio;
     for (let i in d.parts) {
       let p = d.parts[i];
-      let x_ = p.x * w;
-      let y_ = p.y * h;
-      //console.log(x_, y_)
+      let x = p.x * minimap.width;
+      let y = p.y * minimap.height;
       ctx_minimap.beginPath();
-      ctx_minimap.arc(x_, y_, w, 0, 2 * Math.PI);
+      ctx_minimap.arc(x, y, 0.5, 0, 2 * Math.PI);
       ctx_minimap.fill();
+      let center = {
+        x: 0.5,
+        y: 0.5,
+      };
+      ctx.beginPath();
+      let x_ = (p.x - center.x) * zoom + center.x
+      let y_ = (p.y - center.y) * zoom + center.y
+      ctx.arc(
+        x_  *  canvas_min + (canvas.width -  canvas_min) * 0.5 ,
+        y_  *  canvas_min + (canvas.height - canvas_min) * 0.5 ,
+        zoom * definition, 0, 2 * Math.PI);
+      ctx.fill();
     }
   }
-  update_fps(x)
+  update_fps(a)
   const end = performance.now();
-  x.fps_counter.push({
+  a.fps_counter.push({
     start: start,
     end: end,
     duration: end - start
   })
-  loop(x)
+  loop(a)
 }
 function loop(x) {
   window.requestAnimationFrame(function () {

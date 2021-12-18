@@ -91,7 +91,7 @@ if (x.server === 'local') {
     },
     fps_counter_length: 100,
     fps_counter: [],
-    image_width: 512*2,
-    image_height: 512*2,
+    image_width: 512,
+    image_height: 512,
   })
 }

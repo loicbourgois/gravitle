@@ -4,6 +4,7 @@ mod main_hashmap2;
 mod part;
 #[cfg(test)]
 mod tests;
+mod websocket;
 fn main() {
     let choice = 1;
     println!("CPUS: {}", num_cpus::get());

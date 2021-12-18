@@ -23,7 +23,7 @@ canvas {
   z-index: 1;
 }
 #minimap {
-  width: 64em;
-  height: 64em;
+  width: 32em;
+  height: 32em;
   background: blueviolet;
 }
