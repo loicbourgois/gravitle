@@ -1,25 +1,27 @@
-use crate::{main_hashmap2::Data, part::Part};
+use crate::{
+    server_2::server::{
+        Data,
+        BLOCKS,
+        CLIENT_BLOCKS
+    },
+    part::Part
+};
 use serde::{Deserialize, Serialize};
 use std::{
-    // cmp::{
-    //     // min
-    // },
     collections::{HashMap, HashSet},
     net::{TcpListener, TcpStream},
     sync::{
         Arc,
         Mutex,
         RwLock,
-        //RwLockReadGuard
     },
     thread,
     time::Duration,
 };
-use crate::main_hashmap2::{
-    SIZE,
-    // CLIENT_SIZE,
-    CLIENT_BLOCKS
-};
+// use crate::main_hashmap2::{
+//     BLOCKS,
+//     CLIENT_BLOCKS
+// };
 use tungstenite::{accept, Message, WebSocket};
 use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug)]
@@ -95,14 +97,14 @@ pub fn send(a: &SendArgs) {
                 step: 0,
                 parts: HashMap::new(),
                 pids: Vec::new(),
-                height: SIZE as f32,
-                width: SIZE as f32,
-                blocks: SIZE,
+                height: BLOCKS as f32,
+                width: BLOCKS as f32,
+                blocks: BLOCKS,
                 client_blocks: CLIENT_BLOCKS,
             };
             for data in datas.iter() {
                 let dr = data.read().unwrap();
-                let mid = SIZE/2;
+                let mid = BLOCKS/2;
                 let start_block = mid - CLIENT_BLOCKS / 2;
                 let end_block = mid +   CLIENT_BLOCKS / 2;
                 let mut pids = Vec::new();

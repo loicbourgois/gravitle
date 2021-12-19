@@ -5,4 +5,5 @@ pub struct Part {
     pub y: f64,
     pub x_old: f64,
     pub y_old: f64,
+    pub colissions: u32,
 }

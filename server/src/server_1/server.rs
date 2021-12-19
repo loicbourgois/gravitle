@@ -2,29 +2,28 @@
 use rand;
 use rand::Rng;
 use std::sync::RwLock;
-const TIMES_COUNT: usize = 100;
-pub const SIZE: usize = 32;
-// pub const CLIENT_SIZE: usize = 2;
+pub const BLOCKS: usize = 4;
 pub const CLIENT_BLOCKS: usize = 4;
 const BASE_CAPACITY: usize = 10;
-const COUNT: i32 = 8 * 1024;
+const TOTAL_COUNT: i32 = 100_000;
 const THREADS: usize = 8;
+const COUNT: i32 = TOTAL_COUNT / THREADS as i32;
 const MODULO: usize = 100;
+const TIMES_COUNT: usize = 100;
 use crate::{
     part::Part,
-    websocket::{send, serve, SendArgs, Senders, ServeArgs},
+    server_1::{
+        websocket::{send, serve, SendArgs, Senders, ServeArgs}
+    },
 };
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, RwLockReadGuard},
     thread,
-    //    net::TcpListener
-    //net::TcpStream;
     time::Duration,
     time::SystemTime,
 };
-//use tungstenite::{Message, WebSocket, accept};
 use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -42,7 +41,7 @@ struct FirstMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
     pub step: usize,
-    pub pids: Vec<Vec<Vec<u128>>>,
+    pub pids: Vec<Vec<u128>>,
     pub parts: HashMap<u128, Part>,
     pub width: f64,
     pub height: f64,
@@ -68,16 +67,16 @@ pub fn main() {
             step: 0,
             parts: HashMap::new(),
             pids: Vec::new(),
-            width: SIZE as f64,
-            height: SIZE as f64,
+            width: BLOCKS as f64,
+            height: BLOCKS as f64,
             id: i as i32,
         })));
         data2s.push(Arc::new(RwLock::new(Data {
             step: 0,
             parts: HashMap::new(),
             pids: Vec::new(),
-            width: SIZE as f64,
-            height: SIZE as f64,
+            width: BLOCKS as f64,
+            height: BLOCKS as f64,
             id: i as i32,
         })));
         init(&data1s[i]);
@@ -109,7 +108,7 @@ pub fn main() {
 }
 fn init(data: &Arc<RwLock<Data>>) {
     let mut d = data.write().unwrap();
-    d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); SIZE]; SIZE];
+    d.pids = vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS*BLOCKS];
     let mut rng = rand::thread_rng();
     for _ in 0..COUNT {
         let a = 0.00001;
@@ -171,8 +170,8 @@ fn compute(arg: &mut ComputeArgs) {
             thread::sleep(Duration::from_millis(1));
         }
     }
-    let mut dw_pids: Vec<Vec<Vec<u128>>> =
-        vec![vec![Vec::with_capacity(BASE_CAPACITY); SIZE]; SIZE];
+    let mut dw_pids: Vec<Vec<u128>> =
+        vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS* BLOCKS];
     let mut dw_parts: HashMap<u128, Part> = HashMap::new();
     let dw_step;
     {
@@ -198,27 +197,27 @@ fn compute(arg: &mut ComputeArgs) {
                 );
             }
         }
-        for a in dr.pids.iter() {
-            for pids in a.iter() {
-                for pid in pids.iter() {
-                    let p1r = dr.parts.get(pid).unwrap();
-                    let dx = p1r.x - p1r.x_old;
-                    let dy = p1r.y - p1r.y_old;
-                    let x = (p1r.x + dx) % dr.width;
-                    let y = (p1r.y + dy) % dr.height;
-                    let i: usize = ((x * dr.width) % dr.width).floor() as usize;
-                    let j: usize = ((y * dr.height) % dr.height).floor() as usize;
-                    dw_pids[i][j].push(*pid);
-                    dw_parts.insert(
-                        *pid,
-                        Part {
-                            x: x,
-                            y: y,
-                            x_old: x - dx,
-                            y_old: y - dy,
-                        },
-                    );
-                }
+        for pids in dr.pids.iter() {
+            for pid in pids.iter() {
+                let p1r = dr.parts.get(pid).unwrap();
+                let dx = p1r.x - p1r.x_old;
+                let dy = p1r.y - p1r.y_old;
+                let x = (p1r.x + dx) % dr.width;
+                let y = (p1r.y + dy) % dr.height;
+                let i: usize = ((x * dr.width) % dr.width).floor() as usize;
+                let j: usize = ((y * dr.height) % dr.height).floor() as usize;
+                let ij = i + j * BLOCKS;
+                dw_pids[ij].push(*pid);
+                dw_parts.insert(
+                    *pid,
+                    Part {
+                        x: x,
+                        y: y,
+                        x_old: x - dx,
+                        y_old: y - dy,
+                        colissions: 0,
+                    },
+                );
             }
         }
     }
@@ -239,6 +238,7 @@ pub struct AddPartArgs<'a> {
 pub fn add_part(a: &mut AddPartArgs) {
     let i: usize = ((a.x * a.data.width) % a.data.width).floor() as usize;
     let j: usize = ((a.y * a.data.height) % a.data.height).floor() as usize;
+    let ij = i + j * BLOCKS;
     let part_id: u128 = Uuid::new_v4().as_u128();
     a.data.parts.insert(
         part_id,
@@ -247,7 +247,8 @@ pub fn add_part(a: &mut AddPartArgs) {
             y: a.y,
             x_old: a.x - a.dx,
             y_old: a.y - a.dy,
+            colissions: 0,
         },
     );
-    a.data.pids[i][j].push(part_id)
+    a.data.pids[ij].push(part_id)
 }

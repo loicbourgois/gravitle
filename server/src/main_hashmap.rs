@@ -236,6 +236,7 @@ fn compute(x: &mut ComputeArgs) {
                         y: y,
                         x_old: x_ - dx,
                         y_old: y - dy,
+                        colissions: 0,
                     };
                 }
                 None => {
@@ -246,6 +247,7 @@ fn compute(x: &mut ComputeArgs) {
                             y: y,
                             x_old: x_ - dx,
                             y_old: y - dy,
+                            colissions: 0,
                         },
                     );
                 }
@@ -279,6 +281,7 @@ pub fn add_part(x: &mut AddPartArgs) {
             y: x.y,
             x_old: x.x - x.dx,
             y_old: x.y - x.dy,
+            colissions: 0,
         },
     );
     match x.data.pids.get_mut(&(i, j)) {

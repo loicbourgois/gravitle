@@ -11,7 +11,7 @@ import {
 function render(a) {
   const start = performance.now();
   // Render
-  const definition = 0.25;
+  const definition = 0.5;
   const canvas = document.getElementById("canvas");
   canvas.width  = window.innerWidth*definition;
   canvas.height = window.innerHeight*definition;
@@ -34,7 +34,6 @@ function render(a) {
     document.getElementById("p_pids").innerHTML = `Particles: ${ d.pids.length } `
     // console.log(d.parts)
     // console.log(d.pids.length)
-
     let zoom = 1.05 * (d.blocks/d.client_blocks)*canvas_ratio;
     for (let i in d.parts) {
       let p = d.parts[i];
@@ -47,13 +46,18 @@ function render(a) {
         x: 0.5,
         y: 0.5,
       };
-      ctx.beginPath();
       let x_ = (p.x - center.x) * zoom + center.x
       let y_ = (p.y - center.y) * zoom + center.y
+      if (p.colissions == 0) {
+        ctx.fillStyle = "black";
+      } else {
+        //ctx.fillStyle = "red";
+      }
+      ctx.beginPath();
       ctx.arc(
         x_  *  canvas_min + (canvas.width -  canvas_min) * 0.5 ,
         y_  *  canvas_min + (canvas.height - canvas_min) * 0.5 ,
-        zoom * definition, 0, 2 * Math.PI);
+        zoom * canvas_min * 0.001*0.5, 0, 2 * Math.PI);
       ctx.fill();
     }
   }

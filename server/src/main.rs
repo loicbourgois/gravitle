@@ -1,12 +1,13 @@
 #![deny(warnings)]
 mod main_hashmap;
-mod main_hashmap2;
+mod server_1;
+mod server_2;
 mod part;
+mod maths;
 #[cfg(test)]
 mod tests;
-mod websocket;
 fn main() {
-    let choice = 1;
+    let choice = 2;
     println!("CPUS: {}", num_cpus::get());
     println!("CPUS: {}", num_cpus::get_physical());
     match choice {
@@ -14,9 +15,11 @@ fn main() {
             main_hashmap::main();
         }
         1 => {
-            main_hashmap2::main();
+            server_1::server::main();
+        }
+        2 => {
+            server_2::server::main();
         }
         _ => {}
     }
-    //
 }

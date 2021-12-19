@@ -47,6 +47,7 @@ pub fn add_part(x: &mut AddPartArgs) {
         y: x.y,
         x_old: x.x - x.dx,
         y_old: x.y - x.dy,
+        colissions: 0,
     });
     x.data.pids[i][j].push(pid);
 }
