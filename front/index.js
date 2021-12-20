@@ -3,6 +3,7 @@ import * as wasm from "../wasm/pkg";
 import * as webgpu_server from "./webgpu_server";
 import * as webgpu_renderer from "./webgpu_renderer";
 import * as canvas_renderer from "./canvas_renderer";
+import * as three_renderer from "./three/renderer";
 import {
   last,
   len,
@@ -10,9 +11,6 @@ import {
 function player_id() {
   return uuid.v4()
 }
-// const x = {
-//   'server': 'browser'
-// }
 const x = {
   server: {
     host: '127.0.0.1',
@@ -85,13 +83,28 @@ if (x.server === 'local') {
   socket.onerror = function(error) {
     console.error(`[error] ${error.message}`);
   };
-  canvas_renderer.render({
-    pull: function() {
-      return data;
-    },
+  function pull() {
+    return data;
+  }
+  three_renderer.start({
+    pull: pull,
     fps_counter_length: 100,
     fps_counter: [],
     image_width: 512,
     image_height: 512,
+    fov: 75,
+    clipping: {
+      near: 0.1,
+      far: 1000
+    }
   })
+  // canvas_renderer.render({
+  //   pull: function() {
+  //     return data;
+  //   },
+  //   fps_counter_length: 100,
+  //   fps_counter: [],
+  //   image_width: 512,
+  //   image_height: 512,
+  // })
 }

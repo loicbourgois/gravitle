@@ -33,6 +33,7 @@
     "webpack-dev-server": "*"
   },
   "dependencies": {
+    "three": "^0.135.0",
     "uuid": "^8.3.2"
   }
 }
