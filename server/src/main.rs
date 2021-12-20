@@ -1,7 +1,7 @@
 #![deny(warnings)]
 // mod main_hashmap;
 // mod server_1;
-mod maths;
+mod maths0;
 mod part;
 mod server_2;
 //#[cfg(test)]

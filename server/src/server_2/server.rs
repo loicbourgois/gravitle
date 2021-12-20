@@ -12,7 +12,7 @@ const MODULO: usize = 100;
 const TIMES_COUNT: usize = 100;
 const DIAMETER: f64 = 0.01;
 use crate::{
-    maths::{delta_position_wrap_around, distance_squared_wrap_around,
+    maths0::{delta_position_wrap_around, distance_squared_wrap_around,
         dot,
         normalize},
     part::Part,
@@ -186,7 +186,7 @@ fn compute(arg: &mut ComputeArgs) {
                     let j_max = (j_ + BLOCKS + aa) % BLOCKS;
                     let v1x = p1.x - p1.x_old;
                     let v1y = p1.y - p1.y_old;
-                    // let v1z = p1.z - p1.z_old;
+                    let v1z = p1.z - p1.z_old;
 
                     let mut fx = 0.0; // Forces
                     let mut fy = 0.0;
@@ -200,45 +200,89 @@ fn compute(arg: &mut ComputeArgs) {
                         for i2 in i_min..=i_max {
                             for j2 in j_min..=j_max {
                                 for pid2 in dr2.pids[i2][j2].iter() {
+                                    // if pid != pid2 {
+                                    //     let p2 = dr2.parts.get(pid2).unwrap();
+                                    //     let d_square =
+                                    //         distance_squared_wrap_around(p1.x, p1.y, p2.x, p2.y);
+                                    //     let avg_diameter = DIAMETER;
+                                    //     // let avg_diameter_sqrd = avg_diameter * avg_diameter;
+                                    //     let d = d_square.sqrt();
+                                    //     if d < avg_diameter * 1.5 {
+                                    //         let dpw =
+                                    //             delta_position_wrap_around(p1.x, p1.y, p2.x, p2.y);
+                                    //
+                                    //         let linking = - (avg_diameter - d) * 0.01;
+                                    //         fx += normalize(dpw).0 * linking;
+                                    //         fy += normalize(dpw).1 * linking;
+                                    //         fz += 0.0 * linking * 0.0;
+                                    //
+                                    //         if d < avg_diameter {
+                                    //             // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+                                    //             colissions += 1;
+                                    //             let v2x = p2.x - p2.x_old;
+                                    //             let v2y = p2.y - p2.y_old;
+                                    //             // let v2z = p2.z - p2.z_old;
+                                    //             let dvx = v1x - v2x;
+                                    //             let dvy = v1y - v2y;
+                                    //             // let dvz = v1z - v2z;
+                                    //             // let mass_factor = 2.0 * p1.m / (p1.m + p2.m);
+                                    //             let mass_factor = 1.0;
+                                    //             let dot_vp = dot(dvx, dvy, dpw.0, dpw.1);
+                                    //             let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
+                                    //             let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
+                                    //             let acc_z = 0.0 * mass_factor * dot_vp / d_square;
+                                    //             let oo = 0.5;
+                                    //             dx_collision -= acc_x * oo;
+                                    //             dy_collision -= acc_y * oo;
+                                    //             dz_collision -= acc_z * oo;
+                                    //             // forces = forces +  normalize(delta_position) *  (DIAMETER - d) * linking[p1.kind][p2.kind] * 100.0;
+                                    //         }
+                                    //     }
+                                    //
+                                    // }
                                     if pid != pid2 {
                                         let p2 = dr2.parts.get(pid2).unwrap();
-                                        let d_square =
-                                            distance_squared_wrap_around(p1.x, p1.y, p2.x, p2.y);
-                                        let avg_diameter = DIAMETER;
-                                        // let avg_diameter_sqrd = avg_diameter * avg_diameter;
-                                        let d = d_square.sqrt();
-                                        if d < avg_diameter * 1.5 {
-                                            let dpw =
-                                                delta_position_wrap_around(p1.x, p1.y, p2.x, p2.y);
-
-                                            let linking = - (avg_diameter - d) * 0.01;
-                                            fx += normalize(dpw).0 * linking;
-                                            fy += normalize(dpw).1 * linking;
-                                            fz += 0.0 * linking * 0.0;
-
-                                            if d < avg_diameter {
-                                                // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
-                                                colissions += 1;
-                                                let v2x = p2.x - p2.x_old;
-                                                let v2y = p2.y - p2.y_old;
-                                                // let v2z = p2.z - p2.z_old;
-                                                let dvx = v1x - v2x;
-                                                let dvy = v1y - v2y;
-                                                // let dvz = v1z - v2z;
-                                                // let mass_factor = 2.0 * p1.m / (p1.m + p2.m);
-                                                let mass_factor = 1.0;
-                                                let dot_vp = dot(dvx, dvy, dpw.0, dpw.1);
-                                                let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
-                                                let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
-                                                let acc_z = 0.0 * mass_factor * dot_vp / d_square;
-                                                let oo = 0.5;
-                                                dx_collision -= acc_x * oo;
-                                                dy_collision -= acc_y * oo;
-                                                dz_collision -= acc_z * oo;
-                                                // forces = forces +  normalize(delta_position) *  (DIAMETER - d) * linking[p1.kind][p2.kind] * 100.0;
-                                            }
+                                        let mut d_square = distance_squared_wrap_around(
+                                            p1.x,
+                                            p1.y,
+                                            p1.z,
+                                            p2.x,
+                                            p2.y,
+                                            p2.z,
+                                        );
+                                        let dpw = delta_position_wrap_around(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+                                        if d_square < DIAMETER*DIAMETER*4.0 {
+                                            let aa = 10.0;
+                                            let norm = normalize(dpw);
+                                            fx += (p1.x-p2.x) * (DIAMETER*DIAMETER - d_square)*aa*0.0;
+                                            fy += norm.1 * (DIAMETER*DIAMETER - d_square)*aa*0.0;
+                                            fz += norm.2 * (DIAMETER*DIAMETER - d_square)*aa*0.0;
                                         }
+                                        if d_square < DIAMETER*DIAMETER {
+                                            // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+                                            colissions += 1;
+                                            let v2x = p2.x - p2.x_old;
+                                            let v2y = p2.y - p2.y_old;
+                                            let v2z = p2.z - p2.z_old;
+                                            let dvx = v1x - v2x;
+                                            let dvy = v1y - v2y;
+                                            let dvz = v1z - v2z;
+                                            // TODO
+                                            // let mass_factor = 2.0 * p1.mass / (p1.mass + p2.mass)
+                                            let mass_factor = 1.0;
+                                            let dot_vp = dot(dvx, dvy, dvz, dpw.0, dpw.1, dpw.2);
 
+                                            let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
+                                            let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
+                                            let acc_z = dpw.2 * mass_factor * dot_vp / d_square;
+
+                                            dx_collision -= acc_x * 0.5;
+                                            dy_collision -= acc_y * 0.5;
+                                            dz_collision -= acc_z * 0.5;
+
+
+
+                                        }
                                     }
                                 }
                             }
@@ -322,8 +366,8 @@ fn init(data: &Arc<RwLock<Data>>) {
     let mut d = data.write().unwrap();
     d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS]; BLOCKS];
     let mut rng = rand::thread_rng();
-    for _ in 0..0 {
-        let a = 0.00002;
+    for _ in 0..COUNT*0 {
+        let a = 0.0001;
         add_part(&mut AddPartArgs {
             x: rng.gen::<f64>(),
             y: rng.gen::<f64>(),
@@ -340,7 +384,7 @@ fn init(data: &Arc<RwLock<Data>>) {
     add_part(&mut AddPartArgs {
         x: 0.48,
         y: 0.5,
-        z: 0.0,
+        z: 0.1,
         dx: 0.00001,
         dy: 0.0,
         // dz: rng.gen::<f64>() * a - a * 0.5,
@@ -348,10 +392,10 @@ fn init(data: &Arc<RwLock<Data>>) {
         data: &mut d,
     });
     add_part(&mut AddPartArgs {
-        x: 0.51,
+        x: 0.54,
         y: 0.5,
-        z: 0.0,
-        dx: 0.0,
+        z: 0.1,
+        dx: -0.00001,
         dy: 0.0,
         // dz: rng.gen::<f64>() * a - a * 0.5,
         dz: 0.0,

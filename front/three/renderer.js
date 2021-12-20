@@ -15,7 +15,7 @@ function start(a) {
   const camera = new THREE.PerspectiveCamera(a.fov, window.innerWidth / window.innerHeight, a.clipping.near, a.clipping.far);
   camera.position.x = 0.5*TM;
   camera.position.y = 0.5*TM;
-  camera.position.z = TM *0.5;
+  camera.position.z = TM * 0.25;
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
@@ -46,7 +46,7 @@ function start(a) {
       'default': new THREE.MeshLambertMaterial({ color: 0xeeee00 }),
       // MeshLambertMaterial
     },
-    geometry: new THREE.IcosahedronGeometry(DIAMETER * 0.5 * TM, 1),
+    geometry: new THREE.IcosahedronGeometry(DIAMETER * 0.5 * TM , 1),
     meshes: []
   });
 }
