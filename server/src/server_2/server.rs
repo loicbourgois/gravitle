@@ -113,21 +113,6 @@ pub fn main() {
         thread::sleep(Duration::from_millis(1000));
     }
 }
-fn init(data: &Arc<RwLock<Data>>) {
-    let mut d = data.write().unwrap();
-    d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS];BLOCKS];
-    let mut rng = rand::thread_rng();
-    for _ in 0..COUNT {
-        let a = 0.0001;
-        add_part(&mut AddPartArgs {
-            x: rng.gen::<f64>(),
-            y: rng.gen::<f64>(),
-            dx: rng.gen::<f64>() * a - a * 0.5,
-            dy: rng.gen::<f64>() * a - a * 0.5,
-            data: &mut d,
-        });
-    }
-}
 fn compute_loop(d1s: &Vec<Arc<RwLock<Data>>>, d2s: &Vec<Arc<RwLock<Data>>>, i: usize) {
     let mut times: Vec<SystemTime> = Vec::new();
     let mut step = 0;
@@ -234,10 +219,12 @@ fn compute(arg: &mut ComputeArgs) {
                                         let d_square = distance_squared_wrap_around(
                                             p1.x,
                                             p1.y,
+                                            0.0,
                                             p2.x,
                                             p2.y,
+                                            0.0
                                         );
-                                        let dpw = delta_position_wrap_around(p1.x, p1.y, p2.x, p2.y);
+                                        let dpw = delta_position_wrap_around(p1.x, p1.y, 0.0, p2.x, p2.y, 0.0);
                                         if d_square < DIAMETER*DIAMETER*1.2 {
                                             fx += normalize(dpw).0 * (DIAMETER*DIAMETER - d_square)*1000.0;
                                             fy += normalize(dpw).1 * (DIAMETER*DIAMETER - d_square)*1000.0;
@@ -252,7 +239,7 @@ fn compute(arg: &mut ComputeArgs) {
                                             // TODO
                                             // let mass_factor = 2.0 * p1.mass / (p1.mass + p2.mass)
                                             let mass_factor = 1.0;
-                                            let dot_vp = dot(dvx, dvy, dpw.0, dpw.1);
+                                            let dot_vp = dot(dvx, dvy, 0.0, dpw.0, dpw.1, 0.0);
 
                                             let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
                                             let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
@@ -292,8 +279,10 @@ fn compute(arg: &mut ComputeArgs) {
                         Part {
                             x: x,
                             y: y,
+                            z: 0.0,
                             x_old: x_old,
                             y_old: y_old,
+                            z_old: 0.0,
                             colissions: colissions
                         },
                     );
@@ -311,9 +300,28 @@ fn compute(arg: &mut ComputeArgs) {
 pub struct AddPartArgs<'a> {
     pub x: f64,
     pub y: f64,
+    pub z: f64,
     pub dx: f64,
     pub dy: f64,
+    pub dz: f64,
     pub data: &'a mut Data,
+}
+fn init(data: &Arc<RwLock<Data>>) {
+    let mut d = data.write().unwrap();
+    d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS];BLOCKS];
+    let mut rng = rand::thread_rng();
+    for _ in 0..COUNT {
+        let a = 0.0001;
+        add_part(&mut AddPartArgs {
+            x: rng.gen::<f64>(),
+            y: rng.gen::<f64>(),
+            z: 0.0,
+            dx: rng.gen::<f64>() * a - a * 0.5,
+            dy: rng.gen::<f64>() * a - a * 0.5,
+            dz: 0.0,
+            data: &mut d,
+        });
+    }
 }
 pub fn add_part(a: &mut AddPartArgs) {
     let i: usize = ((a.x * a.data.width) % a.data.width).floor() as usize;
@@ -324,8 +332,10 @@ pub fn add_part(a: &mut AddPartArgs) {
         Part {
             x: a.x,
             y: a.y,
+            z: a.z,
             x_old: a.x - a.dx,
             y_old: a.y - a.dy,
+            z_old: a.z - a.dz,
             colissions: 0,
         },
     );
