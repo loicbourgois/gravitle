@@ -118,7 +118,7 @@ fn init(data: &Arc<RwLock<Data>>) {
     d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS];BLOCKS];
     let mut rng = rand::thread_rng();
     for _ in 0..COUNT {
-        let a = 0.0000;
+        let a = 0.0001;
         add_part(&mut AddPartArgs {
             x: rng.gen::<f64>(),
             y: rng.gen::<f64>(),
@@ -237,6 +237,11 @@ fn compute(arg: &mut ComputeArgs) {
                                             p2.x,
                                             p2.y,
                                         );
+                                        let dpw = delta_position_wrap_around(p1.x, p1.y, p2.x, p2.y);
+                                        if d_square < DIAMETER*DIAMETER*1.2 {
+                                            fx += normalize(dpw).0 * (DIAMETER*DIAMETER - d_square)*1000.0;
+                                            fy += normalize(dpw).1 * (DIAMETER*DIAMETER - d_square)*1000.0;
+                                        }
                                         if d_square < DIAMETER*DIAMETER {
                                             // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
                                             colissions += 1;
@@ -247,17 +252,15 @@ fn compute(arg: &mut ComputeArgs) {
                                             // TODO
                                             // let mass_factor = 2.0 * p1.mass / (p1.mass + p2.mass)
                                             let mass_factor = 1.0;
-                                            let dpw = delta_position_wrap_around(p1.x, p1.y, p2.x, p2.y);
                                             let dot_vp = dot(dvx, dvy, dpw.0, dpw.1);
 
                                             let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
                                             let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
 
-                                            dx_collision -= acc_x * 0.0;
-                                            dy_collision -= acc_y * 0.0;
+                                            dx_collision -= acc_x * 0.5;
+                                            dy_collision -= acc_y * 0.5;
 
-                                            fx += normalize(dpw).0 * (DIAMETER*DIAMETER - d_square)*1000.0;
-                                            fy += normalize(dpw).1 * (DIAMETER*DIAMETER - d_square)*1000.0;
+
 
                                         }
                                     }
