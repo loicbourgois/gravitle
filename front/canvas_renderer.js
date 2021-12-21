@@ -26,19 +26,21 @@ function render(a) {
   minimap.height = a.image_height;
   const ctx_minimap = minimap.getContext("2d");
   const server_data = a.pull();
+  //console.log(server_data)
   if (len(server_data)) {
     const d = JSON.parse(server_data)
     if (d.step) {
       document.getElementById("p_step").innerHTML = `Step: ${ d.step } `
     }
     document.getElementById("p_pids").innerHTML = `Particles: ${ d.pids.length } `
-    // console.log(d.parts)
+    //console.log("oo")
     // console.log(d.pids.length)
     let zoom = 1.05 * (d.blocks/d.client_blocks)*canvas_ratio;
     for (let i in d.parts) {
       let p = d.parts[i];
       let x = p.x * minimap.width;
       let y = p.y * minimap.height;
+      
       ctx_minimap.beginPath();
       ctx_minimap.arc(x, y, 0.5, 0, 2 * Math.PI);
       ctx_minimap.fill();
@@ -51,7 +53,7 @@ function render(a) {
       if (p.colissions == 0) {
         ctx.fillStyle = "black";
       } else {
-        //ctx.fillStyle = "red";
+        // ctx.fillStyle = "red";
       }
       ctx.beginPath();
       ctx.arc(

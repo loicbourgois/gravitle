@@ -203,13 +203,13 @@ fn compute(arg: &mut ComputeArgs) {
                     let j_max = (j_+BLOCKS+aa)%BLOCKS;
                     let v1x = p1.x - p1.x_old;
                     let v1y = p1.y - p1.y_old;
-
+                    let v1z = p1.z - p1.z_old;
                     let mut fx = 0.0; // Forces
                     let mut fy = 0.0;
-
+                    let mut fz = 0.0;
                     let mut dx_collision = 0.0; // collision
                     let mut dy_collision = 0.0;
-
+                    let mut dz_collision = 0.0;
                     for dr2 in drs_.iter() {
                         for i2 in i_min..=i_max {
                             for j2 in j_min..=j_max {
@@ -219,57 +219,60 @@ fn compute(arg: &mut ComputeArgs) {
                                         let d_square = distance_squared_wrap_around(
                                             p1.x,
                                             p1.y,
-                                            0.0,
+                                            p1.z,
                                             p2.x,
                                             p2.y,
-                                            0.0
+                                            p2.z,
                                         );
                                         let dpw = delta_position_wrap_around(p1.x, p1.y, 0.0, p2.x, p2.y, 0.0);
-                                        if d_square < DIAMETER*DIAMETER*1.2 {
-                                            fx += normalize(dpw).0 * (DIAMETER*DIAMETER - d_square)*1000.0;
-                                            fy += normalize(dpw).1 * (DIAMETER*DIAMETER - d_square)*1000.0;
+                                        if d_square < DIAMETER*DIAMETER*2.0 {
+                                            let norm = normalize(dpw);
+                                            let strength = 10.0;
+                                            fx += norm.0 * (DIAMETER*DIAMETER - d_square)*strength;
+                                            fy += norm.1 * (DIAMETER*DIAMETER - d_square)*strength;
+                                            fz += norm.2 * (DIAMETER*DIAMETER - d_square)*strength;
                                         }
                                         if d_square < DIAMETER*DIAMETER {
                                             // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
                                             colissions += 1;
                                             let v2x = p2.x - p2.x_old;
                                             let v2y = p2.y - p2.y_old;
+                                            let v2z = p2.z - p2.z_old;
                                             let dvx = v1x - v2x;
                                             let dvy = v1y - v2y;
+                                            let dvz = v1z - v2z;
                                             // TODO
                                             // let mass_factor = 2.0 * p1.mass / (p1.mass + p2.mass)
                                             let mass_factor = 1.0;
-                                            let dot_vp = dot(dvx, dvy, 0.0, dpw.0, dpw.1, 0.0);
-
+                                            let dot_vp = dot(dvx, dvy, dvz, dpw.0, dpw.1, dpw.2);
                                             let acc_x = dpw.0 * mass_factor * dot_vp / d_square;
                                             let acc_y = dpw.1 * mass_factor * dot_vp / d_square;
-
+                                            let acc_z = dpw.2 * mass_factor * dot_vp / d_square;
                                             dx_collision -= acc_x * 0.5;
                                             dy_collision -= acc_y * 0.5;
-
-
-
+                                            dz_collision -= acc_z * 0.5;
                                         }
                                     }
                                 }
                             }
                         }
                     }
-
                     let p1_mass = 1.0;
                     let delta_time = 1.0/60.0;
                     let acc_x = fx / p1_mass;
                     let acc_y = fy / p1_mass;
-                    let  speed_x = p1.x - p1.x_old + acc_x * delta_time + dx_collision;
-                    let  speed_y = p1.y - p1.y_old + acc_y * delta_time + dy_collision;
-                    // let max_speed = 1.0;
-                    // speed_x = speed_x.max(-max_speed).min(max_speed);
-                    // speed_y = speed_y.max(-max_speed).min(max_speed);
+                    let acc_z = fz / p1_mass;
+                    let max_speed = 1.0;
+                    let speed_x = (p1.x - p1.x_old + acc_x * delta_time + dx_collision).max(-max_speed).min(max_speed);
+                    let speed_y = (p1.y - p1.y_old + acc_y * delta_time + dy_collision).max(-max_speed).min(max_speed);
+                    let speed_z = (p1.z - p1.z_old + acc_z * delta_time + dz_collision).max(-max_speed).min(max_speed);
 
                     let x = (p1.x + speed_x).fract();
                     let y = (p1.y + speed_y).fract();
+                    let z = (p1.z + speed_z).fract() * 0.0;
                     let x_old = x - speed_x;
                     let y_old = y - speed_y;
+                    let z_old = z - speed_z * 0.0;
 
                     let i: usize = ((x * dr.width) % dr.width).floor() as usize;
                     let j: usize = ((y * dr.height) % dr.height).floor() as usize;
@@ -279,10 +282,10 @@ fn compute(arg: &mut ComputeArgs) {
                         Part {
                             x: x,
                             y: y,
-                            z: 0.0,
+                            z: z,
                             x_old: x_old,
                             y_old: y_old,
-                            z_old: 0.0,
+                            z_old: z_old,
                             colissions: colissions
                         },
                     );
@@ -311,7 +314,7 @@ fn init(data: &Arc<RwLock<Data>>) {
     d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS];BLOCKS];
     let mut rng = rand::thread_rng();
     for _ in 0..COUNT {
-        let a = 0.0001;
+        let a = 0.00001;
         add_part(&mut AddPartArgs {
             x: rng.gen::<f64>(),
             y: rng.gen::<f64>(),
