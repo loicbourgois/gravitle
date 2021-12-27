@@ -35,14 +35,14 @@ function render(a) {
     document.getElementById("p_pids").innerHTML = `Particles: ${ d.pids.length } `
     //console.log("oo")
     // console.log(d.pids.length)
-    let zoom = 1.05 * (d.blocks/d.client_blocks)*canvas_ratio;
+    let zoom = .5 * (d.blocks/d.client_blocks)*canvas_ratio;
     for (let i in d.parts) {
       let p = d.parts[i];
       let x = p.x * minimap.width;
       let y = p.y * minimap.height;
       
       ctx_minimap.beginPath();
-      ctx_minimap.arc(x, y, 0.5, 0, 2 * Math.PI);
+      ctx_minimap.arc(x, y, p.d*a.image_width*0.5, 0, 2 * Math.PI);
       ctx_minimap.fill();
       let center = {
         x: 0.5,
@@ -59,7 +59,7 @@ function render(a) {
       ctx.arc(
         x_  *  canvas_min + (canvas.width -  canvas_min) * 0.5 ,
         y_  *  canvas_min + (canvas.height - canvas_min) * 0.5 ,
-        zoom * canvas_min * 0.001*0.5, 0, 2 * Math.PI);
+        zoom * canvas_min * p.d * 0.5, 0, 2 * Math.PI);
       ctx.fill();
     }
   }

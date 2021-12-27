@@ -1,27 +1,15 @@
 use crate::{
-    server_2::server::{
-        Data,
-        BLOCKS,
-        CLIENT_BLOCKS
-    },
-    part::Part
+    part::Part,
+    server_2::server::{Data, BLOCKS, CLIENT_BLOCKS, DIAMETER},
 };
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     net::{TcpListener, TcpStream},
-    sync::{
-        Arc,
-        Mutex,
-        RwLock,
-    },
+    sync::{Arc, Mutex, RwLock},
     thread,
     time::Duration,
 };
-// use crate::main_hashmap2::{
-//     BLOCKS,
-//     CLIENT_BLOCKS
-// };
 use tungstenite::{accept, Message, WebSocket};
 use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug)]
@@ -83,6 +71,7 @@ struct DataClient {
     width: f32,
     blocks: usize,
     client_blocks: usize,
+    diameter: f64,
 }
 pub struct SendArgs<'a> {
     pub senders: &'a Senders,
@@ -91,55 +80,54 @@ pub struct SendArgs<'a> {
 pub fn send(a: &SendArgs) {
     let datas = a.datas.clone();
     let senders = a.senders.clone();
-    thread::spawn(move || {
-        loop {
-            let mut data_client = DataClient {
-                step: 0,
-                parts: HashMap::new(),
-                pids: Vec::new(),
-                height: BLOCKS as f32,
-                width: BLOCKS as f32,
-                blocks: BLOCKS,
-                client_blocks: CLIENT_BLOCKS,
-            };
-            for data in datas.iter() {
-                let dr = data.read().unwrap();
-                let mid = BLOCKS/2;
-                let start_block = mid - CLIENT_BLOCKS / 2;
-                let end_block = mid +   CLIENT_BLOCKS / 2;
-                let mut pids = Vec::new();
-                for i in start_block..end_block {
-                    for j in start_block..end_block {
-                        pids.append(&mut dr.pids[i][j].clone());
-                    }
-                }
-                data_client.step = dr.step;
-                for pid in &pids {
-                    data_client.parts.insert(*pid, dr.parts[&pid]);
-                }
-                data_client.pids.append(&mut pids);
-            }
-            let mut senders_to_delete: HashSet<u128> = HashSet::new();
-            for (k, sender) in senders.lock().unwrap().iter_mut() {
-                match serde_json::to_string(&data_client) {
-                    Ok(d_string) => {
-                        match sender.write_message(Message::Text(d_string)) {
-                            Ok(_) => {}
-                            Err(e) => {
-                                println!("error A: {} {:?}", *k, e);
-                                senders_to_delete.insert(*k);
-                            }
-                        };
-                    }
-                    Err(e) => {
-                        println!("error B: {:?}", e)
-                    }
+    thread::spawn(move || loop {
+        let mut data_client = DataClient {
+            step: 0,
+            diameter: DIAMETER,
+            parts: HashMap::new(),
+            pids: Vec::new(),
+            height: BLOCKS as f32,
+            width: BLOCKS as f32,
+            blocks: BLOCKS,
+            client_blocks: CLIENT_BLOCKS,
+        };
+        for data in datas.iter() {
+            let dr = data.read().unwrap();
+            let mid = BLOCKS / 2;
+            let start_block = mid - CLIENT_BLOCKS / 2;
+            let end_block = mid + CLIENT_BLOCKS / 2;
+            let mut pids = Vec::new();
+            for i in start_block..end_block {
+                for j in start_block..end_block {
+                    pids.append(&mut dr.pids[i][j].clone());
                 }
             }
-            for k in senders_to_delete.iter() {
-                senders.lock().unwrap().remove(k);
+            data_client.step = dr.step;
+            for pid in &pids {
+                data_client.parts.insert(*pid, dr.parts[&pid]);
             }
-            thread::sleep(Duration::from_millis(10));
+            data_client.pids.append(&mut pids);
         }
+        let mut senders_to_delete: HashSet<u128> = HashSet::new();
+        for (k, sender) in senders.lock().unwrap().iter_mut() {
+            match serde_json::to_string(&data_client) {
+                Ok(d_string) => {
+                    match sender.write_message(Message::Text(d_string)) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("error A: {} {:?}", *k, e);
+                            senders_to_delete.insert(*k);
+                        }
+                    };
+                }
+                Err(e) => {
+                    println!("error B: {:?}", e)
+                }
+            }
+        }
+        for k in senders_to_delete.iter() {
+            senders.lock().unwrap().remove(k);
+        }
+        thread::sleep(Duration::from_millis(10));
     });
 }
