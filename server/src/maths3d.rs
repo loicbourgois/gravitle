@@ -40,10 +40,6 @@ fn distance_squared(
     let dz = z2 - z1;
     return dx*dx + dy*dy + dz*dz;
 }
-// pub struct Vector {
-//     x: f64,
-//     y: f64,
-// }
 pub fn delta_position_wrap_around(
     x1: f64,
     y1: f64,
@@ -51,7 +47,7 @@ pub fn delta_position_wrap_around(
     x2: f64,
     y2: f64,
     z2: f64,
-) -> (f64, f64) {
+) -> (f64, f64, f64) {
     let da_squared = distance_squared(x1, y1, z1, x2, y2, z2);
     let b_x1 = (x1 + 0.25).fract();
     let b_y1 = (y1 + 0.25).fract();
@@ -71,12 +67,12 @@ pub fn delta_position_wrap_around(
       if da_squared < dc_squared {
           return delta(x1, y1, z1, x2, y2, z2);
       } else {
-          return delta(c_x1, c_y1, c_z1, c_x2, c_y2, c_y2);
+          return delta(c_x1, c_y1, c_z1, c_x2, c_y2, c_z2);
       }
     }
     else {
       if db_squared < dc_squared {
-        return delta(b_x1, b_y1, b_z1, b_x2, b_y2, b_y2);
+        return delta(b_x1, b_y1, b_z1, b_x2, b_y2, b_z2);
       }
     }
     return delta(c_x1, c_y1, c_z1, c_x2, c_y2, c_z2);
@@ -88,7 +84,7 @@ z1: f64,
 x2: f64,
 y2: f64,
 z2: f64,
-) -> (f64, f64, f54) {
+) -> (f64, f64, f64) {
     return (x1-x2, y1-y2, z1-z2);
 }
 pub fn normalize(a: (f64, f64, f64)) -> (f64, f64, f64) {

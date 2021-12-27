@@ -5,15 +5,16 @@ use std::sync::RwLock;
 pub const BLOCKS: usize = 16 * 8 * 2;
 pub const CLIENT_BLOCKS: usize = BLOCKS / 8;
 const BASE_CAPACITY: usize = 10;
-const TOTAL_COUNT: i32 = 40_000;
+const TOTAL_COUNT: i32 = 20_000;
 const THREADS: usize = 4;
 const COUNT: i32 = TOTAL_COUNT / THREADS as i32;
 const MODULO: usize = 100;
 const TIMES_COUNT: usize = 100;
 const DIAMETER: f64 = 0.001;
+const ALLOW_Z: f64 = 1.0;
 use crate::{
     part::Part,
-    maths::{
+    maths3d::{
         distance_squared_wrap_around,
         delta_position_wrap_around,
         dot,
@@ -269,10 +270,10 @@ fn compute(arg: &mut ComputeArgs) {
 
                     let x = (p1.x + speed_x).fract();
                     let y = (p1.y + speed_y).fract();
-                    let z = (p1.z + speed_z).fract() * 0.0;
+                    let z = (p1.z + speed_z).fract() * ALLOW_Z;
                     let x_old = x - speed_x;
                     let y_old = y - speed_y;
-                    let z_old = z - speed_z * 0.0;
+                    let z_old = z - speed_z * ALLOW_Z;
 
                     let i: usize = ((x * dr.width) % dr.width).floor() as usize;
                     let j: usize = ((y * dr.height) % dr.height).floor() as usize;

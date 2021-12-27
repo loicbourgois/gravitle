@@ -3,7 +3,7 @@
 //mod server_1;
 mod server_2;
 mod part;
-mod maths;
+mod maths3d;
 //#[cfg(test)]
 //mod tests;
 fn main() {
