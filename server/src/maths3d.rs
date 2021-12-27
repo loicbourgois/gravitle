@@ -100,26 +100,3 @@ z2: f64,
 ) -> f64 {
     return x1*x2 + y1*y2 + z1*z2;
 }
-
-// fn delta_position_wrap_around(a:vec2<f32>, b:vec2<f32>) -> vec2<f32> {
-//   let a2 =   (vec2<f32>(   fract(a.x + .25), fract(a.y + .25)  ));
-//   let b2 =   (vec2<f32>(   fract(b.x + .25), fract(b.y + .25)  ));
-//   let a3 =   (vec2<f32>(   fract(a.x + .5), fract(a.y + .5)  ));
-//   let b3 =   (vec2<f32>(   fract(b.x + .5), fract(b.y + .5)  ));
-//   let d1 = distance(a,b);
-//   let d2 = distance(a2,b2);
-//   let d3 = distance(a3,b3);
-//   if (d1 < d2 ) {
-//     if (d1 < d3) {
-//       return a - b;
-//     } else {
-//      return a3 - b3;
-//     }
-//   }
-//   else{
-//     if (d2 < d3) {
-//       return a2 - b2;
-//     }
-//   }
-//   return a3 - b3;
-// }

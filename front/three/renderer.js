@@ -8,14 +8,13 @@ import {
   update_fps,
 } from "../renderer_util";
 const TM = 1.0
-// const DIAMETER = 0.1
-const LIMIT = 2000
+const LIMIT = 3000
 function start(a) {
   console.log("starting")
   const camera = new THREE.PerspectiveCamera(a.fov, window.innerWidth / window.innerHeight, a.clipping.near, a.clipping.far);
-  camera.position.x = - 0.5;
-  camera.position.y = - 0.5;
-  camera.position.z = 1.5;
+  camera.position.x = 0.5;
+  camera.position.y = 0.5;
+  camera.position.z = 0.5;
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
@@ -61,7 +60,7 @@ function animate(a) {
   if (len(server_data)) {
     const d = JSON.parse(server_data)
     if (a.geometry === undefined && d.diameter) {
-      a.geometry = new THREE.IcosahedronGeometry(d.diameter * 0.5, 1)
+      a.geometry = new THREE.IcosahedronGeometry(d.diameter * 0.5, 4)
     }
 
     if (d.step) {

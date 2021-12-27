@@ -92,7 +92,7 @@ if (x.server === 'local') {
     fps_counter: [],
     image_width: 512,
     image_height: 512,
-    fov: 75,
+    fov: 65,
     clipping: {
       near: 0.1,
       far: 1000
