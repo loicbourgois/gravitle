@@ -54,7 +54,7 @@ function animate(a) {
   });
   const start = performance.now();
   // a.camera.rotation.z += 0.001;
-  // a.camera.rotation.y += 0.001;
+  a.camera.rotation.y += 0.0003;
   const server_data = a.pull();
   let meshes = [];
   if (len(server_data)) {

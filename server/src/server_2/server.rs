@@ -2,22 +2,18 @@
 use rand;
 use rand::Rng;
 use std::sync::RwLock;
-pub const BLOCKS: usize = 4*4*2;
-pub const CLIENT_BLOCKS: usize = BLOCKS;
+pub const BLOCKS: usize = 4 * 4 * 4 * 2;
+pub const CLIENT_BLOCKS: usize = BLOCKS / 2;
 const BASE_CAPACITY: usize = 10;
-const TOTAL_COUNT: i32 = 2000;
+const TOTAL_COUNT: i32 = 5_000;
 const THREADS: usize = 2;
 const COUNT_PER_THREAD: i32 = TOTAL_COUNT / THREADS as i32;
 const MODULO: usize = 100;
 const TIMES_COUNT: usize = 100;
-pub const DIAMETER: f64 = 0.02;
+pub const DIAMETER: f64 = 0.01;
 const ALLOW_Z: f64 = 1.0;
 use crate::{
-    maths3d::{
-        distance_squared_wrap_around,
-        delta_position_wrap_around,
-        dot,
-        normalize},
+    maths3d::{delta_position_wrap_around, distance_squared_wrap_around, dot, normalize},
     part::Part,
     server_2::websocket::{send, serve, SendArgs, Senders, ServeArgs},
 };
@@ -196,32 +192,35 @@ fn compute(arg: &mut ComputeArgs) {
                     let mut dz_collision = 0.0;
                     let aa = 1;
                     for dr2 in drs_.iter() {
-                        for ia in BLOCKS-aa..=BLOCKS+aa {
+                        for ia in BLOCKS - aa..=BLOCKS + aa {
                             let i2 = (i_ + ia) % BLOCKS;
-                            for ja in BLOCKS-aa..=BLOCKS+aa {
+                            for ja in BLOCKS - aa..=BLOCKS + aa {
                                 let j2 = (j_ + ja) % BLOCKS;
                                 for pid2 in dr2.pids[i2][j2].iter() {
                                     if pid != pid2 {
                                         let p2 = dr2.parts.get(pid2).unwrap();
                                         let d_square = distance_squared_wrap_around(
-                                            p1.x,
-                                            p1.y,
-                                            p1.z,
-                                            p2.x,
-                                            p2.y,
-                                            p2.z,
+                                            p1.x, p1.y, p1.z, p2.x, p2.y, p2.z,
                                         );
                                         // println!("d: {}", d_square);
-                                        let dpw = delta_position_wrap_around(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+                                        let dpw = delta_position_wrap_around(
+                                            p1.x, p1.y, p1.z, p2.x, p2.y, p2.z,
+                                        );
                                         let d_link = DIAMETER * 1.2;
                                         let d_link_squared = d_link * d_link;
                                         let do_link = true;
                                         if do_link && d_square < d_link_squared {
                                             let norm = normalize(dpw);
                                             let strength = 10.0;
-                                            fx += norm.0 * (DIAMETER*DIAMETER - d_square)*strength;
-                                            fy += norm.1 * (DIAMETER*DIAMETER - d_square)*strength;
-                                            fz += norm.2 * (DIAMETER*DIAMETER - d_square)*strength;
+                                            fx += norm.0
+                                                * (DIAMETER * DIAMETER - d_square)
+                                                * strength;
+                                            fy += norm.1
+                                                * (DIAMETER * DIAMETER - d_square)
+                                                * strength;
+                                            fz += norm.2
+                                                * (DIAMETER * DIAMETER - d_square)
+                                                * strength;
                                         }
                                         if d_square < DIAMETER * DIAMETER {
                                             // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
@@ -252,22 +251,26 @@ fn compute(arg: &mut ComputeArgs) {
                             }
                         }
                     }
-                    let delta_time = 1.0/60.0;
+                    let delta_time = 1.0 / 60.0;
                     let acc_x = fx / p1.m;
                     let acc_y = fy / p1.m;
                     let acc_z = fz / p1.m;
                     let max_speed = 1.0;
-                    let speed_x = (p1.x - p1.x_old + acc_x * delta_time + dx_collision).max(-max_speed).min(max_speed);
-                    let speed_y = (p1.y - p1.y_old + acc_y * delta_time + dy_collision).max(-max_speed).min(max_speed);
-                    let speed_z = (p1.z - p1.z_old + acc_z * delta_time + dz_collision).max(-max_speed).min(max_speed);
-
+                    let speed_x = (p1.x - p1.x_old + acc_x * delta_time + dx_collision)
+                        .max(-max_speed)
+                        .min(max_speed);
+                    let speed_y = (p1.y - p1.y_old + acc_y * delta_time + dy_collision)
+                        .max(-max_speed)
+                        .min(max_speed);
+                    let speed_z = (p1.z - p1.z_old + acc_z * delta_time + dz_collision)
+                        .max(-max_speed)
+                        .min(max_speed);
                     let x = (p1.x + speed_x + 1.0).fract();
                     let y = (p1.y + speed_y + 1.0).fract();
                     let z = (p1.z + speed_z + 1.0).fract() * ALLOW_Z;
                     let x_old = x - speed_x;
                     let y_old = y - speed_y;
                     let z_old = z - speed_z * ALLOW_Z;
-
                     let i: usize = ((x * dr.width) % dr.width).floor() as usize;
                     let j: usize = ((y * dr.height) % dr.height).floor() as usize;
                     dw_pids[i][j].push(*pid);
@@ -347,14 +350,14 @@ fn init_thread(data: &Arc<RwLock<Data>>) {
     d.pids = vec![vec![Vec::with_capacity(BASE_CAPACITY); BLOCKS]; BLOCKS];
     let mut rng = rand::thread_rng();
     for _ in 0..COUNT_PER_THREAD {
-        let a = 0.00001;
+        let a = 0.00002;
         add_part(&mut AddPartArgs {
             x: rng.gen::<f64>(),
             y: rng.gen::<f64>(),
-            z: rng.gen::<f64>() * ALLOW_Z * 0.5,
+            z: rng.gen::<f64>() * ALLOW_Z,
             dx: rng.gen::<f64>() * a - a * 0.5,
             dy: rng.gen::<f64>() * a - a * 0.5,
-            dz: (rng.gen::<f64>() * a - a * 0.5) * ALLOW_Z * 0.0,
+            dz: (rng.gen::<f64>() * a - a * 0.5) * ALLOW_Z,
             data: &mut d,
         });
     }
@@ -370,24 +373,6 @@ fn init_first(data: &Arc<RwLock<Data>>) {
         dz: 0.0 * ALLOW_Z,
         data: &mut d,
     });
-    // add_part(&mut AddPartArgs {
-    //     x: 0.75,
-    //     y: 0.75,
-    //     z: 0.0,
-    //     dx: 0.0,
-    //     dy: 0.0,
-    //     dz: 0.0 * ALLOW_Z,
-    //     data: &mut d,
-    // });
-    // add_part(&mut AddPartArgs {
-    //     x: 0.25,
-    //     y: 0.25,
-    //     z: 0.0,
-    //     dx: 0.0,
-    //     dy: 0.0,
-    //     dz: 0.0 * ALLOW_Z,
-    //     data: &mut d,
-    // });
     add_part(&mut AddPartArgs {
         x: 0.65,
         y: 0.5,
@@ -397,60 +382,4 @@ fn init_first(data: &Arc<RwLock<Data>>) {
         dz: 0.0 * ALLOW_Z,
         data: &mut d,
     });
-    // add_part(&mut AddPartArgs {
-    //     x: rng.gen::<f64>(),
-    //     y: rng.gen::<f64>(),
-    //     z: rng.gen::<f64>() * ALLOW_Z,
-    //     dx: 0.0,
-    //     dy: 0.0,
-    //     dz: 0.0 * ALLOW_Z,
-    //     data: &mut d,
-    // });
-    // add_part(&mut AddPartArgs {
-    //     x: rng.gen::<f64>(),
-    //     y: rng.gen::<f64>(),
-    //     z: rng.gen::<f64>() * ALLOW_Z,
-    //     dx: 0.0,
-    //     dy: 0.0,
-    //     dz: 0.0 * ALLOW_Z,
-    //     data: &mut d,
-    // });
-
-    // add_part(&mut AddPartArgs {
-    //     x: 0.15,
-    //     y: 0.5,
-    //     z: 0.1,
-    //     dx: 0.001,
-    //     dy: 0.01,
-    //     dz: 0.01,
-    //     data: &mut d,
-    // });
-    // add_part(&mut AddPartArgs {
-    //     x: 0.25,
-    //     y: 0.25,
-    //     z: 0.0,
-    //     dx: 0.0,
-    //     dy: 0.0,
-    //     dz: 0.0,
-    //     data: &mut d,
-    // });
-    // add_part(&mut AddPartArgs {
-    //     x: 0.75,
-    //     y: 0.75,
-    //     z: 0.0,
-    //     dx: 0.001,
-    //     dy: 0.001,
-    //     dz: 0.0,
-    //     data: &mut d,
-    // });
-    // add_part(&mut AddPartArgs {
-    //     x: 0.5,
-    //     y: 0.5,
-    //     z: 0.5,
-    //     dx: -0.00001,
-    //     dy: 0.0,
-    //     dz: 0.0,
-    //     data: &mut d,
-    // });
-
 }

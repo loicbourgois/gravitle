@@ -94,8 +94,8 @@ if (x.server === 'local') {
     image_height: 512,
     fov: 65,
     clipping: {
-      near: 0.1,
-      far: 1000
+      near: 0.01,
+      far: 5
     }
   })
   // canvas_renderer.render({

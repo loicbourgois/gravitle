@@ -1,9 +1,9 @@
 #![deny(warnings)]
 //mod main_hashmap;
 //mod server_1;
-mod server_2;
-mod part;
 mod maths3d;
+mod part;
+mod server_2;
 //#[cfg(test)]
 //mod tests;
 fn main() {
