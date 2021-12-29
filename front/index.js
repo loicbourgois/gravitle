@@ -12,10 +12,11 @@ function player_id() {
   return uuid.v4()
 }
 const x = {
-  server: {
-    host: '127.0.0.1',
-    port: 8000,
-  }
+  // server: {
+  //   host: '127.0.0.1',
+  //   port: 8000,
+  // }
+  server: 'local'
 }
 if (x.server === 'local') {
   webgpu_server.serve({
