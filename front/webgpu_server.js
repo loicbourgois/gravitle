@@ -267,9 +267,18 @@ async function serve(x) {
       if (d.command === 'add_ship') {
         x.entity_id_max += 1;
         console.log(x.entity_id_max)
+        let x_ = Math.random()
+        let y_ = Math.random()
+        if (d.x !== undefined) {
+          x_ = d.x
+        }
+        if (d.y !== undefined) {
+          y_ = d.y
+        }
+        console.log(d)
         add_ship({
-          x: Math.random(),
-          y: Math.random(),
+          x: x_,
+          y: y_,
           plan: d.plan,
           buffer_write: buffer_write,
           grid_width: x.grid_width,

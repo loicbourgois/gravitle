@@ -5,6 +5,9 @@ import {
 } from "./util";
 import * as render_shader from "./shaders/render";
 import {materials} from "./materials";
+import {
+  update_fps
+} from "./renderer_util";
 async function render(x) {
   const start = performance.now();
   if (x.materials === undefined) {

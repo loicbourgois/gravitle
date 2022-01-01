@@ -1,7 +1,6 @@
 import {
   last,
   len,
-  //assert,
 } from "./util";
 function update_fps(x) {
   if (len(x.fps_counter) > 0) {

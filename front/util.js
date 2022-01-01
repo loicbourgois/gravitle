@@ -1,3 +1,4 @@
+import * as uuid from 'uuid';
 function assert(x) {
   if (!x) {
     console.error("failed condition");
@@ -13,8 +14,12 @@ function last(x) {
     return undefined
   }
 }
+function player_id() {
+  return uuid.v4()
+}
 export {
-assert,
+  assert,
   last,
   len,
+  player_id,
 }
