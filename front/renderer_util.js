@@ -2,6 +2,13 @@ import {
   last,
   len,
 } from "./util";
+//  x: {
+//    fps_counter_length: int,
+//    fps_counter: [{
+//      start,
+//      end,
+//    }]
+//  }
 function update_fps(x) {
   if (len(x.fps_counter) > 0) {
     while (len(x.fps_counter) > x.fps_counter_length) {

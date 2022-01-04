@@ -4,12 +4,16 @@ import * as webgpu_renderer from "../webgpu_renderer";
 import {memory} from "../../wasm/pkg/wasm_bg.wasm"
 import * as render_reset from "../shaders/render_reset";
 import * as render_trace from "../shaders/render_trace";
+import {
+  update_fps
+} from "../renderer_util";
 const float_size = 4
 const part_args = 6
 const part_size = part_args * float_size
 const max_parts_sqrt = 64
-const data_size = 6*4;
+const data_size = 12 * float_size;
 const max_parts = max_parts_sqrt * max_parts_sqrt // 4096
+const RESOLUTION = 0.5
 function gallery () {
   let webgpu = false;
   const kvs = window.location.search.replace("?", "").split("&")
@@ -26,10 +30,11 @@ function gallery () {
 <div id="menu">
   <a href="/playground">Playground</a>
   <a href="/gallery">Gallery</a>
+  <a href="/gallery?webgpu=true">Gallery (WebGPU)</a>
 </div>
   <canvas id="minimap"></canvas>
   <div>
-    Zoom: <input type="range" min="0" max="1000" value="00" id="zoom_slider">
+    Zoom: <input type="range" min="0" max="1000" value="0" id="zoom_slider">
   </div>
   <div>
     x: <input type="range" min="0" max="1000" value="500" id="x_slider">
@@ -45,53 +50,61 @@ function gallery () {
   <p id="p_pids"></p>
 </div>`
   const server = wasm.Server.new(10, 10);
-  server.add_part(
-    wasm.Point.new(0.0, 0.5),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.5, 0.0),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.5, 0.5),
-    wasm.Point.new(0.0, 0.0)
-  );
-
-  server.add_part(
-    wasm.Point.new(0.5, 0.9999),
-    wasm.Point.new(0.0, 0.0)
-  );
-
-  server.add_part(
-    wasm.Point.new(0.5, 0.75),
-    wasm.Point.new(0.0, 0.0)
-  );
-
-  server.add_part(
-    wasm.Point.new(0.5, 0.55),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.55, 0.55),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.5, 0.25),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.75, 0.5),
-    wasm.Point.new(0.0, 0.0)
-  );
-  server.add_part(
-    wasm.Point.new(0.5, 0.75),
-    wasm.Point.new(0.0, 0.0)
-  );
+  // server.add_part(
+  //   wasm.Point.new(0.0, 0.5),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.0),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.5),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  //
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.9999),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  //
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.75),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  //
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.55),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.55, 0.55),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.25),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.75, 0.5),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   wasm.Point.new(0.5, 0.75),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
   // server.add_part(
   //   wasm.Point.new(0.75, 0.75),
   //   wasm.Point.new(0.001, 0.00)
   // );
+
+  for (var i = 0; i < 500; i++) {
+    server.add_part(
+      wasm.Point.new(Math.random(), Math.random()),
+      wasm.Point.new(Math.random()*0.001-0.0005, Math.random()*0.001-0.0005)
+    );
+  }
+
   run(server)
   if (webgpu === true) {
     if ("gpu" in navigator) {
@@ -117,8 +130,8 @@ async function setup_webgpu(server) {
   }
   const x = {
     data_buffer_size: server_data.buffer_size,
-    image_width: Math.floor(window.innerWidth),
-    image_height: Math.floor(window.innerHeight),
+    image_width: Math.floor(window.innerWidth*RESOLUTION),
+    image_height: Math.floor(window.innerHeight*RESOLUTION),
     max_parts_sqrt: max_parts_sqrt,
   }
   x.device = await adapter.requestDevice();
@@ -135,10 +148,10 @@ async function setup_webgpu(server) {
       size: image_buffer_size(x),
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     }),
-    // out_previous: x.device.createBuffer({
-    //   size: image_buffer_size(x),
-    //   usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
-    // }),
+    previous_img: x.device.createBuffer({
+      size: image_buffer_size(x),
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
+    }),
     read: x.device.createBuffer({
       size: image_buffer_size(x),
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
@@ -209,7 +222,7 @@ async function setup_webgpu(server) {
         {
           binding: 0,
           resource: {
-            buffer: x.buffers.in
+            buffer: x.buffers.previous_img
           }
         },{
           binding: 1,
@@ -241,7 +254,7 @@ async function setup_webgpu(server) {
       ]
     }),
   }
-  x.workgroup_size = 8
+  x.workgroup_size = 16
   x.dispatch = Math.ceil(max_parts_sqrt / x.workgroup_size);
   x.compute_pipelines = {
     reset: x.device.createComputePipeline({
@@ -276,9 +289,13 @@ async function setup_webgpu(server) {
   render_webgpu(server, x, ctx)
 }
 async function render_webgpu(server, x, ctx) {
-
   const start = performance.now();
-
+  if (x.fps_counter === undefined) {
+    x.fps_counter = [];
+  }
+  if (x.fps_counter_length === undefined) {
+    x.fps_counter_length = 100;
+  }
   const cd_max = Math.max(canvas.width, canvas.height)
   const camera = {
     x: (document.getElementById("x_slider").value )/1000,
@@ -291,13 +308,21 @@ async function render_webgpu(server, x, ctx) {
   const oi = (1.0 - 1.0 / camera.zoom) * 0.5
   const zok_x = oi * canvas.width / cd_max;
   const zok_y = oi * canvas.height / cd_max;
-  const aa_x = (cd_max - canvas.width) / cd_max * 0.5;
-  const aa_y = (cd_max - canvas.height)/ cd_max * 0.5;
+  // const aa_x = (cd_max - canvas.width) / cd_max * 0.5;
+  // const aa_y = (cd_max - canvas.height)/ cd_max * 0.5;
+  const x_min = camera.x - 0.5/ camera.zoom* x.image_width  / cd_max;
+  const y_min = camera.y - 0.5/ camera.zoom* x.image_height / cd_max;
+  const x_max = x_min + 1.0   / camera.zoom * x.image_width  / cd_max ;
+  const y_max = y_min + 1.0   / camera.zoom * x.image_height  / cd_max;
   for (let i = 0 ; i < server.parts_count() ; i++ ) {
     const x = parts[i*part_args + 0]
     const y = parts[i*part_args + 1]
     const d = parts[i*part_args + 4]
-    render_p_minimap(x, y, d, ctx_minimap)
+    if (x_min <= x && x <= x_max && y_min <= y && y <= y_max) {
+      render_p_minimap(x, y, d, ctx_minimap, false)
+    } else {
+      render_p_minimap(x, y, d, ctx_minimap, true)
+    }
   }
   let write_map = x.buffers.write.mapAsync(GPUMapMode.WRITE);
   let write_data_map = x.buffers.write_data.mapAsync(GPUMapMode.WRITE);
@@ -305,7 +330,6 @@ async function render_webgpu(server, x, ctx) {
   await write_data_map;
   new Float32Array(x.buffers.write.getMappedRange()).set( parts );
   const part_count = server.parts_count()
-  //console.log(part_count)
   new Float32Array(x.buffers.write_data.getMappedRange()).set( [
     camera.zoom,
     camera.x,
@@ -313,12 +337,16 @@ async function render_webgpu(server, x, ctx) {
     part_count,
     x.image_width,
     x.image_height,
+    x_min,
+    y_min,
+    x_max,
+    y_max,
+    performance.now(),
+    server.get_step()/1.0
   ] );
-  // console.log(camera.zoom)
-  // console.log(1.0-1.0/camera.zoom)
   x.buffers.write.unmap()
   x.buffers.write_data.unmap()
-  if (server.get_step() > 2)
+
   {
     const command_encoder = x.device.createCommandEncoder();
     const pass_encoder = command_encoder.beginComputePass();
@@ -329,7 +357,7 @@ async function render_webgpu(server, x, ctx) {
     const gpu_commands = command_encoder.finish();
     x.device.queue.submit([gpu_commands]);
   }
-  if (server.get_step() > 2)
+
   {
     const command_encoder = x.device.createCommandEncoder();
     command_encoder.copyBufferToBuffer(x.buffers.write, 0, x.buffers.in, 0 , x.data_buffer_size);
@@ -339,7 +367,8 @@ async function render_webgpu(server, x, ctx) {
     pass_encoder.setBindGroup(0, x.bind_groups.trace);
     pass_encoder.dispatch(x.dispatch, x.dispatch);
     pass_encoder.endPass();
-    command_encoder.copyBufferToBuffer(x.buffers.out, 0, x.buffers.read, 0 , image_buffer_size(x));
+    command_encoder.copyBufferToBuffer(x.buffers.out, 0, x.buffers.read, 0, image_buffer_size(x));
+    command_encoder.copyBufferToBuffer(x.buffers.out, 0, x.buffers.previous_img, 0, image_buffer_size(x));
     const gpu_commands = command_encoder.finish();
     x.device.queue.submit([gpu_commands]);
   }
@@ -354,11 +383,16 @@ async function render_webgpu(server, x, ctx) {
     0, 0
   );
   x.buffers.read.unmap()
+  update_fps(x)
+  const end = performance.now();
+  x.fps_counter.push({
+    start: start,
+    end: end,
+    duration: end - start
+  })
   window.requestAnimationFrame(function () {
     render_webgpu(server, x, ctx)
   })
-
-  // const end = performance.now();
   // //console.log(end-start);
   //
   // window.setTimeout(async function(){
@@ -396,7 +430,12 @@ function render_minimap(camera, cd_max) {
   ctx_minimap.fillStyle = "#000"
   return ctx_minimap
 }
-function render_p_minimap(x, y, d, ctx_minimap) {
+function render_p_minimap(x, y, d, ctx_minimap, light) {
+  if (light) {
+    ctx_minimap.fillStyle = "#888"
+  } else {
+    ctx_minimap.fillStyle = "#000"
+  }
   ctx_minimap.beginPath();
   ctx_minimap.arc(x*minimap.width, y*minimap.height, d*minimap.width*0.5, 0, 2 * Math.PI);
   ctx_minimap.fill();
@@ -439,6 +478,7 @@ function render_canvas(server) {
     const y = parts[i*part_args + 1]
     const d = parts[i*part_args + 4]
     render_p_minimap(x, y, d, ctx_minimap)
+    ctx.fillStyle = "#aaa"
     ctx.beginPath();
     ctx.arc(
       (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * cd_max,

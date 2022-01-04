@@ -15,7 +15,7 @@ wasm-bindgen = "0.2.63"
 gravitle = { path = "../gravitle" }
 uuid = { version = "*", features = ["v4", "wasm-bindgen"] }
 # getrandom = { version = "*", features = ["wasm-bindgen", "js"] }
-# rand = "*"
+rand = "*"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

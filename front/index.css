@@ -11,11 +11,9 @@ body {
   background: #000;
 }
 canvas {
-  /*background: #f0f;*/
   image-rendering: pixelated;
 }
 #canvas {
-  background: #330;
   position: fixed;
 }
 #panel {
@@ -23,7 +21,7 @@ canvas {
   z-index: 1;
 }
 #minimap {
-  width: 32em;
-  height: 32em;
+  width: 16em;
+  height: 16em;
   background: blueviolet;
 }

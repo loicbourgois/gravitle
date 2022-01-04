@@ -2,6 +2,7 @@ mod utils;
 use utils::{
     log
 };
+use rand;
 // use rand::Rng;
 use uuid::Uuid;
 use std::ops;
@@ -9,7 +10,7 @@ use std::ops;
 use std::collections::{HashMap,HashSet};
 use wasm_bindgen::prelude::wasm_bindgen;
 const BASE_CAPACITY: usize = 2;
-const DIAMETER:float = 0.05;
+const DIAMETER:float = 0.01;
 const MASS: float = 1.0;
 type float = f32;
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -33,6 +34,15 @@ impl ops::Sub<&Point> for &Point {
         Point {
             x: self.x - p2.x,
             y: self.y - p2.y,
+        }
+    }
+}
+impl ops::Mul<&Point> for &Point {
+    type Output = Point;
+    fn mul(self, p2: &Point) -> Point {
+        Point {
+            x: self.x * p2.x,
+            y: self.y * p2.y,
         }
     }
 }
@@ -139,9 +149,18 @@ impl Server {
                         y: (p1.p.y + 1.0 + v.y).fract(),
                     };
                     let block = Block::new(&p, &self.blocks);
+                    let pp = &p - &v;
+                    let delta = 0.0005;
+                    let mx_speed = 0.001;
+                    let mut pp_ = &pp * &Point {
+                        x: (1.0 - delta*0.5 + rand::random::<float>() * delta),
+                        y: (1.0 - delta*0.5 + rand::random::<float>() * delta),
+                    };
+                    pp_.x = pp_.x.max(p.x-mx_speed).min(p.x+mx_speed);
+                    pp_.y = pp_.y.max(p.y-mx_speed).min(p.y+mx_speed);
                     new_parts.insert(*pid, Part{
                         p:  p,
-                        pp: &p - &v,
+                        pp: pp_,
                         d:  p1.d,
                         m:  p1.m,
                     });

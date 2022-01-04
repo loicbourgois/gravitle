@@ -18,23 +18,30 @@ struct Part {
   parts: array<Part>;
 };
 struct Pixel {
-  r: u32;
-  g: u32;
-  b: u32;
-  a: u32;
+  r: i32;
+  g: i32;
+  b: i32;
+  a: i32;
 };
 [[block]] struct Image {
   pix: array<Pixel, ${x.image_width * x.image_height}>;
 };
-// [[group(0), binding(0)]] var<storage, read>   input     : Parts;
+[[group(0), binding(0)]] var<storage, read>   input     : Image;
 [[group(0), binding(1)]] var<storage, write>  output    : Image;
 [[stage(compute), workgroup_size(1, 1)]]
 fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   let pix_id = gid.x + gid.y * ${x.image_width}u;
-  output.pix[pix_id].r = 0u;
-  output.pix[pix_id].g = 0u;
-  output.pix[pix_id].b = 0u;
-  output.pix[pix_id].a = 1u;
+  // output.pix[pix_id].r = max(input.pix[pix_id].r - 1u, 0u);
+  // output.pix[pix_id].g = max(input.pix[pix_id].g - 1u, 0u);
+  // output.pix[pix_id].b = max(input.pix[pix_id].b - 1u, 0u);
+
+  let fade = 10;
+
+  output.pix[pix_id].r = min(max(input.pix[pix_id].r - fade, 0), 255);
+  output.pix[pix_id].g = min(max(input.pix[pix_id].g - fade, 0), 255);
+  output.pix[pix_id].b = min(max(input.pix[pix_id].b - fade, 0), 255);
+
+  output.pix[pix_id].a = 255;
 }
 `
 }
