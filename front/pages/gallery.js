@@ -7,13 +7,24 @@ import * as render_trace from "../shaders/render_trace";
 import {
   update_fps
 } from "../renderer_util";
+import {
+  random_int
+} from "../maths";
 const float_size = 4
-const part_args = 6
+const part_args = 11
 const part_size = part_args * float_size
 const max_parts_sqrt = 64
 const data_size = 12 * float_size;
 const max_parts = max_parts_sqrt * max_parts_sqrt // 4096
 const RESOLUTION = 0.5
+const kind = {
+  FIREFLY: 1,
+  METAL: 2,
+  TURBO: 3,
+  DIATOM: 4,
+  NEURON: 5,
+  MOUTH: 6,
+}
 function gallery () {
   let webgpu = false;
   const kvs = window.location.search.replace("?", "").split("&")
@@ -34,13 +45,13 @@ function gallery () {
 </div>
   <canvas id="minimap"></canvas>
   <div>
-    Zoom: <input type="range" min="0" max="1000" value="0" id="zoom_slider">
+    Zoom: <input type="range" min="0" max="1000" value="800" id="zoom_slider">
   </div>
   <div>
-    x: <input type="range" min="0" max="1000" value="500" id="x_slider">
+    x: <input type="range" min="0" max="1000" value="00" id="x_slider">
   </div>
   <div>
-    y: <input type="range" min="0" max="1000" value="500" id="y_slider">
+    y: <input type="range" min="0" max="1000" value="0" id="y_slider">
   </div>
   <p id="p_step"></p>
   <p id="p_fps"></p>
@@ -49,62 +60,109 @@ function gallery () {
   <p id="p_compute_duration"></p>
   <p id="p_pids"></p>
 </div>`
-  const server = wasm.Server.new(10, 10);
-  // server.add_part(
-  //   wasm.Point.new(0.0, 0.5),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.0),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.5),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  //
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.9999),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  //
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.75),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  //
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.55),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.55, 0.55),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.25),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.75, 0.5),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.5, 0.75),
-  //   wasm.Point.new(0.0, 0.0)
-  // );
-  // server.add_part(
-  //   wasm.Point.new(0.75, 0.75),
-  //   wasm.Point.new(0.001, 0.00)
-  // );
+  const server = wasm.Server.new(50, 50);
 
-  for (var i = 0; i < 500; i++) {
-    server.add_part(
-      wasm.Point.new(Math.random(), Math.random()),
-      wasm.Point.new(Math.random()*0.001-0.0005, Math.random()*0.001-0.0005)
-    );
+
+    // server.add_part(
+    //   kind.DIATOM,
+    //   wasm.Point.new(0.0, 0.05),
+    //   wasm.Point.new(0.0, 0.0)
+    // );
+
+
+  const plan = wasm.Plan.new(kind.NEURON, 0.25, kind.NEURON);
+  plan.add(0, 1, kind.MOUTH); // 2
+  plan.add(1, 0, kind.METAL); // 3
+  let k =  kind.TURBO;
+  //k = kind.METAL
+  plan.add(1, 3, k); // 4
+  plan.add(3, 0, k); // 5
+
+  plan.add(1, 4, kind.METAL); // 6
+  plan.add(5, 0, kind.METAL); // 7
+
+  plan.add(1, 6, kind.METAL);
+  plan.add(7, 0, kind.METAL);
+
+  plan.add(6, 4, kind.METAL);
+  plan.add(5, 7, kind.METAL);
+
+
+  server.add_entity(
+    plan,
+    wasm.Point.new(0.0, 0.0)
+  )
+
+  for (var i = 0; i < 50; i++) {
+    server.add_entity(
+      plan,
+      wasm.Point.new(Math.random(), Math.random())
+    )
   }
 
+
+  // server.add_entity(
+  //   wasm.Plan.new(
+  //     kind.NEURON, 0.5, kind.TURBO
+  //     //[0, 1, kind.MOUTH],
+  //     //[1, 0, kind.METAL],
+  //   ),
+  //   wasm.Point.new(0.0, 0.0),
+  // )
+
+
+  //const plan = [
+  //     [0, 1, 'METAL'],
+  //     [0, 2, 'RADAR'],
+  //     [0, 3, 'METAL'],
+  //     [0, 4, 'TURBO'],
+  //     [2, 1, 'RADAR'],
+  //     [6, 1, 'METAL'],
+  //     [7, 1, 'TURBO'],
+  //     [1, 0, 'METAL'],
+  //   ]
+
+  // server.add_part(
+  //   kind.METAL,
+  //   wasm.Point.new(0.0, 0.0),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   kind.METAL,
+  //   wasm.Point.new(0.0, 0.01),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  // server.add_part(
+  //   kind.TURBO,
+  //   wasm.Point.new(0.99, 0.015),
+  //   wasm.Point.new(0.0, 0.0)
+  // );
+  //
+  //
+  // for (var i = 0; i < 1000; i++) {
+  //   server.add_part(
+  //     random_int(1, 3),
+  //     wasm.Point.new(Math.random(), Math.random()),
+  //     wasm.Point.new(Math.random()*0.001-0.0005, Math.random()*0.001-0.0005)
+  //   );
+  // }
+  // for (var i = 0; i < 300; i++) {
+  //   server.add_part(
+  //     kind.METAL,
+  //     wasm.Point.new(Math.random(), Math.random()),
+  //     wasm.Point.new(Math.random()*0.001-0.0005, Math.random()*0.001-0.0005)
+  //   );
+  // }
+  // server.add_part(
+  //   kind.METAL,
+  //   wasm.Point.new(0.5, 0.5),
+  //   wasm.Point.new(0.0, 0.0),
+  // );
+  // server.add_part(
+  //   kind.METAL,
+  //   wasm.Point.new(0.501, 0.53),
+  //   wasm.Point.new(0.0, -0.001),
+  // );
   run(server)
   if (webgpu === true) {
     if ("gpu" in navigator) {
@@ -304,16 +362,17 @@ async function render_webgpu(server, x, ctx) {
   }
   const ctx_minimap = render_minimap(camera, cd_max)
   const minimap = ctx_minimap.canvas
-  const parts = new Float32Array(memory.buffer, server.parts_ptr(), part_args * server.parts_count());
+  const parts = new Float32Array(new Float32Array(memory.buffer, server.parts_ptr(), part_args * server.parts_count()))
+
   const oi = (1.0 - 1.0 / camera.zoom) * 0.5
   const zok_x = oi * canvas.width / cd_max;
   const zok_y = oi * canvas.height / cd_max;
   // const aa_x = (cd_max - canvas.width) / cd_max * 0.5;
   // const aa_y = (cd_max - canvas.height)/ cd_max * 0.5;
-  const x_min = camera.x - 0.5/ camera.zoom* x.image_width  / cd_max;
-  const y_min = camera.y - 0.5/ camera.zoom* x.image_height / cd_max;
-  const x_max = x_min + 1.0   / camera.zoom * x.image_width  / cd_max ;
-  const y_max = y_min + 1.0   / camera.zoom * x.image_height  / cd_max;
+  const x_min = camera.x - 0.5 / camera.zoom* x.image_width  / cd_max;
+  const y_min = camera.y - 0.5 / camera.zoom* x.image_height / cd_max;
+  const x_max = x_min + 1.0    / camera.zoom * x.image_width  / cd_max ;
+  const y_max = y_min + 1.0    / camera.zoom * x.image_height  / cd_max;
   for (let i = 0 ; i < server.parts_count() ; i++ ) {
     const x = parts[i*part_args + 0]
     const y = parts[i*part_args + 1]
@@ -344,6 +403,8 @@ async function render_webgpu(server, x, ctx) {
     performance.now(),
     server.get_step()/1.0
   ] );
+
+
   x.buffers.write.unmap()
   x.buffers.write_data.unmap()
 
@@ -407,7 +468,7 @@ function data_buffer_size(x) {
 }
 function render_minimap(camera, cd_max) {
   const minimap = document.getElementById("minimap");
-  const resolution = 512
+  const resolution = 256
   minimap.width  = resolution;
   minimap.height = resolution;
   const ctx_minimap = minimap.getContext("2d");
