@@ -25,11 +25,14 @@ fn main() {
                 .subcommand(SubCommand::with_name("server")),
         )
         .subcommand(SubCommand::with_name("watch"))
+        .subcommand(SubCommand::with_name("poc"))
         .get_matches();
     if let Some(_matches) = matches.subcommand_matches("build") {
         build();
     } else if let Some(_matches) = matches.subcommand_matches("format") {
         format();
+    } else if let Some(_matches) = matches.subcommand_matches("poc") {
+        poc();
     } else if let Some(matches_2) = matches.subcommand_matches("start") {
         if let Some(_matches) = matches_2.subcommand_matches("client") {
             start_client();
@@ -43,6 +46,10 @@ fn main() {
     } else if let Some(_matches) = matches.subcommand_matches("watch") {
         watch();
     }
+}
+fn poc() {
+    runshellcmd("Poc", Command::new("python")
+        .arg(format!("{}/poc.py", base_dir())));
 }
 fn runshellcmd(title: &str, command: &mut Command) -> bool {
     println!("[ start ] {}", title);

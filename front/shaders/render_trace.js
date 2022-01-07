@@ -13,6 +13,8 @@ struct Part {
   tb: f32;
   tc: f32;
   td: f32;
+  direction_x: f32;
+  direction_y:  f32;
 };
 struct Kind {
   FIREFLY: u32;
@@ -21,8 +23,10 @@ struct Kind {
   DIATOM: u32;
   NEURON: u32;
   MOUTH:  u32;
+  CORE:  u32;
+  EGG:  u32;
 };
-let kind: Kind = Kind(1u, 2u, 3u, 4u, 5u, 6u);
+let kind: Kind = Kind(1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u);
 [[block]] struct Data {
   zoom: f32;
   center_x: f32;
@@ -78,12 +82,12 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       let y = part_y * zoom;
       let cd_max = max(data.image_height, data.image_width);
       let d = max(min(0.1, part.d), 0.0001);
-      let r  = d * 0.5 * zoom;
+      let rayon  = d * 0.5 * zoom;
       let cd_min = min(data.image_height, data.image_width);
       let resolution = 0.0002 * zoom;
       let boo = cd_max * 0.5 * (zoom - 1.0) ;
-      for (var i = -r ; i < r ; i=i+resolution ) {
-        for (var j = -r ; j < r ; j=j+resolution ) {
+      for (var i = -rayon ; i < rayon ; i=i+resolution ) {
+        for (var j = -rayon ; j < rayon ; j=j+resolution ) {
           let xx = ( (x+i) * cd_max ) - (cd_max - data.image_width) * 0.5 - boo + (0.5 - data.center_x) * zoom * cd_max;
           let yy = ( (y+j) * cd_max ) - (cd_max - data.image_height)* 0.5 - boo + (0.5 - data.center_y) * zoom * cd_max;
           if (xx < data.image_width) {
@@ -93,37 +97,52 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
             let angle_ = fract(1.75 - (0.5 - 0.5*j/abs(j) * acos(normalize(vec2<f32>(i, j)).x) * ${UNPI}));
             let angle = fract(angle_ + data.time * 0.00025);
             if ( dc < 1.0) {
+              var r = 0.0;
+              var g = 0.0;
+              var b = 0.0;
               if (part.kind == kind.FIREFLY) {
-                output.pix[pix_id].r = 150u + u32(255.0 * dc );
-                output.pix[pix_id].g = u32(255.0 * sin(angle*100.0)*dc);
-                output.pix[pix_id].b = 0u;
-                output.pix[pix_id].a = 255u;
+                // output.pix[pix_id].r = 150u + u32(255.0 * dc );
+                // output.pix[pix_id].g = u32(255.0 * sin(angle*100.0)*dc);
+                // output.pix[pix_id].b = 0u;
+                // output.pix[pix_id].a = 255u;
               } elseif (part.kind == kind.METAL) {
-                output.pix[pix_id].r = 100u;
-                output.pix[pix_id].g = 100u;
-                output.pix[pix_id].b = 200u;
-                output.pix[pix_id].a = 255u;
+                // output.pix[pix_id].r = 100u;
+                // output.pix[pix_id].g = 100u;
+                // output.pix[pix_id].b = 200u;
+                // output.pix[pix_id].a = 255u;
+              } elseif (part.kind == kind.MOUTH) {
+                r = 1.0;
+                g = 1.0;
               } elseif (part.kind == kind.DIATOM) {
-                output.pix[pix_id].r = 0u;
-                output.pix[pix_id].g = 255u;
-                output.pix[pix_id].b = 200u;
-                output.pix[pix_id].a = 255u;
+                // output.pix[pix_id].r = 0u;
+                // output.pix[pix_id].g = 255u;
+                // output.pix[pix_id].b = 200u;
+                // output.pix[pix_id].a = 255u;
               } elseif (part.kind == kind.TURBO) {
-                output.pix[pix_id].r = u32(255.0 * (0.75 + part.ta)) ;
-                output.pix[pix_id].g = 155u;
-                output.pix[pix_id].b = 0u;
-                output.pix[pix_id].a = 255u;
+                // r = 0.75 + part.ta ;
+                // g = 0.75;
+                r = 0.75;
+                g = part.ta *   (1.0-sin(dc*0.7));
               } elseif (part.kind == kind.NEURON) {
-                output.pix[pix_id].r = 255u;
-                output.pix[pix_id].g = u32(255.0 * part.ta *   (1.0-sin(dc*0.7))   );
-                output.pix[pix_id].b = 255u;
-                output.pix[pix_id].a = 255u;
+                r = 0.25;
+                g = part.ta *   (1.0-sin(dc*0.7));
+                b = part.ta *   (1.0-sin(dc*0.7));
+              } elseif (part.kind == kind.CORE) {
+                if (part.ta < 1.0) {
+                  r = 1.0 - part.ta;
+                  g = part.ta;
+                } else {
+                  b = part.ta - 1.0;
+                  g = 1.0;
+                }
               } else {
-                output.pix[pix_id].r = 255u;
-                output.pix[pix_id].g = 0u;
-                output.pix[pix_id].b = 255u;
-                output.pix[pix_id].a = 255u;
+                r = 1.0;
+                b = 1.0;
               }
+              output.pix[pix_id].r = u32(255.0 * r);
+              output.pix[pix_id].g = u32(255.0 * g);
+              output.pix[pix_id].b = u32(255.0 * b);
+              output.pix[pix_id].a = 255u;
             }
           }
         }

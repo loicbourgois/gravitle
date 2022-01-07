@@ -36,7 +36,7 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   // output.pix[pix_id].g = max(input.pix[pix_id].g - 1u, 0u);
   // output.pix[pix_id].b = max(input.pix[pix_id].b - 1u, 0u);
 
-  let fade = 20;
+  let fade = 100;
 
   output.pix[pix_id].r = min(max(input.pix[pix_id].r - fade, 0), 255);
   output.pix[pix_id].g = min(max(input.pix[pix_id].g - fade, 0), 255);

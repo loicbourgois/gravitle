@@ -8,6 +8,7 @@ pub struct CollisionResponse {
     pub force: Point,
     pub delta_position: Point,
     pub linked: bool,
+    pub colliding: bool,
 }
 
 pub fn collision(
@@ -17,21 +18,15 @@ pub fn collision(
     pid1: &u128,
     pid2: &u128,
 ) -> CollisionResponse {
+    let linked;
+    let link_strength;
     let d_square = distance_squared_wrap_around(&p1.p, &p2.p);
     let dpw = &delta_position_wrap_around(&p1.p, &p2.p);
     let diameter = (p1.d + p2.d) * 0.5;
     let d_link = diameter * 1.2;
     let d_link_squared = d_link * d_link;
-    // let do_link = true;
-    let linked;
-    let link_strength;
-    let (pid_min, pid_max) = if pid1 < pid2 {
-        (pid1, pid2)
-    } else {
-        (pid2, pid1)
-    };
-    match server.links.get(pid_min) {
-        Some(a) => match a.get(pid_max) {
+    match server.links.get(pid1) {
+        Some(a) => match a.get(pid2) {
             Some(strengh) => {
                 linked = true;
                 link_strength = strengh;
@@ -47,14 +42,11 @@ pub fn collision(
         }
     }
     let force;
-    //let linked;
     let dx_collision;
     let dy_collision;
-    if linked
-    /*&& d_square < d_link_squared*/
-    {
+    let colliding = d_square < diameter * diameter;
+    if linked {
         let norm = normalize(&dpw);
-        // let strength = 100.0;
         force = Point {
             x: norm.x * (diameter * diameter - d_square) * link_strength,
             y: norm.y * (diameter * diameter - d_square) * link_strength,
@@ -62,7 +54,7 @@ pub fn collision(
     } else {
         force = Point { x: 0.0, y: 0.0 };
     }
-    if d_square < diameter * diameter {
+    if colliding {
         // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
         let v1x = p1.p.x - p1.pp.x;
         let v1y = p1.p.y - p1.pp.y;
@@ -94,5 +86,6 @@ pub fn collision(
             y: dy_collision,
         },
         linked: linked,
+        colliding: colliding,
     }
 }
