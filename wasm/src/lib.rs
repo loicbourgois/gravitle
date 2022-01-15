@@ -11,7 +11,7 @@ use crate::{
     utils::set_panic_hook,
 };
 use rand;
-use std::collections::{HashMap,HashSet};
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 // use std::{
 //     time::{Duration,SystemTime}
@@ -99,13 +99,13 @@ pub struct Server {
     links: HashMap<u128, HashMap<u128, Float>>,
     neuro_links: HashMap<u128, Vec<(u128, Float)>>,
     total_energy: Float,
-    counters: Vec<Counter>
+    counters: Vec<Counter>,
 }
 
 const COUNTER_GLOBAL: usize = 0;
-const COUNTER_COLLISION:usize = 1;
-const COUNTER_ACTIVITY:usize = 2;
-const COUNTER_LINKED:usize = 3;
+const COUNTER_COLLISION: usize = 1;
+const COUNTER_ACTIVITY: usize = 2;
+const COUNTER_LINKED: usize = 3;
 const COUNTERS: usize = 4;
 const COUNTER_SIZE: usize = 10;
 //extern crate web_sys;
@@ -184,6 +184,10 @@ impl Server {
     }
 
     fn add_part_(&mut self, kind: Kind, p: &Point, v: &Point) -> u128 {
+        self.add_part__(kind, p, v, 0.1)
+    }
+
+    fn add_part__(&mut self, kind: Kind, p: &Point, v: &Point, diameter: Float) -> u128 {
         let block = Block::new(&p, &self.blocks);
         let pid: u128 = Uuid::new_v4().as_u128();
         self.parts.insert(
@@ -191,17 +195,14 @@ impl Server {
             Part {
                 p: *p,
                 pp: p - v,
-                d: DIAMETER*0.1,
+                d: DIAMETER * diameter,
                 m: MASS,
                 kind: kind,
                 trace_a: 0.0,
                 trace_b: 0.0,
                 trace_c: 0.0,
                 trace_d: 0.0,
-                direction: Point {
-                    x:0.0,
-                    y:0.0
-                }
+                direction: Point { x: 0.0, y: 0.0 },
             },
         );
         let mut data_map = HashMap::new();
@@ -212,7 +213,7 @@ impl Server {
             }
             Kind::Neuron => {
                 data_map.insert(DataKind::Activity, 0.0);
-                data_map.insert(DataKind::Bias, rand::random::<Float>()*2.0 - 1.0);
+                data_map.insert(DataKind::Bias, rand::random::<Float>() * 2.0 - 1.0);
             }
             _ => {}
         }
@@ -256,54 +257,68 @@ impl Server {
         let p2 = self.parts.get(pid2).unwrap();
         let d1 = self.datas.get(pid1).unwrap();
         let d2 = self.datas.get(pid2).unwrap();
-        match (p1.kind, d1.get(&DataKind::Activity), d2.get(&DataKind::Activity)) {
-            (Kind::Neuron, Some(a1), Some(a2)) => {
-                match self.neuro_links.get_mut(pid1) {
-                    Some(a) => {
-                        a.push( (*pid2, rand::random::<Float>() * 2.0 - 1.0) );
-                    }
-                    None => {
-                        self.neuro_links.insert(*pid1, vec![(*pid2, rand::random::<Float>() * 2.0 - 1.0)]);
-                    }
+        match (
+            p1.kind,
+            d1.get(&DataKind::Activity),
+            d2.get(&DataKind::Activity),
+        ) {
+            (Kind::Neuron, Some(a1), Some(a2)) => match self.neuro_links.get_mut(pid1) {
+                Some(a) => {
+                    a.push((*pid2, rand::random::<Float>() * 2.0 - 1.0));
                 }
-            }
+                None => {
+                    self.neuro_links
+                        .insert(*pid1, vec![(*pid2, rand::random::<Float>() * 2.0 - 1.0)]);
+                }
+            },
             _ => {}
         }
-        match (p2.kind, d1.get(&DataKind::Activity), d2.get(&DataKind::Activity)) {
-            (Kind::Neuron, Some(a1), Some(a2)) => {
-                match self.neuro_links.get_mut(pid2) {
-                    Some(a) => {
-                        a.push( (*pid1, rand::random::<Float>() * 2.0 - 1.0) );
-                    }
-                    None => {
-                        self.neuro_links.insert(*pid2, vec![(*pid1, rand::random::<Float>() * 2.0 - 1.0)]);
-                    }
+        match (
+            p2.kind,
+            d1.get(&DataKind::Activity),
+            d2.get(&DataKind::Activity),
+        ) {
+            (Kind::Neuron, Some(a1), Some(a2)) => match self.neuro_links.get_mut(pid2) {
+                Some(a) => {
+                    a.push((*pid1, rand::random::<Float>() * 2.0 - 1.0));
                 }
-            }
+                None => {
+                    self.neuro_links
+                        .insert(*pid2, vec![(*pid1, rand::random::<Float>() * 2.0 - 1.0)]);
+                }
+            },
             _ => {}
         }
     }
 
     pub fn add_entity(&mut self, p: &Plan, c: &Point) {
+        self.add_entity_(p, c, 0.1);
+    }
+
+    pub fn add_entity_full(&mut self, p: &Plan, c: &Point) {
+        self.add_entity_(p, c, 1.0);
+    }
+
+    pub fn add_entity_(&mut self, p: &Plan, c: &Point, diameter: Float) {
         let v = Point { x: 0.0, y: 0.0 };
         let p1 = c - &Point {
-            x: DIAMETER * 0.5 * 0.1,
+            x: DIAMETER * 0.5 * diameter,
             y: 0.0,
         };
         let p2 = c + &Point {
-            x: DIAMETER * 0.5 * 0.1,
+            x: DIAMETER * 0.5 * diameter,
             y: 0.0,
         };
         let mut coords = Vec::new();
         let mut pids = Vec::new();
         coords.push(p1);
         coords.push(p2);
-        pids.push(self.add_part_(p.k1, &p1, &v));
-        pids.push(self.add_part_(p.k2, &p2, &v));
+        pids.push(self.add_part__(p.k1, &p1, &v, diameter));
+        pids.push(self.add_part__(p.k2, &p2, &v, diameter));
         self.add_link(&pids[0], &pids[1], LINK_STRENGTH);
         for part in p.part_plans_().iter() {
             let pos = p_coords(&coords[part.a], &coords[part.b]);
-            let pid1 = self.add_part_(part.k, &pos, &v);
+            let pid1 = self.add_part__(part.k, &pos, &v, diameter);
             let p1 = self.parts[&pid1];
             for pid2 in pids.iter() {
                 let p2 = self.parts[&pid2];
@@ -368,12 +383,10 @@ impl Server {
                                             }
                                             _ => {}
                                         }
-                                        match (
-                                            d1.get(&DataKind::Energy),
-                                            d2.get(&DataKind::Energy),
-                                        ) {
+                                        match (d1.get(&DataKind::Energy), d2.get(&DataKind::Energy))
+                                        {
                                             (Some(e1), Some(e2)) => {
-                                                energy_to_add += (e2-e1) * 0.1;
+                                                energy_to_add += (e2 - e1) * 0.1;
                                             }
                                             _ => {}
                                         }
@@ -383,11 +396,9 @@ impl Server {
                                             d1.get(&DataKind::Energy),
                                             d2.get(&DataKind::Energy),
                                             p1.kind,
-                                            p2.kind
+                                            p2.kind,
                                         ) {
-                                            (true, Some(_), Some(_), Kind::Mouth, Kind::Mouth) => {
-
-                                            }
+                                            (true, Some(_), Some(_), Kind::Mouth, Kind::Mouth) => {}
                                             (true, Some(_), Some(e2), Kind::Mouth, _) => {
                                                 energy_to_add += e2 * 0.5;
                                             }
@@ -418,11 +429,9 @@ impl Server {
                                         total_energy
                                     }
                                 }
-                                _ => {
-                                    total_energy
-                                }
+                                _ => total_energy,
                             };
-                            if (new_energy <= 0.0 ) {
+                            if (new_energy <= 0.0) {
                                 to_deletes.insert(*pid1);
                                 to_delete = true;
                             }
@@ -443,9 +452,10 @@ impl Server {
                                     for x in links {
                                         match self.datas.get(&x.0) {
                                             Some(data) => {
-                                                activity_sum_ += data.get(&DataKind::Activity).unwrap() * x.1;
+                                                activity_sum_ +=
+                                                    data.get(&DataKind::Activity).unwrap() * x.1;
                                                 weights_sum += x.1.abs();
-                                            },
+                                            }
                                             None => {
                                                 // ok
                                             }
@@ -464,7 +474,7 @@ impl Server {
                         }
                         _ => {}
                     };
-                    counter_activity += now()-counter_activity_start;
+                    counter_activity += now() - counter_activity_start;
                     let trace_a: Float;
                     let trace_b: Float;
                     let trace_c: Float;
@@ -542,7 +552,7 @@ impl Server {
                             Part {
                                 p: p,
                                 pp: pp,
-                                d: (p1.d + DIAMETER * 0.005).max(DIAMETER*0.1).min(DIAMETER),
+                                d: (p1.d + DIAMETER * 0.005).max(DIAMETER * 0.1).min(DIAMETER),
                                 m: p1.m,
                                 kind: p1.kind,
                                 trace_a: trace_a,
@@ -568,10 +578,18 @@ impl Server {
         for parent_core_pid in new_eggs.iter() {
             let core_part = self.parts.get(parent_core_pid).unwrap();
             let pos = core_part.p + core_part.direction * core_part.d * 0.5;
-            let v = Point {x:0.0, y:0.0};
+            let v = Point { x: 0.0, y: 0.0 };
             let pid = self.add_part_(Kind::Egg, &pos, &v);
-            let energy = *self.datas.get(parent_core_pid).unwrap().get(&DataKind::Energy).unwrap();
-            self.datas.get_mut(&pid).unwrap().insert(DataKind::Energy, energy);
+            let energy = *self
+                .datas
+                .get(parent_core_pid)
+                .unwrap()
+                .get(&DataKind::Energy)
+                .unwrap();
+            self.datas
+                .get_mut(&pid)
+                .unwrap()
+                .insert(DataKind::Energy, energy);
             server_total_energy += energy;
         }
         for pid1 in to_deletes.iter() {
@@ -581,7 +599,7 @@ impl Server {
                         match self.links.get_mut(pid2) {
                             Some(a) => {
                                 a.remove(pid1);
-                            },
+                            }
                             None => {}
                         }
                     }
@@ -606,10 +624,14 @@ impl Server {
                 }
                 self.counters[k].value = v_sum / (self.counters[k].values.len() as f64);
             }
-            let duration = now() -  self.counters[COUNTER_GLOBAL].start;
+            let duration = now() - self.counters[COUNTER_GLOBAL].start;
             self.counters[COUNTER_GLOBAL].values.push(duration);
-            self.counters[COUNTER_COLLISION].values.push(counter_collision);
-            self.counters[COUNTER_ACTIVITY].values.push(counter_activity);
+            self.counters[COUNTER_COLLISION]
+                .values
+                .push(counter_collision);
+            self.counters[COUNTER_ACTIVITY]
+                .values
+                .push(counter_activity);
             self.counters[COUNTER_LINKED].values.push(counter_linked);
         }
     }
@@ -625,7 +647,7 @@ impl Server {
     pub fn get_total_energy(&self) -> Float {
         self.total_energy
     }
-    pub fn get_counter_value(&self, i:usize) -> f64 {
+    pub fn get_counter_value(&self, i: usize) -> f64 {
         self.counters[i].value
     }
 }

@@ -16,8 +16,11 @@ fn main() {
         .subcommand(
             SubCommand::with_name("start")
                 .setting(clap::AppSettings::ArgRequiredElseHelp)
-                .subcommand(SubCommand::with_name("client"))
-                .subcommand(SubCommand::with_name("server")),
+                .subcommand(SubCommand::with_name("front"))
+                .subcommand(SubCommand::with_name("server"))
+                .subcommand(SubCommand::with_name("server_2"))
+                .subcommand(SubCommand::with_name("server_async"))
+                .subcommand(SubCommand::with_name("client")),
         )
         .subcommand(
             SubCommand::with_name("test")
@@ -34,10 +37,16 @@ fn main() {
     } else if let Some(_matches) = matches.subcommand_matches("poc") {
         poc();
     } else if let Some(matches_2) = matches.subcommand_matches("start") {
-        if let Some(_matches) = matches_2.subcommand_matches("client") {
-            start_client();
+        if let Some(_matches) = matches_2.subcommand_matches("front") {
+            start_front();
         } else if let Some(_matches) = matches_2.subcommand_matches("server") {
             start_server();
+        } else if let Some(_matches) = matches_2.subcommand_matches("server_2") {
+            start_server_2();
+        } else if let Some(_matches) = matches_2.subcommand_matches("server_async") {
+            start_server_async();
+        } else if let Some(_matches) = matches_2.subcommand_matches("client") {
+            start_client();
         }
     } else if let Some(matches_2) = matches.subcommand_matches("test") {
         if let Some(_matches) = matches_2.subcommand_matches("server") {
@@ -48,17 +57,26 @@ fn main() {
     }
 }
 fn poc() {
-    runshellcmd("Poc", Command::new("python")
-        .arg(format!("{}/poc.py", base_dir())));
+    runshellcmd(
+        "Poc",
+        Command::new("python").arg(format!("{}/poc.py", base_dir())),
+    );
 }
 fn runshellcmd(title: &str, command: &mut Command) -> bool {
     println!("[ start ] {}", title);
     if let Ok(mut child) = command.spawn() {
-        if child.wait().expect("error").code().unwrap() == 0 {
-            println!("[  end  ] {} done", title);
-            return true;
-        } else {
-            println!("[ error ] {} failed", title);
+        match child.wait().expect("error").code() {
+            Some(code) => {
+                if code == 0 {
+                    println!("[  end  ] {} done", title);
+                    return true;
+                } else {
+                    println!("[ error ] {} failed", title);
+                }
+            }
+            None => {
+                println!("[ error ] {} failed", title);
+            }
         }
     } else {
         println!("[ error ] {} didn't start", title);
@@ -91,13 +109,13 @@ fn build() -> bool {
                 .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
                 .current_dir(format!("{}/wasm/", base_dir())),
         )
-        && runshellcmd(
+        && (runshellcmd(
             "Fixing",
             Command::new("npm")
                 .arg("audit")
                 .arg("fix")
                 .current_dir(format!("{}/front/", base_dir())),
-        )
+        ) || true)
         && runshellcmd(
             "Installing",
             Command::new("npm")
@@ -107,29 +125,17 @@ fn build() -> bool {
         && succes();
 }
 fn format() {
-    runshellcmd(
-        "Formating cli",
-        Command::new("cargo")
-            .arg("fmt")
-            .arg("--manifest-path")
-            .arg(format!("{}/cli/Cargo.toml", base_dir())),
-    );
-    runshellcmd(
-        "Formating wasm",
-        Command::new("cargo")
-            .arg("fmt")
-            .arg("--manifest-path")
-            .arg(format!("{}/wasm/Cargo.toml", base_dir())),
-    );
-    runshellcmd(
-        "Formating server",
-        Command::new("cargo")
-            .arg("fmt")
-            .arg("--manifest-path")
-            .arg(format!("{}/server/Cargo.toml", base_dir())),
-    );
+    for project in ["cli", "client", "server", "wasm"] {
+        runshellcmd(
+            &format!("Formating {}", project),
+            Command::new("cargo")
+                .arg("fmt")
+                .arg("--manifest-path")
+                .arg(format!("{}/{}/Cargo.toml", base_dir(), project)),
+        );
+    }
 }
-fn start_client() {
+fn start_front() {
     let _ = build()
         && runshellcmd(
             "Starting client",
@@ -146,6 +152,34 @@ fn start_server() -> bool {
             .arg("run")
             .arg("--release")
             .current_dir(format!("{}/server", base_dir())),
+    );
+}
+fn start_server_2() -> bool {
+    return runshellcmd(
+        "Starting server_2",
+        Command::new("cargo")
+            .arg("run")
+            .arg("--release")
+            .current_dir(format!("{}/server_2", base_dir())),
+    );
+}
+fn start_server_async() -> bool {
+    return runshellcmd(
+        "Starting server_async",
+        Command::new("cargo")
+            .arg("run")
+            .arg("--release")
+            .env("RUST_LOG", "info")
+            .current_dir(format!("{}/server_async", base_dir())),
+    );
+}
+fn start_client() -> bool {
+    return runshellcmd(
+        "Starting client",
+        Command::new("cargo")
+            .arg("run")
+            .arg("--release")
+            .current_dir(format!("{}/client", base_dir())),
     );
 }
 fn test_server() -> bool {

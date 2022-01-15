@@ -6,15 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "*"
 tungstenite = "*"
 uuid = { version = "*", features = ["v4", "serde"] }
 serde = { version = "*", features = ["derive"]}
 serde_json = "*"
-tokio-tungstenite = "*"
-tokio = { version = "*", features = ["full"] }
-env_logger = "*"
-log = "*"
-futures-util = "*"
 bincode = "*"
 core = { path = "../core" }

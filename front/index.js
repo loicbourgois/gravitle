@@ -10,12 +10,19 @@ import {
 } from "./util";
 import {home} from "./pages/home";
 import {gallery} from "./pages/gallery";
+import {webgpu} from "./pages/webgpu";
+import {localhost_3d} from "./pages/localhost_3d";
+import {playground} from "./pages/playground";
 if (window.location.pathname === "/") {
   home()
 } else if (window.location.pathname === "/playground") {
-  console.log("/playground")
+  playground()
 } else if (window.location.pathname === "/gallery") {
   gallery()
+} else if (window.location.pathname === "/webgpu") {
+  webgpu()
+} else if (window.location.pathname === "/localhost_3d") {
+  localhost_3d()
 } else {
   console.error("404")
 }

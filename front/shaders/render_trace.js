@@ -63,7 +63,6 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   if (part_id <= u32(data.count))
   {
     let part = input.parts[part_id];
-
     var part_x = part.x;
     var part_y = part.y;
     if (part_x > data.x_max) {
@@ -84,12 +83,20 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       let d = max(min(0.1, part.d), 0.0001);
       let rayon  = d * 0.5 * zoom;
       let cd_min = min(data.image_height, data.image_width);
-      let resolution = 0.0002 * zoom;
+      let resolution = 0.00005 * zoom;
       let boo = cd_max * 0.5 * (zoom - 1.0) ;
-      for (var i = -rayon ; i < rayon ; i=i+resolution ) {
-        for (var j = -rayon ; j < rayon ; j=j+resolution ) {
-          let xx = ( (x+i) * cd_max ) - (cd_max - data.image_width) * 0.5 - boo + (0.5 - data.center_x) * zoom * cd_max;
-          let yy = ( (y+j) * cd_max ) - (cd_max - data.image_height)* 0.5 - boo + (0.5 - data.center_y) * zoom * cd_max;
+      let bup_x = (0.5 - data.center_x) * zoom * cd_max - (cd_max - data.image_width) * 0.5 - boo;
+      let bup_y = (0.5 - data.center_y) * zoom * cd_max - (cd_max - data.image_height)* 0.5 - boo;
+
+      let i_min = -rayon;
+      let i_max = rayon;
+      let j_min = -rayon;
+      let j_max = rayon;
+
+      for (var i = i_min ; i < i_max ; i=i+resolution ) {
+        for (var j = j_min ; j < j_max ; j=j+resolution ) {
+          let xx = (x+i) * cd_max + bup_x ;
+          let yy = (y+j) * cd_max + bup_y ;
           if (xx < data.image_width) {
             let pix_id = u32(xx) + u32(yy) * u32(data.image_width);
             // distance from center

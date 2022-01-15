@@ -5,8 +5,8 @@ use std::sync::RwLock;
 pub const BLOCKS: usize = 4 * 4 * 4 * 2;
 pub const CLIENT_BLOCKS: usize = BLOCKS / 2;
 const BASE_CAPACITY: usize = 10;
-const TOTAL_COUNT: i32 = 5_000;
-const THREADS: usize = 2;
+const TOTAL_COUNT: i32 = 100_000;
+const THREADS: usize = 10;
 const COUNT_PER_THREAD: i32 = TOTAL_COUNT / THREADS as i32;
 const MODULO: usize = 100;
 const TIMES_COUNT: usize = 100;
@@ -37,8 +37,6 @@ struct FirstMessage {
     request: FirstMessageRequest,
     uuid: Uuid,
 }
-// type Senders = Arc<Mutex<HashMap<u128, WebSocket<TcpStream>>>>;
-// type Receivers = Arc<Mutex<HashMap<u128, WebSocket<TcpStream>>>>;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
     pub step: usize,
@@ -144,7 +142,7 @@ fn compute(arg: &mut ComputeArgs) {
             if b {
                 break;
             }
-            thread::sleep(Duration::from_millis(1));
+            // thread::sleep(Duration::from_millis(1));
         }
     }
     let mut dw_pids: Vec<Vec<Vec<u128>>> =
