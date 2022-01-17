@@ -1,7 +1,7 @@
 use crate::data::Data;
-use crate::test2::cell_id;
-use crate::test2::HEIGHT;
-use crate::test2::WIDTH;
+use crate::gravitle::cell_id;
+use crate::gravitle::HEIGHT;
+use crate::gravitle::WIDTH;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -16,6 +16,7 @@ use tungstenite::accept;
 use tungstenite::Message;
 use tungstenite::WebSocket;
 use uuid::Uuid;
+use crate::gravitle::part_id;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -42,8 +43,10 @@ pub fn serve(senders: &Senders) {
             thread::spawn(move || {
                 let mut websocket = accept(stream.unwrap()).unwrap();
                 let message = websocket.read_message().unwrap().to_string();
-                match serde_json::from_str::<FirstMessage>(&message) {
-                    first_message => match first_message {
+
+                let first_message = serde_json::from_str::<FirstMessage>(&message);
+
+                match first_message {
                         Ok(m) => match m.request {
                             FirstMessageRequest::CreateSender => {
                                 println!("new server sender");
@@ -60,8 +63,8 @@ pub fn serve(senders: &Senders) {
                         Err(e) => {
                             println!("{:?}", e)
                         }
-                    },
-                }
+                    }
+
             });
         }
     });
@@ -78,10 +81,11 @@ pub fn send(a: &SendArgs) {
     thread::spawn(move || loop {
         let mut senders_to_delete: HashSet<u128> = HashSet::new();
         for (k, sender) in senders.lock().unwrap().iter_mut() {
-            let start_i = 340;
-            let count_i = 350;
-            let start_j = 340;
-            let count_j = 350;
+            let start_i = 0;
+            let count_i = 100;
+            let start_j = 0;
+            let count_j = 100;
+            let mut parts = Vec::new();
             let mut part_count: u32 = 0;
             for data in datas.iter() {
                 let dr = data.read().unwrap();
@@ -89,13 +93,25 @@ pub fn send(a: &SendArgs) {
                     let i = i_ % WIDTH;
                     for j_ in start_j..start_j + count_j {
                         let j = j_ % HEIGHT;
-                        part_count += dr.depths[cell_id(i, j)] as u32;
+                        let cid = cell_id(i, j);
+                        let depth = dr.depths[cid];
+                        part_count += depth as u32;
+                        for k in 0..depth {
+                            parts.push(dr.parts[part_id(cid, k)]);
+                        }
                     }
                 }
             }
             let data_client: Vec<u8> = bincode::serialize(&DataClient {
                 step: datas[0].read().unwrap().step as u32,
                 part_count: part_count,
+                parts: parts,
+                 width: WIDTH as u32,
+                height: HEIGHT as u32,
+                i_start: start_i as u32,
+                i_size: count_i as u32,
+                j_start: start_j as u32,
+                j_size: count_j as u32,
             })
             .unwrap();
             let message = Message::Binary(data_client);

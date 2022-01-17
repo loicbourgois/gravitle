@@ -1,18 +1,20 @@
 mod data;
 mod maths;
-mod part;
-mod point;
-mod test2;
+use core::part;
+use core::point;
+mod gravitle;
 mod websocket;
+mod link;
 mod websocket_async;
 type Float = f32;
 type Depth = u8;
 type CellId = usize;
+type ThreadId = u8;
 type PartId = usize;
 use std::io::Error;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let _ = env_logger::try_init();
-    test2::main().await;
+    gravitle::start().await;
     Ok(())
 }

@@ -7,7 +7,7 @@ use tokio::net::TcpListener as TokioTcpListener;
 use tokio::net::TcpStream as TokioTcpStream;
 use tungstenite::Message;
 
-pub async fn serve_async(senders: &Senders) {
+pub async fn serve_async(_senders: &Senders) {
     println!("  bobyy: ");
     let addr = env::args()
         .nth(1)
@@ -30,13 +30,13 @@ async fn accept_connection(stream: TokioTcpStream) {
         .expect("connected streams should have a peer address");
     info!("New WebSocket connection: {}", addr);
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
-    let (mut ws_sender, mut ws_receiver) = ws_stream.split();
+    let (mut ws_sender, _) = ws_stream.split();
     let mut interval = tokio::time::interval(Duration::from_millis(10));
 
     // Echo incoming WebSocket messages and send a message periodically every second.
 
     loop {
         interval.tick().await;
-        ws_sender.send(Message::Text("tick".to_owned())).await;
+        ws_sender.send(Message::Text("tick".to_owned())).await.unwrap();
     }
 }
