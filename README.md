@@ -1,9 +1,5 @@
 # Gravitle
 
-
-## Energy tranfer
-
-A: 0.5   (0.5+0.4)/2          ->  0.45
-B: 0.4   ((0.5+0.4)/2+(0.25+0.4)/2)/2 ->  0.3875
-C: 0.25  (0.4+0.25)/2         ->  0.325
-T: 1.15
+```sh
+alias g="cargo run --manifest-path $HOME/github.com/loicbourgois/gravitle/cli/Cargo.toml -- "
+```

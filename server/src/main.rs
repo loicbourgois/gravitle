@@ -5,12 +5,15 @@ use core::point;
 mod gravitle;
 mod websocket;
 mod link;
+mod plan;
+mod entity;
 mod websocket_async;
 type Float = f32;
 type Depth = u8;
 type CellId = usize;
 type ThreadId = u8;
 type PartId = usize;
+type PID = PartId;
 use std::io::Error;
 #[tokio::main]
 async fn main() -> Result<(), Error> {

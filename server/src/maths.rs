@@ -83,17 +83,17 @@ pub fn dot(p1: &Point, p2: &Point) -> Float {
     p1.x * p2.x + p1.y * p2.y
 }
 
-// pub fn p_coords(p1: &Point, p2: &Point) -> Point {
-//     rotate(p1, p2, std::f32::consts::PI / 3.0 * 5.0)
-// }
-// pub fn rotate(p1: &Point, p2: &Point, angle: Float) -> Point {
-//     // Rotates p2 around p1
-//     let dx = p2.x - p1.x;
-//     let dy = p2.y - p1.y;
-//     let cos_ = angle.cos();
-//     let sin_ = angle.sin();
-//     Point {
-//         x: p1.x + dx * cos_ - dy * sin_,
-//         y: p1.y + dy * cos_ + dx * sin_,
-//     }
-// }
+pub fn p_coords(p1: &Point, p2: &Point) -> Point {
+    rotate(p1, p2, std::f32::consts::PI / 3.0 * 5.0)
+}
+pub fn rotate(p1: &Point, p2: &Point, angle: Float) -> Point {
+    // Rotates p2 around p1
+    let dx = p2.x - p1.x;
+    let dy = p2.y - p1.y;
+    let cos_ = angle.cos();
+    let sin_ = angle.sin();
+    Point {
+        x: p1.x + dx * cos_ - dy * sin_,
+        y: p1.y + dy * cos_ + dx * sin_,
+    }
+}

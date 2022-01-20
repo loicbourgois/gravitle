@@ -5,10 +5,17 @@ use crate::maths::normalize;
 use crate::maths::dot;
 use crate::part::Part;
 use core::point::Point;
+use crate::plan::Plan;
+use crate::plan::Kind;
+use crate::entity::add_entity;
+use std::time::Duration;
+use std::collections::HashSet;
 use crate::websocket;
 use crate::websocket_async;
+use crate::plan::PartPlan;
 use crate::CellId;
 use crate::Depth;
+use std::sync::RwLockWriteGuard;
 use crate::Float;
 use crate::link::Link;
 use futures_util::{future, StreamExt, TryStreamExt};
@@ -24,7 +31,7 @@ use std::thread;
 use std::time::SystemTime;
 use tokio::net::TcpListener as TokioTcpListener;
 use tokio::net::TcpStream as TokioTcpStream;
-const TOTAL_COUNT: usize = 20_000;
+const TOTAL_COUNT: usize = 100_000;
 const THREADS: usize = 8;
 pub const WIDTH: usize = 350;
 const WIDTH_LESS: usize = WIDTH - 1;
@@ -32,25 +39,27 @@ const WIDTH_MORE: usize = WIDTH + 1;
 pub const HEIGHT: usize = 350;
 const HEIGHT_LESS: usize = HEIGHT - 1;
 const HEIGHT_MORE: usize = HEIGHT + 1;
-const MAX_DEPTH: Depth = 8;
+const MAX_DEPTH: Depth = 32;
 const SIZE: usize = WIDTH * HEIGHT * MAX_DEPTH as usize;
-const DIAMETER_MIN: Float = 1.0 / 350.0 * 0.5;
-const DIAMETER_MAX: Float = 1.0 / 350.0 * 0.5;
+pub const DIAMETER_MIN: Float = 1.0 / 350.0 * 0.5;
+pub const DIAMETER_MAX: Float = 1.0 / 350.0 * 0.5;
 const WIDTH_X_HEIGHT: usize = WIDTH * HEIGHT;
 const WEBSOCKET_ASYNC: bool = false;
 const DELTA_TIME: Float = 1.0 / 60.0;
+const ends_count: usize = 100;
+const LINK_STRENGTH: Float = 1000.0;
 #[inline(always)]
 pub fn cell_id(i: usize, j: usize) -> usize {
     i + j * WIDTH
 }
-#[inline(always)]
-fn part_id_next(cid: CellId, depths: &[Depth]) -> usize {
+// #[inline(always)]
+pub fn part_id_next(cid: CellId, depths: &[Depth]) -> usize {
     let k = depths[cid];
     assert!(k < MAX_DEPTH);
     part_id(cid, k)
 }
 
-#[inline(always)]
+// #[inline(always)]
 pub fn part_id(cid: CellId, depth: Depth) -> usize {
     cid * MAX_DEPTH as usize + depth as usize
 }
@@ -79,6 +88,7 @@ pub async fn start() {
             links: vec![Vec::new();THREADS],
             step: 0,
             new_pids: vec![0; SIZE],
+            parts_to_remove: HashSet::new(),
         })));
         data2s.push(Arc::new(RwLock::new(Data {
             parts: init_parts(),
@@ -86,61 +96,33 @@ pub async fn start() {
             links: vec![Vec::new();THREADS],
             step: 0,
             new_pids: vec![0; SIZE],
+            parts_to_remove: HashSet::new(),
         })));
     }
-    for _ in 0..TOTAL_COUNT/2-2 {
-        let xx = rng.gen::<Float>();
-        let yy = rng.gen::<Float>();
-        let (thread_id1, pid1) = {
-            let x = xx;
-            let y = yy;
-            let thread_id: usize = rng.gen_range(0..THREADS);
-            let i: usize = (x * WIDTH as Float) as usize;
-            let j: usize = (y * HEIGHT as Float) as usize;
-            let cid = cell_id(i, j);
-            let mut data1 = data1s[thread_id].write().unwrap();
-            let pid = part_id_next(cid, &data1.depths);
-            data1.depths[cid] += 1;
-            data1.parts[pid].p.x = x;
-            data1.parts[pid].p.y = y;
-            let max_speed = 0.001 * 1.0;
-            data1.parts[pid].pp.x = x + rng.gen::<Float>() * max_speed - max_speed*0.5;
-            data1.parts[pid].pp.y = y + rng.gen::<Float>() * max_speed - max_speed*0.5;
-            data1.parts[pid].d = (DIAMETER_MAX-DIAMETER_MIN)*rng.gen::<Float>() + DIAMETER_MIN;
-            data1.parts[pid].m = rng.gen::<Float>() + 1.0;
-            data1.new_pids[pid] = pid;
-            (thread_id, pid)
+    let plan: Plan = Plan {
+        kinds: [Kind::Metal, Kind::Metal],
+        part_plans: vec![
+            PartPlan{a:0,b:1,k:Kind::Metal},
+            PartPlan{a:1,b:0,k:Kind::Metal},
+            PartPlan{a:1,b:3,k:Kind::Metal},
+            PartPlan{a:3,b:0,k:Kind::Metal},
+            PartPlan{a:1,b:4,k:Kind::Metal},
+            PartPlan{a:5,b:0,k:Kind::Metal},
+            PartPlan{a:1,b:6,k:Kind::Metal},
+            PartPlan{a:7,b:0,k:Kind::Metal},
+            PartPlan{a:6,b:4,k:Kind::Metal},
+            PartPlan{a:5,b:7,k:Kind::Metal},
+        ],
+    };
+    for _ in 0..TOTAL_COUNT/12 {
+        let position = Point {
+            x: rng.gen::<Float>(),
+            y: rng.gen::<Float>(),
         };
-        let (thread_id2, pid2) = {
-            let x = xx + DIAMETER_MAX * 1.2;
-            let y = yy ;
-            let thread_id: usize = rng.gen_range(0..THREADS);
-            let i: usize = (x * WIDTH as Float) as usize;
-            let j: usize = (y * HEIGHT as Float) as usize;
-            let cid = cell_id(i, j);
-            let mut data1 = data1s[thread_id].write().unwrap();
-            let pid = part_id_next(cid, &data1.depths);
-            data1.depths[cid] += 1;
-            data1.parts[pid].p.x = x;
-            data1.parts[pid].p.y = y;
-            let max_speed = 0.00001 * 0.0;
-            data1.parts[pid].pp.x = x + rng.gen::<Float>() * max_speed - max_speed*0.5;
-            data1.parts[pid].pp.y = y + rng.gen::<Float>() * max_speed - max_speed*0.5;
-            data1.parts[pid].d = (DIAMETER_MAX-DIAMETER_MIN)*rng.gen::<Float>() + DIAMETER_MIN;
-            data1.parts[pid].m = rng.gen::<Float>() + 1.0;
-            data1.new_pids[pid] = pid;
-            (thread_id, pid)
-        };
-        data1s[thread_id1].write().unwrap().links[thread_id2].push(Link {
-            pid1: pid1,
-            pid2: pid2,
-        });
-        data1s[thread_id2].write().unwrap().links[thread_id1].push(Link {
-            pid1: pid2,
-            pid2: pid1,
-        });
+        let rotation = rng.gen::<Float>();
+        let thread_id = rng.gen_range(0..THREADS);
+        add_entity(&mut data1s, &plan, &position, rotation, thread_id);
     }
-
     println!("  init: {:?}", timer_init.elapsed().unwrap());
     let mut handles = Vec::new();
     let timer_steps = SystemTime::now();
@@ -175,7 +157,6 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
     let mut tmp_count = 0;
     let mut tmp_depths: Vec<Depth> = vec![0; WIDTH_X_HEIGHT];
     let mut old_pids: Vec<usize> = vec![0; SIZE];
-    let ends_count = 1000;
     let mut ends = vec![SystemTime::now(); ends_count];
     let mut step = 0;
     let start = SystemTime::now();
@@ -192,18 +173,22 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 (d2s, d1s)
             }
         };
+
         {
+            let mut min = 0;
             loop {
                 let mut b = true;
                 {
                     let drs_: Vec<RwLockReadGuard<Data>> =
                         drs.iter().map(|x| x.read().unwrap()).collect();
                     let dr = drs[thread_id].read().unwrap();
-                    for d in drs_.iter() {
+                    for i  in min..drs_.len() {
+                        let d = &drs_[i];
                         if d.step < dr.step {
                             b = false;
                             break;
                         }
+                        min = i;
                     }
                 }
                 if b {
@@ -213,35 +198,8 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
         }
 
 
-        // Update links
-        {
-            let mut dw = dws[thread_id].write().unwrap();
-            {
-                let dr1 = drs[thread_id].read().unwrap();
-                for (thread_id_2, links) in dr1.links.iter().enumerate() {
-                    dw.links[thread_id_2].resize(links.len(), Link{pid1:0, pid2:0});
-                    let dr2 = &drs[thread_id_2].read().unwrap();
-                    for i in 0..links.len() {
-                        let link = &dr1.links[thread_id_2][i];
-                        dw.links[thread_id_2][i].pid1 = dr1.new_pids[ link.pid1 ];
-                        dw.links[thread_id_2][i].pid2 = dr2.new_pids[ link.pid2 ];
-                    }
-                }
-            }
-            {
-                let mut dr = drs[thread_id].write().unwrap();
-                for (thread_id_2, links) in dw.links.iter().enumerate() {
-                    dr.links[thread_id_2].resize(links.len(), Link{pid1:0, pid2:0});
-                    for i in 0..links.len() {
-                        dr.links[thread_id_2][i].pid1 = links[i].pid1;
-                        dr.links[thread_id_2][i].pid2 = links[i].pid2;
-                    }
-                }
-            }
-        }
-
-
         let dw_step;
+        let mut links_to_remove: Vec<Vec<usize>> = vec![Vec::new();THREADS];
         {
             let data_read = drs[thread_id].read().unwrap();
             let drs_: Vec<RwLockReadGuard<Data>> = drs.iter().map(|x| x.read().unwrap()).collect();
@@ -252,6 +210,13 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                     let cid1 = cell_id(i, j);
                     for k in 0..data_read.depths[cid1] {
                         let pid1 = part_id(cid1, k);
+
+                        if data_read.parts_to_remove.contains(&pid1) {
+                            continue;
+                        } else {
+                            // ok
+                        }
+
                         let p1 = data_read.parts[pid1];
                         let mut d_collision = Point {
                             x: 0.0,
@@ -268,6 +233,13 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                                 for (tid2, dr2) in drs_.iter().enumerate().take(THREADS) {
                                     for k2 in 0..dr2.depths[cid2] {
                                         let pid2 = part_id(cid2, k2);
+
+                                        if dr2.parts_to_remove.contains(&pid2) {
+                                            continue;
+                                        } else {
+                                            // ok
+                                        }
+
                                         if pid1 != pid2 || tid2 != thread_id {
                                             collision_tests += 1;
                                             let p2 = dr2.parts[pid2];
@@ -308,12 +280,19 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 }
             }
 
-            for (thread_id, links) in data_read.links.iter().enumerate() {
-                let dr = &drs_[thread_id];
-                for link in links {
+            for (thid2, links) in data_read.links.iter().enumerate() {
+                let dr = &drs_[thid2];
+                for (link_id, link) in links.iter().enumerate() {
+
+                    if data_read.parts_to_remove.contains(&link.pid1) || dr.parts_to_remove.contains(&link.pid2) {
+                        links_to_remove[thid2].push(link_id);
+                        continue;
+                    } else {
+                        // ok
+                    }
+
                     let p1 = data_read.parts[link.pid1];
                     let p2 = dr.parts[link.pid2];
-
                     let distance_sqrd =
                         distance_squared_wrap_around(&p1.p, &p2.p);
                     let dpw = &delta_position_wrap_around(&p1.p, &p2.p);
@@ -333,9 +312,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         y: dpw.y * mass_factor * dot_vp / distance_sqrd
                     };
                     let colliding = distance_sqrd < diameter * diameter;
-
-                    let strength = 10000.0;
-                    let link_force = normalize(dpw) * ((diameter * diameter - distance_sqrd) * strength);
+                    let link_force = normalize(dpw) * ((diameter * diameter - distance_sqrd) * LINK_STRENGTH);
                     if (colliding) {
                         tmp_speeds[link.pid1] += &(link_force / p1.m * DELTA_TIME + acceleration * 0.5);
                     } else {
@@ -351,6 +328,13 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                     let cid1 = cell_id(i, j);
                     for k in 0..data_read.depths[cid1] {
                         let pid1 = part_id(cid1, k);
+
+                        if data_read.parts_to_remove.contains(&pid1) {
+                            continue;
+                        } else {
+                            // ok
+                        }
+
                         let p1 = data_read.parts[pid1];
                         let max_speed = 0.0001;
                         tmp_speeds[pid1].x = tmp_speeds[pid1].x.max(-max_speed).min(max_speed);
@@ -381,9 +365,19 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
             dw_step = data_read.step + 1;
         }
         let depths_clone = tmp_depths.clone();
-        let links_clone = drs[thread_id].read().unwrap().links.clone();
+        let mut links_clone = drs[thread_id].read().unwrap().links.clone();
+        for i in 0..THREADS {
+            let l = links_to_remove[i].len();
+            //println!("{}", links_clone.len());
+            for j in (0..l).rev() {
+                links_clone[i].remove(links_to_remove[i][j]);
+            }
+        }
+
+        let links_clone_2 = links_clone.clone();
         {
             let mut dw = dws[thread_id].write().unwrap();
+            dw.parts_to_remove.clear();
             for i in 0..tmp_count {
                 let pid = tmp_pids[i];
                 let part = tmp_parts[i];
@@ -396,9 +390,75 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 dw.new_pids[old_pids[i]] = pid;
             }
             dw.depths = depths_clone;
-            dw.step = dw_step;
+            if thread_id != 0 {
+                dw.step = dw_step;
+            }
             dw.links = links_clone;
         }
+        if thread_id == 0 {
+            // Wait for all writes to be done
+            {
+                let mut min = 0;
+                loop {
+                    let mut b = true;
+                    {
+                        let dws_: Vec<RwLockReadGuard<Data>> =
+                            dws.iter().map(|x| x.read().unwrap()).collect();
+                        let dw = dws[thread_id].read().unwrap();
+                        for thread_id_  in min..dws_.len() {
+                            let d = &dws_[thread_id_];
+                            if d.step < dw_step && thread_id_ != thread_id {
+                                b = false;
+                                break;
+                            }
+                            min = thread_id_;
+                        }
+                    }
+                    if b {
+                        break;
+                    }
+                }
+            }
+            // Update links
+            {
+                let mut ds: Vec<RwLockWriteGuard<Data>> =
+                    dws.iter().map(|x| x.write().unwrap()).collect();
+                for thid1 in 0..THREADS {
+                    for thid2 in 0..THREADS {
+                        let l = ds[thid1].links[thid2].len();
+                        for i in 0..l {
+                            ds[thid1].links[thid2][i].pid1 = ds[thid1].new_pids[ ds[thid1].links[thid2][i].pid1 ];
+                            ds[thid1].links[thid2][i].pid2 = ds[thid2].new_pids[ ds[thid1].links[thid2][i].pid2 ];
+                        }
+                    }
+                }
+            }
+            dws[thread_id].write().unwrap().step = dw_step;
+        }
+        // Wait for all writes to be done
+        {
+            let mut min = 0;
+            loop {
+                let mut b = true;
+                {
+                    let dws_: Vec<RwLockReadGuard<Data>> =
+                        dws.iter().map(|x| x.read().unwrap()).collect();
+                    let dw = dws[thread_id].read().unwrap();
+                    for i  in min..dws_.len() {
+                        let d = &dws_[i];
+                        if d.step < dw.step {
+                            b = false;
+                            break;
+                        }
+                        min = i;
+                    }
+                }
+                if b {
+                    break;
+                }
+            }
+        }
+        //
         ends[dw_step % ends_count] = SystemTime::now();
         if dw_step % 100 == 0 && thread_id == 0 {
             let duration = ends[(dw_step + 1) % ends_count].elapsed().unwrap() / ends_count as u32;
