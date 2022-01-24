@@ -1,5 +1,5 @@
 use crate::websocket::Senders;
-use futures_util::{future, StreamExt, TryStreamExt};
+use futures_util::StreamExt;
 use log::info;
 use std::env;
 use std::time::Duration;
@@ -37,6 +37,9 @@ async fn accept_connection(stream: TokioTcpStream) {
 
     loop {
         interval.tick().await;
-        ws_sender.send(Message::Text("tick".to_owned())).await.unwrap();
+        ws_sender
+            .send(Message::Text("tick".to_owned()))
+            .await
+            .unwrap();
     }
 }

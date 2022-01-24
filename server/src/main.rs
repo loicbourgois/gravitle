@@ -2,18 +2,17 @@ mod data;
 mod maths;
 use core::part;
 use core::point;
+mod entity;
 mod gravitle;
-mod websocket;
 mod link;
 mod plan;
-mod entity;
+mod websocket;
 mod websocket_async;
 type Float = f32;
 type Depth = u8;
 type CellId = usize;
-type ThreadId = u8;
 type PartId = usize;
-type PID = PartId;
+type Pid = PartId;
 use std::io::Error;
 #[tokio::main]
 async fn main() -> Result<(), Error> {

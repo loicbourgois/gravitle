@@ -12,6 +12,7 @@ fn main() {
         .usage("gravitle [COMMAND]")
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .subcommand(SubCommand::with_name("build"))
+        .subcommand(SubCommand::with_name("lint"))
         .subcommand(SubCommand::with_name("format"))
         .subcommand(
             SubCommand::with_name("start")
@@ -32,6 +33,8 @@ fn main() {
         .get_matches();
     if let Some(_matches) = matches.subcommand_matches("build") {
         build();
+    } else if matches.subcommand_matches("lint").is_some() {
+        lint();
     } else if let Some(_matches) = matches.subcommand_matches("format") {
         format();
     } else if let Some(_matches) = matches.subcommand_matches("poc") {
@@ -81,11 +84,11 @@ fn runshellcmd(title: &str, command: &mut Command) -> bool {
     } else {
         println!("[ error ] {} didn't start", title);
     }
-    return false;
+    false
 }
 fn succes() -> bool {
     println!("[success]");
-    return true;
+    true
 }
 fn build() -> bool {
     return runshellcmd(
@@ -109,13 +112,13 @@ fn build() -> bool {
                 .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
                 .current_dir(format!("{}/wasm/", base_dir())),
         )
-        && (runshellcmd(
+        && runshellcmd(
             "Fixing",
             Command::new("npm")
                 .arg("audit")
                 .arg("fix")
                 .current_dir(format!("{}/front/", base_dir())),
-        ) || true)
+        )
         && runshellcmd(
             "Installing",
             Command::new("npm")
@@ -124,6 +127,28 @@ fn build() -> bool {
         )
         && succes();
 }
+
+fn lint() -> bool {
+    runshellcmd(
+        "Linting cli",
+        Command::new("cargo")
+            .arg("clippy")
+            .arg("--")
+            .arg("--deny")
+            .arg("warnings")
+            .current_dir(format!("{}/cli/", base_dir())),
+    )
+    && runshellcmd(
+        "Linting server",
+        Command::new("cargo")
+            .arg("clippy")
+            .arg("--")
+            .arg("--deny")
+            .arg("warnings")
+            .current_dir(format!("{}/server/", base_dir())),
+    ) && succes()
+}
+
 fn format() {
     for project in ["cli", "client", "server", "wasm"] {
         runshellcmd(

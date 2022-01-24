@@ -1,5 +1,6 @@
 use crate::data::Data;
 use crate::gravitle::cell_id;
+use crate::gravitle::part_id;
 use crate::gravitle::HEIGHT;
 use crate::gravitle::WIDTH;
 use serde::{Deserialize, Serialize};
@@ -16,7 +17,6 @@ use tungstenite::accept;
 use tungstenite::Message;
 use tungstenite::WebSocket;
 use uuid::Uuid;
-use crate::gravitle::part_id;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -47,24 +47,23 @@ pub fn serve(senders: &Senders) {
                 let first_message = serde_json::from_str::<FirstMessage>(&message);
 
                 match first_message {
-                        Ok(m) => match m.request {
-                            FirstMessageRequest::CreateSender => {
-                                println!("new server sender");
-                                senders.lock().unwrap().insert(m.uuid.as_u128(), websocket);
-                            }
-                            FirstMessageRequest::CreateReceiver => {
-                                // println!("new server receiver");
-                                // receivers_
-                                //     .lock()
-                                //     .unwrap()
-                                //     .insert(m.uuid.as_u128(), websocket);
-                            }
-                        },
-                        Err(e) => {
-                            println!("{:?}", e)
+                    Ok(m) => match m.request {
+                        FirstMessageRequest::CreateSender => {
+                            println!("new server sender");
+                            senders.lock().unwrap().insert(m.uuid.as_u128(), websocket);
                         }
+                        FirstMessageRequest::CreateReceiver => {
+                            // println!("new server receiver");
+                            // receivers_
+                            //     .lock()
+                            //     .unwrap()
+                            //     .insert(m.uuid.as_u128(), websocket);
+                        }
+                    },
+                    Err(e) => {
+                        println!("{:?}", e)
                     }
-
+                }
             });
         }
     });
@@ -104,9 +103,9 @@ pub fn send(a: &SendArgs) {
             }
             let data_client: Vec<u8> = bincode::serialize(&DataClient {
                 step: datas[0].read().unwrap().step as u32,
-                part_count: part_count,
-                parts: parts,
-                 width: WIDTH as u32,
+                part_count,
+                parts,
+                width: WIDTH as u32,
                 height: HEIGHT as u32,
                 i_start: start_i as u32,
                 i_size: count_i as u32,

@@ -1,8 +1,7 @@
+use crate::link::Link;
 use crate::part::Part;
 use crate::Depth;
-use crate::PID;
-use crate::link::Link;
-use crate::ThreadId;
+use crate::Pid;
 use std::collections::HashSet;
 
 #[derive(Clone)]
@@ -11,6 +10,6 @@ pub struct Data {
     pub depths: Vec<Depth>,
     pub step: usize,
     pub links: Vec<Vec<Link>>,
-    pub new_pids: Vec<PID>,
-    pub parts_to_remove: HashSet<PID>
+    pub new_pids: Vec<Pid>,
+    pub parts_to_remove: HashSet<Pid>,
 }
