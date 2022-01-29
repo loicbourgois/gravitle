@@ -1,13 +1,45 @@
-#![deny(warnings)]
 extern crate clap;
 extern crate dirs;
 extern crate notify;
+use clap::ArgMatches;
 use clap::{App, SubCommand};
 use notify::{watcher, RecursiveMode, Watcher};
+use serde::Deserialize;
+use std::fs;
+use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::time::Duration;
+use std::time::Instant;
+
+#[derive(Deserialize)]
+struct Configuration {
+    host: String,
+}
+
 fn main() {
+    let mut configuration_str = fs::read_to_string(format!("{}/configuration.yml", base_dir()))
+        .expect("Something went wrong reading the file");
+    let env_filename = format!("{}/../gravitle_local/gravitle.env", base_dir());
+    let env_file = File::open(env_filename).unwrap();
+    let env_reader = BufReader::new(env_file);
+
+    for (_index, line) in env_reader.lines().enumerate() {
+        let line = line.unwrap();
+        let split = line.split('=').collect::<Vec<&str>>();
+        let key = format!("${{{}}}", split[0]);
+        let value = split[1];
+        match configuration_str.find(&key) {
+            Some(_) => {
+                configuration_str = configuration_str.replace(&key, value);
+            }
+            None => println!("Could not find key in configuration {}", &key),
+        }
+    }
+    let configuration: Configuration = serde_yaml::from_str(&configuration_str).unwrap();
+
     let matches = App::new("gravitle")
         .usage("gravitle [COMMAND]")
         .setting(clap::AppSettings::ArgRequiredElseHelp)
@@ -24,6 +56,15 @@ fn main() {
                 .subcommand(SubCommand::with_name("client")),
         )
         .subcommand(
+            SubCommand::with_name("host")
+                .setting(clap::AppSettings::ArgRequiredElseHelp)
+                .subcommand(SubCommand::with_name("setup"))
+                .subcommand(SubCommand::with_name("run"))
+                .subcommand(SubCommand::with_name("log"))
+                .subcommand(SubCommand::with_name("kill"))
+                .subcommand(SubCommand::with_name("status")),
+        )
+        .subcommand(
             SubCommand::with_name("test")
                 .setting(clap::AppSettings::ArgRequiredElseHelp)
                 .subcommand(SubCommand::with_name("server")),
@@ -31,7 +72,11 @@ fn main() {
         .subcommand(SubCommand::with_name("watch"))
         .subcommand(SubCommand::with_name("poc"))
         .get_matches();
-    if let Some(_matches) = matches.subcommand_matches("build") {
+    handle(matches, &configuration);
+}
+
+fn handle(matches: ArgMatches, configuration: &Configuration) {
+    if let Some(_) = matches.subcommand_matches("build") {
         build();
     } else if matches.subcommand_matches("lint").is_some() {
         lint();
@@ -57,40 +102,237 @@ fn main() {
         }
     } else if let Some(_matches) = matches.subcommand_matches("watch") {
         watch();
+    } else if let Some(matches) = matches.subcommand_matches("host") {
+        if let Some(_) = matches.subcommand_matches("setup") {
+            host_setup(&configuration.host);
+        } else if let Some(_) = matches.subcommand_matches("run") {
+            host_run(&configuration.host);
+        } else if let Some(_) = matches.subcommand_matches("log") {
+            host_log(&configuration.host);
+        } else if let Some(_) = matches.subcommand_matches("kill") {
+            host_kill(&configuration.host);
+        } else if let Some(_) = matches.subcommand_matches("status") {
+            host_status(&configuration.host);
+        }
     }
 }
+
+fn host_kill(host: &str) -> bool {
+    runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
+            .arg("screen -X -S server quit"),
+    )
+}
+
+fn host_status(host: &str) -> bool {
+    runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
+            .arg("screen -list"),
+    )
+}
+
+fn host_setup(host: &str) -> bool {
+    // eval "$(ssh-agent -s)"
+    // ssh-add --apple-use-keychain $HOME/.ssh/gravitle
+    // runshellcmd_default_title(
+    //     Command::new("ssh-keygen").arg("-t").arg("ed25519")
+    //         .arg("-C").arg(filename).arg("-f").arg(file_path),
+    // );
+    let start = Instant::now();
+    let filename = "gravitle";
+    let file_path = &format!("{}/.ssh/{}", home_dir(), filename);
+    let filename_root = "loic@mac-perso@hetzner";
+    let ssh_key_root = &format!("{}/.ssh/{}", home_dir(), filename_root);
+    let sshd_config_local_path = &format!("{}/cli/configs/sshd_config", base_dir());
+    runshellcmd_default_title(
+        Command::new("ssh-add")
+            .arg("--apple-use-keychain")
+            .arg(&ssh_key_root),
+    )
+    && runshellcmd_default_title(
+        Command::new("ssh").arg("-i")
+            .arg(ssh_key_root).arg(format!("root@{}", host)).arg("pwd")
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg(format!("root@{}", host))
+                .arg("adduser gravitle || true"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh-copy-id")
+                .arg("-f")
+                .arg("-i")
+                .arg(&file_path)
+                .arg(format!("gravitle@{}", host)),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("pwd"),
+        )
+        &&  runshellcmd_default_title(
+            Command::new("scp")
+                .arg("-i")
+                .arg(ssh_key_root)
+                .arg(sshd_config_local_path)
+                .arg(format!("root@{}:/etc/ssh/sshd_config", host)),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(ssh_key_root)
+                .arg(format!("root@{}", host))
+                .arg("systemctl restart ssh"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("pwd"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("/home/gravitle/.cargo/bin/cargo --version"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle || true"),
+        )
+        && runshellcmd_default_title(
+            Command::new("rsync")
+                .arg("--recursive")
+                .arg("--verbose")
+                .arg("--exclude")
+                .arg("target")
+                .arg(format!("{}/server/", base_dir()))
+                .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/server/", host)),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(ssh_key_root)
+                .arg(format!("root@{}", host))
+                .arg("apt-get update"),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(ssh_key_root)
+                .arg(format!("root@{}", host))
+                .arg("apt-get install gcc gcc-multilib screen iptables nmap -y"),
+        )
+        && runshellcmd_default_title(
+            Command::new("rsync")
+                .arg("--recursive")
+                .arg("--verbose")
+                .arg("--exclude")
+                .arg("target")
+                .arg(format!("{}/core/", base_dir()))
+                .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/core/", host)),
+        )
+        && runshellcmd_default_title(
+            Command::new("ssh")
+                .arg("-i")
+                .arg(file_path)
+                .arg(format!("gravitle@{}", host))
+                .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml"),
+        )
+        && success(&start)
+}
+
+fn host_run(host: &str) -> bool {
+    let filename = "gravitle";
+    let file_path = &format!("{}/.ssh/{}", home_dir(), filename);
+    let screen_run = "screen -L -Logfile /home/gravitle/server.log -d -m -S server /home/gravitle/.cargo/bin/cargo run --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml";
+    runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg(screen_run),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("screen -S server -X colon 'logfile flush 0^M'"),
+    )
+}
+
+fn host_log(host: &str) -> bool {
+    let file_path = &format!("{}/.ssh/gravitle", home_dir());
+    runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("tail -f server.log"),
+    )
+}
+
 fn poc() {
     runshellcmd(
         "Poc",
         Command::new("python").arg(format!("{}/poc.py", base_dir())),
     );
 }
+
+fn runshellcmd_default_title(command: &mut Command) -> bool {
+    let title = format!("{:?}", command);
+    runshellcmd(&title, command)
+}
+
 fn runshellcmd(title: &str, command: &mut Command) -> bool {
+    let start = Instant::now();
     println!("[ start ] {}", title);
     if let Ok(mut child) = command.spawn() {
         match child.wait().expect("error").code() {
             Some(code) => {
                 if code == 0 {
-                    println!("[  end  ] {} done", title);
+                    println!("[  end  ] {} [{:?}]", title, start.elapsed());
                     return true;
                 } else {
-                    println!("[ error ] {} failed", title);
+                    println!(
+                        "[ error ] {} [{:?}] [code={}]",
+                        title,
+                        start.elapsed(),
+                        code
+                    );
                 }
             }
             None => {
-                println!("[ error ] {} failed", title);
+                println!("[ error ] {} [{:?}] [no code]", title, start.elapsed());
             }
         }
     } else {
-        println!("[ error ] {} didn't start", title);
+        println!("[ error ] {} [{:?}] [no start]", title, start.elapsed());
     }
     false
 }
-fn succes() -> bool {
-    println!("[success]");
+fn success(start: &Instant) -> bool {
+    println!("[success] [{:?}]", start.elapsed());
     true
 }
 fn build() -> bool {
+    let start = Instant::now();
     return runshellcmd(
         "Building cli",
         Command::new("cargo")
@@ -125,10 +367,11 @@ fn build() -> bool {
                 .arg("install")
                 .current_dir(format!("{}/front/", base_dir())),
         )
-        && succes();
+        && success(&start);
 }
 
 fn lint() -> bool {
+    let start = Instant::now();
     runshellcmd(
         "Linting cli",
         Command::new("cargo")
@@ -137,8 +380,7 @@ fn lint() -> bool {
             .arg("--deny")
             .arg("warnings")
             .current_dir(format!("{}/cli/", base_dir())),
-    )
-    && runshellcmd(
+    ) && runshellcmd(
         "Linting server",
         Command::new("cargo")
             .arg("clippy")
@@ -146,20 +388,25 @@ fn lint() -> bool {
             .arg("--deny")
             .arg("warnings")
             .current_dir(format!("{}/server/", base_dir())),
-    ) && succes()
+    ) && success(&start)
 }
 
-fn format() {
+fn format() -> bool {
+    let start = Instant::now();
     for project in ["cli", "client", "server", "wasm"] {
-        runshellcmd(
+        if !runshellcmd(
             &format!("Formating {}", project),
             Command::new("cargo")
                 .arg("fmt")
                 .arg("--manifest-path")
                 .arg(format!("{}/{}/Cargo.toml", base_dir(), project)),
-        );
+        ) {
+            return false;
+        }
     }
+    success(&start)
 }
+
 fn start_front() {
     let _ = build()
         && runshellcmd(
@@ -261,6 +508,15 @@ fn watch() {
         }
     }
 }
+
+fn home_dir() -> String {
+    dirs::home_dir()
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap()
+}
+
 fn base_dir() -> String {
     return format!(
         "{}/github.com/loicbourgois/gravitle",

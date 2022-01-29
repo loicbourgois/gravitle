@@ -22,7 +22,8 @@ fn retry_receive() {
 }
 
 fn receive() {
-    match tungstenite::client::connect("ws://127.0.0.1:8000/ws") {
+    // match tungstenite::client::connect("ws://127.0.0.1:8000/ws") {
+    match tungstenite::client::connect("ws://136.243.64.165:8000/ws") {
         Ok(connection) => {
             let (mut client_receiver, response) = connection;
             println!("response: {:?}", response);

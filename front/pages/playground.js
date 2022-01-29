@@ -5,6 +5,7 @@ import {
 
 
 let server_data = undefined;
+let socket;
 const minimap = {};
 const view = {};
 const counters = {
@@ -33,12 +34,30 @@ const counters = {
     value: undefined,
   }
 }
+const urls = [
+  "ws://127.0.0.1:8000/ws",
+  "ws://136.243.64.165:8000/ws",
+]
 
 
 function playground() {
   init()
   connect()
   render()
+}
+
+function select_url_html() {
+  let options = "";
+  for (var url of urls) {
+    options += `<option value="${url}">${url}</option>`
+  }
+  return `\
+  <div>
+    <select name="url_selector" id="url_selector">
+      ${options}
+    </select>
+    <span id="connection_status">Connecting</span>
+  </div>`
 }
 
 function init() {
@@ -53,6 +72,7 @@ function init() {
   <a href="/gallery?webgpu=true">Gallery (WebGPU)</a>
 </div>
   <canvas id="minimap"></canvas>
+  ${select_url_html()}
   <div>
     Zoom: <input type="range" min="0" max="1000" value="800" id="zoom_slider">
   </div>
@@ -96,6 +116,9 @@ function init() {
   view.canvas.height = window.innerHeight;
   view.canvas.style.width = window.innerWidth + "px";
   view.canvas.style.height = window.innerHeight + "px";
+  document.getElementById('url_selector').addEventListener('change', function() {
+    connect()
+  });
 }
 
 
@@ -264,9 +287,18 @@ function update_counters() {
 
 
 function connect() {
-  let socket = new WebSocket("ws://127.0.0.1:8000/ws");
+  // TODO:
+  // Eror on firefox
+  // thread '<unnamed>' panicked at '[ error ] can not get websocket: WebSocket protocol error: httparse error: invalid token', src/websocket.rs:50:31
+  document.getElementById("connection_status").innerHTML = "Connecting..."
+  let url = document.getElementById("url_selector").selectedOptions[0].value;
+  if (socket) {
+    socket.close();
+  }
+  socket = new WebSocket(url);
   socket.binaryType = "arraybuffer";
   socket.onopen = function(e) {
+    document.getElementById("connection_status").innerHTML = "Connected"
     console.log("[open] Connection established");
     socket.send(JSON.stringify({
       'request': 'create_sender',
@@ -277,6 +309,7 @@ function connect() {
     server_data = event.data;
   };
   socket.onclose = function(event) {
+    document.getElementById("connection_status").innerHTML = "Closed"
     if (event.wasClean) {
       console.error(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
     } else {
@@ -288,12 +321,12 @@ function connect() {
     }
   };
   socket.onerror = function(error) {
+    document.getElementById("connection_status").innerHTML = "Error"
+    console.error(error);
     console.error(`[error] ${error.message}`);
   };
   console.log("Waiting for server")
 }
-
-
 
 export {
   playground

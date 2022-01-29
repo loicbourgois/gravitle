@@ -2,7 +2,7 @@
 pub enum Kind {
     // Firefly = 1,
     Metal = 2,
-    // Turbo = 3,
+    Turbo = 3,
     // Diatom = 4,
     // Neuron = 5,
     // Mouth = 6,

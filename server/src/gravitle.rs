@@ -13,6 +13,7 @@ use crate::websocket_async;
 use crate::CellId;
 use crate::Depth;
 use crate::Float;
+use chrono::Utc;
 use core::point::Point;
 use rand::Rng;
 use std::collections::HashMap;
@@ -23,6 +24,8 @@ use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::thread;
+// #[macro_use]
+// extern crate log;
 use std::time::SystemTime;
 const TOTAL_COUNT: usize = 50_000;
 const THREADS: usize = 8;
@@ -33,7 +36,7 @@ const WIDTH_MORE: usize = WIDTH + 1;
 pub const HEIGHT: usize = DIMENSION;
 const HEIGHT_LESS: usize = HEIGHT - 1;
 const HEIGHT_MORE: usize = HEIGHT + 1;
-const MAX_DEPTH: Depth = 16;
+const MAX_DEPTH: Depth = 32;
 const SIZE: usize = WIDTH * HEIGHT * MAX_DEPTH as usize;
 pub const DIAMETER_MIN: Float = 0.5 / (DIMENSION as Float);
 pub const DIAMETER_MAX: Float = 1.0 / (DIMENSION as Float);
@@ -138,12 +141,12 @@ pub async fn start() {
             PartPlan {
                 a: 6,
                 b: 4,
-                k: Kind::Metal,
+                k: Kind::Turbo,
             },
             PartPlan {
                 a: 5,
                 b: 7,
-                k: Kind::Metal,
+                k: Kind::Turbo,
             },
         ],
     };
@@ -390,8 +393,8 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 dw.parts[pid].p.x = part.p.x;
                 dw.parts[pid].p.y = part.p.y;
                 dw.parts[pid].d = part.d;
-                assert!(part.d<=DIAMETER_MAX);
-                assert!(part.d>=DIAMETER_MIN);
+                assert!(part.d <= DIAMETER_MAX);
+                assert!(part.d >= DIAMETER_MIN);
                 dw.parts[pid].m = part.m;
                 dw.parts[pid].pp.x = part.pp.x;
                 dw.parts[pid].pp.y = part.pp.y;
@@ -468,7 +471,8 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
         //
         ends[dw_step % DATA_POINTS_COUNT] = SystemTime::now();
         if dw_step % 100 == 0 && thread_id == 0 {
-            let duration = ends[(dw_step + 1) % DATA_POINTS_COUNT].elapsed().unwrap() / DATA_POINTS_COUNT as u32;
+            let duration = ends[(dw_step + 1) % DATA_POINTS_COUNT].elapsed().unwrap()
+                / DATA_POINTS_COUNT as u32;
             let duration_ = ends[(dw_step + 1) % DATA_POINTS_COUNT]
                 .elapsed()
                 .unwrap()
@@ -483,6 +487,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 "\
 Thread #{}
     current:
+        utc:             {}
         step:            {}
         collision_tests: {}
         part count:      {}
@@ -495,7 +500,18 @@ Thread #{}
         pps:             {:.2} MP/s
     total:
         time:            {:?}",
-                thread_id, dw_step, collision_tests, tmp_count, DATA_POINTS_COUNT, duration, cps, mpps, global_cps, global_mpps, global_duration
+                thread_id,
+                Utc::now(),
+                dw_step,
+                collision_tests,
+                tmp_count,
+                DATA_POINTS_COUNT,
+                duration,
+                cps,
+                mpps,
+                global_cps,
+                global_mpps,
+                global_duration
             );
         }
         step = dw_step;

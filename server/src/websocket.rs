@@ -34,14 +34,21 @@ struct FirstMessage {
 pub type Senders = Arc<Mutex<HashMap<u128, WebSocket<TcpStream>>>>;
 
 pub fn serve(senders: &Senders) {
-    let server = TcpListener::bind("127.0.0.1:8000").unwrap();
+    let server = TcpListener::bind("0.0.0.0:8000").unwrap();
     let senders_ = senders.clone();
     thread::spawn(move || {
         for stream in server.incoming() {
             println!("new stream");
             let senders = senders_.clone();
             thread::spawn(move || {
-                let mut websocket = accept(stream.unwrap()).unwrap();
+                let stream = match stream {
+                    Ok(stream) => stream,
+                    Err(e) => panic!("[ error ] can not get stream: {}", e)
+                };
+                let mut websocket =  match accept(stream) {
+                    Ok(websocket) => websocket,
+                    Err(e) => panic!("[ error ] can not get websocket: {}", e)
+                };
                 let message = websocket.read_message().unwrap().to_string();
 
                 let first_message = serde_json::from_str::<FirstMessage>(&message);

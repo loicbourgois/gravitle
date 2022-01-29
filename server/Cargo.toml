@@ -1,5 +1,5 @@
 [package]
-name = "server_2"
+name = "server"
 version = "0.1.0"
 edition = "2021"
 
@@ -18,3 +18,4 @@ log = "*"
 futures-util = "*"
 bincode = "*"
 core = { path = "../core" }
+chrono = "*"
