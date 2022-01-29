@@ -6,6 +6,10 @@ import {
 
 let server_data = undefined;
 let socket;
+const Kind = {
+  Metal: 2,
+  Turbo: 3
+}
 const minimap = {};
 const view = {};
 const counters = {
@@ -151,11 +155,12 @@ function render() {
     reset_canvas(minimap.canvas, minimap.context, "#ffff0004")
     render_minimap(camera, minimap, view)
     for (let i = 0 ; i < part_count ; i += 2) {
-      const pid = 8*4 + i*6*4
-      const x = data.getFloat32(pid+0*4, littleEndian)
-      const y = data.getFloat32(pid+1*4, littleEndian)
-      const d = data.getFloat32(pid+2*4, littleEndian)
-      const m = data.getFloat32(pid+3*4, littleEndian)
+      const pid = 10*4 + i*7*4
+      const d = data.getFloat32(  pid+0*4, littleEndian)
+      const m = data.getFloat32(  pid+1*4, littleEndian)
+      const x = data.getFloat32(  pid+2*4, littleEndian)
+      const y = data.getFloat32(  pid+3*4, littleEndian)
+      const kind = data.getUint32(pid+6*4, littleEndian)
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
       render_p_minimap(x, y, d * 2.0, minimap.context, inside, minimap.canvas)
     }
@@ -168,14 +173,40 @@ function render() {
     const aa_x = (view_max - view.canvas.width) / view_max * 0.5;
     const aa_y = (view_max - view.canvas.height)/ view_max * 0.5;
     for (let i = 0 ; i < part_count ; i += 1) {
-      const pid = 8*4 + i*6*4
-      const x = data.getFloat32(pid+0*4, littleEndian)
-      const y = data.getFloat32(pid+1*4, littleEndian)
-      const d = data.getFloat32(pid+2*4, littleEndian)
-      const m = data.getFloat32(pid+3*4, littleEndian)
+      const pid = 10*4 + i*7*4
+
+      const d = data.getFloat32(  pid+0*4, littleEndian)
+      const m = data.getFloat32(  pid+1*4, littleEndian)
+      const x = data.getFloat32(  pid+2*4, littleEndian)
+      const y = data.getFloat32(  pid+3*4, littleEndian)
+      const kind = data.getUint32(pid+6*4, littleEndian)
+
+      // if (i == 0) {
+      //   console.log(kind)
+      //   console.log(x)
+      //   console.log(y)
+      //   console.log(d)
+      //   console.log(m)
+      // }
+
+      // for (let aa = 0 ; aa < 100 ; aa +=1) {
+      //   console.log( data.getUint32(  pid+aa*4, littleEndian) )
+      // }
+
+
+
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
       if (inside) {
-        view.context.fillStyle = "#aaa"
+        if (kind == Kind.Metal) {
+          view.context.fillStyle = "#aaa"
+        } else if (kind == Kind.Turbo) {
+          view.context.fillStyle = "#faa"
+        } else if (kind == 0) {
+          view.context.fillStyle = "#FF0"
+        } else {
+          view.context.fillStyle = "#f0f"
+        }
+
         view.context.beginPath();
         view.context.arc(
           (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
@@ -184,10 +215,12 @@ function render() {
           0, 2 * Math.PI);
         view.context.fill();
       }
+
     }
     stop_counter('render_view');
     document.getElementById(`p_step`).innerHTML = `Step: ${step}`
   }
+
   update_counters()
   document.getElementById(`p_fps`).innerHTML = `FPS: ${(1000.0/counters.frame.value).toFixed(0)}`
   window.requestAnimationFrame(function () {

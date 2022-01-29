@@ -5,7 +5,6 @@ use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
 use crate::maths::normalize;
 use crate::part::Part;
-use crate::plan::Kind;
 use crate::plan::PartPlan;
 use crate::plan::Plan;
 use crate::websocket;
@@ -24,8 +23,7 @@ use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::thread;
-// #[macro_use]
-// extern crate log;
+use core::part::Kind;
 use std::time::SystemTime;
 const TOTAL_COUNT: usize = 50_000;
 const THREADS: usize = 8;
@@ -67,6 +65,7 @@ pub fn init_parts() -> Vec<Part> {
             pp: Point { x: 0.0, y: 0.0 },
             d: 0.0,
             m: 0.0,
+            kind: Kind::Invalid
         };
         SIZE
     ]
@@ -148,9 +147,31 @@ pub async fn start() {
                 b: 7,
                 k: Kind::Turbo,
             },
+            //
+            //
+            PartPlan {
+                a: 6,
+                b: 10,
+                k: Kind::Metal,
+            },
+            PartPlan {
+                a: 12,
+                b: 10,
+                k: Kind::Metal,
+            },
+            PartPlan {
+                a: 11,
+                b: 7,
+                k: Kind::Metal,
+            },
+            PartPlan {
+                a: 11,
+                b: 14,
+                k: Kind::Metal,
+            },
         ],
     };
-    for _ in 0..TOTAL_COUNT / 12 {
+    for _ in 0..TOTAL_COUNT / 16 {
         let position = Point {
             x: rng.gen::<Float>(),
             y: rng.gen::<Float>(),
@@ -183,12 +204,27 @@ pub async fn start() {
     }
 }
 
+#[derive(Clone)]
+struct Direction {
+    neighbour_count: Float,
+    direction: Point,
+}
+
 fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id: usize) {
     let mut tmp_parts = init_parts();
     let mut tmp_speeds: Vec<Point> = vec![Point { x: 0.0, y: 0.0 }; SIZE];
     let mut tmp_pids: Vec<usize> = vec![0; SIZE];
     let mut tmp_count;
     let mut tmp_depths: Vec<Depth> = vec![0; WIDTH_X_HEIGHT];
+
+    let mut tmp_directions: Vec<Direction> = vec![Direction{
+        neighbour_count: 0.0,
+        direction: Point {
+            x:0.0,
+            y:0.0
+        }
+    }; SIZE];
+
     let mut old_pids: Vec<usize> = vec![0; SIZE];
     let mut ends = vec![SystemTime::now(); DATA_POINTS_COUNT];
     let mut step = 0;
@@ -294,6 +330,9 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                             }
                         }
                         tmp_speeds[pid1] = p1.p - p1.pp + d_collision;
+                        tmp_directions[pid1].neighbour_count = 0.0;
+                        tmp_directions[pid1].direction.x = 0.0;
+                        tmp_directions[pid1].direction.y = 0.0;
                     }
                 }
             }
@@ -328,8 +367,11 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         y: dpw.y * mass_factor * dot_vp / distance_sqrd,
                     };
                     let colliding = distance_sqrd < diameter * diameter;
+                    let ndpw = normalize(dpw);
                     let link_force =
-                        normalize(dpw) * ((diameter * diameter - distance_sqrd) * LINK_STRENGTH);
+                        ndpw * ((diameter * diameter - distance_sqrd) * LINK_STRENGTH);
+                    tmp_directions[link.pid1].neighbour_count += 1.0;
+                    tmp_directions[link.pid1].direction += &ndpw;
                     if colliding {
                         tmp_speeds[link.pid1] +=
                             &(link_force / p1.m * DELTA_TIME + acceleration * 0.5);
@@ -350,6 +392,15 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         }
                         let p1 = data_read.parts[pid1];
                         let max_speed = 0.0001;
+
+                        match p1.kind {
+                            Kind::Turbo => {
+                                tmp_speeds[pid1].x -= tmp_directions[pid1].direction.x / tmp_directions[pid1].neighbour_count * 0.00001;
+                                tmp_speeds[pid1].y -= tmp_directions[pid1].direction.y / tmp_directions[pid1].neighbour_count * 0.00001;
+                            }
+                            _ => {}
+                        }
+
                         tmp_speeds[pid1].x = tmp_speeds[pid1].x.max(-max_speed).min(max_speed);
                         tmp_speeds[pid1].y = tmp_speeds[pid1].y.max(-max_speed).min(max_speed);
                         let x = (p1.p.x + tmp_speeds[pid1].x + 1.0).fract();
@@ -366,6 +417,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         tmp_parts[tmp_count].pp.x = x_;
                         tmp_parts[tmp_count].pp.y = y_;
                         tmp_parts[tmp_count].d = p1.d;
+                        tmp_parts[tmp_count].kind = p1.kind;
                         tmp_parts[tmp_count].m = p1.m;
                         tmp_pids[tmp_count] = pid_new;
                         // new_pids[tmp_count] = pid_new;
@@ -396,6 +448,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 assert!(part.d <= DIAMETER_MAX);
                 assert!(part.d >= DIAMETER_MIN);
                 dw.parts[pid].m = part.m;
+                dw.parts[pid].kind = part.kind;
                 dw.parts[pid].pp.x = part.pp.x;
                 dw.parts[pid].pp.y = part.pp.y;
                 dw.new_pids[old_pids[i]] = pid;

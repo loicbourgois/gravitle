@@ -145,7 +145,7 @@ fn host_setup(host: &str) -> bool {
     let file_path = &format!("{}/.ssh/{}", home_dir(), filename);
     let filename_root = "loic@mac-perso@hetzner";
     let ssh_key_root = &format!("{}/.ssh/{}", home_dir(), filename_root);
-    let sshd_config_local_path = &format!("{}/cli/configs/sshd_config", base_dir());
+    let sshd_config_local_path = &format!("{}/../gravitle_local/configs/sshd_config", base_dir());
     runshellcmd_default_title(
         Command::new("ssh-add")
             .arg("--apple-use-keychain")

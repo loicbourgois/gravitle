@@ -1,14 +1,4 @@
-#[derive(Copy, Clone, Debug)]
-pub enum Kind {
-    // Firefly = 1,
-    Metal = 2,
-    Turbo = 3,
-    // Diatom = 4,
-    // Neuron = 5,
-    // Mouth = 6,
-    // Core = 7,
-    // Egg = 8,
-}
+use core::part::Kind;
 
 type PlanID = usize;
 

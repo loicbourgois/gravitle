@@ -13,8 +13,9 @@ use crate::Float;
 use crate::Pid;
 use std::sync::Arc;
 use std::sync::RwLock;
+use core::part::Kind;
 
-pub fn add_part(data: &mut Data, position: &Point) -> Pid {
+pub fn add_part(data: &mut Data, position: &Point, kind: &Kind) -> Pid {
     let i: usize = ((position.x * WIDTH as Float) as usize) % WIDTH;
     let j: usize = ((position.y * HEIGHT as Float) as usize) % HEIGHT;
     let cid = cell_id(i, j);
@@ -24,6 +25,7 @@ pub fn add_part(data: &mut Data, position: &Point) -> Pid {
     data.parts[pid].p.y = position.y;
     data.parts[pid].pp.x = position.x;
     data.parts[pid].pp.y = position.y;
+    data.parts[pid].kind = *kind;
     data.parts[pid].d = DIAMETER_MIN;
     data.parts[pid].m = 1.0;
     data.new_pids[pid] = pid;
@@ -71,15 +73,15 @@ pub fn add_entity(
             };
         positions.push(position1);
         positions.push(position2);
-        pids.push(add_part(data, &position1));
-        pids.push(add_part(data, &position2));
+        pids.push(add_part(data, &position1, &plan.kinds[0]));
+        pids.push(add_part(data, &position2, &plan.kinds[1]));
     }
     add_link(datas, pids[0], pids[1], thread_id, thread_id);
     for part in plan.part_plans.iter() {
         let position = p_coords(&positions[part.a], &positions[part.b]);
         let pid1 = {
             let data = &mut datas[thread_id].write().unwrap();
-            add_part(data, &position)
+            add_part(data, &position, &part.k)
         };
         let p1 = datas[thread_id].read().unwrap().parts[pid1];
         for pid2 in pids.iter() {
