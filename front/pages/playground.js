@@ -7,8 +7,10 @@ import {
 let server_data = undefined;
 let socket;
 const Kind = {
+  Core: 1,
   Metal: 2,
-  Turbo: 3
+  Turbo: 3,
+  Mouth: 4,
 }
 const minimap = {};
 const view = {};
@@ -155,7 +157,7 @@ function render() {
     reset_canvas(minimap.canvas, minimap.context, "#ffff0004")
     render_minimap(camera, minimap, view)
     for (let i = 0 ; i < part_count ; i += 2) {
-      const pid = 10*4 + i*7*4
+      const pid = 10*4 + i*8*4
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
@@ -173,13 +175,14 @@ function render() {
     const aa_x = (view_max - view.canvas.width) / view_max * 0.5;
     const aa_y = (view_max - view.canvas.height)/ view_max * 0.5;
     for (let i = 0 ; i < part_count ; i += 1) {
-      const pid = 10*4 + i*7*4
+      const pid = 10*4 + i*8*4
 
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
       const y = data.getFloat32(  pid+3*4, littleEndian)
       const kind = data.getUint32(pid+6*4, littleEndian)
+      const energy = Math.max(0.0, Math.min(1.0, data.getFloat32(pid+7*4, littleEndian)))
 
       // if (i == 0) {
       //   console.log(kind)
@@ -197,10 +200,50 @@ function render() {
 
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
       if (inside) {
+
         if (kind == Kind.Metal) {
           view.context.fillStyle = "#aaa"
+
+          let r = 0.0;
+          let g = 0.0;
+          if (energy > 0.5) {
+            g = 1.0;
+            r = (1.0 - energy) * 2.0;
+          } else {
+            r = 1.0;
+            g = energy * 2.0;
+          }
+          if (i == 0) {
+            // console.log(energy)
+          }
+          let b = 0.0;
+          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+
         } else if (kind == Kind.Turbo) {
-          view.context.fillStyle = "#faa"
+          view.context.fillStyle = "#f80"
+        } else if (kind == Kind.Mouth) {
+          view.context.fillStyle = "#f80"
+        } else if (kind == Kind.Core) {
+          // view.context.fillStyle = "#88F"
+
+          let r = 0.0;
+          let g = 0.0;
+          let b = 0.0;
+          if (energy > 0.5) {
+            b = 1.0;
+            g = 1.0;
+            r = (1.0 - energy) * 2.0;
+          } else {
+            r = 1.0;
+            b = energy * 2.0;
+            g = energy * 2.0;
+          }
+          if (i == 0) {
+            // console.log(energy)
+          }
+
+          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+
         } else if (kind == 0) {
           view.context.fillStyle = "#FF0"
         } else {

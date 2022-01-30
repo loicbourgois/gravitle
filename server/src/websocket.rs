@@ -43,11 +43,11 @@ pub fn serve(senders: &Senders) {
             thread::spawn(move || {
                 let stream = match stream {
                     Ok(stream) => stream,
-                    Err(e) => panic!("[ error ] can not get stream: {}", e)
+                    Err(e) => panic!("[ error ] can not get stream: {}", e),
                 };
-                let mut websocket =  match accept(stream) {
+                let mut websocket = match accept(stream) {
                     Ok(websocket) => websocket,
-                    Err(e) => panic!("[ error ] can not get websocket: {}", e)
+                    Err(e) => panic!("[ error ] can not get websocket: {}", e),
                 };
                 let message = websocket.read_message().unwrap().to_string();
 

@@ -13,6 +13,7 @@ type Depth = u8;
 type CellId = usize;
 type PartId = usize;
 type Pid = PartId;
+type DnaId = u128;
 use std::io::Error;
 #[tokio::main]
 async fn main() -> Result<(), Error> {

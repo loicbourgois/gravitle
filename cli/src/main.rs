@@ -59,6 +59,7 @@ fn main() {
             SubCommand::with_name("host")
                 .setting(clap::AppSettings::ArgRequiredElseHelp)
                 .subcommand(SubCommand::with_name("setup"))
+                .subcommand(SubCommand::with_name("sync"))
                 .subcommand(SubCommand::with_name("run"))
                 .subcommand(SubCommand::with_name("log"))
                 .subcommand(SubCommand::with_name("kill"))
@@ -105,6 +106,8 @@ fn handle(matches: ArgMatches, configuration: &Configuration) {
     } else if let Some(matches) = matches.subcommand_matches("host") {
         if let Some(_) = matches.subcommand_matches("setup") {
             host_setup(&configuration.host);
+        } else if let Some(_) = matches.subcommand_matches("sync") {
+            host_sync(&configuration.host);
         } else if let Some(_) = matches.subcommand_matches("run") {
             host_run(&configuration.host);
         } else if let Some(_) = matches.subcommand_matches("log") {
@@ -133,6 +136,31 @@ fn host_status(host: &str) -> bool {
     )
 }
 
+fn host_sync(host: &str) -> bool {
+    runshellcmd_default_title(
+        Command::new("rsync")
+            .arg("--recursive")
+            .arg("--verbose")
+            .arg("--exclude")
+            .arg("target")
+            .arg(format!("{}/server/", base_dir()))
+            .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/server/", host)),
+    ) && runshellcmd_default_title(
+        Command::new("rsync")
+            .arg("--recursive")
+            .arg("--verbose")
+            .arg("--exclude")
+            .arg("target")
+            .arg(format!("{}/core/", base_dir()))
+            .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/core/", host)),
+    )
+    && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
+            .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml"),
+    )
+}
+
 fn host_setup(host: &str) -> bool {
     // eval "$(ssh-agent -s)"
     // ssh-add --apple-use-keychain $HOME/.ssh/gravitle
@@ -150,111 +178,77 @@ fn host_setup(host: &str) -> bool {
         Command::new("ssh-add")
             .arg("--apple-use-keychain")
             .arg(&ssh_key_root),
-    )
-    && runshellcmd_default_title(
-        Command::new("ssh").arg("-i")
-            .arg(ssh_key_root).arg(format!("root@{}", host)).arg("pwd")
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg(format!("root@{}", host))
-                .arg("adduser gravitle || true"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh-copy-id")
-                .arg("-f")
-                .arg("-i")
-                .arg(&file_path)
-                .arg(format!("gravitle@{}", host)),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("pwd"),
-        )
-        &&  runshellcmd_default_title(
-            Command::new("scp")
-                .arg("-i")
-                .arg(ssh_key_root)
-                .arg(sshd_config_local_path)
-                .arg(format!("root@{}:/etc/ssh/sshd_config", host)),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(ssh_key_root)
-                .arg(format!("root@{}", host))
-                .arg("systemctl restart ssh"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("pwd"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("/home/gravitle/.cargo/bin/cargo --version"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle || true"),
-        )
-        && runshellcmd_default_title(
-            Command::new("rsync")
-                .arg("--recursive")
-                .arg("--verbose")
-                .arg("--exclude")
-                .arg("target")
-                .arg(format!("{}/server/", base_dir()))
-                .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/server/", host)),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(ssh_key_root)
-                .arg(format!("root@{}", host))
-                .arg("apt-get update"),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(ssh_key_root)
-                .arg(format!("root@{}", host))
-                .arg("apt-get install gcc gcc-multilib screen iptables nmap -y"),
-        )
-        && runshellcmd_default_title(
-            Command::new("rsync")
-                .arg("--recursive")
-                .arg("--verbose")
-                .arg("--exclude")
-                .arg("target")
-                .arg(format!("{}/core/", base_dir()))
-                .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/core/", host)),
-        )
-        && runshellcmd_default_title(
-            Command::new("ssh")
-                .arg("-i")
-                .arg(file_path)
-                .arg(format!("gravitle@{}", host))
-                .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml"),
-        )
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(ssh_key_root)
+            .arg(format!("root@{}", host))
+            .arg("pwd"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("root@{}", host))
+            .arg("adduser gravitle || true"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh-copy-id")
+            .arg("-f")
+            .arg("-i")
+            .arg(&file_path)
+            .arg(format!("gravitle@{}", host)),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("pwd"),
+    ) && runshellcmd_default_title(
+        Command::new("scp")
+            .arg("-i")
+            .arg(ssh_key_root)
+            .arg(sshd_config_local_path)
+            .arg(format!("root@{}:/etc/ssh/sshd_config", host)),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(ssh_key_root)
+            .arg(format!("root@{}", host))
+            .arg("systemctl restart ssh"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("pwd"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("/home/gravitle/.cargo/bin/cargo --version"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
+            .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle || true"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(ssh_key_root)
+            .arg(format!("root@{}", host))
+            .arg("apt-get update"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(ssh_key_root)
+            .arg(format!("root@{}", host))
+            .arg("apt-get install gcc gcc-multilib screen iptables nmap -y"),
+    ) && host_sync(host)
         && success(&start)
 }
 
