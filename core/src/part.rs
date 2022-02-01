@@ -46,4 +46,5 @@ pub struct Part {
     pub pp: Point,
     pub kind: Kind,
     pub energy: Float,
+    pub activity: Float,
 }

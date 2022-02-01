@@ -63,6 +63,7 @@ fn main() {
                 .subcommand(SubCommand::with_name("run"))
                 .subcommand(SubCommand::with_name("log"))
                 .subcommand(SubCommand::with_name("kill"))
+                .subcommand(SubCommand::with_name("ssh"))
                 .subcommand(SubCommand::with_name("status")),
         )
         .subcommand(
@@ -77,7 +78,7 @@ fn main() {
 }
 
 fn handle(matches: ArgMatches, configuration: &Configuration) {
-    if let Some(_) = matches.subcommand_matches("build") {
+    if matches.subcommand_matches("build").is_some() {
         build();
     } else if matches.subcommand_matches("lint").is_some() {
         lint();
@@ -104,18 +105,20 @@ fn handle(matches: ArgMatches, configuration: &Configuration) {
     } else if let Some(_matches) = matches.subcommand_matches("watch") {
         watch();
     } else if let Some(matches) = matches.subcommand_matches("host") {
-        if let Some(_) = matches.subcommand_matches("setup") {
+        if matches.subcommand_matches("setup").is_some() {
             host_setup(&configuration.host);
-        } else if let Some(_) = matches.subcommand_matches("sync") {
+        } else if matches.subcommand_matches("sync").is_some() {
             host_sync(&configuration.host);
-        } else if let Some(_) = matches.subcommand_matches("run") {
+        } else if matches.subcommand_matches("run").is_some() {
             host_run(&configuration.host);
-        } else if let Some(_) = matches.subcommand_matches("log") {
+        } else if matches.subcommand_matches("log").is_some() {
             host_log(&configuration.host);
-        } else if let Some(_) = matches.subcommand_matches("kill") {
+        } else if matches.subcommand_matches("kill").is_some() {
             host_kill(&configuration.host);
-        } else if let Some(_) = matches.subcommand_matches("status") {
+        } else if matches.subcommand_matches("status").is_some() {
             host_status(&configuration.host);
+        } else if matches.subcommand_matches("ssh").is_some() {
+            host_ssh(&configuration.host);
         }
     }
 }
@@ -159,6 +162,10 @@ fn host_sync(host: &str) -> bool {
             .arg(format!("gravitle@{}", host))
             .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml"),
     )
+}
+
+fn host_ssh(host: &str) -> bool {
+    runshellcmd_default_title(Command::new("ssh").arg(format!("gravitle@{}", host)))
 }
 
 fn host_setup(host: &str) -> bool {

@@ -12,9 +12,8 @@ use crate::point::Point;
 use crate::Float;
 use crate::Pid;
 use core::part::Kind;
-use std::sync::Arc;
-use std::sync::RwLock;
 use std::sync::RwLockWriteGuard;
+use crate::gravitle::START_ACTIVITY;
 
 pub fn add_part(data: &mut Data, position: &Point, kind: &Kind, energy: Float) -> Pid {
     let i: usize = ((position.x * WIDTH as Float) as usize) % WIDTH;
@@ -29,11 +28,11 @@ pub fn add_part(data: &mut Data, position: &Point, kind: &Kind, energy: Float) -
     data.parts[pid].kind = *kind;
     data.parts[pid].d = DIAMETER_NEW;
     data.parts[pid].m = 1.0;
+    data.parts[pid].activity = START_ACTIVITY;
     data.parts[pid].energy = energy;
     data.new_pids[pid] = pid;
     pid
 }
-
 
 pub fn add_link_2(
     datas: &mut [RwLockWriteGuard<Data>],
@@ -51,8 +50,6 @@ pub fn add_link_2(
         pid2: pid_a,
     });
 }
-
-
 
 pub fn add_entity_2(
     datas: &mut [RwLockWriteGuard<Data>],

@@ -132,6 +132,6 @@ pub fn send(a: &SendArgs) {
         for k in senders_to_delete.iter() {
             senders.lock().unwrap().remove(k);
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(30));
     });
 }

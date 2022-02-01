@@ -157,7 +157,7 @@ function render() {
     reset_canvas(minimap.canvas, minimap.context, "#ffff0004")
     render_minimap(camera, minimap, view)
     for (let i = 0 ; i < part_count ; i += 2) {
-      const pid = 10*4 + i*8*4
+      const pid = 10*4 + i*9*4
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
@@ -168,36 +168,21 @@ function render() {
     }
     stop_counter('render_minimap');
     start_counter('render_view');
-    reset_canvas(view.canvas, view.context, "#000000")
+    reset_canvas(view.canvas, view.context, "#00000080")
     const oi = (1.0 - 1.0 / camera.zoom) * 0.5
     const zok_x = oi * view.canvas.width / view_max;
     const zok_y = oi * view.canvas.height / view_max;
     const aa_x = (view_max - view.canvas.width) / view_max * 0.5;
     const aa_y = (view_max - view.canvas.height)/ view_max * 0.5;
     for (let i = 0 ; i < part_count ; i += 1) {
-      const pid = 10*4 + i*8*4
-
+      const pid = 10*4 + i*9*4
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
       const y = data.getFloat32(  pid+3*4, littleEndian)
       const kind = data.getUint32(pid+6*4, littleEndian)
       const energy = Math.max(0.0, Math.min(1.0, data.getFloat32(pid+7*4, littleEndian)))
-
-      // if (i == 0) {
-      //   console.log(kind)
-      //   console.log(x)
-      //   console.log(y)
-      //   console.log(d)
-      //   console.log(m)
-      // }
-
-      // for (let aa = 0 ; aa < 100 ; aa +=1) {
-      //   console.log( data.getUint32(  pid+aa*4, littleEndian) )
-      // }
-
-
-
+      const activity = data.getFloat32(pid+8*4, littleEndian)
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
       if (inside) {
 
@@ -221,6 +206,10 @@ function render() {
 
         } else if (kind == Kind.Turbo) {
           view.context.fillStyle = "#f80"
+          let r = 1.0;
+          let g = 1.0 - activity;
+          let b = 0.0;
+          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
         } else if (kind == Kind.Mouth) {
           view.context.fillStyle = "#f80"
         } else if (kind == Kind.Core) {
