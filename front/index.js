@@ -13,6 +13,8 @@ import {webgpu} from "./pages/webgpu";
 import {localhost_3d} from "./pages/localhost_3d";
 import {playground} from "./pages/playground";
 if (window.location.pathname === "/") {
+  playground()
+} else if (window.location.pathname === "/home") {
   home()
 } else if (window.location.pathname === "/playground") {
   playground()

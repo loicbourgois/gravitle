@@ -12,6 +12,7 @@ use crate::websocket_async;
 use crate::CellId;
 use crate::Depth;
 use crate::Float;
+use crate::entity::add_part;
 use chrono::Utc;
 use core::part::Kind;
 use core::point::Point;
@@ -400,19 +401,23 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         let j_new: usize = (y * HEIGHT as Float) as usize;
                         let cid_new: CellId = cell_id(i_new, j_new);
                         let pid_new = part_id_next(cid_new, &tmp_depths);
-                        tmp_depths[cid_new] += 1;
-                        tmp_parts[tmp_count].p.x = x;
-                        tmp_parts[tmp_count].p.y = y;
-                        tmp_parts[tmp_count].pp.x = x_;
-                        tmp_parts[tmp_count].pp.y = y_;
-                        tmp_parts[tmp_count].d = p1.d;
-                        tmp_parts[tmp_count].activity = p1.activity;
-                        tmp_parts[tmp_count].energy = p1.energy + tmp_energies_delta[pid1];
-                        tmp_parts[tmp_count].kind = p1.kind;
-                        tmp_parts[tmp_count].m = p1.m;
-                        tmp_pids[tmp_count] = pid_new;
-                        old_pids[tmp_count] = pid1;
-                        tmp_count += 1;
+                        if pid_new < SIZE {
+                            tmp_depths[cid_new] += 1;
+                            tmp_parts[tmp_count].p.x = x;
+                            tmp_parts[tmp_count].p.y = y;
+                            tmp_parts[tmp_count].pp.x = x_;
+                            tmp_parts[tmp_count].pp.y = y_;
+                            tmp_parts[tmp_count].d = p1.d;
+                            tmp_parts[tmp_count].activity = p1.activity;
+                            tmp_parts[tmp_count].energy = p1.energy + tmp_energies_delta[pid1];
+                            tmp_parts[tmp_count].kind = p1.kind;
+                            tmp_parts[tmp_count].m = p1.m;
+                            tmp_pids[tmp_count] = pid_new;
+                            old_pids[tmp_count] = pid1;
+                            tmp_count += 1;
+                        } else {
+                            println!("[WARN ] pid_new >= SIZE: {} >= {}", pid_new, SIZE);
+                        }
                     }
                 }
             }
@@ -601,6 +606,25 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                     }
                 }
             }
+            {
+                let energy_max = TOTAL_COUNT as Float * INIT_ENERGY_RATIO;
+                let mut energy_total_tmp = energy_total_2;
+                loop {
+                    let position = Point {
+                        x: rng.gen::<Float>(),
+                        y: rng.gen::<Float>(),
+                    };
+                    let thread_id = rng.gen_range(0..THREADS);
+                    let data = &mut dws[thread_id].write().unwrap();
+                    add_part(data, &position, &Kind::Metal, 1.0);
+                    energy_total_tmp += 1.0;
+                    if energy_total_tmp > energy_max {
+                        break
+                    }
+                }
+
+                // data: &mut Data, position: &Point, kind: &Kind, energy: Float
+            }
             let duration = ends[(dw_step + 1) % DATA_POINTS_COUNT].elapsed().unwrap()
                 / DATA_POINTS_COUNT as u32;
             let duration_ = ends[(dw_step + 1) % DATA_POINTS_COUNT]
@@ -609,10 +633,10 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 .as_secs_f32()
                 / DATA_POINTS_COUNT as Float;
             let cps = 1.0 / duration_;
-            let mpps = (0.000001 / duration_) * (TOTAL_COUNT) as Float;
+            let mpps = (0.000001 / duration_) * (depths) as Float;
             let global_duration = start.elapsed().unwrap();
             let global_cps = dw_step as Float / start.elapsed().unwrap().as_secs_f32();
-            let global_mpps = global_cps * (TOTAL_COUNT as Float) * 0.000001;
+            let global_mpps = global_cps * (depths as Float) * 0.000001;
             println!(
                 "\
 Thread #{}

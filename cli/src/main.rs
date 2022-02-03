@@ -1,3 +1,5 @@
+mod release;
+use release::*;
 extern crate clap;
 extern crate dirs;
 extern crate notify;
@@ -25,7 +27,6 @@ fn main() {
     let env_filename = format!("{}/../gravitle_local/gravitle.env", base_dir());
     let env_file = File::open(env_filename).unwrap();
     let env_reader = BufReader::new(env_file);
-
     for (_index, line) in env_reader.lines().enumerate() {
         let line = line.unwrap();
         let split = line.split('=').collect::<Vec<&str>>();
@@ -39,13 +40,18 @@ fn main() {
         }
     }
     let configuration: Configuration = serde_yaml::from_str(&configuration_str).unwrap();
-
     let matches = App::new("gravitle")
         .usage("gravitle [COMMAND]")
         .setting(clap::AppSettings::ArgRequiredElseHelp)
         .subcommand(SubCommand::with_name("build"))
         .subcommand(SubCommand::with_name("lint"))
         .subcommand(SubCommand::with_name("format"))
+        .subcommand(
+            SubCommand::with_name("release")
+                .setting(clap::AppSettings::ArgRequiredElseHelp)
+                .subcommand(SubCommand::with_name("front"))
+                .subcommand(SubCommand::with_name("server")),
+        )
         .subcommand(
             SubCommand::with_name("start")
                 .setting(clap::AppSettings::ArgRequiredElseHelp)
@@ -101,6 +107,12 @@ fn handle(matches: ArgMatches, configuration: &Configuration) {
     } else if let Some(matches_2) = matches.subcommand_matches("test") {
         if let Some(_matches) = matches_2.subcommand_matches("server") {
             test_server();
+        }
+    } else if let Some(matches) = matches.subcommand_matches("release") {
+        if matches.subcommand_matches("front").is_some() {
+            release_front();
+        } else if matches.subcommand_matches("server").is_some() {
+            release_server();
         }
     } else if let Some(_matches) = matches.subcommand_matches("watch") {
         watch();

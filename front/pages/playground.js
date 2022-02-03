@@ -40,9 +40,14 @@ const counters = {
     value: undefined,
   }
 }
-const urls = [
-  "ws://127.0.0.1:8000/ws",
-  "ws://136.243.64.165:8000/ws",
+const servers = [
+  {
+    location: "Germany",
+    url: "ws://136.243.64.165:8000/ws"
+  }, {
+    location: "Local",
+    url: "ws://127.0.0.1:8000/ws"
+  }
 ]
 
 
@@ -54,8 +59,8 @@ function playground() {
 
 function select_url_html() {
   let options = "";
-  for (var url of urls) {
-    options += `<option value="${url}">${url}</option>`
+  for (var server of servers) {
+    options += `<option value="${server.url}">${server.location}</option>`
   }
   return `\
   <div>
@@ -72,11 +77,11 @@ function init() {
   document.getElementById("content").innerHTML = `\
 <canvas id="canvas"></canvas>
 <div id="panel">
-<div id="menu">
+<!-- <div id="menu">
   <a href="/playground">Playground</a>
   <a href="/gallery">Gallery</a>
   <a href="/gallery?webgpu=true">Gallery (WebGPU)</a>
-</div>
+</div> -->
   <canvas id="minimap"></canvas>
   ${select_url_html()}
   <div>
