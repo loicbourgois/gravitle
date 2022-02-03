@@ -1,0 +1,1 @@
+function home(){document.getElementById("content").innerHTML='<a href="/playground">Playground</a>\n<a href="/gallery">Gallery</a>\n<a href="/webgpu">webgpu</a>\n<a href="/localhost_3d">3D</a>\n'}export{home};
