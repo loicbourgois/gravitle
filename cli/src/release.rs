@@ -1,7 +1,3 @@
-pub fn release_front() {
-    
-}
+pub fn release_front() {}
 
-pub fn release_server() {
-
-}
+pub fn release_server() {}

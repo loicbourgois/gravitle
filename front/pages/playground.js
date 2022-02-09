@@ -11,6 +11,7 @@ const Kind = {
   Metal: 2,
   Turbo: 3,
   Mouth: 4,
+  Energy: 5,
 }
 const minimap = {};
 const view = {};
@@ -190,10 +191,8 @@ function render() {
       const activity = data.getFloat32(pid+8*4, littleEndian)
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
       if (inside) {
-
         if (kind == Kind.Metal) {
           view.context.fillStyle = "#aaa"
-
           let r = 0.0;
           let g = 0.0;
           if (energy > 0.5) {
@@ -203,12 +202,14 @@ function render() {
             r = 1.0;
             g = energy * 2.0;
           }
-          if (i == 0) {
-            // console.log(energy)
-          }
           let b = 0.0;
           view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
-
+        } else if (kind == Kind.Energy) {
+          view.context.fillStyle = "#aaa"
+          let r = 0.55 + 0.45 * energy;
+          let g = 0.55 + 0.45 * energy;
+          let b = 0.45;
+          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
         } else if (kind == Kind.Turbo) {
           view.context.fillStyle = "#f80"
           let r = 1.0;

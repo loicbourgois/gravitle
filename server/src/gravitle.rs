@@ -1,6 +1,7 @@
 use crate::data::Data;
 use crate::data::EntityToAdd;
 use crate::entity::add_entity_2;
+use crate::entity::add_part;
 use crate::maths::delta_position_wrap_around;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
@@ -12,7 +13,6 @@ use crate::websocket_async;
 use crate::CellId;
 use crate::Depth;
 use crate::Float;
-use crate::entity::add_part;
 use chrono::Utc;
 use core::part::Kind;
 use core::point::Point;
@@ -118,7 +118,7 @@ pub async fn start() {
     {
         let mut datas: Vec<RwLockWriteGuard<Data>> =
             data1s.iter().map(|x| x.write().unwrap()).collect();
-        for _ in 0..TOTAL_COUNT / part_plans_count {
+        for _ in 0..TOTAL_COUNT / part_plans_count / 2 {
             let position = Point {
                 x: rng.gen::<Float>(),
                 y: rng.gen::<Float>(),
@@ -386,10 +386,12 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         if let Kind::Turbo = p1.kind {
                             tmp_speeds[pid1].x -= tmp_directions[pid1].direction.x
                                 / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED * p1.activity;
+                                * TURBO_SPEED
+                                * p1.activity;
                             tmp_speeds[pid1].y -= tmp_directions[pid1].direction.y
                                 / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED * p1.activity;
+                                * TURBO_SPEED
+                                * p1.activity;
                         }
                         tmp_speeds[pid1].x = tmp_speeds[pid1].x.max(-MAX_SPEED).min(MAX_SPEED);
                         tmp_speeds[pid1].y = tmp_speeds[pid1].y.max(-MAX_SPEED).min(MAX_SPEED);
@@ -449,7 +451,11 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 assert!(part.d >= DIAMETER_NEW);
                 dw.parts[pid].m = part.m;
                 dw.parts[pid].kind = part.kind;
-                dw.parts[pid].activity = (part.activity + rng.gen::<Float>() * ACTIVITY_CHANGE_RATE - ACTIVITY_CHANGE_RATE*0.5).max(0.0).min(1.0);
+                dw.parts[pid].activity = (part.activity
+                    + rng.gen::<Float>() * ACTIVITY_CHANGE_RATE
+                    - ACTIVITY_CHANGE_RATE * 0.5)
+                    .max(0.0)
+                    .min(1.0);
                 dw.parts[pid].energy =
                     if part.energy <= 0.0 || !part_ok[old_pids[i]] || part.energy > 2.0 {
                         dw.parts_to_remove.insert(pid);
@@ -616,10 +622,10 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                     };
                     let thread_id = rng.gen_range(0..THREADS);
                     let data = &mut dws[thread_id].write().unwrap();
-                    add_part(data, &position, &Kind::Metal, 1.0);
+                    add_part(data, &position, &Kind::Energy, 1.0);
                     energy_total_tmp += 1.0;
                     if energy_total_tmp > energy_max {
-                        break
+                        break;
                     }
                 }
 

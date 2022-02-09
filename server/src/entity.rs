@@ -3,6 +3,7 @@ use crate::gravitle::cell_id;
 use crate::gravitle::part_id_next;
 use crate::gravitle::DIAMETER_NEW;
 use crate::gravitle::HEIGHT;
+use crate::gravitle::START_ACTIVITY;
 use crate::gravitle::WIDTH;
 use crate::link::Link;
 use crate::maths::distance_squared_wrap_around;
@@ -13,7 +14,6 @@ use crate::Float;
 use crate::Pid;
 use core::part::Kind;
 use std::sync::RwLockWriteGuard;
-use crate::gravitle::START_ACTIVITY;
 
 pub fn add_part(data: &mut Data, position: &Point, kind: &Kind, energy: Float) -> Pid {
     let i: usize = ((position.x * WIDTH as Float) as usize) % WIDTH;
@@ -96,9 +96,4 @@ pub fn add_entity_2(
         pids.push(pid1);
         positions.push(position);
     }
-    // datas[thread_id]
-    //     .write()
-    //     .unwrap()
-    //     .parts_to_remove
-    //     .insert(pids[0]);
 }
