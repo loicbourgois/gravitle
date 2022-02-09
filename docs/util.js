@@ -1,0 +1,1 @@
+import*as uuid from"uuid";function assert(n){n||console.error("failed condition")}function len(n){return n.length}function last(n){return len(n)>0?n[len(n)-1]:void 0}function player_id(){return uuid.v4()}export{assert,last,len,player_id};
