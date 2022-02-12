@@ -1,18 +1,21 @@
 use crate::data::Data;
 use crate::data::EntityToAdd;
-use crate::entity::add_entity_2;
+use crate::entity::add_entity;
 use crate::maths::delta_position_wrap_around;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
 use crate::maths::normalize;
+use crate::plan::mutate_dna_inplace;
 use crate::part::Part;
+use crate::plan::Dna;
+use crate::entity::add_part_energy;
 use crate::plan::get_plan;
+use crate::plan::plan_to_dna;
 use crate::websocket;
 use crate::websocket_async;
 use crate::CellId;
 use crate::Depth;
 use crate::Float;
-use crate::entity::add_part;
 use chrono::Utc;
 use core::part::Kind;
 use core::point::Point;
@@ -26,8 +29,9 @@ use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::thread;
 use std::time::SystemTime;
-const TOTAL_COUNT: usize = 50_000;
-const THREADS: usize = 6;
+const TOTAL_COUNT: usize = 60_000;
+const BLOOP_COUNT_START: usize = TOTAL_COUNT / 30;
+const THREADS: usize = 8;
 const DIMENSION: usize = 450;
 pub const WIDTH: usize = DIMENSION;
 const WIDTH_LESS: usize = WIDTH - 1;
@@ -35,7 +39,7 @@ const WIDTH_MORE: usize = WIDTH + 1;
 pub const HEIGHT: usize = DIMENSION;
 const HEIGHT_LESS: usize = HEIGHT - 1;
 const HEIGHT_MORE: usize = HEIGHT + 1;
-const MAX_DEPTH: Depth = 64;
+const MAX_DEPTH: Depth = 128;
 const SIZE: usize = WIDTH * HEIGHT * MAX_DEPTH as usize;
 pub const DIAMETER_NEW: Float = 0.05 / (DIMENSION as Float);
 pub const DIAMETER_MIN: Float = 0.5 / (DIMENSION as Float);
@@ -63,9 +67,9 @@ pub fn cell_id(i: usize, j: usize) -> usize {
 pub fn part_id_next(cid: CellId, depths: &[Depth]) -> usize {
     let k = depths[cid];
     // assert!(k < MAX_DEPTH);
-    if k > MAX_DEPTH {
-        println!("[WARN ] k > MAX_DEPTH: {} > {}", k, MAX_DEPTH);
-    }
+    // if k > MAX_DEPTH {
+    //     println!("[WARN ] k > MAX_DEPTH: {} > {}", k, MAX_DEPTH);
+    // }
     part_id(cid, k)
 }
 
@@ -83,18 +87,36 @@ pub fn init_parts() -> Vec<Part> {
             kind: Kind::Invalid,
             energy: 0.0,
             activity: 0.0,
+            uuid: 0,
+            r: 0,
+            g: 0,
+            b: 0,
         };
         SIZE
     ]
 }
 
+#[derive(Clone)]
+struct Wrapper {
+    data1s: Vec<Arc<RwLock<Data>>>,
+    data2s: Vec<Arc<RwLock<Data>>>,
+    dnas: Arc<RwLock<HashMap<u128, Dna>>>,
+}
+
 pub async fn start() {
-    let mut data1s: Vec<Arc<RwLock<Data>>> = Vec::new();
-    let mut data2s: Vec<Arc<RwLock<Data>>> = Vec::new();
+    let mut w = Wrapper {
+        data1s: Vec::new(),
+        data2s: Vec::new(),
+        dnas: Arc::new(RwLock::new(HashMap::new())),
+    };
+
+    // let mut data1s: Vec<Arc<RwLock<Data>>> = Vec::new();
+    // let mut data2s: Vec<Arc<RwLock<Data>>> = Vec::new();
+
     let timer_init = SystemTime::now();
     let mut rng = rand::thread_rng();
     for _ in 0..THREADS {
-        data1s.push(Arc::new(RwLock::new(Data {
+        w.data1s.push(Arc::new(RwLock::new(Data {
             parts: init_parts(),
             depths: vec![0; WIDTH_X_HEIGHT],
             links: vec![Vec::new(); THREADS],
@@ -103,7 +125,7 @@ pub async fn start() {
             parts_to_remove: HashSet::new(),
             entities_to_add: Vec::new(),
         })));
-        data2s.push(Arc::new(RwLock::new(Data {
+        w.data2s.push(Arc::new(RwLock::new(Data {
             parts: init_parts(),
             depths: vec![0; WIDTH_X_HEIGHT],
             links: vec![Vec::new(); THREADS],
@@ -113,35 +135,37 @@ pub async fn start() {
             entities_to_add: Vec::new(),
         })));
     }
-    let plan = get_plan();
-    let part_plans_count: usize = plan.part_plans.len() + 2;
+    let base_dna = plan_to_dna(&get_plan());
     {
         let mut datas: Vec<RwLockWriteGuard<Data>> =
-            data1s.iter().map(|x| x.write().unwrap()).collect();
-        for _ in 0..TOTAL_COUNT / part_plans_count {
+            w.data1s.iter().map(|x| x.write().unwrap()).collect();
+        for _ in 0..BLOOP_COUNT_START {
+            let part_plans_count: usize = get_plan().part_plans.len() + 2;
             let position = Point {
                 x: rng.gen::<Float>(),
                 y: rng.gen::<Float>(),
             };
             let rotation = rng.gen::<Float>();
             let thread_id = rng.gen_range(0..THREADS);
-            add_entity_2(
+            add_entity(
                 &mut datas,
-                &plan,
                 &position,
                 rotation,
                 thread_id,
                 (part_plans_count as Float) * INIT_ENERGY_RATIO,
+                &mut w.dnas.write().unwrap(),
+                &base_dna
             );
         }
     }
     println!("  init: {:?}", timer_init.elapsed().unwrap());
     let mut handles = Vec::new();
     for i in 0..THREADS {
-        let d1s = data1s.clone();
-        let d2s = data2s.clone();
+        // let d1s = w.data1s.clone();
+        // let d2s = w.data2s.clone();
+        let w_ = w.clone();
         handles.push(thread::spawn(move || {
-            compute_loop(&d1s, &d2s, i);
+            compute_loop(&w_, i);
         }));
     }
     let senders: websocket::Senders = Arc::new(Mutex::new(HashMap::new()));
@@ -151,7 +175,7 @@ pub async fn start() {
         websocket::serve(&senders);
         websocket::send(&websocket::SendArgs {
             senders: &senders,
-            datas: &data1s,
+            datas: &w.data1s,
         });
     }
     for handle in handles {
@@ -165,7 +189,9 @@ struct Direction {
     direction: Point,
 }
 
-fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id: usize) {
+fn compute_loop(w: &Wrapper, thread_id: usize) {
+    let d1s = &w.data1s;
+    let d2s = &w.data2s;
     let mut rng = rand::thread_rng();
     let mut tmp_parts = init_parts();
     let mut tmp_speeds: Vec<Point> = vec![Point { x: 0.0, y: 0.0 }; SIZE];
@@ -386,10 +412,12 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         if let Kind::Turbo = p1.kind {
                             tmp_speeds[pid1].x -= tmp_directions[pid1].direction.x
                                 / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED * p1.activity;
+                                * TURBO_SPEED
+                                * p1.activity;
                             tmp_speeds[pid1].y -= tmp_directions[pid1].direction.y
                                 / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED * p1.activity;
+                                * TURBO_SPEED
+                                * p1.activity;
                         }
                         tmp_speeds[pid1].x = tmp_speeds[pid1].x.max(-MAX_SPEED).min(MAX_SPEED);
                         tmp_speeds[pid1].y = tmp_speeds[pid1].y.max(-MAX_SPEED).min(MAX_SPEED);
@@ -402,6 +430,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                         let cid_new: CellId = cell_id(i_new, j_new);
                         let pid_new = part_id_next(cid_new, &tmp_depths);
                         if pid_new < SIZE {
+                            // /!\ COPY VALUES 1/2
                             tmp_depths[cid_new] += 1;
                             tmp_parts[tmp_count].p.x = x;
                             tmp_parts[tmp_count].p.y = y;
@@ -412,6 +441,10 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                             tmp_parts[tmp_count].energy = p1.energy + tmp_energies_delta[pid1];
                             tmp_parts[tmp_count].kind = p1.kind;
                             tmp_parts[tmp_count].m = p1.m;
+                            tmp_parts[tmp_count].r = p1.r;
+                            tmp_parts[tmp_count].g = p1.g;
+                            tmp_parts[tmp_count].b = p1.b;
+                            tmp_parts[tmp_count].uuid = p1.uuid;
                             tmp_pids[tmp_count] = pid_new;
                             old_pids[tmp_count] = pid1;
                             tmp_count += 1;
@@ -436,11 +469,16 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
             let mut dw = dws[thread_id].write().unwrap();
             dw.parts_to_remove.clear();
             for i in 0..tmp_count {
+                // /!\ COPY VALUES 2/2
                 let pid = tmp_pids[i];
                 let pid_old = old_pids[i];
                 let part = tmp_parts[i];
                 dw.parts[pid].p.x = part.p.x;
                 dw.parts[pid].p.y = part.p.y;
+                dw.parts[pid].uuid = part.uuid;
+                dw.parts[pid].r = part.r;
+                dw.parts[pid].g = part.g;
+                dw.parts[pid].b = part.b;
                 dw.parts[pid].d = part.d;
                 if dw.parts[pid].d < DIAMETER_MIN {
                     dw.parts[pid].d = (dw.parts[pid].d + GROWTH).min(DIAMETER_MIN);
@@ -449,7 +487,11 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                 assert!(part.d >= DIAMETER_NEW);
                 dw.parts[pid].m = part.m;
                 dw.parts[pid].kind = part.kind;
-                dw.parts[pid].activity = (part.activity + rng.gen::<Float>() * ACTIVITY_CHANGE_RATE - ACTIVITY_CHANGE_RATE*0.5).max(0.0).min(1.0);
+                dw.parts[pid].activity = (part.activity
+                    + rng.gen::<Float>() * ACTIVITY_CHANGE_RATE
+                    - ACTIVITY_CHANGE_RATE * 0.5)
+                    .max(0.0)
+                    .min(1.0);
                 dw.parts[pid].energy =
                     if part.energy <= 0.0 || !part_ok[old_pids[i]] || part.energy > 2.0 {
                         dw.parts_to_remove.insert(pid);
@@ -459,7 +501,7 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                             Kind::Core => {
                                 entities_to_add.push(EntityToAdd {
                                     source_thread_id: thread_id,
-                                    source_dna: 2,
+                                    source_dna_id: part.uuid,
                                     total_energy: 0.9,
                                     position: part.p
                                         + (tmp_directions[pid_old].direction
@@ -526,21 +568,26 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
             }
             // Add new entities
             {
-                let plan = get_plan();
+
                 for thid in 0..THREADS {
                     let entities_to_add = { dws[thid].read().unwrap().entities_to_add.clone() };
                     let mut dws_: Vec<RwLockWriteGuard<Data>> =
                         dws.iter().map(|x| x.write().unwrap()).collect();
                     for entity in &entities_to_add {
+                        let mut dna = *w.dnas.read().unwrap().get(&entity.source_dna_id).unwrap();
+                        for _ in 0..1 {
+                            mutate_dna_inplace(&mut dna);
+                        }
                         let rotation = 0.0;
                         let thread_id__ = dw_step % THREADS;
-                        add_entity_2(
+                        add_entity(
                             &mut dws_,
-                            &plan,
                             &entity.position,
                             rotation,
                             thread_id__,
                             entity.total_energy,
+                            &mut w.dnas.write().unwrap(),
+                            &dna
                         );
                     }
                 }
@@ -616,10 +663,10 @@ fn compute_loop(d1s: &[Arc<RwLock<Data>>], d2s: &[Arc<RwLock<Data>>], thread_id:
                     };
                     let thread_id = rng.gen_range(0..THREADS);
                     let data = &mut dws[thread_id].write().unwrap();
-                    add_part(data, &position, &Kind::Metal, 1.0);
+                    add_part_energy(data, &position);
                     energy_total_tmp += 1.0;
                     if energy_total_tmp > energy_max {
-                        break
+                        break;
                     }
                 }
 
