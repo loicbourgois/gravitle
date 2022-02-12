@@ -67,9 +67,9 @@ pub fn cell_id(i: usize, j: usize) -> usize {
 pub fn part_id_next(cid: CellId, depths: &[Depth]) -> usize {
     let k = depths[cid];
     // assert!(k < MAX_DEPTH);
-    if k > MAX_DEPTH {
-        println!("[WARN ] k > MAX_DEPTH: {} > {}", k, MAX_DEPTH);
-    }
+    // if k > MAX_DEPTH {
+    //     println!("[WARN ] k > MAX_DEPTH: {} > {}", k, MAX_DEPTH);
+    // }
     part_id(cid, k)
 }
 
