@@ -15,6 +15,19 @@ pub enum Kind {
     Energy = 5,
 }
 
+impl From<u8> for Kind {
+    fn from(v: u8) -> Self {
+        match v {
+            x if x == Kind::Core as u8 => Kind::Core,
+            x if x == Kind::Metal as u8 => Kind::Metal,
+            x if x == Kind::Turbo as u8 => Kind::Turbo,
+            x if x == Kind::Mouth as u8 => Kind::Mouth,
+            x if x == Kind::Energy as u8 => Kind::Energy,
+            _ => Kind::Invalid
+        }
+    }
+}
+
 impl From<u32> for Kind {
     fn from(v: u32) -> Self {
         match v {
@@ -50,4 +63,8 @@ pub struct Part {
     pub kind: Kind,
     pub energy: Float,
     pub activity: Float,
+    pub uuid: u128,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }

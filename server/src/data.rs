@@ -10,7 +10,7 @@ use std::collections::HashSet;
 #[derive(Clone)]
 pub struct EntityToAdd {
     pub source_thread_id: usize,
-    pub source_dna: DnaId,
+    pub source_dna_id: DnaId,
     pub total_energy: Float,
     pub position: Point,
 }

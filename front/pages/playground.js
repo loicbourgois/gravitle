@@ -45,7 +45,8 @@ const servers = [
   {
     location: "Germany",
     url: "ws://136.243.64.165:8000/ws"
-  }, {
+  },
+  {
     location: "Local",
     url: "ws://127.0.0.1:8000/ws"
   }
@@ -162,8 +163,9 @@ function render() {
     start_counter('render_minimap');
     reset_canvas(minimap.canvas, minimap.context, "#ffff0004")
     render_minimap(camera, minimap, view)
+    const part_data_length = 13*4 + 3;
     for (let i = 0 ; i < part_count ; i += 2) {
-      const pid = 10*4 + i*9*4
+      const pid = 10*4 + i*part_data_length
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
@@ -181,68 +183,79 @@ function render() {
     const aa_x = (view_max - view.canvas.width) / view_max * 0.5;
     const aa_y = (view_max - view.canvas.height)/ view_max * 0.5;
     for (let i = 0 ; i < part_count ; i += 1) {
-      const pid = 10*4 + i*9*4
+      const pid = 10*4 + i * part_data_length
       const d = data.getFloat32(  pid+0*4, littleEndian)
       const m = data.getFloat32(  pid+1*4, littleEndian)
       const x = data.getFloat32(  pid+2*4, littleEndian)
       const y = data.getFloat32(  pid+3*4, littleEndian)
+
+      const r_ = data.getUint8(  pid+13*4, littleEndian)
+      const g_ = data.getUint8(  pid+13*4+1, littleEndian)
+      const b_ = data.getUint8(  pid+13*4+2, littleEndian)
+
+      // if (i==0) {
+      //   console.log(r_, g_, b_)
+      // }
+
       const kind = data.getUint32(pid+6*4, littleEndian)
       const energy = Math.max(0.0, Math.min(1.0, data.getFloat32(pid+7*4, littleEndian)))
       const activity = data.getFloat32(pid+8*4, littleEndian)
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
+      const color_by_kind = false;
       if (inside) {
-        if (kind == Kind.Metal) {
-          view.context.fillStyle = "#aaa"
-          let r = 0.0;
-          let g = 0.0;
-          if (energy > 0.5) {
-            g = 1.0;
-            r = (1.0 - energy) * 2.0;
-          } else {
-            r = 1.0;
-            g = energy * 2.0;
-          }
-          let b = 0.0;
-          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
-        } else if (kind == Kind.Energy) {
-          view.context.fillStyle = "#aaa"
-          let r = 0.55 + 0.45 * energy;
-          let g = 0.55 + 0.45 * energy;
-          let b = 0.45;
-          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
-        } else if (kind == Kind.Turbo) {
-          view.context.fillStyle = "#f80"
-          let r = 1.0;
-          let g = 1.0 - activity;
-          let b = 0.0;
-          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
-        } else if (kind == Kind.Mouth) {
-          view.context.fillStyle = "#f80"
-        } else if (kind == Kind.Core) {
-          // view.context.fillStyle = "#88F"
+        if (color_by_kind) {
+          if (kind == Kind.Metal) {
+            view.context.fillStyle = "#aaa"
+            let r = 0.0;
+            let g = 0.0;
+            if (energy > 0.5) {
+              g = 1.0;
+              r = (1.0 - energy) * 2.0;
+            } else {
+              r = 1.0;
+              g = energy * 2.0;
+            }
+            let b = 0.0;
+            view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+          } else if (kind == Kind.Energy) {
+            view.context.fillStyle = "#aaa"
+            let r = 0.55 + 0.45 * energy;
+            let g = 0.55 + 0.45 * energy;
+            let b = 0.45;
+            view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+          } else if (kind == Kind.Turbo) {
+            view.context.fillStyle = "#f80"
+            let r = 1.0;
+            let g = 1.0 - activity;
+            let b = 0.0;
+            view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+          } else if (kind == Kind.Mouth) {
+            view.context.fillStyle = "#f80"
+          } else if (kind == Kind.Core) {
+            // view.context.fillStyle = "#88F"
 
-          let r = 0.0;
-          let g = 0.0;
-          let b = 0.0;
-          if (energy > 0.5) {
-            b = 1.0;
-            g = 1.0;
-            r = (1.0 - energy) * 2.0;
-          } else {
-            r = 1.0;
-            b = energy * 2.0;
-            g = energy * 2.0;
-          }
-          if (i == 0) {
-            // console.log(energy)
-          }
+            let r = 0.0;
+            let g = 0.0;
+            let b = 0.0;
+            if (energy > 0.5) {
+              b = 1.0;
+              g = 1.0;
+              r = (1.0 - energy) * 2.0;
+            } else {
+              r = 1.0;
+              b = energy * 2.0;
+              g = energy * 2.0;
+            }
 
-          view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+            view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
 
-        } else if (kind == 0) {
-          view.context.fillStyle = "#FF0"
-        } else {
-          view.context.fillStyle = "#f0f"
+          } else if (kind == 0) {
+            view.context.fillStyle = "#FF0"
+          } else {
+            view.context.fillStyle = "#f0f"
+          }
+        } else {
+          view.context.fillStyle = `rgba(${r_}, ${g_}, ${b_}, 1.0)`
         }
 
         view.context.beginPath();
