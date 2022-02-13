@@ -42,10 +42,10 @@ const counters = {
   }
 }
 const servers = [
-  // {
-  //   location: "Germany",
-  //   url: "ws://136.243.64.165:8000/ws"
-  // },
+  {
+    location: "Germany",
+    url: "ws://136.243.64.165:8000/ws"
+  },
   {
     location: "Local",
     url: "ws://127.0.0.1:8000/ws"
