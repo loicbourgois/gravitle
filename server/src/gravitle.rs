@@ -1,16 +1,16 @@
 use crate::data::Data;
 use crate::data::EntityToAdd;
 use crate::entity::add_entity;
+use crate::entity::add_part_energy;
 use crate::maths::delta_position_wrap_around;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
 use crate::maths::normalize;
-use crate::plan::mutate_dna_inplace;
 use crate::part::Part;
-use crate::plan::Dna;
-use crate::entity::add_part_energy;
 use crate::plan::get_plan;
+use crate::plan::mutate_dna_inplace;
 use crate::plan::plan_to_dna;
+use crate::plan::Dna;
 use crate::websocket;
 use crate::websocket_async;
 use crate::CellId;
@@ -29,8 +29,8 @@ use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::thread;
 use std::time::SystemTime;
-const TOTAL_COUNT: usize = 60_000;
-const BLOOP_COUNT_START: usize = TOTAL_COUNT / 30;
+const TOTAL_COUNT: usize = 50_000;
+const BLOOP_COUNT_START: usize = 1000;
 const THREADS: usize = 8;
 const DIMENSION: usize = 450;
 pub const WIDTH: usize = DIMENSION;
@@ -62,6 +62,14 @@ pub const START_ACTIVITY: Float = 1.0;
 
 pub fn cell_id(i: usize, j: usize) -> usize {
     i + j * WIDTH
+}
+
+fn home_dir() -> String {
+    dirs::home_dir()
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap()
 }
 
 pub fn part_id_next(cid: CellId, depths: &[Depth]) -> usize {
@@ -97,25 +105,39 @@ pub fn init_parts() -> Vec<Part> {
 }
 
 #[derive(Clone)]
+pub struct DnaSave {
+    pub parent_uuid: u128,
+    pub dna: Dna,
+}
+
+#[derive(Clone)]
 struct Wrapper {
     data1s: Vec<Arc<RwLock<Data>>>,
     data2s: Vec<Arc<RwLock<Data>>>,
-    dnas: Arc<RwLock<HashMap<u128, Dna>>>,
+    dnas: Arc<RwLock<HashMap<u128, DnaSave>>>,
+    //start: chrono::DateTime<Utc>,
+    dna_save_file_path: String,
 }
+use std::fs::File;
 
 pub async fn start() {
+    let timer_init = SystemTime::now();
+    println!("[ start ] Initializing");
+    let start = Utc::now();
     let mut w = Wrapper {
         data1s: Vec::new(),
         data2s: Vec::new(),
         dnas: Arc::new(RwLock::new(HashMap::new())),
+        //start,
+        dna_save_file_path: format!(
+            "{}/github.com/loicbourgois/gravitle_local/dna/{}.csv",
+            home_dir(),
+            start
+        ),
     };
-
-    // let mut data1s: Vec<Arc<RwLock<Data>>> = Vec::new();
-    // let mut data2s: Vec<Arc<RwLock<Data>>> = Vec::new();
-
-    let timer_init = SystemTime::now();
+    let _f = File::create(&w.dna_save_file_path).expect("Unable to create file");
     let mut rng = rand::thread_rng();
-    for _ in 0..THREADS {
+    for i in 0..THREADS {
         w.data1s.push(Arc::new(RwLock::new(Data {
             parts: init_parts(),
             depths: vec![0; WIDTH_X_HEIGHT],
@@ -134,12 +156,13 @@ pub async fn start() {
             parts_to_remove: HashSet::new(),
             entities_to_add: Vec::new(),
         })));
+        println!("Thread {}/{}", i + 1, THREADS);
     }
     let base_dna = plan_to_dna(&get_plan());
     {
         let mut datas: Vec<RwLockWriteGuard<Data>> =
             w.data1s.iter().map(|x| x.write().unwrap()).collect();
-        for _ in 0..BLOOP_COUNT_START {
+        for i in 0..BLOOP_COUNT_START {
             let part_plans_count: usize = get_plan().part_plans.len() + 2;
             let position = Point {
                 x: rng.gen::<Float>(),
@@ -147,6 +170,10 @@ pub async fn start() {
             };
             let rotation = rng.gen::<Float>();
             let thread_id = rng.gen_range(0..THREADS);
+            let dna_save = DnaSave {
+                dna: base_dna,
+                parent_uuid: 0,
+            };
             add_entity(
                 &mut datas,
                 &position,
@@ -154,15 +181,14 @@ pub async fn start() {
                 thread_id,
                 (part_plans_count as Float) * INIT_ENERGY_RATIO,
                 &mut w.dnas.write().unwrap(),
-                &base_dna
+                &dna_save,
+                &w.dna_save_file_path,
             );
+            println!("Bloop {}/{}", i + 1, BLOOP_COUNT_START);
         }
     }
-    println!("  init: {:?}", timer_init.elapsed().unwrap());
     let mut handles = Vec::new();
     for i in 0..THREADS {
-        // let d1s = w.data1s.clone();
-        // let d2s = w.data2s.clone();
         let w_ = w.clone();
         handles.push(thread::spawn(move || {
             compute_loop(&w_, i);
@@ -178,6 +204,10 @@ pub async fn start() {
             datas: &w.data1s,
         });
     }
+    println!(
+        "[  end  ] Initializing: {:?}",
+        timer_init.elapsed().unwrap()
+    );
     for handle in handles {
         handle.join().unwrap();
     }
@@ -550,6 +580,21 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     }
                 }
             }
+
+            // remove dnas
+            {
+                let drs_: Vec<RwLockReadGuard<Data>> =
+                    drs.iter().map(|x| x.read().unwrap()).collect();
+                let mut dnas = w.dnas.write().unwrap();
+                for dr in drs_.iter().take(THREADS) {
+                    for part_to_remove in &dr.parts_to_remove {
+                        let p = dr.parts[*part_to_remove];
+                        // TODO: save dna to file
+                        dnas.remove(&p.uuid);
+                    }
+                }
+            }
+
             // Update links
             {
                 let mut ds: Vec<RwLockWriteGuard<Data>> =
@@ -568,16 +613,25 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
             }
             // Add new entities
             {
-
                 for thid in 0..THREADS {
                     let entities_to_add = { dws[thid].read().unwrap().entities_to_add.clone() };
                     let mut dws_: Vec<RwLockWriteGuard<Data>> =
                         dws.iter().map(|x| x.write().unwrap()).collect();
                     for entity in &entities_to_add {
-                        let mut dna = *w.dnas.read().unwrap().get(&entity.source_dna_id).unwrap();
+                        let mut dna = w
+                            .dnas
+                            .read()
+                            .unwrap()
+                            .get(&entity.source_dna_id)
+                            .unwrap()
+                            .dna;
                         for _ in 0..1 {
                             mutate_dna_inplace(&mut dna);
                         }
+                        let dna_save = DnaSave {
+                            dna,
+                            parent_uuid: entity.source_dna_id,
+                        };
                         let rotation = 0.0;
                         let thread_id__ = dw_step % THREADS;
                         add_entity(
@@ -587,7 +641,8 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                             thread_id__,
                             entity.total_energy,
                             &mut w.dnas.write().unwrap(),
-                            &dna
+                            &dna_save,
+                            &w.dna_save_file_path,
                         );
                     }
                 }
@@ -620,8 +675,7 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
         //
         ends[dw_step % DATA_POINTS_COUNT] = SystemTime::now();
         if dw_step % 100 == 0 && thread_id == 0 {
-            // TODO:
-            // Why are they not the same ?
+            // TODO: Why are they not the same ?
             let mut energy_total: Float = 0.0;
             let mut energy_total_2: Float = 0.0;
             let mut parts = 0;
@@ -669,8 +723,6 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                         break;
                     }
                 }
-
-                // data: &mut Data, position: &Point, kind: &Kind, energy: Float
             }
             let duration = ends[(dw_step + 1) % DATA_POINTS_COUNT].elapsed().unwrap()
                 / DATA_POINTS_COUNT as u32;
@@ -696,6 +748,7 @@ Thread #{}
         energy:          {}
         energy 2:        {}
         depths:          {}
+        dnas:            {}
     last {}
         compute:         {:?}
         cps:             {}
@@ -714,6 +767,7 @@ Thread #{}
                 energy_total,
                 energy_total_2,
                 depths,
+                w.dnas.read().unwrap().len(),
                 DATA_POINTS_COUNT,
                 duration,
                 cps,

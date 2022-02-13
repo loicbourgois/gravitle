@@ -19,3 +19,4 @@ futures-util = "*"
 bincode = "*"
 core = { path = "../core" }
 chrono = "*"
+dirs = "*"

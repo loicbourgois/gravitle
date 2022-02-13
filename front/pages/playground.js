@@ -97,6 +97,9 @@ function init() {
   </div>
   <p id="p_step"></p>
   <p id="p_fps"></p>
+  <div>
+    Color by kind: <input type="checkbox" id="color_by_kind_checkbox">
+  </div>
 
   <p id="p_counter_frame"></p>
   <p id="p_counter_render"></p>
@@ -182,6 +185,8 @@ function render() {
     const zok_y = oi * view.canvas.height / view_max;
     const aa_x = (view_max - view.canvas.width) / view_max * 0.5;
     const aa_y = (view_max - view.canvas.height)/ view_max * 0.5;
+    const color_by_kind = document.getElementById("color_by_kind_checkbox").checked
+    // console.log(color_by_kind)
     for (let i = 0 ; i < part_count ; i += 1) {
       const pid = 10*4 + i * part_data_length
       const d = data.getFloat32(  pid+0*4, littleEndian)
@@ -201,7 +206,6 @@ function render() {
       const energy = Math.max(0.0, Math.min(1.0, data.getFloat32(pid+7*4, littleEndian)))
       const activity = data.getFloat32(pid+8*4, littleEndian)
       const inside = x_min <= x && x <= x_max && y_min <= y && y <= y_max;
-      const color_by_kind = false;
       if (inside) {
         if (color_by_kind) {
           if (kind == Kind.Metal) {
@@ -232,8 +236,6 @@ function render() {
           } else if (kind == Kind.Mouth) {
             view.context.fillStyle = "#f80"
           } else if (kind == Kind.Core) {
-            // view.context.fillStyle = "#88F"
-
             let r = 0.0;
             let g = 0.0;
             let b = 0.0;
@@ -246,16 +248,30 @@ function render() {
               b = energy * 2.0;
               g = energy * 2.0;
             }
-
             view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
-
           } else if (kind == 0) {
             view.context.fillStyle = "#FF0"
           } else {
             view.context.fillStyle = "#f0f"
           }
         } else {
-          view.context.fillStyle = `rgba(${r_}, ${g_}, ${b_}, 1.0)`
+          // if (kind == Kind.Core) {
+          //   let r = 0.0;
+          //   let g = 0.0;
+          //   let b = 0.0;
+          //   if (energy > 0.5) {
+          //     b = 1.0;
+          //     g = 1.0;
+          //     r = (1.0 - energy) * 2.0;
+          //   } else {
+          //     r = 1.0;
+          //     b = energy * 2.0;
+          //     g = energy * 2.0;
+          //   }
+          //   view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, 0, 1.0)`
+          // } else {
+            view.context.fillStyle = `rgba(${r_*0.5+128}, ${g_*0.5+128}, ${b_*0.5+128}, 1.0)`
+          // }
         }
 
         view.context.beginPath();
