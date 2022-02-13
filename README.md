@@ -7,4 +7,5 @@ g start server
 g start front
 
 g release front
+g host kill && g host sync && g host run && g host log;
 ```

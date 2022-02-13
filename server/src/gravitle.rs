@@ -2,14 +2,22 @@ use crate::data::Data;
 use crate::data::EntityToAdd;
 use crate::entity::add_entity;
 use crate::entity::add_part_energy;
+use crate::maths::cross;
 use crate::maths::delta_position_wrap_around;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
 use crate::maths::normalize;
+use crate::plan::random_dna;
+use crate::plan::link_plan_to_ab_plan;
+use crate::plan::dna_to_link_plan;
 use crate::part::Part;
-use crate::plan::get_plan;
+use crate::plan::get_plan_pyra;
+use crate::plan::ab_plan_to_link_plan;
+use crate::plan::get_plan_planner;
+use crate::plan::get_plan_pusher;
+use crate::plan::get_plan_aie;
+use crate::plan::link_plan_to_dna;
 use crate::plan::mutate_dna_inplace;
-use crate::plan::plan_to_dna;
 use crate::plan::Dna;
 use crate::websocket;
 use crate::websocket_async;
@@ -30,7 +38,6 @@ use std::sync::RwLockWriteGuard;
 use std::thread;
 use std::time::SystemTime;
 const TOTAL_COUNT: usize = 50_000;
-const BLOOP_COUNT_START: usize = 1000;
 const THREADS: usize = 8;
 const DIMENSION: usize = 450;
 pub const WIDTH: usize = DIMENSION;
@@ -43,7 +50,7 @@ const MAX_DEPTH: Depth = 128;
 const SIZE: usize = WIDTH * HEIGHT * MAX_DEPTH as usize;
 pub const DIAMETER_NEW: Float = 0.05 / (DIMENSION as Float);
 pub const DIAMETER_MIN: Float = 0.5 / (DIMENSION as Float);
-pub const DIAMETER_MAX: Float = 1.0 / (DIMENSION as Float);
+pub const DIAMETER_MAX: Float = 0.6 / (DIMENSION as Float);
 const GROWTH: Float = DIAMETER_MIN * 0.001;
 const WIDTH_X_HEIGHT: usize = WIDTH * HEIGHT;
 const WEBSOCKET_ASYNC: bool = false;
@@ -59,6 +66,8 @@ const TURBO_SPEED: Float = 0.00001;
 const MAX_SPEED: Float = 0.0001;
 const ACTIVITY_CHANGE_RATE: Float = 0.0;
 pub const START_ACTIVITY: Float = 1.0;
+const MUTATIONS: usize = 1;
+const D_MOVE_RATIO: Float = 0.01;
 
 pub fn cell_id(i: usize, j: usize) -> usize {
     i + j * WIDTH
@@ -115,7 +124,6 @@ struct Wrapper {
     data1s: Vec<Arc<RwLock<Data>>>,
     data2s: Vec<Arc<RwLock<Data>>>,
     dnas: Arc<RwLock<HashMap<u128, DnaSave>>>,
-    //start: chrono::DateTime<Utc>,
     dna_save_file_path: String,
 }
 use std::fs::File;
@@ -128,7 +136,6 @@ pub async fn start() {
         data1s: Vec::new(),
         data2s: Vec::new(),
         dnas: Arc::new(RwLock::new(HashMap::new())),
-        //start,
         dna_save_file_path: format!(
             "{}/github.com/loicbourgois/gravitle_local/dna/{}.csv",
             home_dir(),
@@ -158,33 +165,55 @@ pub async fn start() {
         })));
         println!("Thread {}/{}", i + 1, THREADS);
     }
-    let base_dna = plan_to_dna(&get_plan());
+
     {
         let mut datas: Vec<RwLockWriteGuard<Data>> =
             w.data1s.iter().map(|x| x.write().unwrap()).collect();
-        for i in 0..BLOOP_COUNT_START {
-            let part_plans_count: usize = get_plan().part_plans.len() + 2;
-            let position = Point {
-                x: rng.gen::<Float>(),
-                y: rng.gen::<Float>(),
+        let mut p_count = 0;
+        loop {
+            let plan = match rng.gen_range(0..5) {
+                0 => get_plan_pusher(),
+                1 => get_plan_planner(),
+                2 => get_plan_pyra(),
+                3 => get_plan_aie(),
+                _ => link_plan_to_ab_plan(&dna_to_link_plan(&random_dna())),
             };
-            let rotation = rng.gen::<Float>();
-            let thread_id = rng.gen_range(0..THREADS);
             let dna_save = DnaSave {
-                dna: base_dna,
+                dna: link_plan_to_dna(&ab_plan_to_link_plan(&plan)),
                 parent_uuid: 0,
+            };
+            let part_plans_count = {
+                let mut c = 2;
+                for part in plan.part_plans.iter() {
+                    match part.k {
+                        Kind::Invalid => {
+                            break;
+                        }
+                        _ => {
+                            c += 1;
+                        }
+                    }
+                }
+                c
             };
             add_entity(
                 &mut datas,
-                &position,
-                rotation,
-                thread_id,
-                (part_plans_count as Float) * INIT_ENERGY_RATIO,
+                &Point {
+                    x: rng.gen::<Float>(),
+                    y: rng.gen::<Float>(),
+                },
+                rng.gen::<Float>(),
+                rng.gen_range(0..THREADS),
+                part_plans_count as Float * INIT_ENERGY_RATIO,
                 &mut w.dnas.write().unwrap(),
                 &dna_save,
                 &w.dna_save_file_path,
             );
-            println!("Bloop {}/{}", i + 1, BLOOP_COUNT_START);
+            p_count += part_plans_count;
+            println!("Parts:  {:1}/{}", (p_count as Float) , TOTAL_COUNT);
+            if (p_count as Float) >= TOTAL_COUNT as Float {
+                break
+            }
         }
     }
     let mut handles = Vec::new();
@@ -225,9 +254,10 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
     let mut rng = rand::thread_rng();
     let mut tmp_parts = init_parts();
     let mut tmp_speeds: Vec<Point> = vec![Point { x: 0.0, y: 0.0 }; SIZE];
+    let mut tmp_moves: Vec<Point> = vec![Point { x: 0.0, y: 0.0 }; SIZE];
     let mut tmp_pids: Vec<usize> = vec![0; SIZE];
     let mut tmp_energies_delta: Vec<Float> = vec![0.0; SIZE];
-    let mut part_ok: Vec<bool> = vec![true; SIZE];
+    let mut part_ok: Vec<u8> = vec![100; SIZE];
     let mut tmp_count;
     let mut tmp_depths: Vec<Depth> = vec![0; WIDTH_X_HEIGHT];
     let mut tmp_directions: Vec<Direction> = vec![
@@ -280,6 +310,9 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
         {
             let data_read = drs[thread_id].read().unwrap();
             let drs_: Vec<RwLockReadGuard<Data>> = drs.iter().map(|x| x.read().unwrap()).collect();
+            //
+            // Collisions
+            //
             for a in 0..WIDTH_X_HEIGHT {
                 let i = a % DIMENSION;
                 let j = a / DIMENSION;
@@ -307,6 +340,7 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     }
                     let p1 = data_read.parts[pid1];
                     let mut d_collision = Point { x: 0.0, y: 0.0 };
+                    let mut d_move_collision = Point { x: 0.0, y: 0.0 };
                     // TODO: store collisions for debugging
                     let mut _collisions = 0;
                     for cid2 in cid2s {
@@ -342,15 +376,19 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                                             y: dpw.y * mass_factor * dot_vp / distance_sqrd,
                                         };
                                         d_collision -= acceleration;
+                                        let dpwn = normalize(dpw);
+                                        d_move_collision += &(dpwn * diameter * D_MOVE_RATIO);
                                         _collisions += 1;
                                         match (p1.kind, p2.kind) {
                                             (Kind::Mouth, Kind::Mouth) => {
+                                                // feeding baby
                                                 if p1.energy > p2.energy {
-                                                    energy_delta += ENERGY_TRANSFER_EAT;
-                                                } else if p1.energy < p2.energy {
                                                     energy_delta -= ENERGY_TRANSFER_EAT;
+                                                } else if p1.energy < p2.energy {
+                                                    energy_delta += ENERGY_TRANSFER_EAT;
                                                 } else {
                                                 }
+                                                // energy_delta -= ENERGY_TRANSFER_EAT;
                                             }
                                             (Kind::Mouth, _) => {
                                                 energy_delta += ENERGY_TRANSFER_EAT;
@@ -358,7 +396,16 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                                             (_, Kind::Mouth) => {
                                                 energy_delta -= ENERGY_TRANSFER_EAT;
                                             }
-                                            _ => {}
+                                            _ => {
+                                                if distance_sqrd < diameter * diameter * 0.5 * 0.5 {
+                                                    if p1.energy > p2.energy {
+                                                        energy_delta += ENERGY_TRANSFER_EAT;
+                                                    } else if p1.energy < p2.energy {
+                                                        energy_delta -= ENERGY_TRANSFER_EAT;
+                                                    } else {
+                                                    }
+                                                }
+                                            }
                                         }
                                     } else {
                                         // pass
@@ -369,15 +416,19 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     }
                     tmp_energies_delta[pid1] = energy_delta;
                     tmp_speeds[pid1] = p1.p - p1.pp + d_collision;
+                    tmp_moves[pid1] = d_move_collision;
                     tmp_directions[pid1].neighbour_count = 0.0;
                     tmp_directions[pid1].direction.x = 0.0;
                     tmp_directions[pid1].direction.y = 0.0;
                     match p1.kind {
-                        Kind::Mouth => part_ok[pid1] = false,
-                        _ => part_ok[pid1] = true,
+                        Kind::Mouth => part_ok[pid1] = 0,
+                        _ => part_ok[pid1] = 100,
                     }
                 }
             }
+            //
+            // Links
+            //
             for (thid2, links) in data_read.links.iter().enumerate() {
                 let dr = &drs_[thid2];
                 for (link_id, link) in links.iter().enumerate() {
@@ -392,10 +443,9 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     let p1 = data_read.parts[link.pid1];
                     let p2 = dr.parts[link.pid2];
                     tmp_energies_delta[link.pid1] -= (p1.energy - p2.energy) * ENERGY_TRANSFER;
-
                     match (p1.kind, p2.kind) {
                         (Kind::Mouth, Kind::Mouth) => {}
-                        (Kind::Mouth, _) => part_ok[link.pid1] = true,
+                        (Kind::Mouth, _) => part_ok[link.pid1] += 1,
                         _ => {}
                     }
                     let distance_sqrd = distance_squared_wrap_around(&p1.p, &p2.p);
@@ -428,6 +478,9 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     }
                 }
             }
+            //
+            // Update
+            //
             for i in 0..WIDTH {
                 for j in 0..HEIGHT {
                     let cid1 = cell_id(i, j);
@@ -439,22 +492,53 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                             // ok
                         }
                         let p1 = data_read.parts[pid1];
+                        let direction =
+                            tmp_directions[pid1].direction / tmp_directions[pid1].neighbour_count;
                         if let Kind::Turbo = p1.kind {
-                            tmp_speeds[pid1].x -= tmp_directions[pid1].direction.x
-                                / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED
-                                * p1.activity;
-                            tmp_speeds[pid1].y -= tmp_directions[pid1].direction.y
-                                / tmp_directions[pid1].neighbour_count
-                                * TURBO_SPEED
-                                * p1.activity;
+                            tmp_speeds[pid1].x -= direction.x * TURBO_SPEED * p1.activity;
+                            tmp_speeds[pid1].y -= direction.y * TURBO_SPEED * p1.activity;
                         }
-                        tmp_speeds[pid1].x = tmp_speeds[pid1].x.max(-MAX_SPEED).min(MAX_SPEED);
-                        tmp_speeds[pid1].y = tmp_speeds[pid1].y.max(-MAX_SPEED).min(MAX_SPEED);
-                        let x = (p1.p.x + tmp_speeds[pid1].x + 1.0).fract();
-                        let y = (p1.p.y + tmp_speeds[pid1].y + 1.0).fract();
-                        let x_ = x - tmp_speeds[pid1].x;
-                        let y_ = y - tmp_speeds[pid1].y;
+                        // tmp_speeds[pid1].x = tmp_speeds[pid1].x;//.max(-MAX_SPEED).min(MAX_SPEED);
+                        // tmp_speeds[pid1].y = tmp_speeds[pid1].y;//.max(-MAX_SPEED).min(MAX_SPEED);
+
+                        let mut dx = tmp_speeds[pid1].x;
+                        let mut dy = tmp_speeds[pid1].y;
+
+                        if dx > MAX_SPEED {
+                            dx = MAX_SPEED * 0.9;
+                            //println!("speed issue dx > MAX_SPEED");
+                        }
+                        if dx < -MAX_SPEED {
+                            dx = -MAX_SPEED * 0.9;
+                            //println!("speed issue dx < -MAX_SPEED");
+                        }
+                        if dy > MAX_SPEED {
+                            dy = MAX_SPEED * 0.9;
+                            //println!("speed issue dy > MAX_SPEED");
+                        }
+                        if dy < -MAX_SPEED {
+                            dy = -MAX_SPEED * 0.9;
+                            //println!("speed issue dy < -MAX_SPEED");
+                        }
+
+                        if let Kind::Grip = p1.kind {
+                            let direction_perpendicular = Point {
+                                x: direction.y,
+                                y: -direction.x,
+                            };
+                            // let pa1 = pA - direction_perpendicular;
+                            // let pa2 = pA + direction_perpendicular
+                            let cross_ = cross(&direction_perpendicular, &tmp_speeds[pid1]);
+                            if cross_ > 0.0 {
+                                dx *= 0.5;
+                                dy *= 0.5;
+                            }
+                        }
+
+                        let x = (p1.p.x + dx + 1.0 + tmp_moves[pid1].x).fract();
+                        let y = (p1.p.y + dy + 1.0 + tmp_moves[pid1].y).fract();
+                        let x_ = x - dx;
+                        let y_ = y - dy;
                         let i_new: usize = (x * WIDTH as Float) as usize;
                         let j_new: usize = (y * HEIGHT as Float) as usize;
                         let cid_new: CellId = cell_id(i_new, j_new);
@@ -512,9 +596,19 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                 dw.parts[pid].d = part.d;
                 if dw.parts[pid].d < DIAMETER_MIN {
                     dw.parts[pid].d = (dw.parts[pid].d + GROWTH).min(DIAMETER_MIN);
+                } else {
+                    match part.kind {
+                        Kind::Muscle => {
+                            dw.parts[pid].d = DIAMETER_MIN
+                                + (DIAMETER_MAX - DIAMETER_MIN)
+                                    * (1.0 + ((step as Float) * 0.1).sin())
+                                    * 0.5;
+                        }
+                        _ => {
+                            dw.parts[pid].d = (dw.parts[pid].d + GROWTH).min(DIAMETER_MAX);
+                        }
+                    }
                 }
-                assert!(part.d <= DIAMETER_MAX);
-                assert!(part.d >= DIAMETER_NEW);
                 dw.parts[pid].m = part.m;
                 dw.parts[pid].kind = part.kind;
                 dw.parts[pid].activity = (part.activity
@@ -523,7 +617,7 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     .max(0.0)
                     .min(1.0);
                 dw.parts[pid].energy =
-                    if part.energy <= 0.0 || !part_ok[old_pids[i]] || part.energy > 2.0 {
+                    if part.energy <= 0.0 || part_ok[old_pids[i]] < 3 || part.energy > 2.0 {
                         dw.parts_to_remove.insert(pid);
                         part.energy
                     } else if part.energy > 1.0 {
@@ -617,33 +711,39 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                     let entities_to_add = { dws[thid].read().unwrap().entities_to_add.clone() };
                     let mut dws_: Vec<RwLockWriteGuard<Data>> =
                         dws.iter().map(|x| x.write().unwrap()).collect();
-                    for entity in &entities_to_add {
-                        let mut dna = w
-                            .dnas
-                            .read()
-                            .unwrap()
-                            .get(&entity.source_dna_id)
-                            .unwrap()
-                            .dna;
-                        for _ in 0..1 {
-                            mutate_dna_inplace(&mut dna);
+                    for (_, entity) in entities_to_add.iter().enumerate() {
+                        // println!("#{}: adding {}/{}", thid, i+1, entities_to_add.len());
+                        let mut dnas = w.dnas.write().unwrap();
+                        match dnas.get(&entity.source_dna_id) {
+                            Some(dna_save) => {
+                                let mut dna = dna_save.dna;
+                                for _ in 0..MUTATIONS {
+                                    mutate_dna_inplace(&mut dna);
+                                }
+                                let dna_save = DnaSave {
+                                    dna,
+                                    parent_uuid: entity.source_dna_id,
+                                };
+                                let rotation = 0.0;
+                                let thread_id__ = dw_step % THREADS;
+                                add_entity(
+                                    &mut dws_,
+                                    &entity.position,
+                                    rotation,
+                                    thread_id__,
+                                    entity.total_energy,
+                                    &mut dnas,
+                                    &dna_save,
+                                    &w.dna_save_file_path,
+                                );
+                            }
+                            None => {
+                                println!(
+                                    "[ERROR] none dna_save for source_dna_id: {}",
+                                    entity.source_dna_id
+                                );
+                            }
                         }
-                        let dna_save = DnaSave {
-                            dna,
-                            parent_uuid: entity.source_dna_id,
-                        };
-                        let rotation = 0.0;
-                        let thread_id__ = dw_step % THREADS;
-                        add_entity(
-                            &mut dws_,
-                            &entity.position,
-                            rotation,
-                            thread_id__,
-                            entity.total_energy,
-                            &mut w.dnas.write().unwrap(),
-                            &dna_save,
-                            &w.dna_save_file_path,
-                        );
                     }
                 }
             }
