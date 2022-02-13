@@ -1,22 +1,22 @@
 use crate::data::Data;
 use crate::gravitle::cell_id;
 use crate::gravitle::part_id_next;
-use crate::gravitle::DIAMETER_NEW;
-use crate::plan::dna_to_plan;
-use std::collections::HashMap;
 use crate::gravitle::DnaSave;
+use crate::gravitle::DIAMETER_NEW;
 use crate::gravitle::HEIGHT;
 use crate::gravitle::START_ACTIVITY;
 use crate::gravitle::WIDTH;
-use std::fs;
-use std::io::Write;
 use crate::link::Link;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::p_coords;
+use crate::plan::dna_to_plan;
 use crate::point::Point;
 use crate::Float;
 use crate::Pid;
 use core::part::Kind;
+use std::collections::HashMap;
+use std::fs;
+use std::io::Write;
 use std::sync::RwLockWriteGuard;
 use uuid::Uuid;
 
