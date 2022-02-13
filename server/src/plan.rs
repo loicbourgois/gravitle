@@ -18,7 +18,7 @@ pub struct Plan {
     pub part_plans: Vec<PartPlan>,
 }
 
-const DNA_SIZE: usize = 2*4 + 6 * 20;
+const DNA_SIZE: usize = 2 * 4 + 6 * 20;
 
 pub type Dna = [u8; DNA_SIZE];
 
@@ -71,26 +71,19 @@ pub fn mutate_dna_inplace(dna: &mut Dna) {
 pub fn dna_to_plan(dna: &Dna) -> Plan {
     let mut plan = Plan {
         kinds: [Kind::from(dna[0]), Kind::from(dna[1])],
-        colors: [
-            dna[2],
-            dna[3],
-            dna[4],
-            dna[5],
-            dna[6],
-            dna[7],
-        ],
+        colors: [dna[2], dna[3], dna[4], dna[5], dna[6], dna[7]],
         part_plans: Vec::new(),
     };
-    let i_start = 2*4;
+    let i_start = 2 * 4;
     let ss = 6;
     for i in 0..20 {
         plan.part_plans.push(PartPlan {
             k: Kind::from(dna[i_start + i * ss]),
             a: dna[i_start + i * ss + 1] as usize,
             b: dna[i_start + i * ss + 2] as usize,
-            cr: dna[i_start + i * ss + 3] ,
-            cg: dna[i_start + i * ss + 4] ,
-            cb: dna[i_start + i * ss + 5] ,
+            cr: dna[i_start + i * ss + 3],
+            cg: dna[i_start + i * ss + 4],
+            cb: dna[i_start + i * ss + 5],
         })
     }
     plan

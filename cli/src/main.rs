@@ -280,6 +280,12 @@ fn host_run(host: &str) -> bool {
             .arg("-i")
             .arg(file_path)
             .arg(format!("gravitle@{}", host))
+            .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle_local/dna"),
+    ) && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg("-i")
+            .arg(file_path)
+            .arg(format!("gravitle@{}", host))
             .arg(screen_run),
     ) && runshellcmd_default_title(
         Command::new("ssh")
@@ -531,12 +537,5 @@ fn home_dir() -> String {
 }
 
 fn base_dir() -> String {
-    return format!(
-        "{}/github.com/loicbourgois/gravitle",
-        dirs::home_dir()
-            .unwrap()
-            .into_os_string()
-            .into_string()
-            .unwrap()
-    );
+    return format!("{}/github.com/loicbourgois/gravitle", home_dir());
 }

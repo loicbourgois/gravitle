@@ -1,17 +1,18 @@
 use crate::data::Data;
 use crate::gravitle::cell_id;
 use crate::gravitle::part_id_next;
-use crate::plan::dna_to_plan;
 use crate::gravitle::DIAMETER_NEW;
+use crate::plan::dna_to_plan;
 use std::collections::HashMap;
+use crate::gravitle::DnaSave;
 use crate::gravitle::HEIGHT;
 use crate::gravitle::START_ACTIVITY;
 use crate::gravitle::WIDTH;
+use std::fs;
+use std::io::Write;
 use crate::link::Link;
-use crate::plan::Dna;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::p_coords;
-// use crate::plan::Plan;
 use crate::point::Point;
 use crate::Float;
 use crate::Pid;
@@ -19,16 +20,11 @@ use core::part::Kind;
 use std::sync::RwLockWriteGuard;
 use uuid::Uuid;
 
-pub fn add_part_energy(
-    data: &mut Data, position: &Point
-) -> Pid {
-    add_part_(data, position, &Kind::Energy, 1.0, [255, 255, 255])
+pub fn add_part_energy(data: &mut Data, position: &Point) -> Pid {
+    add_part_(data, position, &Kind::Energy, 1.0, [255, 255, 0])
 }
 
-
-fn add_part_(
-    data: &mut Data, position: &Point, kind: &Kind, energy: Float, color: [u8;3]
-) -> Pid{
+fn add_part_(data: &mut Data, position: &Point, kind: &Kind, energy: Float, color: [u8; 3]) -> Pid {
     let i: usize = ((position.x * WIDTH as Float) as usize) % WIDTH;
     let j: usize = ((position.y * HEIGHT as Float) as usize) % HEIGHT;
     let cid = cell_id(i, j);
@@ -51,15 +47,42 @@ fn add_part_(
     pid
 }
 
-
+#[allow(clippy::too_many_arguments)]
 fn add_part(
-    data: &mut Data, position: &Point, kind: &Kind, energy: Float,
-    color: [u8;3],
-    dnas: &mut HashMap<u128, Dna>, dna: &Dna
+    data: &mut Data,
+    position: &Point,
+    kind: &Kind,
+    energy: Float,
+    color: [u8; 3],
+    dnas: &mut HashMap<u128, DnaSave>,
+    dna_save: &DnaSave,
+    dna_save_file_path: &str,
 ) -> Pid {
     let pid = add_part_(data, position, kind, energy, color);
     if let Kind::Core = *kind {
-        dnas.insert(data.parts[pid].uuid, *dna);
+        dnas.insert(
+            data.parts[pid].uuid,
+            DnaSave {
+                dna: dna_save.dna,
+                parent_uuid: dna_save.parent_uuid,
+            },
+        );
+        let line = format!(
+            "{},{},{}\n",
+            Uuid::from_u128(data.parts[pid].uuid)
+                .to_hyphenated()
+                .encode_lower(&mut Uuid::encode_buffer()),
+            Uuid::from_u128(dna_save.parent_uuid)
+                .to_hyphenated()
+                .encode_lower(&mut Uuid::encode_buffer()),
+            "__"
+        );
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .append(true) // This is needed to append to file
+            .open(dna_save_file_path)
+            .unwrap();
+        file.write_all(line.as_bytes()).unwrap();
     }
     pid
 }
@@ -81,18 +104,19 @@ pub fn add_link(
     });
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_entity(
     datas: &mut [RwLockWriteGuard<Data>],
-    // plan: &Plan,
     position: &Point,
     // TODO: Allow new entity to spawn rotated.
     _rotation: Float,
     thread_id: usize,
     energy_total: Float,
-    dnas: &mut RwLockWriteGuard<HashMap<u128, Dna>>,
-    dna: &Dna,
+    dnas: &mut RwLockWriteGuard<HashMap<u128, DnaSave>>,
+    dna_save: &DnaSave,
+    dna_save_file_path: &str,
 ) {
-    let plan = dna_to_plan(dna);
+    let plan = dna_to_plan(&dna_save.dna);
     let mut positions: Vec<Point> = Vec::new();
     let mut pids: Vec<Pid> = Vec::new();
     let energy_per_part = energy_total / (plan.part_plans.len() + 2) as Float;
@@ -107,13 +131,25 @@ pub fn add_entity(
         positions.push(position1);
         positions.push(position2);
         pids.push(add_part(
-            data, &position1, &plan.kinds[0], energy_per_part,
+            data,
+            &position1,
+            &plan.kinds[0],
+            energy_per_part,
             [plan.colors[0], plan.colors[1], plan.colors[2]],
-            dnas, dna));
+            dnas,
+            dna_save,
+            dna_save_file_path,
+        ));
         pids.push(add_part(
-            data, &position2, &plan.kinds[1], energy_per_part,
+            data,
+            &position2,
+            &plan.kinds[1],
+            energy_per_part,
             [plan.colors[3], plan.colors[4], plan.colors[5]],
-            dnas, dna));
+            dnas,
+            dna_save,
+            dna_save_file_path,
+        ));
     }
     add_link(datas, pids[0], pids[1], thread_id, thread_id);
     for part in plan.part_plans.iter() {
@@ -124,9 +160,16 @@ pub fn add_entity(
                     let position = p_coords(&positions[part.a], &positions[part.b]);
                     let pid1 = {
                         let data = &mut datas[thread_id];
-                        add_part(data, &position, &part.k, energy_per_part,
+                        add_part(
+                            data,
+                            &position,
+                            &part.k,
+                            energy_per_part,
                             [part.cr, part.cg, part.cb],
-                            dnas, dna)
+                            dnas,
+                            dna_save,
+                            dna_save_file_path,
+                        )
                     };
                     let p1 = datas[thread_id].parts[pid1];
                     for pid2 in pids.iter() {
@@ -140,9 +183,13 @@ pub fn add_entity(
                     pids.push(pid1);
                     positions.push(position);
                 } else {
-                    println!("[warn] Index out for positions: a={}, b={}, positions={}", part.a, part.b, positions.len())
+                    // println!(
+                    //     "[warn] Index out for positions: a={}, b={}, positions={}",
+                    //     part.a,
+                    //     part.b,
+                    //     positions.len()
+                    // )
                 }
-
             }
         }
     }
