@@ -2,7 +2,7 @@ use crate::Float;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Point {
     pub x: Float,
     pub y: Float,

@@ -9,7 +9,9 @@ use crate::gravitle::WIDTH;
 use crate::link::Link;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::p_coords;
-use crate::plan::dna_to_plan;
+use crate::plan::dna_to_str;
+use crate::plan::dna_to_link_plan;
+use crate::plan::link_plan_to_ab_plan;
 use crate::point::Point;
 use crate::Float;
 use crate::Pid;
@@ -75,7 +77,7 @@ fn add_part(
             Uuid::from_u128(dna_save.parent_uuid)
                 .to_hyphenated()
                 .encode_lower(&mut Uuid::encode_buffer()),
-            "__"
+            dna_to_str(&dna_save.dna)
         );
         let mut file = fs::OpenOptions::new()
             .write(true)
@@ -116,10 +118,22 @@ pub fn add_entity(
     dna_save: &DnaSave,
     dna_save_file_path: &str,
 ) {
-    let plan = dna_to_plan(&dna_save.dna);
+    let link_plan = dna_to_link_plan(&dna_save.dna);
+    let plan = link_plan_to_ab_plan(&link_plan);
     let mut positions: Vec<Point> = Vec::new();
     let mut pids: Vec<Pid> = Vec::new();
-    let energy_per_part = energy_total / (plan.part_plans.len() + 2) as Float;
+    let mut part_count = 2.0;
+    for part in plan.part_plans.iter() {
+        match part.k {
+            Kind::Invalid => {
+                break;
+            }
+            _ => {
+                part_count += 1.0;
+            }
+        }
+    }
+    let energy_per_part = energy_total / part_count;
     {
         let data = &mut datas[thread_id];
         let delta_position = Point {
@@ -154,42 +168,54 @@ pub fn add_entity(
     add_link(datas, pids[0], pids[1], thread_id, thread_id);
     for part in plan.part_plans.iter() {
         match part.k {
-            Kind::Invalid => {}
+            Kind::Invalid => {
+                break;
+            }
             _ => {
-                if part.a < positions.len() && part.b < positions.len() {
-                    let position = p_coords(&positions[part.a], &positions[part.b]);
-                    let pid1 = {
-                        let data = &mut datas[thread_id];
-                        add_part(
-                            data,
-                            &position,
-                            &part.k,
-                            energy_per_part,
-                            [part.cr, part.cg, part.cb],
-                            dnas,
-                            dna_save,
-                            dna_save_file_path,
-                        )
-                    };
-                    let p1 = datas[thread_id].parts[pid1];
-                    for pid2 in pids.iter() {
-                        let p2 = datas[thread_id].parts[*pid2];
-                        let d_sqrd = distance_squared_wrap_around(&p1.p, &p2.p);
-                        let diams = (p1.d + p2.d) * 0.5;
-                        if d_sqrd < diams * diams * 2.0 {
-                            add_link(datas, pid1, *pid2, thread_id, thread_id);
-                        }
-                    }
-                    pids.push(pid1);
-                    positions.push(position);
-                } else {
-                    // println!(
-                    //     "[warn] Index out for positions: a={}, b={}, positions={}",
-                    //     part.a,
-                    //     part.b,
-                    //     positions.len()
-                    // )
+                let position_a = part.a % positions.len();
+                if position_a != part.a {
+                    println!(
+                        "[WARN]: position_a != part.a: {} != {} | l={}",
+                        position_a,
+                        part.a,
+                        positions.len()
+                    );
                 }
+                let position_b = part.b % positions.len();
+                if position_b != part.b {
+                    println!(
+                        "[WARN]: position_b != part.b: {} != {} | l={}",
+                        position_b,
+                        part.b,
+                        positions.len()
+                    );
+                }
+                let kind = part.k;
+                let position = p_coords(&positions[position_a], &positions[position_b]);
+                let pid1 = {
+                    let data = &mut datas[thread_id];
+                    add_part(
+                        data,
+                        &position,
+                        &kind,
+                        energy_per_part,
+                        [part.cr, part.cg, part.cb],
+                        dnas,
+                        dna_save,
+                        dna_save_file_path,
+                    )
+                };
+                let p1 = datas[thread_id].parts[pid1];
+                for pid2 in pids.iter() {
+                    let p2 = datas[thread_id].parts[*pid2];
+                    let d_sqrd = distance_squared_wrap_around(&p1.p, &p2.p);
+                    let diams = (p1.d + p2.d) * 0.5;
+                    if d_sqrd < diams * diams * 2.0 {
+                        add_link(datas, pid1, *pid2, thread_id, thread_id);
+                    }
+                }
+                pids.push(pid1);
+                positions.push(position);
             }
         }
     }

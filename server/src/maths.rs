@@ -97,3 +97,7 @@ pub fn rotate(p1: &Point, p2: &Point, angle: Float) -> Point {
         y: p1.y + dy * cos_ + dx * sin_,
     }
 }
+
+pub fn cross(v1: &Point, v2: &Point) -> Float {
+    (v1.x * v2.y) - (v1.y * v2.x)
+}

@@ -1,5 +1,6 @@
 mod data;
 mod maths;
+mod tests;
 use core::part;
 use core::point;
 mod entity;

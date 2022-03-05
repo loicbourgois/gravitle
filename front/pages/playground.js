@@ -12,6 +12,9 @@ const Kind = {
   Turbo: 3,
   Mouth: 4,
   Energy: 5,
+  Muscle: 6,
+  Grip: 7,
+  Eye: 8,
 }
 const minimap = {};
 const view = {};
@@ -61,8 +64,13 @@ function playground() {
 
 function select_url_html() {
   let options = "";
+  const url = new URL(window.location.href)
   for (var server of servers) {
-    options += `<option value="${server.url}">${server.location}</option>`
+    let selected = ""
+    if (url.searchParams.get('location') && server.location.toLowerCase() === url.searchParams.get('location').toLowerCase() ) {
+      selected = "selected"
+    }
+    options += `<option value="${server.url}" ${selected}>${server.location}</option>`
   }
   return `\
   <div>
@@ -87,7 +95,7 @@ function init() {
   <canvas id="minimap"></canvas>
   ${select_url_html()}
   <div>
-    Zoom: <input type="range" min="0" max="1000" value="800" id="zoom_slider">
+    Zoom: <input type="range" min="0" max="1000" value="900" id="zoom_slider">
   </div>
   <div>
     x: <input type="range" min="0" max="1000" value="100" id="x_slider">
@@ -179,7 +187,7 @@ function render() {
     }
     stop_counter('render_minimap');
     start_counter('render_view');
-    reset_canvas(view.canvas, view.context, "#00000080")
+    reset_canvas(view.canvas, view.context, "#012")
     const oi = (1.0 - 1.0 / camera.zoom) * 0.5
     const zok_x = oi * view.canvas.width / view_max;
     const zok_y = oi * view.canvas.height / view_max;
@@ -198,7 +206,7 @@ function render() {
       const g_ = data.getUint8(  pid+13*4+1, littleEndian)
       const b_ = data.getUint8(  pid+13*4+2, littleEndian)
 
-      // if (i==0) {
+      // if (r_ != 255 && r_ != 0) {
       //   console.log(r_, g_, b_)
       // }
 
@@ -227,6 +235,12 @@ function render() {
             let g = 0.55 + 0.45 * energy;
             let b = 0.45;
             view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
+          } else if (kind == Kind.Eye) {
+            view.context.fillStyle = "#eee"
+            // let r = 0.55 + 0.45 * energy;
+            // let g = 0.55 + 0.45 * energy;
+            // let b = 0.45;
+            // view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
           } else if (kind == Kind.Turbo) {
             view.context.fillStyle = "#f80"
             let r = 1.0;
@@ -250,10 +264,17 @@ function render() {
             }
             view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, ${255.0*b}, 1.0)`
           } else if (kind == 0) {
-            view.context.fillStyle = "#FF0"
+            view.context.fillStyle = "#0F0"
           } else {
             view.context.fillStyle = "#f0f"
           }
+          view.context.beginPath();
+          view.context.arc(
+            (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+            (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+            d * view_max * 0.5 * camera.zoom,
+            0, 2 * Math.PI);
+          view.context.fill();
         } else {
           // if (kind == Kind.Core) {
           //   let r = 0.0;
@@ -269,18 +290,58 @@ function render() {
           //     g = energy * 2.0;
           //   }
           //   view.context.fillStyle = `rgba(${255.0*r}, ${255.0*g}, 0, 1.0)`
-          // } else {
+          if (kind == Kind.Eye) {
+            // view.context.fillStyle = `#eee`
+            // view.context.beginPath();
+            // view.context.arc(
+            //   (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+            //   (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+            //   d * view_max * 0.5 * camera.zoom,
+            //   0, 2 * Math.PI);
+            // view.context.fill();
+            //
+            // view.context.fillStyle = `#111`
+            // view.context.beginPath();
+            // view.context.arc(
+            //   (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+            //   (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+            //   d * view_max * 0.3 * camera.zoom,
+            //   0, 2 * Math.PI);
+            // view.context.fill();
+
+          } else {
             view.context.fillStyle = `rgba(${r_*0.5+128}, ${g_*0.5+128}, ${b_*0.5+128}, 1.0)`
-          // }
+            view.context.beginPath();
+            view.context.arc(
+              (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+              (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+              d * view_max * 0.5 * camera.zoom,
+              0, 2 * Math.PI);
+            view.context.fill();
+          }
         }
 
-        view.context.beginPath();
-        view.context.arc(
-          (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
-          (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
-          d * view_max * 0.5 * camera.zoom,
-          0, 2 * Math.PI);
-        view.context.fill();
+        if (kind == Kind.Eye) {
+          view.context.fillStyle = `#eee`
+          view.context.beginPath();
+          view.context.arc(
+            (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+            (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+            d * view_max * 0.5 * camera.zoom,
+            0, 2 * Math.PI);
+          view.context.fill();
+
+          view.context.fillStyle = `#111`
+          view.context.beginPath();
+          view.context.arc(
+            (x + 0.5 - camera.x - zok_x - aa_x) * camera.zoom * view_max,
+            (y + 0.5 - camera.y - zok_y - aa_y) * camera.zoom * view_max,
+            d * view_max * 0.3 * camera.zoom,
+            0, 2 * Math.PI);
+          view.context.fill();
+
+        }
+
       }
 
     }
