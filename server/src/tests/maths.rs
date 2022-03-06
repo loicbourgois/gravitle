@@ -21,10 +21,6 @@ pub fn projection(v1: &Point, v2: &Point, p: &Point) -> Point {
 }
 
 #[test]
-fn it_works() {
-    assert_eq!(2 + 2, 4);
-}
-#[test]
 fn pusher() {
     let d = 1.0;
     let pA = Point { x: 0.0, y: 0.0 };

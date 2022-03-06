@@ -18,7 +18,7 @@ pub enum Kind {
     Eye = 8,
 }
 
-pub const BLOOP_KIND_COUNT: u8 = 8;
+pub const BLOOP_KIND_COUNT: u8 = 7;
 
 pub const BLOOP_KINDS: [Kind; BLOOP_KIND_COUNT as usize] = [
     Kind::Invalid,
@@ -27,7 +27,7 @@ pub const BLOOP_KINDS: [Kind; BLOOP_KIND_COUNT as usize] = [
     Kind::Mouth,
     Kind::Muscle,
     Kind::Grip,
-    Kind::Turbo,
+    // Kind::Turbo,
     Kind::Eye,
 ];
 
@@ -40,8 +40,8 @@ pub fn bloop_dna_to_kind(i: u8) -> Kind {
         3 => Kind::Mouth,
         4 => Kind::Muscle,
         5 => Kind::Grip,
-        6 => Kind::Turbo,
-        7 => Kind::Eye,
+        6 => Kind::Eye,
+        // 6 => Kind::Turbo,
         _ => panic!("bloop_dna_to_kind error")
     }
 }
@@ -54,8 +54,8 @@ pub fn kind_to_bloop_dna(i: Kind) -> u8 {
         Kind::Mouth => 3,
         Kind::Muscle =>4,
         Kind::Grip => 5,
-        Kind::Turbo => 6,
-        Kind::Eye => 7,
+        Kind::Eye => 6,
+        // Kind::Turbo => 6,
         _ => panic!("kind_to_bloop_dna error")
     }
 }

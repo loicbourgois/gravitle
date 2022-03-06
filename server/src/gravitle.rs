@@ -7,15 +7,15 @@ use crate::maths::delta_position_wrap_around;
 use crate::maths::distance_squared_wrap_around;
 use crate::maths::dot;
 use crate::maths::normalize;
-use crate::plan::random_dna;
-use crate::plan::link_plan_to_ab_plan;
-use crate::plan::dna_to_link_plan;
 use crate::part::Part;
-use crate::plan::get_plan_pyra;
+use crate::plan::dna_to_link_plan;
+use crate::plan::link_plan_to_ab_plan;
+use crate::plan::random_dna;
+// use crate::plan::get_turbo_plan_pyra;
 use crate::plan::ab_plan_to_link_plan;
 use crate::plan::get_plan_planner;
 use crate::plan::get_plan_pusher;
-use crate::plan::get_plan_aie;
+// use crate::plan::get_turbo_plan_aie;
 use crate::plan::link_plan_to_dna;
 use crate::plan::mutate_dna_inplace;
 use crate::plan::Dna;
@@ -174,8 +174,8 @@ pub async fn start() {
             let plan = match rng.gen_range(0..5) {
                 0 => get_plan_pusher(),
                 1 => get_plan_planner(),
-                2 => get_plan_pyra(),
-                3 => get_plan_aie(),
+                // 2 => get_turbo_plan_pyra(),
+                // 3 => get_turbo_plan_aie(),
                 _ => link_plan_to_ab_plan(&dna_to_link_plan(&random_dna())),
             };
             let dna_save = DnaSave {
@@ -210,9 +210,9 @@ pub async fn start() {
                 &w.dna_save_file_path,
             );
             p_count += part_plans_count;
-            println!("Parts:  {:1}/{}", (p_count as Float) , TOTAL_COUNT);
+            println!("Parts:  {:1}/{}", (p_count as Float), TOTAL_COUNT);
             if (p_count as Float) >= TOTAL_COUNT as Float {
-                break
+                break;
             }
         }
     }
