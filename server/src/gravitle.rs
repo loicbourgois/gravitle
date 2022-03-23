@@ -381,14 +381,21 @@ fn compute_loop(w: &Wrapper, thread_id: usize) {
                                         _collisions += 1;
                                         match (p1.kind, p2.kind) {
                                             (Kind::Mouth, Kind::Mouth) => {
-                                                // feeding baby
+                                                // // feeding baby
+                                                // if p1.energy > p2.energy {
+                                                //     energy_delta -= ENERGY_TRANSFER_EAT;
+                                                // } else if p1.energy < p2.energy {
+                                                //     energy_delta += ENERGY_TRANSFER_EAT;
+                                                // } else {
+                                                // }
+                                                // energy_delta -= ENERGY_TRANSFER_EAT;
+                                                // Eat it
                                                 if p1.energy > p2.energy {
-                                                    energy_delta -= ENERGY_TRANSFER_EAT;
-                                                } else if p1.energy < p2.energy {
                                                     energy_delta += ENERGY_TRANSFER_EAT;
+                                                } else if p1.energy < p2.energy {
+                                                    energy_delta -= ENERGY_TRANSFER_EAT;
                                                 } else {
                                                 }
-                                                // energy_delta -= ENERGY_TRANSFER_EAT;
                                             }
                                             (Kind::Mouth, _) => {
                                                 energy_delta += ENERGY_TRANSFER_EAT;
