@@ -187,7 +187,7 @@ pub type Dna = [u8; DNA_SIZE];
 
 pub fn random_dna() -> Dna {
     let mut rng = rand::thread_rng();
-    let mut dna =  [0; DNA_SIZE];
+    let mut dna = [0; DNA_SIZE];
     for gene in dna.iter_mut().take(DNA_SIZE) {
         *gene = rng.gen_range(0..=255);
     }
@@ -284,7 +284,8 @@ pub fn get_plan_pusher() -> Plan {
         kinds: [Kind::Eye, Kind::Eye],
         colors: [255, 0, 255, 255, 0, 255],
         part_plans: vec![
-            PartPlan { // 2
+            PartPlan {
+                // 2
                 a: 1,
                 b: 0,
                 k: Kind::Core,
@@ -300,7 +301,8 @@ pub fn get_plan_pusher() -> Plan {
                 cg: 0,
                 cb: 255,
             },
-            PartPlan { // 4
+            PartPlan {
+                // 4
                 a: 1,
                 b: 3,
                 k: Kind::Mouth,
@@ -324,7 +326,8 @@ pub fn get_plan_pusher() -> Plan {
                 cg: 0,
                 cb: 255,
             },
-            PartPlan { // 7
+            PartPlan {
+                // 7
                 a: 6,
                 b: 0,
                 k: Kind::Mouth,
@@ -365,7 +368,8 @@ pub fn get_plan_planner() -> Plan {
         kinds: [Kind::Metal, Kind::Metal],
         colors: [0, 255, 255, 0, 255, 255],
         part_plans: vec![
-            PartPlan { // 2
+            PartPlan {
+                // 2
                 a: 0,
                 b: 1,
                 k: Kind::Eye,
@@ -373,7 +377,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 3
+            PartPlan {
+                // 3
                 a: 0,
                 b: 2,
                 k: Kind::Mouth,
@@ -381,7 +386,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 4
+            PartPlan {
+                // 4
                 a: 2,
                 b: 1,
                 k: Kind::Mouth,
@@ -389,7 +395,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 5
+            PartPlan {
+                // 5
                 a: 0,
                 b: 3,
                 k: Kind::Metal,
@@ -397,7 +404,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 6
+            PartPlan {
+                // 6
                 a: 4,
                 b: 1,
                 k: Kind::Metal,
@@ -405,7 +413,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 7
+            PartPlan {
+                // 7
                 a: 1,
                 b: 0,
                 k: Kind::Core,
@@ -413,7 +422,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 8
+            PartPlan {
+                // 8
                 a: 0,
                 b: 5,
                 k: Kind::Metal,
@@ -421,7 +431,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 9
+            PartPlan {
+                // 9
                 a: 6,
                 b: 1,
                 k: Kind::Metal,
@@ -429,7 +440,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 10
+            PartPlan {
+                // 10
                 a: 8,
                 b: 5,
                 k: Kind::Muscle,
@@ -437,7 +449,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 11
+            PartPlan {
+                // 11
                 a: 6,
                 b: 9,
                 k: Kind::Muscle,
@@ -445,7 +458,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 12
+            PartPlan {
+                // 12
                 a: 10,
                 b: 5,
                 k: Kind::Metal,
@@ -453,7 +467,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 13
+            PartPlan {
+                // 13
                 a: 6,
                 b: 11,
                 k: Kind::Metal,
@@ -461,7 +476,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 14
+            PartPlan {
+                // 14
                 a: 10,
                 b: 12,
                 k: Kind::Metal,
@@ -469,7 +485,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 15
+            PartPlan {
+                // 15
                 a: 13,
                 b: 11,
                 k: Kind::Metal,
@@ -477,7 +494,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 16
+            PartPlan {
+                // 16
                 a: 10,
                 b: 14,
                 k: Kind::Grip,
@@ -485,7 +503,8 @@ pub fn get_plan_planner() -> Plan {
                 cg: 255,
                 cb: 255,
             },
-            PartPlan { // 17
+            PartPlan {
+                // 17
                 a: 15,
                 b: 11,
                 k: Kind::Grip,
@@ -497,13 +516,14 @@ pub fn get_plan_planner() -> Plan {
     }
 }
 
-
-pub fn get_plan_pyra() -> Plan {
+#[allow(dead_code)]
+pub fn get_turbo_plan_pyra() -> Plan {
     Plan {
         kinds: [Kind::Metal, Kind::Metal],
         colors: [255, 155, 0, 255, 155, 0],
         part_plans: vec![
-            PartPlan { // 2
+            PartPlan {
+                // 2
                 a: 0,
                 b: 1,
                 k: Kind::Eye,
@@ -511,7 +531,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 3
+            PartPlan {
+                // 3
                 a: 2,
                 b: 1,
                 k: Kind::Mouth,
@@ -519,7 +540,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 4
+            PartPlan {
+                // 4
                 a: 0,
                 b: 2,
                 k: Kind::Mouth,
@@ -527,7 +549,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 5
+            PartPlan {
+                // 5
                 a: 0,
                 b: 4,
                 k: Kind::Metal,
@@ -535,7 +558,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 6
+            PartPlan {
+                // 6
                 a: 3,
                 b: 1,
                 k: Kind::Metal,
@@ -543,7 +567,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 7
+            PartPlan {
+                // 7
                 a: 0,
                 b: 5,
                 k: Kind::Metal,
@@ -551,7 +576,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 8
+            PartPlan {
+                // 8
                 a: 1,
                 b: 0,
                 k: Kind::Core,
@@ -559,7 +585,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 9
+            PartPlan {
+                // 9
                 a: 6,
                 b: 1,
                 k: Kind::Metal,
@@ -567,7 +594,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 10
+            PartPlan {
+                // 10
                 a: 6,
                 b: 9,
                 k: Kind::Metal,
@@ -575,7 +603,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 11
+            PartPlan {
+                // 11
                 a: 7,
                 b: 5,
                 k: Kind::Metal,
@@ -583,7 +612,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 12
+            PartPlan {
+                // 12
                 a: 7,
                 b: 11,
                 k: Kind::Metal,
@@ -591,7 +621,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 13
+            PartPlan {
+                // 13
                 a: 12,
                 b: 11,
                 k: Kind::Turbo,
@@ -599,7 +630,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 14
+            PartPlan {
+                // 14
                 a: 10,
                 b: 9,
                 k: Kind::Metal,
@@ -607,7 +639,8 @@ pub fn get_plan_pyra() -> Plan {
                 cg: 155,
                 cb: 0,
             },
-            PartPlan { // 15
+            PartPlan {
+                // 15
                 a: 10,
                 b: 14,
                 k: Kind::Turbo,
@@ -619,12 +652,14 @@ pub fn get_plan_pyra() -> Plan {
     }
 }
 
-pub fn get_plan_aie() -> Plan {
+#[allow(dead_code)]
+pub fn get_turbo_plan_aie() -> Plan {
     Plan {
         kinds: [Kind::Mouth, Kind::Eye],
         colors: [0, 155, 255, 0, 155, 255],
         part_plans: vec![
-            PartPlan { // 2
+            PartPlan {
+                // 2
                 a: 0,
                 b: 1,
                 k: Kind::Metal,
@@ -632,7 +667,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 3
+            PartPlan {
+                // 3
                 a: 0,
                 b: 2,
                 k: Kind::Eye,
@@ -640,7 +676,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 4
+            PartPlan {
+                // 4
                 a: 2,
                 b: 1,
                 k: Kind::Turbo,
@@ -648,7 +685,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 5
+            PartPlan {
+                // 5
                 a: 3,
                 b: 2,
                 k: Kind::Turbo,
@@ -656,7 +694,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 6
+            PartPlan {
+                // 6
                 a: 3,
                 b: 5,
                 k: Kind::Metal,
@@ -664,7 +703,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 7
+            PartPlan {
+                // 7
                 a: 4,
                 b: 1,
                 k: Kind::Metal,
@@ -672,7 +712,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 8
+            PartPlan {
+                // 8
                 a: 4,
                 b: 7,
                 k: Kind::Metal,
@@ -680,7 +721,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 9
+            PartPlan {
+                // 9
                 a: 5,
                 b: 2,
                 k: Kind::Metal,
@@ -688,7 +730,8 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-            PartPlan { // 10
+            PartPlan {
+                // 10
                 a: 6,
                 b: 5,
                 k: Kind::Metal,
@@ -696,6 +739,6 @@ pub fn get_plan_aie() -> Plan {
                 cg: 155,
                 cb: 255,
             },
-        ]
+        ],
     }
 }
