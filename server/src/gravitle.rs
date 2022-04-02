@@ -68,6 +68,7 @@ const ACTIVITY_CHANGE_RATE: Float = 0.0;
 pub const START_ACTIVITY: Float = 1.0;
 const MUTATIONS: usize = 1;
 const D_MOVE_RATIO: Float = 0.01;
+use std::fs;
 
 pub fn cell_id(i: usize, j: usize) -> usize {
     i + j * WIDTH
@@ -142,7 +143,11 @@ pub async fn start() {
             start
         ),
     };
-    let _f = File::create(&w.dna_save_file_path).expect("Unable to create file");
+    fs::create_dir_all(format!(
+        "{}/github.com/loicbourgois/gravitle_local/dna/",
+        home_dir(),
+    )).unwrap();
+    let _f = File::create(&w.dna_save_file_path).expect(&format!("Unable to create file {}", &w.dna_save_file_path));
     let mut rng = rand::thread_rng();
     for i in 0..THREADS {
         w.data1s.push(Arc::new(RwLock::new(Data {

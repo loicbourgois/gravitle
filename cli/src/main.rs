@@ -25,7 +25,9 @@ fn main() {
     let mut configuration_str = fs::read_to_string(format!("{}/configuration.yml", base_dir()))
         .expect("Something went wrong reading the file");
     let env_filename = format!("{}/../gravitle_local/gravitle.env", base_dir());
-    let env_file = File::open(env_filename).unwrap();
+    let env_file = File::open(&env_filename).unwrap_or_else(|_| {
+        panic!("Could not find {}",&env_filename)
+    });
     let env_reader = BufReader::new(env_file);
     for (_index, line) in env_reader.lines().enumerate() {
         let line = line.unwrap();
