@@ -12,9 +12,9 @@ import {gallery} from "./pages/gallery";
 import {webgpu} from "./pages/webgpu";
 import {localhost_3d} from "./pages/localhost_3d";
 import {playground} from "./pages/playground";
-import {gravity_poc} from "./pages/gravity-poc";
+import {go as home_go} from "./pages/home/main";
 if (window.location.pathname === "/") {
-  playground()
+  home_go()
 } else if (window.location.pathname === "/home") {
   home()
 } else if (window.location.pathname === "/playground") {
@@ -25,8 +25,6 @@ if (window.location.pathname === "/") {
   webgpu()
 } else if (window.location.pathname === "/localhost_3d") {
   localhost_3d()
-} else if (window.location.pathname === "/gravity-poc") {
-  gravity_poc()
-} else {
+}  else {
   console.error("404")
 }

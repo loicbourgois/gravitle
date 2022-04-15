@@ -25,3 +25,7 @@ canvas {
   height: 16em;
   background: blueviolet;
 }
+
+#gpu_canvas {
+  position: fixed;
+}
