@@ -2,27 +2,37 @@ import {compute_shader_0} from "./compute_shader_0";
 import {reset_shader} from "./reset_shader";
 import {add_parts} from "./add_parts";
 import {gpu_render} from "./render";
+import {
+  float_size,
+  attributs_count,
+  little_endian,
+  map_width,
+  grid_width,
+  map_size,
+  cell_count,
+} from "./constants";
 
-const map_width = 32;
-const grid_width = map_width*2
-const map_size = map_width;
-const cell_count = grid_width * grid_width
-const little_endian = true;
+// const map_width = 32;
+// const grid_width = map_width*2
+// const map_size = map_width;
+// const cell_count = grid_width * grid_width
+// const little_endian = true;
 const mass = 1.0
 const gravity_field_density = 3;
 const origin = [0.0, 0.0]
 const frames = []
 const computes = []
-const float_size = 4
-const attributs_count = 8
+// const float_size = 4
+// const attributs_count = 8
 let data_out_buffer
 let gpu
 const DRAW_SQUARES = false
 const DRAW_CIRCLES = true
 const DRAW_COLLISIONS = false
 const DRAW_ORIGIN = false
-const ITER = 32
+const ITER = 10
 const LOOP_DRAW = false
+const LOOP_COMPUTE = true
 
 let context;
 let canvas;
@@ -56,8 +66,12 @@ const go = async () => {
   canvas.height = window.innerHeight;
   await gpu_setup()
   await gpu_compute()
-  draw()
-  gpu_render()
+  //draw()
+  gpu_render({
+    buffer: gpu.buffers.in,
+    device: gpu.device,
+    adapter: gpu.adapter
+  })
 }
 
 
@@ -268,9 +282,11 @@ const gpu_compute = async () => {
 
 
   await gpu.buffers.read.mapAsync(GPUMapMode.READ);
-  data_out_buffer = Uint32Array.from(new Uint32Array(gpu.buffers.read.getMappedRange()))
+  // data_out_buffer = Uint32Array.from(new Uint32Array(gpu.buffers.read.getMappedRange()))
   gpu.buffers.read.unmap()
-  setTimeout(gpu_compute, 10);
+  if (LOOP_COMPUTE) {
+    setTimeout(gpu_compute, 0);
+  }
 }
 
 

@@ -33,7 +33,7 @@ const add_parts = async (_) => {
 
 
 
-  for (var i = 0; i < 200; i++) {
+  for (var i = 0; i < 500; i++) {
     let x = Math.random() * _.map_width
     let y = Math.random() * _.map_width
     let static_ = true;
