@@ -6,40 +6,32 @@ import {
 import {
   rotate,
 } from "./maths";
+
+
+
+const anchors = (centers, size) => {
+  let xys = []
+  for (var center of centers) {
+    xys.push(center)
+    for (var i = 1; i < size; i++) {
+      let right = [center[0]+i, center[1]]
+      xys.push( right );
+      xys.push( rotate(right, center, 1.0/6.0) );
+      xys.push( rotate(right, center, 2.0/6.0) );
+      xys.push( rotate(right, center, 3.0/6.0) );
+      xys.push( rotate(right, center, 4.0/6.0) );
+      xys.push( rotate(right, center, 5.0/6.0) );
+    }
+  }
+  return xys
+}
+
+
 const add_parts = async (_) => {
-  //let xys = [[0.0, 0.0]]
-  // xys.push( [1.0, 0.0] );
-  // xys.push( rotate(xys[1], xys[0], 1.0/6.0) );
-  // xys.push( rotate(xys[1], xys[0], 2.0/6.0) );
-  // xys.push( rotate(xys[1], xys[0], 3.0/6.0) );
-  // xys.push( rotate(xys[1], xys[0], 4.0/6.0) );
-  // xys.push( rotate(xys[1], xys[0], 5.0/6.0) );
-  //
-  // const aa = [2.0, 0.0]
-  // xys.push(aa)
-  // xys.push( rotate(aa, xys[0], 1.0/6.0) );
-  // xys.push( rotate(aa, xys[0], 2.0/6.0) );
-  // xys.push( rotate(aa, xys[0], 3.0/6.0) );
-  // xys.push( rotate(aa, xys[0], 4.0/6.0) );
-  // xys.push( rotate(aa, xys[0], 5.0/6.0) );
-  //
-  // const bb = [3.0, 0.0]
-  // xys.push(bb)
-  // xys.push( rotate(bb, xys[0], 1.0/6.0) );
-  // xys.push( rotate(bb, xys[0], 2.0/6.0) );
-  // xys.push( rotate(bb, xys[0], 3.0/6.0) );
-  // xys.push( rotate(bb, xys[0], 4.0/6.0) );
-  // xys.push( rotate(bb, xys[0], 5.0/6.0) );
-
-
-
-  for (var i = 0; i < 500; i++) {
+  for (var i = 0; i < 512; i++) {
     let x = Math.random() * _.map_width
     let y = Math.random() * _.map_width
     let static_ = true;
-    // if (x > _.map_width * 0.25 && y > _.map_width * 0.25) {
-    //   static_ = false
-    // }
     await add_part({
       xy: [x,y],
       dxy: [0.0, 0.0],
@@ -49,54 +41,23 @@ const add_parts = async (_) => {
       map_width: _.map_width
     })
   }
-
-  // for (let xy of xys) {
-  //   await add_part({
-  //     xy: xy,
-  //     dxy: [0.0, 0.0],
-  //     static: true,
-  //     mass: 1.0,
-  //     gpu: _.gpu,
-  //     map_width: _.map_width
-  //   })
-  // }
-
-  for (var i = 0; i < 5; i++) {
+  let xys = anchors(
+    [[-16.0,-8.0], [16.0, 8.0]],
+    8
+  )
+  for (let xy of xys) {
     await add_part({
-      xy: [i, 0.0],
+      xy: xy,
       dxy: [0.0, 0.0],
       static: true,
       mass: 1.0,
       gpu: _.gpu,
       map_width: _.map_width
     })
-    await add_part({
-      xy: [-i, 0.0],
-      dxy: [0.0, 0.0],
-      static: true,
-      mass: 1.0,
-      gpu: _.gpu,
-      map_width: _.map_width
-    })
-    // await add_part({
-    //   xy: [0.0, i],
-    //   dxy: [0.0, 0.0],
-    //   static: true,
-    //   mass: 1.0,
-    //   gpu: _.gpu,
-    //   map_width: _.map_width
-    // })
-    // await add_part({
-    //   xy: [0.0, -i],
-    //   dxy: [0.0, 0.0],
-    //   static: true,
-    //   mass: 1.0,
-    //   gpu: _.gpu,
-    //   map_width: _.map_width
-    // })
   }
-
 }
+
+
 const add_part = async (_) => {
   await _.gpu.buffers.write.mapAsync(GPUMapMode.WRITE)
   const buffer_write = new DataView(_.gpu.buffers.write.getMappedRange())
@@ -120,9 +81,13 @@ const add_part = async (_) => {
   buffer_write.setFloat32(x_id+float_size*7, _.mass, little_endian)
   _.gpu.buffers.write.unmap()
 }
+
+
 const cell_id = (xy, map_width) =>  {
   return Math.floor(xy[1] * 2 )* 2 * map_width + Math.floor(xy[0] * 2)
 }
+
+
 export {
   add_parts
 }
