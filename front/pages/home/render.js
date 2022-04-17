@@ -13,7 +13,6 @@ import {
 } from "./dom"
 
 
-
 const gpu_render = async (a) => {
   const adapter = a.adapter;
   const device = a.device;

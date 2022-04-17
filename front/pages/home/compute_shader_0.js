@@ -1,3 +1,11 @@
+import {
+    kind
+} from "./constants"
+import {
+  shader_common
+} from "./shader_common"
+
+
 const neighbours_setup = `
   var neighbouring_cells_xy: array<vec2<u32>, NEIGHBOURS>;
   neighbouring_cells_xy[0] = cell_up(gid.xy);
@@ -34,77 +42,11 @@ const neighbours_setup = `
 
 
 const compute_shader_0 = (x) => { return `
-struct Cell {
-  p:  vec2<f32>;
-  pp: vec2<f32>;
-  enabled: i32;
-  debug: i32;
-  static: i32;
-  mass: f32;
-};
-
-fn cell_id_fn(gid: vec2<u32>) -> u32 {
-  return gid.x + gid.y * ${x.grid_width}u ;
-}
-
-fn cell_up(v: vec2<u32>) -> vec2<u32> {
-  return vec2<u32>(v.x, (v.y + ${x.grid_width+1}u) % ${x.grid_width}u);
-}
-fn cell_down(v: vec2<u32>) -> vec2<u32> {
-  return vec2<u32>(v.x, (v.y + ${x.grid_width-1}u) % ${x.grid_width}u);
-}
-fn distance_wrap_around(a:vec2<f32>, b:vec2<f32>) -> f32{
-  let o25 = f32(${x.map_width*0.25});
-  let m25 = f32(${x.map_width*0.25});
-  let o5 =  f32(${x.map_width*0.5});
-  let m5 = f32(${x.map_width*0.5});
-  let m = f32(${x.map_width});
-  let a2 =   (vec2<f32>(   (a.x + o25+m)%m, (a.y + o25+m)%m  ));
-  let b2 =   (vec2<f32>(   (b.x + o25+m)%m, (b.y + o25+m)%m  ));
-  let a3 =   (vec2<f32>(   (a.x + o5+m)%m, (a.y + o5+m)%m  ));
-  let b3 =   (vec2<f32>(   (b.x + o5+m)%m, (b.y + o5+m)%m  ));
-  return min( min ( distance(a,b), distance(a2,b2) ), distance(a3,b3));
-}
-
-fn delta_position_wrap_around(a:vec2<f32>, b:vec2<f32>) -> vec2<f32> {
-  let o25 = f32(${x.map_width*0.25});
-  let m25 = f32(${x.map_width*0.25});
-  let o5 =  f32(${x.map_width*0.5});
-  let m5 = f32(${x.map_width*0.5});
-  let m = f32(${x.map_width});
-  let a2 =   (vec2<f32>(   (a.x + o25+m)%m, (a.y + o25+m)%m  ));
-  let b2 =   (vec2<f32>(   (b.x + o25+m)%m, (b.y + o25+m)%m  ));
-  let a3 =   (vec2<f32>(   (a.x + o5+m)%m, (a.y + o5+m)%m  ));
-  let b3 =   (vec2<f32>(   (b.x + o5+m)%m, (b.y + o5+m)%m  ));
-  let d1 = distance(a,b);
-  let d2 = distance(a2,b2);
-  let d3 = distance(a3,b3);
-  if (d1 < d2 ) {
-    if (d1 < d3) {
-      return a - b;
-    } else {
-     return a3 - b3;
-    }
-  }
-  else{
-    if (d2 < d3) {
-      return a2 - b2;
-    }
-  }
-  return a3 - b3;
-}
+${shader_common}
 
 
-fn cell_left(v: vec2<u32>) -> vec2<u32> {
-  return vec2<u32>((v.x + ${x.grid_width-1}u) % ${x.grid_width}u, v.y);
-}
-fn cell_right(v: vec2<u32>) -> vec2<u32> {
-  return vec2<u32>((v.x + ${x.grid_width+1}u) % ${x.grid_width}u, v.y);
-}
 let NEIGHBOURS: i32 = 24;
-[[block]] struct Data {
-  cells: array<Cell, ${x.cell_count}>;
-};
+
 [[group(0), binding(0)]] var<storage, read>   input     : Data;
 [[group(0), binding(1)]] var<storage, write>  output    : Data;
 [[stage(compute), workgroup_size(${x.workgroup_size}, ${x.workgroup_size})]]
@@ -118,15 +60,21 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     var d_collision = vec2<f32>(0.0, 0.0);
     var d_collision_move = vec2<f32>(0.0, 0.0);
     var colliding = false;
+    var out_direction = vec2<f32>(0.0, 0.0);
     if (cell.static == 0) {
       ${neighbours_setup}
       for (var i = 0 ; i < NEIGHBOURS ; i=i+1) {
         let p2 = neighbours[i];
         if (p2.enabled == 1) {
           let d = distance_wrap_around(cell.p, p2.p);
+          var delta_position = vec2<f32>(0.0, 0.0);
+          if (d < 1.1) {
+            delta_position = delta_position_wrap_around(cell.p, p2.p);
+            out_direction = out_direction + delta_position;
+          }
+
           if (d < 1.0) {
             colliding = true;
-            let delta_position = delta_position_wrap_around(cell.p, p2.p);
             d_collision_move = d_collision_move + normalize(delta_position) * (1.0-d)*0.55 ;
             {
               // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
@@ -140,20 +88,11 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
               let distance_squared = distance_ * distance_;
               let acceleration = delta_position * mass_factor * dot_vp / distance_squared;
               d_collision = d_collision - acceleration * 0.5;
-              // if (linked) {
-              //   dx_collision = dx_collision - acceleration.x * 0.5;
-              //   dy_collision = dy_collision - acceleration.y * 0.5;
-              // }
-              // else {
-              //   dx_collision = dx_collision - acceleration.x * 1.0;
-              //   dy_collision = dy_collision - acceleration.y * 1.0;
-              // }
-
             }
           };
         }
       }
-      for (var id3 = 0u ; id3 < ${x.grid_width*x.grid_width}u ; id3 = id3+1u) {
+      for (var id3 = 0u ; id3 < ${x.grid_width * x.grid_width}u ; id3 = id3 + 1u) {
         if (id3 != cell_id) {
           let p3 = input.cells[id3];
           if (p3.enabled == 1) {
@@ -191,8 +130,6 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
         + d_collision_move.y
         + speed.y
       ) % ${x.map_width}.0;
-
-
     let new_gid = vec2<u32>(u32(new_x*2.0), u32(new_y*2.0));
     let new_cell_id = cell_id_fn(new_gid);
     output.cells[new_cell_id].p.x = new_x;
@@ -202,11 +139,40 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     output.cells[new_cell_id].enabled = 1;
     output.cells[new_cell_id].mass = p1.mass;
     output.cells[new_cell_id].static = p1.static;
-    if (colliding) {
-      output.cells[new_cell_id].debug = 1;
+    output.cells[new_cell_id].kind = p1.kind;
+
+
+    var can_produce = true;
+    if (cell.kind == ${kind.miner} && distance(out_direction, vec2<f32>(0.0,0.0) ) < 0.95  ) {
+      output.cells[new_cell_id].debug = 7;
+      can_produce = false;
     }
 
+
+    if (can_produce && cell.kind == ${kind.miner} && input.step % 30 == 1 ) {
+      out_direction = normalize(out_direction);
+      let new_new_x = new_x + out_direction.x * 1.5;
+      let new_new_y = new_y + out_direction.y * 1.5;
+      let new_new_gid = vec2<u32>(u32(new_new_x*2.0), u32(new_new_y*2.0));
+      let new_new_cell_id = cell_id_fn(new_new_gid);
+      if (input.cells[new_new_cell_id].enabled == 0) {
+        output.cells[new_new_cell_id].p.x = new_new_x;
+        output.cells[new_new_cell_id].p.y = new_new_y;
+        output.cells[new_new_cell_id].pp.x = new_new_x - out_direction.x*0.03;
+        output.cells[new_new_cell_id].pp.y = new_new_y - out_direction.y*0.03;
+        output.cells[new_new_cell_id].enabled = 1;
+        output.cells[new_new_cell_id].mass = 1.0;
+        output.cells[new_new_cell_id].static = 0;
+        output.cells[new_new_cell_id].kind = ${kind.water};
+      }
+    }
+
+
+    // if (colliding) {
+    //   output.cells[new_cell_id].debug = 1;
+    // }
   }
+  output.step = input.step + 1;
 }`}
 export {
   compute_shader_0

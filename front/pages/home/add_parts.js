@@ -2,6 +2,7 @@ import {
   attributs_count,
   float_size,
   little_endian,
+  kind,
 } from "./constants";
 import {
   rotate,
@@ -28,33 +29,48 @@ const anchors = (centers, size) => {
 
 
 const add_parts = async (_) => {
-  for (var i = 0; i < 512; i++) {
+  for (var i = 0; i < 0; i++) {
     let x = Math.random() * _.map_width
     let y = Math.random() * _.map_width
     let static_ = true;
+    let kinds = [
+      kind.carbon,
+      kind.water,
+    ]
+    //let kind =
     await add_part({
       xy: [x,y],
       dxy: [0.0, 0.0],
       static: false,
       mass: 1.0,
       gpu: _.gpu,
-      map_width: _.map_width
+      map_width: _.map_width,
+      kind: kinds[parseInt(Math.random()*2.0)]
     })
   }
-  let xys = anchors(
-    [[-16.0,-8.0], [16.0, 8.0]],
+  for (let xy of anchors(
+    [[-16.0,-8.0], [16.0, 8.0], [0,0], [3,0], [-3,0]],
     8
-  )
-  for (let xy of xys) {
+  )) {
     await add_part({
       xy: xy,
       dxy: [0.0, 0.0],
       static: true,
       mass: 1.0,
       gpu: _.gpu,
-      map_width: _.map_width
+      map_width: _.map_width,
+      kind: kind.iron,
     })
   }
+  await add_part({
+    xy: [14.5,9.0],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.miner
+  })
 }
 
 
@@ -77,8 +93,9 @@ const add_part = async (_) => {
   buffer_write.setFloat32(x_id+float_size*2,    pp[0] , little_endian)
   buffer_write.setFloat32(x_id+float_size*3,    pp[1] , little_endian)
   buffer_write.setInt32(x_id+float_size*4, 1, little_endian)
-  buffer_write.setInt32(x_id+float_size*6, _.static, little_endian)
+  buffer_write.setInt32(x_id+float_size*6, _.static ? 1 : 0 , little_endian)
   buffer_write.setFloat32(x_id+float_size*7, _.mass, little_endian)
+  buffer_write.setInt32(x_id+float_size*8, _.kind, little_endian)
   _.gpu.buffers.write.unmap()
 }
 

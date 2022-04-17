@@ -163,7 +163,7 @@ const gpu_setup = async () => {
       ]
     })
   };
-  gpu.workgroup_size = 8
+  gpu.workgroup_size = 1
   gpu.dispatch = Math.floor(grid_width / gpu.workgroup_size);
   gpu.compute_pipelines = {
     compute_0: gpu.device.createComputePipeline({

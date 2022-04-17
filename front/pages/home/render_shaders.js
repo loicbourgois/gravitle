@@ -7,36 +7,15 @@ import {
   // map_size,
   cell_count,
   LOOP_RENDER,
+  kind,
 } from "./constants"
+import {
+  shader_common
+} from "./shader_common"
 
 
 const fragment_shader = (a) => {return `
-fn cell_id_fn(gid: vec2<u32>) -> u32 {
-  return gid.x + gid.y * ${grid_width}u ;
-}
-struct Cell {
-  p:  vec2<f32>;
-  pp: vec2<f32>;
-  enabled: i32;
-  debug: i32;
-  static: i32;
-  mass: f32;
-};
-fn distance_wrap_around(a:vec2<f32>, b:vec2<f32>) -> f32{
-  let o25 = f32(${map_width*0.25});
-  let m25 = f32(${map_width*0.25});
-  let o5 =  f32(${map_width*0.5});
-  let m5 = f32(${map_width*0.5});
-  let m = f32(${map_width});
-  let a2 =   (vec2<f32>(   (a.x + o25+m)%m, (a.y + o25+m)%m  ));
-  let b2 =   (vec2<f32>(   (b.x + o25+m)%m, (b.y + o25+m)%m  ));
-  let a3 =   (vec2<f32>(   (a.x + o5+m)%m, (a.y + o5+m)%m  ));
-  let b3 =   (vec2<f32>(   (b.x + o5+m)%m, (b.y + o5+m)%m  ));
-  return min( min ( distance(a,b), distance(a2,b2) ), distance(a3,b3));
-}
-[[block]] struct Data {
-  cells: array<Cell, ${a.cell_count}>;
-};
+${shader_common}
 [[group(0), binding(0)]] var<storage, read>   input     : Data;
 [[stage(fragment)]]
 fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4<f32> {
@@ -61,9 +40,38 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
       let cell_x_ = (cell_x % grid_width);
       let cell_y_ = (cell_y % grid_width);
       let cell = input.cells[cell_id_fn( vec2<u32>( cell_x_, cell_y_ ))];
-      if (cell.enabled == 1 && distance_wrap_around(cell.p, point_p)  < 0.5 ) {
-        r = 1.0;
-        g = 1.0;
+      let d = distance_wrap_around(cell.p, point_p);
+      if (cell.enabled == 1 && d < 0.5 ) {
+        if (cell.kind == ${kind.iron}) {
+          r = 0.5;
+          g = 0.5;
+          b = 0.5;
+        }
+        elseif (cell.kind == ${kind.carbon}) {
+          r = 0.25;
+          g = 0.25;
+          b = 0.25;
+        }
+        elseif (cell.kind == ${kind.water}) {
+          r = 0.25;
+          g = 0.25;
+          b = 0.75;
+        }
+        elseif (cell.kind == ${kind.miner}) {
+          r = 2.0 * d;
+          g = 0.5;
+          b = 0.5;
+
+          if ( cell.debug == 7 ) {
+            r = 1.0;
+          }
+
+        }
+        else {
+          r = 0.75;
+          g = 0.0;
+          b = 0.75;
+        }
       }
     }
   }

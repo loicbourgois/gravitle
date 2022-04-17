@@ -24,7 +24,7 @@ const update_cps = () => {
 
 
 const buffer_size = (x) => {
-  return x.cell_count * attributs_count * float_size;
+  return (x.cell_count * attributs_count + 1) * float_size;
 }
 
 
