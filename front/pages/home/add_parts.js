@@ -28,42 +28,74 @@ const anchors = (centers, size) => {
 }
 
 
-const add_parts = async (_) => {
-  for (var i = 0; i < 0; i++) {
-    let x = Math.random() * _.map_width
-    let y = Math.random() * _.map_width
-    let static_ = true;
-    let kinds = [
-      kind.carbon,
-      kind.water,
-    ]
-    //let kind =
-    await add_part({
-      xy: [x,y],
-      dxy: [0.0, 0.0],
-      static: false,
-      mass: 1.0,
-      gpu: _.gpu,
-      map_width: _.map_width,
-      kind: kinds[parseInt(Math.random()*2.0)]
-    })
-  }
+const random_part = () => {
+  // for (var i = 0; i < 0; i++) {
+  //   let x = Math.random() * _.map_width
+  //   let y = Math.random() * _.map_width
+  //   let static_ = true;
+  //   let kinds = [
+  //     kind.carbon,
+  //     kind.water,
+  //   ]
+  //   await add_part({
+  //     xy: [x,y],
+  //     dxy: [0.0, 0.0],
+  //     static: false,
+  //     mass: 1.0,
+  //     gpu: _.gpu,
+  //     map_width: _.map_width,
+  //     kind: kinds[parseInt(Math.random()*2.0)]
+  //   })
+  // }
+}
+
+
+const add_ball = async (_) => {
   for (let xy of anchors(
-    [[-16.0,-8.0], [16.0, 8.0], [0,0], [3,0], [-3,0]],
-    8
+    [_.xy],
+    2
   )) {
     await add_part({
       xy: xy,
       dxy: [0.0, 0.0],
       static: true,
-      mass: 1.0,
+      mass: 2.0,
       gpu: _.gpu,
       map_width: _.map_width,
-      kind: kind.iron,
+      kind: _.kind,
     })
   }
+}
+
+
+const add_parts = async (_) => {
+  for (var xyk of [
+    [[0,0], kind.iron],
+    [[7,5], kind.carbon],
+    [[-3,8], kind.ice],
+    [[-7,-4], kind.stone],
+  ]) {
+    await add_ball({
+      gpu: _.gpu,
+      map_width: _.map_width,
+      kind: xyk[1],
+      xy: xyk[0]
+    })
+  }
+
+
+  // await add_part({
+  //   xy: [2.5,9.0],
+  //   dxy: [0.0, 0.0],
+  //   static: false,
+  //   mass: 1.0,
+  //   gpu: _.gpu,
+  //   map_width: _.map_width,
+  //   kind: kind.miner
+  // })
+
   await add_part({
-    xy: [14.5,9.0],
+    xy: [-2,7.0],
     dxy: [0.0, 0.0],
     static: false,
     mass: 1.0,
@@ -71,6 +103,77 @@ const add_parts = async (_) => {
     map_width: _.map_width,
     kind: kind.miner
   })
+
+  await add_part({
+    xy: [2,-1.0],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.launcher
+  })
+
+  await add_part({
+    xy: [2,2],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.launcher
+  })
+
+  await add_part({
+    xy: [3, 1.0],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.launcher
+  })
+
+
+  await add_part({
+    xy: [7, 8],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.heater
+  })
+
+  await add_part({
+    xy: [8, 8],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.launcher
+  })
+  await add_part({
+    xy: [10, 8],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.launcher
+  })
+
+  await add_part({
+    xy: [7, 9],
+    dxy: [0.0, 0.0],
+    static: false,
+    mass: 1.0,
+    gpu: _.gpu,
+    map_width: _.map_width,
+    kind: kind.heater
+  })
+
 }
 
 

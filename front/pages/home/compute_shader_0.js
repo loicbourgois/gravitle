@@ -52,28 +52,44 @@ let NEIGHBOURS: i32 = 24;
 [[stage(compute), workgroup_size(${x.workgroup_size}, ${x.workgroup_size})]]
 fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
   let cell_id = cell_id_fn(gid.xy);
-  let cell = input.cells[cell_id];
-  if (cell.enabled == 1) {
-    let p1 = cell;
+  let p1 = input.cells[cell_id];
+  if (p1.enabled == 1) {
     let velocity1 = p1.p - p1.pp;
     var forces = vec2<f32>(0.0, 0.0);
     var d_collision = vec2<f32>(0.0, 0.0);
     var d_collision_move = vec2<f32>(0.0, 0.0);
     var colliding = false;
     var out_direction = vec2<f32>(0.0, 0.0);
-    if (cell.static == 0) {
+    var kind = p1.kind;
+
+    var launchers = 0;
+    var launchers_direction = vec2<f32>(0.0, 0.0);
+
+    if (p1.static == 0) {
       ${neighbours_setup}
       for (var i = 0 ; i < NEIGHBOURS ; i=i+1) {
         let p2 = neighbours[i];
         if (p2.enabled == 1) {
-          let d = distance_wrap_around(cell.p, p2.p);
+          let d = distance_wrap_around(p1.p, p2.p);
           var delta_position = vec2<f32>(0.0, 0.0);
           if (d < 1.1) {
-            delta_position = delta_position_wrap_around(cell.p, p2.p);
+            delta_position = delta_position_wrap_around(p1.p, p2.p);
             out_direction = out_direction + delta_position;
           }
 
           if (d < 1.0) {
+
+
+
+            if (p1.kind == ${kind.ice} && p2.kind == ${kind.heater}) {
+              kind = ${kind.water};
+            }
+
+            if (p1.static == 0 && p2.kind == ${kind.launcher}) {
+              launchers = launchers + 1;
+              launchers_direction = launchers_direction + delta_position;
+            }
+
             colliding = true;
             d_collision_move = d_collision_move + normalize(delta_position) * (1.0-d)*0.55 ;
             {
@@ -97,24 +113,29 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
           let p3 = input.cells[id3];
           if (p3.enabled == 1) {
             let G = .25;
-            let mass = 1.0;
-            let d = distance_wrap_around(cell.p, p3.p);
+            let d = distance_wrap_around(p1.p, p3.p);
             let d_sqrd = d * d;
-            let f = G * mass * mass / d_sqrd;
-            let delta_position = delta_position_wrap_around(cell.p, p3.p);
+            let f = G * p1.mass * p3.mass / d_sqrd;
+            let delta_position = delta_position_wrap_around(p1.p, p3.p);
             let n = normalize(delta_position);
             forces = forces - n * f;
           }
         }
       }
     }
-    let p1_mass = 1.0;
-    let acceleration = forces / p1_mass;
+    let acceleration = forces / p1.mass;
     let delta_time = 0.01;
     var speed = velocity1
       + acceleration * delta_time * delta_time
       + d_collision;
+
+    if (launchers >= 2 && p1.static == 0 && p1.kind != ${kind.launcher}) {
+      speed = speed + normalize(launchers_direction) * 0.022;
+    }
+
     let max_speed = 0.25;
+
+
     speed.x = min(max(speed.x, -max_speed), max_speed);
     speed.y = min(max(speed.y, -max_speed), max_speed);
 
@@ -139,38 +160,42 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     output.cells[new_cell_id].enabled = 1;
     output.cells[new_cell_id].mass = p1.mass;
     output.cells[new_cell_id].static = p1.static;
-    output.cells[new_cell_id].kind = p1.kind;
+    output.cells[new_cell_id].kind = kind;
 
 
     var can_produce = true;
-    if (cell.kind == ${kind.miner} && distance(out_direction, vec2<f32>(0.0,0.0) ) < 0.95  ) {
-      output.cells[new_cell_id].debug = 7;
+    if (p1.kind == ${kind.miner} && distance(out_direction, vec2<f32>(0.0,0.0) ) < 0.95  ) {
       can_produce = false;
     }
 
 
-    if (can_produce && cell.kind == ${kind.miner} && input.step % 30 == 1 ) {
+    if (can_produce && p1.kind == ${kind.miner} && input.step % 1000 == 1 ) {
       out_direction = normalize(out_direction);
-      let new_new_x = new_x + out_direction.x * 1.5;
-      let new_new_y = new_y + out_direction.y * 1.5;
+      let new_new_x = new_x + out_direction.x * 1.01;
+      let new_new_y = new_y + out_direction.y * 1.01;
       let new_new_gid = vec2<u32>(u32(new_new_x*2.0), u32(new_new_y*2.0));
       let new_new_cell_id = cell_id_fn(new_new_gid);
       if (input.cells[new_new_cell_id].enabled == 0) {
         output.cells[new_new_cell_id].p.x = new_new_x;
         output.cells[new_new_cell_id].p.y = new_new_y;
-        output.cells[new_new_cell_id].pp.x = new_new_x - out_direction.x*0.03;
-        output.cells[new_new_cell_id].pp.y = new_new_y - out_direction.y*0.03;
+        output.cells[new_new_cell_id].pp.x = new_new_x - out_direction.x*0.01;
+        output.cells[new_new_cell_id].pp.y = new_new_y - out_direction.y*0.01;
         output.cells[new_new_cell_id].enabled = 1;
         output.cells[new_new_cell_id].mass = 1.0;
         output.cells[new_new_cell_id].static = 0;
-        output.cells[new_new_cell_id].kind = ${kind.water};
+        output.cells[new_new_cell_id].kind = ${kind.ice};
       }
     }
 
 
-    // if (colliding) {
-    //   output.cells[new_cell_id].debug = 1;
-    // }
+    if (!can_produce) {
+      output.cells[new_cell_id].debug = 7;
+    }
+    elseif (colliding) {
+      output.cells[new_cell_id].debug = 1;
+    }
+
+
   }
   output.step = input.step + 1;
 }`}

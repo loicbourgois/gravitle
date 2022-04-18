@@ -35,6 +35,7 @@ const gpu_compute = async (gpu_) => {
   gpu_compute_inner()
 }
 
+let data_out_buffer;
 const gpu_compute_inner = async () => {
   for (var i = 0; i < COMPUTE_ITER; i++) {
     update_cps()
@@ -57,7 +58,7 @@ const gpu_compute_inner = async () => {
       buffer_size({cell_count:gpu.cell_count}));
     command_encoder.copyBufferToBuffer(
       gpu.buffers.out, 0,
-      gpu.buffers.in, 0 ,
+      gpu.buffers.in, 0,
       buffer_size({cell_count:gpu.cell_count}));
     command_encoder.copyBufferToBuffer(
       gpu.buffers.reset, 0,
@@ -67,11 +68,11 @@ const gpu_compute_inner = async () => {
     gpu.device.queue.submit([gpu_commands]);
   }
   await gpu.buffers.read.mapAsync(GPUMapMode.READ);
-  // data_out_buffer = Uint32Array.from(new Uint32Array(gpu.buffers.read.getMappedRange()))
+  data_out_buffer = Uint32Array.from(new Uint32Array(gpu.buffers.read.getMappedRange()))
   gpu.buffers.read.unmap()
   if (LOOP_COMPUTE) {
-    //setTimeout(gpu_compute, 0);
-    gpu_compute_inner();
+    setTimeout(gpu_compute_inner, 10);
+    //gpu_compute_inner();
   }
 }
 

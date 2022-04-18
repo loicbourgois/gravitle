@@ -42,42 +42,62 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
       let cell = input.cells[cell_id_fn( vec2<u32>( cell_x_, cell_y_ ))];
       let d = distance_wrap_around(cell.p, point_p);
       if (cell.enabled == 1 && d < 0.5 ) {
-        if (cell.kind == ${kind.iron}) {
-          r = 0.5;
-          g = 0.5;
-          b = 0.5;
-        }
-        elseif (cell.kind == ${kind.carbon}) {
-          r = 0.25;
-          g = 0.25;
-          b = 0.25;
-        }
-        elseif (cell.kind == ${kind.water}) {
-          r = 0.25;
-          g = 0.25;
-          b = 0.75;
-        }
-        elseif (cell.kind == ${kind.miner}) {
-          r = 2.0 * d;
-          g = 0.5;
-          b = 0.5;
 
-          if ( cell.debug == 7 ) {
-            r = 1.0;
+
+        switch (cell.kind) {
+          case ${kind.iron}: {
+            r = 0.5;
+            g = 0.5;
+            b = 0.5;
           }
-
-        }
-        else {
-          r = 0.75;
-          g = 0.0;
-          b = 0.75;
+          case ${kind.carbon}: {
+            r = 0.25;
+            g = 0.25;
+            b = 0.25;
+          }
+          case ${kind.water}: {
+            r = 0.25;
+            g = 0.25;
+            b = 0.75;
+          }
+          case ${kind.miner}: {
+            r = 0.0;
+            g = d * 1.0;
+            b = 0.0;
+            if ( cell.debug == 7 ) {
+              r = 0.5;
+            }
+          }
+          case ${kind.heater}: {
+            r = (1.0 - d) * 2.0;
+            g = d * 1.0;
+            b = 0.0;
+            if ( cell.debug == 7 ) {
+              r = 1.0;
+            }
+          }
+          case ${kind.ice}: {
+            r = 0.65;
+            g = 0.65;
+            b = 0.95;
+          }
+          case ${kind.stone}: {
+            r = 0.65;
+            g = 0.45;
+            b = 0.45;
+          }
+          default: {
+            r = 0.75;
+            g = 0.0;
+            b = 0.75;
+          }
         }
       }
     }
   }
 
-  let cell_x = u32(point_p.x*2.0) % 64u;
-  let cell_y = u32(point_p.y*2.0) % 64u;
+  let cell_x = u32(point_p.x*2.0) % ${map_width}u;
+  let cell_y = u32(point_p.y*2.0) % ${map_width}u;
   let cell = input.cells[cell_id_fn( vec2<u32>( cell_x, cell_y ))];
 
   return vec4<f32>(r, g, b, 0.01);
