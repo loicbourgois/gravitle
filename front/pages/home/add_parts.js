@@ -74,6 +74,7 @@ const add_parts = async (_) => {
     [[7,5], kind.carbon],
     [[-3,8], kind.ice],
     [[-7,-4], kind.stone],
+    [[-7,-8], kind.water],
   ]) {
     await add_ball({
       gpu: _.gpu,
@@ -173,7 +174,6 @@ const add_parts = async (_) => {
     map_width: _.map_width,
     kind: kind.heater
   })
-
 }
 
 

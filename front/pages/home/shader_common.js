@@ -1,16 +1,15 @@
 import {
-  // float_size,
-  // attributs_count,
-  // little_endian,
   map_width,
   grid_width,
-  // map_size,
   cell_count,
   LOOP_RENDER,
 } from "./constants"
 
 
 const shader_common = `
+let max_speed = 0.25;
+
+
 fn cell_id_fn(gid: vec2<u32>) -> u32 {
   return gid.x + gid.y * ${grid_width}u ;
 }
@@ -71,7 +70,7 @@ struct Cell {
   static: i32;
   mass: f32;
   kind: i32;
-  stuff: i32;
+  downtimer: i32;
 };
 
 

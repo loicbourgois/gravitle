@@ -64,6 +64,8 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
 
     var launchers = 0;
     var launchers_direction = vec2<f32>(0.0, 0.0);
+    var launching = false;
+    var downtimer = p1.downtimer - 1;
 
     if (p1.static == 0) {
       ${neighbours_setup}
@@ -76,20 +78,18 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
             delta_position = delta_position_wrap_around(p1.p, p2.p);
             out_direction = out_direction + delta_position;
           }
-
+          if (abs(d) < 1.5 && p1.kind == ${kind.launcher} && p2.debug == 8) {
+            launching = true;
+            downtimer = 500;
+          }
           if (d < 1.0) {
-
-
-
             if (p1.kind == ${kind.ice} && p2.kind == ${kind.heater}) {
               kind = ${kind.water};
             }
-
             if (p1.static == 0 && p2.kind == ${kind.launcher}) {
               launchers = launchers + 1;
               launchers_direction = launchers_direction + delta_position;
             }
-
             colliding = true;
             d_collision_move = d_collision_move + normalize(delta_position) * (1.0-d)*0.55 ;
             {
@@ -129,16 +129,13 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       + acceleration * delta_time * delta_time
       + d_collision;
 
+    var is_launched = false;
     if (launchers >= 2 && p1.static == 0 && p1.kind != ${kind.launcher}) {
       speed = speed + normalize(launchers_direction) * 0.022;
+      is_launched = true;
     }
-
-    let max_speed = 0.25;
-
-
     speed.x = min(max(speed.x, -max_speed), max_speed);
     speed.y = min(max(speed.y, -max_speed), max_speed);
-
     var new_x = (
         input.cells[cell_id].p.x
         + ${x.map_width}.0
@@ -161,15 +158,13 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     output.cells[new_cell_id].mass = p1.mass;
     output.cells[new_cell_id].static = p1.static;
     output.cells[new_cell_id].kind = kind;
-
-
+    output.cells[new_cell_id].downtimer = max(0, downtimer - 1);
     var can_produce = true;
     if (p1.kind == ${kind.miner} && distance(out_direction, vec2<f32>(0.0,0.0) ) < 0.95  ) {
       can_produce = false;
     }
-
-
     if (can_produce && p1.kind == ${kind.miner} && input.step % 1000 == 1 ) {
+      output.cells[new_cell_id].downtimer = 1000;
       out_direction = normalize(out_direction);
       let new_new_x = new_x + out_direction.x * 1.01;
       let new_new_y = new_y + out_direction.y * 1.01;
@@ -184,18 +179,18 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
         output.cells[new_new_cell_id].mass = 1.0;
         output.cells[new_new_cell_id].static = 0;
         output.cells[new_new_cell_id].kind = ${kind.ice};
+        output.cells[new_new_cell_id].downtimer = 0;
       }
     }
-
-
     if (!can_produce) {
       output.cells[new_cell_id].debug = 7;
     }
-    elseif (colliding) {
-      output.cells[new_cell_id].debug = 1;
+    elseif (is_launched) {
+      output.cells[new_cell_id].debug = 8;
     }
-
-
+    elseif (launching) {
+      output.cells[new_cell_id].debug = 9;
+    }
   }
   output.step = input.step + 1;
 }`}

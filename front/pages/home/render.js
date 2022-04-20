@@ -19,7 +19,7 @@ const gpu_render = async (a) => {
   const canvas = document.getElementById("gpu_canvas")
   canvas.width = window.innerHeight;
   canvas.height = window.innerHeight;
-  const context = canvas.getContext('webgpu');
+  const context = canvas.getContext('webgpu', {antialias: true});
   const presentationSize = [
     canvas.clientWidth,
     canvas.clientHeight,
@@ -118,7 +118,6 @@ const gpu_render = async (a) => {
     passEncoder.endPass();
     device.queue.submit([commandEncoder.finish()]);
     if (LOOP_RENDER) {
-      // setTimeout(gpu_render_inner, 15);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           gpu_render_inner()

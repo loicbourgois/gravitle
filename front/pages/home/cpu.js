@@ -180,3 +180,42 @@
 //     })
 //   }
 // }
+//
+// const dvs_mover = (value, decalage) => {
+//   return (value+map_size*decalage)%map_size
+// }
+//
+//
+// const dvs = (a,b) => {
+//   const dv1 = [
+//     b[0] - a[0],
+//     b[1] - a[1],
+//   ]
+//   const dv2 = [
+//     dvs_mover(b[0], 0.5) - dvs_mover(a[0], 0.5),
+//     dvs_mover(b[1], 0.5) - dvs_mover(a[1], 0.5),
+//   ]
+//   const dv3 = [
+//     dvs_mover(b[0], 0.25) - dvs_mover(a[0], 0.25),
+//     dvs_mover(b[1], 0.25) - dvs_mover(a[1], 0.25),
+//   ]
+//   return [
+//     dv1,
+//     dv2,
+//     dv3,
+//   ]
+// }
+//
+//
+// const min_dv = (dvs) => {
+//   let min_dv_ = undefined
+//   let d = Infinity
+//   for (let dv of dvs) {
+//     const d_new = distance_sqrd(dv)
+//     if (d_new < d) {
+//       d = d_new;
+//       min_dv_ = dv
+//     }
+//   }
+//   return min_dv_
+// }

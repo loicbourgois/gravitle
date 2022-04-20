@@ -1,4 +1,3 @@
-// const update cps
 import {
   COMPUTE_ITER,
   attributs_count,
@@ -34,7 +33,6 @@ const gpu_compute = async (gpu_) => {
   gpu = gpu_
   gpu_compute_inner()
 }
-
 let data_out_buffer;
 const gpu_compute_inner = async () => {
   for (var i = 0; i < COMPUTE_ITER; i++) {
@@ -72,9 +70,10 @@ const gpu_compute_inner = async () => {
   gpu.buffers.read.unmap()
   if (LOOP_COMPUTE) {
     setTimeout(gpu_compute_inner, 10);
-    //gpu_compute_inner();
+    // gpu_compute_inner();
   }
 }
+
 
 export {
   gpu_compute,

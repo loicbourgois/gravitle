@@ -16,14 +16,21 @@ import {
 
 const fragment_shader = (a) => {return `
 ${shader_common}
+
+fn random (st: vec2<f32>) -> f32 {
+    return fract(sin(dot(st.xy,
+                         vec2<f32>(19.9878,78.233)))*
+        40908.5453123);
+}
+
 [[group(0), binding(0)]] var<storage, read>   input     : Data;
 [[stage(fragment)]]
 fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4<f32> {
   let x = position.x/f32(${a.canvas.width});
   let y = 1.0-position.y/f32(${a.canvas.height});
-  var r = 0.1;
-  var g = 0.1;
-  var b = 0.1;
+  var r = 0.02;
+  var g = 0.02;
+  var b = 0.02;
 
   let map_width = f32(${map_width});
   let grid_width = u32(${grid_width});
@@ -43,48 +50,57 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
       let d = distance_wrap_around(cell.p, point_p);
       if (cell.enabled == 1 && d < 0.5 ) {
 
+        let uuu = f32(u32(d*13.0));
+        let rrr = 0.5 + 0.5*random( vec2<f32>(uuu,uuu) );
+        let m = min(1.0, 1.0-d);
+        let dt = f32(cell.downtimer);
 
         switch (cell.kind) {
           case ${kind.iron}: {
-            r = 0.5;
-            g = 0.5;
-            b = 0.5;
+            r = 0.75*m;
+            g = 0.75*m;
+            b = 0.85*m;
           }
           case ${kind.carbon}: {
-            r = 0.25;
-            g = 0.25;
-            b = 0.25;
+            r = 0.25*m;
+            g = 0.25*m;
+            b = 0.25*m;
           }
           case ${kind.water}: {
-            r = 0.25;
-            g = 0.25;
-            b = 0.75;
+            r = 0.55*m;
+            g = 0.55*m;
+            b = 1.15*m;
           }
           case ${kind.miner}: {
             r = 0.0;
-            g = d * 1.0;
-            b = 0.0;
+            g = (1.25 - dt / 1000.0)*m;
+            b = (1.0 - dt / 1000.0)*m;
             if ( cell.debug == 7 ) {
               r = 0.5;
             }
           }
           case ${kind.heater}: {
-            r = (1.0 - d) * 2.0;
-            g = d * 1.0;
+            r = 2.0 * m;
+            g = 0.75 * m;
             b = 0.0;
             if ( cell.debug == 7 ) {
-              r = 1.0;
+              r = 1.0*m;
             }
           }
           case ${kind.ice}: {
-            r = 0.65;
-            g = 0.65;
-            b = 0.95;
+            r = 0.75*m;
+            g = 0.95*m;
+            b = 1.45*m;
           }
           case ${kind.stone}: {
-            r = 0.65;
-            g = 0.45;
-            b = 0.45;
+            r = 0.65 * m;
+            g = 0.45 * m;
+            b = 0.45 * m;
+          }
+          case ${kind.launcher}: {
+            r = 0.65 + 0.3 * f32(cell.downtimer)*0.002 ;
+            g = d * 1.0 + 0.3 * f32(cell.downtimer)*0.002 ; ;
+            b = 0.75 + 0.3 * f32(cell.downtimer)*0.002;
           }
           default: {
             r = 0.75;
@@ -95,12 +111,10 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
       }
     }
   }
-
   let cell_x = u32(point_p.x*2.0) % ${map_width}u;
   let cell_y = u32(point_p.y*2.0) % ${map_width}u;
   let cell = input.cells[cell_id_fn( vec2<u32>( cell_x, cell_y ))];
-
-  return vec4<f32>(r, g, b, 0.01);
+  return vec4<f32>(r, g, b, 1.0);
 }
 `};
 
