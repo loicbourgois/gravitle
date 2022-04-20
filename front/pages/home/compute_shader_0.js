@@ -193,6 +193,7 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
     }
   }
   output.step = input.step + 1;
+  output.mouse = input.mouse;
 }`}
 export {
   compute_shader_0

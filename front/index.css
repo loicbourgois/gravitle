@@ -28,4 +28,5 @@ canvas {
 
 #gpu_canvas {
   position: fixed;
+  cursor: none;
 }

@@ -76,7 +76,7 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
             g = (1.25 - dt / 1000.0)*m;
             b = (1.0 - dt / 1000.0)*m;
             if ( cell.debug == 7 ) {
-              r = 0.5;
+              r = 1.0;
             }
           }
           case ${kind.heater}: {
@@ -98,9 +98,9 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
             b = 0.45 * m;
           }
           case ${kind.launcher}: {
-            r = 0.65 + 0.3 * f32(cell.downtimer)*0.002 ;
-            g = d * 1.0 + 0.3 * f32(cell.downtimer)*0.002 ; ;
-            b = 0.75 + 0.3 * f32(cell.downtimer)*0.002;
+            r = (0.85 + 0.3 * f32(cell.downtimer)*0.02) * m;
+            g = (0.4 + 0.3 * f32(cell.downtimer)*0.002) * m;
+            b = (0.75 + 0.3 * f32(cell.downtimer)*0.002) * m;
           }
           default: {
             r = 0.75;
@@ -114,7 +114,16 @@ fn main(  [[builtin(position)]] position: vec4<f32>    ) -> [[location(0)]] vec4
   let cell_x = u32(point_p.x*2.0) % ${map_width}u;
   let cell_y = u32(point_p.y*2.0) % ${map_width}u;
   let cell = input.cells[cell_id_fn( vec2<u32>( cell_x, cell_y ))];
-  return vec4<f32>(r, g, b, 1.0);
+
+
+
+  if (distance_wrap_around(point_p,input.mouse) < 0.5 && distance_wrap_around(point_p,input.mouse) > 0.42 || distance_wrap_around(point_p,input.mouse) < 0.05) {
+    r = 1.0;
+    g = 1.0;
+    b = 0.5;
+  }
+
+  return vec4<f32>(r, g, b, 1.0 );
 }
 `};
 

@@ -91,6 +91,7 @@ fn distance_wrap_around(a:vec2<f32>, b:vec2<f32>) -> f32{
 [[block]] struct Data {
   cells: array<Cell, ${cell_count}>;
   step: i32;
+  mouse: vec2<f32>;
 };
 `
 

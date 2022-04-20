@@ -50,6 +50,8 @@ const go = async () => {
     <div id="panel">
       ${value_div('fps')}
       ${value_div('cps')}
+      ${value_div('x')}
+      ${value_div('y')}
     </div>
   `
   canvas = byid("canvas")

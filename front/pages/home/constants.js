@@ -1,5 +1,6 @@
 const float_size = 4
 const attributs_count = 10
+const global_attributs_count = 4
 const little_endian = true;
 const map_width = 32;
 const grid_width = map_width*2
@@ -24,6 +25,7 @@ const kind = {
 export {
   float_size,
   attributs_count,
+  global_attributs_count,
   little_endian,
   map_width,
   grid_width,
