@@ -173,8 +173,8 @@ fn main([[builtin(global_invocation_id)]] gid : vec3<u32>) {
       if (input.cells[new_new_cell_id].enabled == 0) {
         output.cells[new_new_cell_id].p.x = new_new_x;
         output.cells[new_new_cell_id].p.y = new_new_y;
-        output.cells[new_new_cell_id].pp.x = new_new_x - out_direction.x*0.01;
-        output.cells[new_new_cell_id].pp.y = new_new_y - out_direction.y*0.01;
+        output.cells[new_new_cell_id].pp.x = new_new_x - out_direction.x*0.022;
+        output.cells[new_new_cell_id].pp.y = new_new_y - out_direction.y*0.022;
         output.cells[new_new_cell_id].enabled = 1;
         output.cells[new_new_cell_id].mass = 1.0;
         output.cells[new_new_cell_id].static = 0;

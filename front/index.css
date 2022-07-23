@@ -19,6 +19,7 @@ canvas {
 #panel {
   position: fixed;
   z-index: 1;
+  pointer-events: none;
 }
 #minimap {
   width: 16em;

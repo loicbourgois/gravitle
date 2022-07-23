@@ -12,6 +12,9 @@ import {
 import {
   byid
 } from "./dom";
+import {
+  add_part_2
+} from "./add_parts";
 
 
 const computes = []
@@ -33,10 +36,8 @@ const buffer_size = (x) => {
 
 let mousex = 0;
 let mousey = 0;
-document.addEventListener("mousemove", () => {
-  mousex = event.clientX;
-  mousey = event.clientY;
-});
+let mouse_clicks = []
+
 
 
 let from_write  = true
@@ -45,6 +46,15 @@ let canvas
 const gpu_compute = async (gpu_) => {
   gpu = gpu_
   canvas = document.getElementById("gpu_canvas")
+  canvas.addEventListener("mousemove", () => {
+    mousex = event.clientX;
+    mousey = event.clientY;
+  });
+  canvas.addEventListener("mousedown", (e) => {
+    mousex = event.clientX;
+    mousey = event.clientY;
+    mouse_clicks.push([mousex,mousey])
+  });
   gpu_compute_inner()
 }
 let data_out_buffer;
@@ -84,34 +94,39 @@ const gpu_compute_inner = async () => {
     gpu.device.queue.submit([gpu_commands]);
   }
   const mouse_x = mousex * map_width / canvas.width - map_width * 0.5
-  const mouse_y =  map_width * 0.5 - mousey * map_width / canvas.width
+  const mouse_y = map_width * 0.5 - mousey * map_width / canvas.width
   byid("value_x").innerHTML = mouse_x.toFixed(1)
   byid("value_y").innerHTML = mouse_y.toFixed(1)
   await gpu.buffers.read.mapAsync(GPUMapMode.READ);
   await gpu.buffers.write.mapAsync(GPUMapMode.WRITE);
   data_out_buffer = Uint32Array.from(new Uint32Array(gpu.buffers.read.getMappedRange()))
+  const buffer_write_ = new Uint32Array(gpu.buffers.write.getMappedRange());
+  buffer_write_.set( data_out_buffer )
+  const buffer_write = new DataView(buffer_write_.buffer)
+  buffer_write.setFloat32( float_size * (cell_count*attributs_count + 2), mouse_x, little_endian)
+  buffer_write.setFloat32( float_size * (cell_count*attributs_count + 3), mouse_y, little_endian)
 
-  //const buffer_write = new DataView(gpu.buffers.write.getMappedRange())
-
-  // let write_map = x.buffers.write.mapAsync(GPUMapMode.WRITE);
-  // await write_map;
-  const aa = new Uint32Array(gpu.buffers.write.getMappedRange());
-  aa.set( data_out_buffer )
-
-  const bb = new DataView(aa.buffer)
-
-  bb.setFloat32( float_size * (cell_count*attributs_count + 2), mouse_x, little_endian)
-  bb.setFloat32( float_size * (cell_count*attributs_count + 3), mouse_y, little_endian)
-  // bb.setFloat32( float_size * (cell_count*attributs_count + 3), 1.0, little_endian)
-
+  while (mouse_clicks.length > 0) {
+    const click = mouse_clicks.shift()
+    const x = click[0] * map_width / canvas.width - map_width * 0.5
+    const y = map_width * 0.5 - click[1] * map_width / canvas.width
+    add_part_2({
+      xy: [x, y],
+      dxy: [0.0, 0.0],
+      static: false,
+      mass: 1.0,
+      buffer_write: buffer_write,
+      map_width: map_width,
+      kind: kind.miner
+    })
+  }
 
   from_write = true;
-
   gpu.buffers.read.unmap()
   gpu.buffers.write.unmap()
   if (LOOP_COMPUTE) {
-    //setTimeout(gpu_compute_inner, 2);
-     gpu_compute_inner();
+    setTimeout(gpu_compute_inner, 1);
+     //gpu_compute_inner();
   }
 }
 

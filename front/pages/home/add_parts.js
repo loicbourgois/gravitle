@@ -203,11 +203,36 @@ const add_part = async (_) => {
 }
 
 
+const add_part_2 = (_) => {
+  const buffer_write = _.buffer_write
+  const p = [
+    (_.xy[0] + _.map_width)%_.map_width,
+    (_.xy[1] + _.map_width)%_.map_width
+  ]
+  const pp = [
+    p[0] - _.dxy[0],
+    p[1] - _.dxy[1],
+  ]
+  const cell_id_ = cell_id(p, _.map_width)
+  const buffer_id = cell_id_ * attributs_count * float_size
+  const x_id = buffer_id
+  buffer_write.setFloat32(x_id,           p[0] , little_endian)
+  buffer_write.setFloat32(x_id+float_size*1,  p[1] , little_endian)
+  buffer_write.setFloat32(x_id+float_size*2,    pp[0] , little_endian)
+  buffer_write.setFloat32(x_id+float_size*3,    pp[1] , little_endian)
+  buffer_write.setInt32(x_id+float_size*4, 1, little_endian)
+  buffer_write.setInt32(x_id+float_size*6, _.static ? 1 : 0 , little_endian)
+  buffer_write.setFloat32(x_id+float_size*7, _.mass, little_endian)
+  buffer_write.setInt32(x_id+float_size*8, _.kind, little_endian)
+}
+
+
 const cell_id = (xy, map_width) =>  {
   return Math.floor(xy[1] * 2 )* 2 * map_width + Math.floor(xy[0] * 2)
 }
 
 
 export {
-  add_parts
+  add_parts,
+  add_part_2,
 }
