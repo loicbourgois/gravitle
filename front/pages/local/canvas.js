@@ -1,7 +1,7 @@
 const context_coordinates = (context, p) => {
   return {
-    x: 0.5 * context.canvas.width + min_dim(context) * p.x*0.5,
-    y: 0.5 * context.canvas.height -  min_dim(context) * p.y*0.5,
+    x: min_dim(context) * p.x,
+    y: context.canvas.height -  min_dim(context) * p.y,
   }
 }
 
@@ -25,7 +25,7 @@ const fill_text = (context, p, text) => {
 
 const fill_circle = (context, p, diameter, color) => {
   const cc = context_coordinates(context, p)
-  const radius = diameter * min_dim(context) * 0.25;
+  const radius = diameter * min_dim(context) * 0.5;
   context.beginPath();
   context.arc(cc.x, cc.y, radius, 0, 2 * Math.PI, false);
   context.fillStyle = color;
@@ -35,12 +35,23 @@ const fill_circle = (context, p, diameter, color) => {
 
 const stroke_circle = (context, p, diameter, color, lineWidth) => {
   const cc = context_coordinates(context, p)
-  const radius = diameter * min_dim(context) * 0.25;
+  const radius = diameter * min_dim(context) * 0.5;
   context.beginPath();
   context.arc(cc.x, cc.y, radius, 0, 2 * Math.PI, false);
   context.strokeStyle = color;
   context.lineWidth = lineWidth?lineWidth:2;
   context.stroke();
+}
+
+
+const stroke_circle_2 = (context, p, diameter, color, lineWidth) => {
+  for (var xy of [[0,0],[1,0],[0,1],[0,-1],[-1,0]]) {
+    const pp = {
+      x: p.x + xy[0],
+      y: p.y + xy[1],
+    }
+    stroke_circle(context, pp, diameter, color, lineWidth)
+  }
 }
 
 
@@ -55,10 +66,19 @@ const resize = (canvas) => {
 }
 
 
+const resize_square = (canvas) => {
+  const dim = Math.min(window.innerWidth, window.innerHeight)
+  canvas.width = dim
+  canvas.height = dim
+}
+
+
 export {
   clear,
   fill_circle,
   fill_text,
   stroke_circle,
+  stroke_circle_2,
   resize,
+  resize_square,
 }
