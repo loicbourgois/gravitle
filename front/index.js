@@ -12,8 +12,9 @@ import {gallery} from "./pages/gallery";
 import {webgpu} from "./pages/webgpu";
 import {localhost_3d} from "./pages/localhost_3d";
 import {playground} from "./pages/playground";
+import {local_main} from "./pages/local/main"
 if (window.location.pathname === "/") {
-  playground()
+  local_main()
 } else if (window.location.pathname === "/home") {
   home()
 } else if (window.location.pathname === "/playground") {

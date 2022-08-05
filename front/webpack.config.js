@@ -40,6 +40,7 @@ module.exports = {
         { from: ('parts_index.js'), to: 'parts_index.js' },
         { from: ('parts-bootstrap.js'), to: 'parts-bootstrap.js' },
         { from: ('parts.css'), to: 'parts.css' },
+        { from: ('favicon.ico'), to: 'favicon.ico' },
       ]
     }),
   ],
