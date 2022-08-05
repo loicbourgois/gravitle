@@ -1,8 +1,43 @@
 const normalize = (p, d) => {
+  if (!d) {
+    d = distance(p)
+  }
     return {
       x: p.x / d,
       y: p.y / d,
     }
+}
+
+
+const add = (a,b) => {
+  return {
+    x: b.x + a.x,
+    y: b.y + a.y,
+  }
+}
+
+
+const mod = (a,k) => {
+  return {
+    x: (a.x+1)%k,
+    y: (a.y+1)%k,
+  }
+}
+
+
+const del = (a,b) => {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+  }
+}
+
+
+const mul = (a,k) => {
+  return {
+    x: a.x*k,
+    y: a.y*k,
+  }
 }
 
 
@@ -113,6 +148,20 @@ const wrap_around = (a,b) => {
 }
 
 
+const rotate = (p1, p2, angle) => {
+  // Rotates p2 around p1
+  angle = Math.PI * 2 * angle
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const cos_ = Math.cos(angle);
+  const sin_ = Math.sin(angle);
+  return {
+    x: p1.x + dx*cos_ - dy*sin_,
+    y: p1.y + dy*cos_ + dx*sin_
+  }
+}
+
+
 const distance_wrap_arround = (a,b) => {
   return Math.sqrt(wrap_around(a,b).d_sqrd)
 }
@@ -123,7 +172,12 @@ export {
   distance_sqrd,
   distance,
   dot,
+  mul,
   collision_response,
   wrap_around,
   normalize,
+  rotate,
+  add,
+  del,
+  mod,
 }

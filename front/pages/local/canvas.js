@@ -12,6 +12,7 @@ const min_dim = (context) => {
 
 
 const fill_text = (context, p, text) => {
+  text = ""+`${text}`
   const size = 14
   const cc = context_coordinates(context, p)
   context.font = `${size}px monospace`;
@@ -55,6 +56,17 @@ const stroke_circle_2 = (context, p, diameter, color, lineWidth) => {
 }
 
 
+const fill_circle_2 = (context, p, diameter, color) => {
+  for (var xy of [[0,0],[1,0],[0,1],[0,-1],[-1,0]]) {
+    const pp = {
+      x: p.x + xy[0],
+      y: p.y + xy[1],
+    }
+    fill_circle(context, pp, diameter, color)
+  }
+}
+
+
 const clear = (context) => {
   context.clearRect(0,0,context.canvas.width, context.canvas.height)
 }
@@ -63,6 +75,18 @@ const clear = (context) => {
 const resize = (canvas) => {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
+}
+
+
+const line = (context, p1, p2, color, line_width) => {
+  const cc1 = context_coordinates(context, p1)
+  const cc2 = context_coordinates(context, p2)
+  context.beginPath();
+  context.moveTo(cc1.x, cc1.y);
+  context.lineTo(cc2.x, cc2.y);
+  context.strokeStyle = color;
+  context.lineWidth = line_width?line_width:2;
+  context.stroke();
 }
 
 
@@ -76,9 +100,11 @@ const resize_square = (canvas) => {
 export {
   clear,
   fill_circle,
+  fill_circle_2,
   fill_text,
   stroke_circle,
   stroke_circle_2,
   resize,
   resize_square,
+  line,
 }
