@@ -19,6 +19,27 @@ import {
   mul,
   mod,
 } from "./math"
+import {
+  get_fps,
+  update_fps,
+  get_ups,
+  update_ups,
+  get_ups_avg_delta,
+} from "./perf"
+
+
+const html = () => {
+  return `
+    <div>
+      <p>Move with F, J</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div>
+      <p>FPS: <span id="fps">...</span></p>
+      <p>UPS: <span id="ups">...</span></p>
+    </div>
+  `
+}
 
 
 const style = () => {
@@ -111,14 +132,7 @@ const add_link = (a_idx, b_idx) => {
 
 
 const local_main = () => {
-  document.querySelector('#content').innerHTML = `
-    <div>
-      <p>Move with F, J</p>
-    </div>
-    <canvas id="canvas"></canvas>
-    <div>
-    </div>
-  `
+  document.querySelector('#content').innerHTML = html()
   const style_element = document.createElement('style')
   document.head.appendChild(style_element)
 
@@ -184,16 +198,13 @@ const local_main = () => {
   }
   add_ship(ship, 0.5, 0.5)
   add_ship(ship_2, 0.25, 0.5)
-  //add_ship(ship_2, 0., 0.)
   add_ship(ship_2, 0.5, 0.25)
   add_ship(ship_2, 0.75, 0.5)
-  //add_ship(ship_2, 0., 0.)
   add_ship(ship_2, 0.5, 0.75)
-
-  for (var i = 0; i < 100; i++) {
-    //add_part(Math.random(),  Math.random(), 0, 0, 'armor')
-  }
-
+  add_ship(ship_2, 0.8, 0.8)
+  add_ship(ship_2, 0.2, 0.8)
+  add_ship(ship_2, 0.8, 0.2)
+  add_ship(ship_2, 0.2, 0.2)
   render(context)
   compute()
   document.addEventListener("keydown", (e) => {
@@ -265,11 +276,12 @@ const average_color = (c1,c2) => {
 
 
 const render = (context) => {
+  update_fps()
   clear(context)
   const colors = {
     'glass': {
       value: '#aaf3',
-      score: 3,
+      score: 4,
     },
     'booster': {
       value: '#fb0',
@@ -330,6 +342,8 @@ const render = (context) => {
     // fill_text(context, p.p, p.idx, )
     //line(context, p.p, add(p.p, mul(p.direction, 0.02)), "red")
   }
+  document.getElementById("fps").innerHTML = get_fps()
+  document.getElementById("ups").innerHTML = get_ups()
   window.requestAnimationFrame(()=>{
     render(context)
   })
@@ -422,9 +436,10 @@ const compute = () => {
     p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x
     p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y
   }
+  update_ups()
   window.setTimeout(() => {
     compute()
-  }, 10)
+  }, 10-get_ups_avg_delta())
 }
 
 
