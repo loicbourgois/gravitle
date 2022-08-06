@@ -6,7 +6,7 @@ import {
   clear,
   line,
   fill_text,
-} from "./canvas"
+} from "../canvas"
 import {
   collision_response,
   distance_sqrd,
@@ -18,7 +18,7 @@ import {
   del,
   mul,
   mod,
-} from "./math"
+} from "../math"
 import {
   get_fps,
   update_fps,
@@ -26,12 +26,17 @@ import {
   update_ups,
   get_ups_avg_delta,
 } from "./perf"
+import {
+  ship,
+  ship_2,
+} from "./ship"
 
 
 const html = () => {
   return `
     <div>
       <p>Move with F, J</p>
+      <p> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div>
@@ -52,9 +57,22 @@ const style = () => {
       align-items: center;
       flex-direction: row;
     }
+    a {
+      color: #ffa;
+      text-decoration: none;
+      background-color: #fff0;
+      padding: 0.8rem;
+    }
+    a:hover {
+      background-color: #fff2;
+    }
     #content > div {
       width: 0;
       flex-grow: 1;
+      display: flex;
+      justify-content: space-around;
+      flex-direction: column;
+      height: 100%;
     }
     p {
       text-align: center;
@@ -71,6 +89,8 @@ const style = () => {
     }
   `
 }
+
+
 const DIAM = 0.0125
 
 
@@ -131,100 +151,31 @@ const add_link = (a_idx, b_idx) => {
 }
 
 
-const local_main = () => {
-  document.querySelector('#content').innerHTML = html()
-  const style_element = document.createElement('style')
-  document.head.appendChild(style_element)
-
-  for (let x of style().split('}')) {
-      try {
-        style_element.sheet.insertRule(x+'}');
-      } catch(e) {
-
-      }
-  }
-
-
-
-
-  const canvas = document.querySelector('#canvas')
-  resize_square(canvas)
-  const context = canvas.getContext('2d')
-  const ship = {
-    p1: 'core',
-    p2: 'core',
-    parts: [
-      [0,1, 'armor'],
-      [0,2, 'gun'],
-      [0,3, 'armor'],
-      [0,4, 'armor'],
-      [0,5, 'armor'],
-      [2,1, 'gun'],
-      [7,1, 'armor'],
-      [8,1, 'armor'],
-      [6,5, 'armor'],
-      [9,6, 'armor'],
-      [8,9, 'armor'],
-      [5,4, 'armor'],
-      [5,13, 'booster'],
-      [12,9, 'booster'],
-      [4,3, 'armor'],
-      [7,8, 'armor'],
-    ],
-    links: [
-      [1,6],
-      [6,9],
-      [10,11],
-    ],
-    key_bindings: {
-      'f': [14],
-      'j': [15],
-    },
-  }
-  const ship_2 = {
-    p1: 'core',
-    p2: 'armor',
-    parts: [
-      [0,1, 'armor'],
-      [0,2, 'armor'],
-      [0,3, 'armor'],
-      [0,4, 'armor'],
-      [0,5, 'armor'],
-    ],
-    links: [
-      [1,6]
-    ],
-    key_bindings: {},
-  }
-  add_ship(ship, 0.5, 0.5)
-  add_ship(ship_2, 0.25, 0.5)
-  add_ship(ship_2, 0.5, 0.25)
-  add_ship(ship_2, 0.75, 0.5)
-  add_ship(ship_2, 0.5, 0.75)
-  add_ship(ship_2, 0.8, 0.8)
-  add_ship(ship_2, 0.2, 0.8)
-  add_ship(ship_2, 0.8, 0.2)
-  add_ship(ship_2, 0.2, 0.2)
-  render(context)
-  compute()
-  document.addEventListener("keydown", (e) => {
-    if (key_bindings.get(e.key)) {
-      for (let idx of key_bindings.get(e.key)) {
-        parts[idx].activated = true
-      }
-    }
-  });
-  document.addEventListener("keyup", (e) => {
-    if (key_bindings.get(e.key)) {
-      for (let idx of key_bindings.get(e.key)) {
-        parts[idx].activated = false
-      }
-    }
-  });
-}
-
-
 const key_bindings = new Map()
+
+
+const add_ship_2 = (ship, x, y) => {
+  const p1_idx = parts.length
+  for (let part of ship.parts) {
+    const idx = add_part(
+      part.p.x-ship.center.x+x,
+      part.p.y-ship.center.y+y,
+      0,
+      0,
+      part.kind
+    )
+    if (part.binding) {
+      if (!key_bindings.has(part.binding)) {
+        key_bindings.set(part.binding, new Set())
+      }
+      key_bindings.get(part.binding).add(idx)
+    }
+  }
+  for (let link of ship.links) {
+    add_link(link.a+p1_idx, link.b+p1_idx)
+  }
+  console.log(key_bindings)
+}
 
 
 const add_ship = (ship, x, y) => {
@@ -440,6 +391,52 @@ const compute = () => {
   window.setTimeout(() => {
     compute()
   }, 10-get_ups_avg_delta())
+}
+
+
+const local_main = () => {
+  document.querySelector('#content').innerHTML = html()
+  const style_element = document.createElement('style')
+  document.head.appendChild(style_element)
+  for (let x of style().split('}')) {
+      try {
+        style_element.sheet.insertRule(x+'}');
+      } catch(e) {
+
+      }
+  }
+  const canvas = document.querySelector('#canvas')
+  resize_square(canvas)
+  const context = canvas.getContext('2d')
+  if (localStorage.getItem('ship')) {
+    add_ship_2(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
+  } else {
+    add_ship(ship, 0.5, 0.5)
+  }
+  add_ship(ship_2, 0.25, 0.5)
+  add_ship(ship_2, 0.5, 0.25)
+  add_ship(ship_2, 0.75, 0.5)
+  add_ship(ship_2, 0.5, 0.75)
+  add_ship(ship_2, 0.8, 0.8)
+  add_ship(ship_2, 0.2, 0.8)
+  add_ship(ship_2, 0.8, 0.2)
+  add_ship(ship_2, 0.2, 0.2)
+  render(context)
+  compute()
+  document.addEventListener("keydown", (e) => {
+    if (key_bindings.get(e.key)) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = true
+      }
+    }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (key_bindings.get(e.key)) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = false
+      }
+    }
+  });
 }
 
 

@@ -11,12 +11,11 @@ const min_dim = (context) => {
 }
 
 
-const fill_text = (context, p, text) => {
+const fill_text = (context, p, text, size=14, color="#fff") => {
   text = ""+`${text}`
-  const size = 14
   const cc = context_coordinates(context, p)
   context.font = `${size}px monospace`;
-  context.fillStyle = "#fff"
+  context.fillStyle = color
   context.fillText(
     text,
     cc.x - size*text.length*0.3,
