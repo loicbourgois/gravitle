@@ -2,13 +2,7 @@ import {
   last,
   len,
 } from "./util";
-//  x: {
-//    fps_counter_length: int,
-//    fps_counter: [{
-//      start,
-//      end,
-//    }]
-//  }
+
 function update_fps(x) {
   if (len(x.fps_counter) > 0) {
     while (len(x.fps_counter) > x.fps_counter_length) {
@@ -23,6 +17,7 @@ function update_fps(x) {
     document.getElementById("p_fps").innerHTML = `FPS: ${ (len(x.fps_counter) / (last(x.fps_counter).end - x.fps_counter[0].start) * 1000).toFixed(1) } `
   }
 }
+
 export {
   update_fps
 }
