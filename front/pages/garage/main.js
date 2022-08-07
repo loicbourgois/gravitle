@@ -54,6 +54,7 @@ const css = () => {
     button {
       border: none;
       padding: 0.8rem;
+      background: #fff1;
     }
     button:hover {
       cursor: pointer;
@@ -105,30 +106,9 @@ const add_part = (x,y,dx,dy, kind, d=DIAM) => {
     idx: idx,
     kind: kind,
     d: d,
-    dp: {
-      x: dx,
-      y: dy,
-    },
-    pp: {
-      x: x-dx,
-      y: y-dy,
-    },
     p: {
       x: x,
       y: y,
-    },
-    np: {
-      x: x,
-      y: y,
-    },
-    collision_response: {
-      x: 0,
-      y: 0,
-      count: 0,
-    },
-    link_response: {
-      x: 0,
-      y: 0,
     },
     links: new Set(),
     direction: {x:0, y:0},
@@ -185,7 +165,6 @@ const add_links = (p1) => {
 
 
 const DIAM = 0.05
-const DIAM_2 = 0.05*0.75
 
 
 const add_option = (x,y,d=DIAM) => {
@@ -266,12 +245,19 @@ const reset_options = () => {
       add_options(part)
     }
   }
+  save_ship()
 }
 
 
 const mouse_position = {
   x:-1,
   y:-1,
+}
+
+
+const save_ship = () => {
+  localStorage.setItem('ship', JSON.stringify(small_ship(true_ship())));
+  console.log("Ship saved")
 }
 
 
@@ -326,14 +312,34 @@ const garage_main = () => {
     }
   });
   document.querySelector("#go_button").addEventListener("click", () => {
-    localStorage.setItem('ship', JSON.stringify(true_ship()));
-    console.log("Ship saved")
+    save_ship()
     window.location.href = ".."
   })
   const context = canvas.getContext('2d')
   resize_square(canvas)
   render_loop(context)
-  add_part(0.5, 0.5, 0, 0, 'core')
+  const ship = JSON.parse(localStorage.getItem('ship'))
+  if (ship && ship.parts.length) {
+    for (let part of ship.parts) {
+      parts.push({
+        idx: parts.length,
+        p: {
+          x: (part.p.x - 0.8)/0.25+0.5,
+          y: (part.p.y - 0.8)/0.25+0.5,
+        },
+        d: part.d/0.25,
+        kind: part.kind,
+        binding: part.binding,
+        links: new Set(),
+        direction: {x:0, y:0},
+      })
+    }
+    for (let link of ship.links) {
+      add_link(link.a, link.b)
+    }
+  } else {
+    add_part(0.5, 0.5, 0, 0, 'core')
+  }
   reset_options()
 }
 
@@ -384,6 +390,15 @@ const true_ship = () => {
     },
     DIAM: DIAM*0.25,
   }
+}
+
+
+const small_ship = (ship) => {
+  const s_ship = JSON.parse(JSON.stringify(ship))
+  for (let part of s_ship.parts) {
+    delete part.np
+  }
+  return s_ship
 }
 
 

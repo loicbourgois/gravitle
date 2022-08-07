@@ -32,16 +32,19 @@ import {
 } from "./ship"
 
 
+const LINK_STRENGH = 0.2
+
+
 const html = () => {
   return `
     <div>
-      <p>Move with F, J</p>
-      <p> <a href="garage">Go to Garage</a> </p>
+      <p id="move_with_instructions"></p>
     </div>
     <canvas id="canvas"></canvas>
     <div>
       <p>FPS: <span id="fps">...</span></p>
       <p>UPS: <span id="ups">...</span></p>
+      <p> <a href="garage">Go to Garage</a> </p>
     </div>
   `
 }
@@ -363,11 +366,10 @@ const compute = () => {
     const p1 = parts[link.a]
     const p2 = parts[link.b]
     const wa = wrap_around(p1.np, p2.np)
-    const link_strength = 0.1
     const d = Math.sqrt(wa.d_sqrd)
     const n = normalize(delta(wa.a, wa.b), d)
     const ds = (p1.d + p2.d) * 0.5
-    const factor = (ds - d) * link_strength
+    const factor = (ds - d) * LINK_STRENGH
     p1.link_response.x -= n.x * factor * 0.5
     p1.link_response.y -= n.y * factor * 0.5
     p2.link_response.x += n.x * factor * 0.5
@@ -410,7 +412,9 @@ const local_main = () => {
   const context = canvas.getContext('2d')
   if (localStorage.getItem('ship')) {
     add_ship_2(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
-  } else {
+  }
+  else
+  {
     add_ship(ship, 0.5, 0.5)
   }
   add_ship(ship_2, 0.25, 0.5)
@@ -437,6 +441,21 @@ const local_main = () => {
       }
     }
   });
+  console.log(key_bindings)
+  const move_with_keys = new Set()
+  for (let kv of key_bindings ) {
+    const key = kv[0]
+    const idxs = kv[1]
+    for (let idx of idxs) {
+      if (parts[idx].kind == 'booster' ) {
+        move_with_keys.add(key)
+      }
+    }
+  }
+  if (move_with_keys.size) {
+    document.querySelector("#move_with_instructions").innerHTML =
+      `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
+  }
 }
 
 
