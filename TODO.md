@@ -2,6 +2,7 @@
 - feat: homepage with default ship
 
 
+<<<<<<< Updated upstream
 # 2022-08-07
 - feat: fps and ups
 - feat: garage
@@ -11,6 +12,10 @@
 
 
 # Wip
+=======
+# New
+- feat: fps and ups
+>>>>>>> Stashed changes
 
 
 # Backlog

@@ -18,7 +18,11 @@ import {
   del,
   mul,
   mod,
+<<<<<<< Updated upstream
 } from "../math"
+=======
+} from "./math"
+>>>>>>> Stashed changes
 import {
   get_fps,
   update_fps,
@@ -26,6 +30,7 @@ import {
   update_ups,
   get_ups_avg_delta,
 } from "./perf"
+<<<<<<< Updated upstream
 import {
   ship_0,
   ship_2,
@@ -34,13 +39,19 @@ import {
 
 
 const LINK_STRENGH = 0.2
+=======
+>>>>>>> Stashed changes
 
 
 const html = () => {
   return `
     <div>
+<<<<<<< Updated upstream
       <p id="move_with_instructions"></p>
       <p> <a href="garage">Go to Garage</a> </p>
+=======
+      <p>Move with F, J</p>
+>>>>>>> Stashed changes
     </div>
     <canvas id="canvas"></canvas>
     <div>
@@ -158,7 +169,14 @@ const add_link = (a_idx, b_idx) => {
 }
 
 
+<<<<<<< Updated upstream
 const key_bindings = new Map()
+=======
+const local_main = () => {
+  document.querySelector('#content').innerHTML = html()
+  const style_element = document.createElement('style')
+  document.head.appendChild(style_element)
+>>>>>>> Stashed changes
 
 
 const add_ship_2 = (ship, x, y) => {
@@ -178,9 +196,90 @@ const add_ship_2 = (ship, x, y) => {
       key_bindings.get(part.binding).add(idx)
     }
   }
+<<<<<<< Updated upstream
   for (let link of ship.links) {
     add_link(link.a+p1_idx, link.b+p1_idx)
   }
+=======
+
+
+
+
+  const canvas = document.querySelector('#canvas')
+  resize_square(canvas)
+  const context = canvas.getContext('2d')
+  const ship = {
+    p1: 'core',
+    p2: 'core',
+    parts: [
+      [0,1, 'armor'],
+      [0,2, 'gun'],
+      [0,3, 'armor'],
+      [0,4, 'armor'],
+      [0,5, 'armor'],
+      [2,1, 'gun'],
+      [7,1, 'armor'],
+      [8,1, 'armor'],
+      [6,5, 'armor'],
+      [9,6, 'armor'],
+      [8,9, 'armor'],
+      [5,4, 'armor'],
+      [5,13, 'booster'],
+      [12,9, 'booster'],
+      [4,3, 'armor'],
+      [7,8, 'armor'],
+    ],
+    links: [
+      [1,6],
+      [6,9],
+      [10,11],
+    ],
+    key_bindings: {
+      'f': [14],
+      'j': [15],
+    },
+  }
+  const ship_2 = {
+    p1: 'core',
+    p2: 'armor',
+    parts: [
+      [0,1, 'armor'],
+      [0,2, 'armor'],
+      [0,3, 'armor'],
+      [0,4, 'armor'],
+      [0,5, 'armor'],
+    ],
+    links: [
+      [1,6]
+    ],
+    key_bindings: {},
+  }
+  add_ship(ship, 0.5, 0.5)
+  add_ship(ship_2, 0.25, 0.5)
+  add_ship(ship_2, 0.5, 0.25)
+  add_ship(ship_2, 0.75, 0.5)
+  add_ship(ship_2, 0.5, 0.75)
+  add_ship(ship_2, 0.8, 0.8)
+  add_ship(ship_2, 0.2, 0.8)
+  add_ship(ship_2, 0.8, 0.2)
+  add_ship(ship_2, 0.2, 0.2)
+  render(context)
+  compute()
+  document.addEventListener("keydown", (e) => {
+    if (key_bindings.get(e.key)) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = true
+      }
+    }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (key_bindings.get(e.key)) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = false
+      }
+    }
+  });
+>>>>>>> Stashed changes
 }
 
 
@@ -396,6 +495,7 @@ const compute = () => {
   window.setTimeout(() => {
     compute()
   }, 10-get_ups_avg_delta())
+<<<<<<< Updated upstream
 }
 
 
@@ -455,6 +555,8 @@ const local_main = () => {
     document.querySelector("#move_with_instructions").innerHTML =
       `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
   }
+=======
+>>>>>>> Stashed changes
 }
 
 
