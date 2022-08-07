@@ -22,7 +22,7 @@ const html = () => {
       <p>Build and customize ships in the garage.</p>
       <p>Big circles are for parts.</p>
       <p>Small circles are for links.</p>
-      <p>Hover on a part and press a key to bind it: useful to activate guns and boosters in game.</p>
+      <p>Hover on a part and press a key to bind it. Press again to unbind.</p>
     </div>
     <canvas id="canvas"></canvas>
     <div>
@@ -43,6 +43,10 @@ const html = () => {
 
 const css = () => {
   return `
+    * {
+      color: #ffa;
+      background: transparent;
+    }
     #content {
       display: flex;
       width: 100%;

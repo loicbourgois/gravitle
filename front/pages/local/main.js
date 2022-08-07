@@ -27,8 +27,9 @@ import {
   get_ups_avg_delta,
 } from "./perf"
 import {
-  ship,
+  ship_0,
   ship_2,
+  ship_1,
 } from "./ship"
 
 
@@ -39,12 +40,12 @@ const html = () => {
   return `
     <div>
       <p id="move_with_instructions"></p>
+      <p> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div>
       <p>FPS: <span id="fps">...</span></p>
       <p>UPS: <span id="ups">...</span></p>
-      <p> <a href="garage">Go to Garage</a> </p>
     </div>
   `
 }
@@ -81,6 +82,9 @@ const style = () => {
       text-align: center;
       color: #ffa;
       font-family: monospace;
+    }
+    p span {
+      color: #ffa;
     }
     #canvas {
         background: #113;
@@ -177,7 +181,6 @@ const add_ship_2 = (ship, x, y) => {
   for (let link of ship.links) {
     add_link(link.a+p1_idx, link.b+p1_idx)
   }
-  console.log(key_bindings)
 }
 
 
@@ -410,17 +413,14 @@ const local_main = () => {
   const canvas = document.querySelector('#canvas')
   resize_square(canvas)
   const context = canvas.getContext('2d')
-  if (localStorage.getItem('ship')) {
-    add_ship_2(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
+  if (!localStorage.getItem('ship')) {
+    localStorage.setItem('ship', ship_1)
   }
-  else
-  {
-    add_ship(ship, 0.5, 0.5)
-  }
-  add_ship(ship_2, 0.25, 0.5)
-  add_ship(ship_2, 0.5, 0.25)
-  add_ship(ship_2, 0.75, 0.5)
-  add_ship(ship_2, 0.5, 0.75)
+  add_ship_2(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
+  add_ship(ship_2, 0.27, 0.5)
+  add_ship(ship_2, 0.5, 0.27)
+  add_ship(ship_2, 0.73, 0.5)
+  add_ship(ship_2, 0.5, 0.73)
   add_ship(ship_2, 0.8, 0.8)
   add_ship(ship_2, 0.2, 0.8)
   add_ship(ship_2, 0.8, 0.2)
@@ -441,7 +441,6 @@ const local_main = () => {
       }
     }
   });
-  console.log(key_bindings)
   const move_with_keys = new Set()
   for (let kv of key_bindings ) {
     const key = kv[0]
