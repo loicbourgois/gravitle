@@ -2,15 +2,19 @@
 - feat: homepage with default ship
 
 
-# New
+# 2022-08-07
 - feat: fps and ups
+- feat: garage
+
+
+# New
 
 
 # Wip
-- feat: editor
 
 
 # Backlog
+- feat: guns
 - feat: render options
   To display links, change size of link parts, ...
 - feat: destroy parts on homepage
