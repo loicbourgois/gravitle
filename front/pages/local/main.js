@@ -3,10 +3,14 @@ import {
   stroke_circle,
   stroke_circle_2,
   fill_circle_2,
+  fill_circle,
   clear,
   line,
   fill_text,
 } from "../canvas"
+import {
+  colors,
+} from '../colors'
 import {
   collision_response,
   distance_sqrd,
@@ -34,6 +38,8 @@ import {
 
 
 const LINK_STRENGH = 0.2
+const GRID_SIDE = 20
+const CELL_COUNT = GRID_SIDE * GRID_SIDE
 
 
 const html = () => {
@@ -98,12 +104,55 @@ const style = () => {
 }
 
 
+const grid_id = (position) => {
+  return parseInt(position.y * GRID_SIDE) * GRID_SIDE + parseInt(position.x * GRID_SIDE)
+}
+const grid_id_2 = (position) => {
+  return parseInt(position.y) * GRID_SIDE + parseInt(position.x)
+}
+const grid_id_3 = (x,y) => {
+  return y * GRID_SIDE + x
+}
+
+
 const DIAM = 0.0125
 
 
 const parts = []
 const links = []
-const links_set = new Set
+const links_set = new Set()
+const grid = []
+const grid_ids = []
+for (var x = 0; x < GRID_SIDE; x++) {
+  for (var y = 0; y < GRID_SIDE; y++) {
+    const grid_x = x
+    const grid_y = y
+    const grid_xs = [
+      (grid_x - 1 + GRID_SIDE) % GRID_SIDE,
+      (grid_x + GRID_SIDE) % GRID_SIDE,
+      (grid_x + 1 + GRID_SIDE) % GRID_SIDE,
+    ]
+    const grid_ys = [
+      (grid_y - 1 + GRID_SIDE) % GRID_SIDE,
+      (grid_y + GRID_SIDE) % GRID_SIDE,
+      (grid_y + 1 + GRID_SIDE) % GRID_SIDE,
+    ]
+    const grid_id_ = grid_id_3(x,y)
+    grid_ids.push([])
+    grid_ids[grid_id_] = [
+      grid_id_3(grid_xs[0], grid_ys[0]),
+      grid_id_3(grid_xs[0], grid_ys[1]),
+      grid_id_3(grid_xs[0], grid_ys[2]),
+      grid_id_3(grid_xs[1], grid_ys[0]),
+      grid_id_3(grid_xs[1], grid_ys[1]),
+      grid_id_3(grid_xs[1], grid_ys[2]),
+      grid_id_3(grid_xs[2], grid_ys[0]),
+      grid_id_3(grid_xs[2], grid_ys[1]),
+      grid_id_3(grid_xs[2], grid_ys[2]),
+    ]
+    grid.push(new Set())
+  }
+}
 
 
 const add_part = (x,y,dx,dy, kind) => {
@@ -165,8 +214,8 @@ const add_ship_2 = (ship, x, y) => {
   const p1_idx = parts.length
   for (let part of ship.parts) {
     const idx = add_part(
-      part.p.x-ship.center.x+x,
-      part.p.y-ship.center.y+y,
+      (part.p.x-ship.center.x)/ship.DIAM*DIAM+x,
+      (part.p.y-ship.center.y)/ship.DIAM*DIAM+y,
       0,
       0,
       part.kind
@@ -235,31 +284,18 @@ const average_color = (c1,c2) => {
 const render = (context) => {
   update_fps()
   clear(context)
-  const colors = {
-    'glass': {
-      value: '#aaf3',
-      score: 4,
-    },
-    'booster': {
-      value: '#fb0',
-      value_1: '#fa0',
-      value_2: '#f80',
-      value_3: '#f00',
-      score: 2,
-    },
-    'core': {
-      value: '#ffa',
-      score: 4,
-    },
-    'armor': {
-      value: '#aaf',
-      score: 3,
-    },
-    'gun': {
-      value: '#f88',
-      score: 1,
-    },
-  }
+
+  // for (var x = 0; x < GRID_SIDE; x++) {
+  //   for (var y = 0; y < GRID_SIDE; y++) {
+  //     const p = {
+  //       x: x/GRID_SIDE + 0.5/GRID_SIDE,
+  //       y: y/GRID_SIDE + 0.5/GRID_SIDE,
+  //     }
+  //     fill_circle(context, p, 1/GRID_SIDE, "#555")
+  //     const c = grid[grid_id(p)].size
+  //     fill_text(context, p, c, 14, "#fff")
+  //   }
+  // }
   for (let p of parts) {
     if (p.activated && p.kind == 'booster')
     {
@@ -307,7 +343,36 @@ const render = (context) => {
 }
 
 
+const update_grid = () => {
+  for (var i = 0; i < CELL_COUNT; i++) {
+    grid[i].clear()
+  }
+  for (let p of parts) {
+    const grid_id_ = grid_id(p.p)
+    grid[grid_id_].add(p.idx)
+    p.grid_id = grid_id_
+  }
+}
+
+
+const neighbours = (pos) => {
+  const grid_id_ = grid_id(pos)
+  return new Set([
+    ...grid[grid_ids[grid_id_][0]],
+    ...grid[grid_ids[grid_id_][1]],
+    ...grid[grid_ids[grid_id_][2]],
+    ...grid[grid_ids[grid_id_][3]],
+    ...grid[grid_ids[grid_id_][4]],
+    ...grid[grid_ids[grid_id_][5]],
+    ...grid[grid_ids[grid_id_][6]],
+    ...grid[grid_ids[grid_id_][7]],
+    ...grid[grid_ids[grid_id_][8]],
+  ])
+}
+
+
 const compute = () => {
+  update_grid()
   let dp = 0
   for (let p of parts) {
     p.direction = {x:0,y:0}
@@ -333,7 +398,8 @@ const compute = () => {
     dp += distance_sqrd(p.dp)
   }
   for (let p1 of parts) {
-    for (let p2 of parts) {
+    for ( let idx2 of neighbours(p1.p) ) {
+      const p2 = parts[idx2]
       if (p1.idx < p2.idx ) {
         const wa = wrap_around(p1.np, p2.np)
         wa.a.np = {
@@ -406,9 +472,7 @@ const local_main = () => {
   for (let x of style().split('}')) {
       try {
         style_element.sheet.insertRule(x+'}');
-      } catch(e) {
-
-      }
+      } catch(e) {}
   }
   const canvas = document.querySelector('#canvas')
   resize_square(canvas)
