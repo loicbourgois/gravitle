@@ -34,6 +34,7 @@ import {
   ship_0,
   ship_2,
   ship_1,
+  emerald,
 } from "./ship"
 
 
@@ -51,6 +52,7 @@ const html = () => {
     <canvas id="canvas"></canvas>
     <div>
       <p>FPS: <span id="fps">...</span></p>
+      <p><span id="points"></span></p>
       <p>UPS: <span id="ups">...</span></p>
     </div>
   `
@@ -118,7 +120,9 @@ const grid_id_3 = (x,y) => {
 const DIAM = 0.0125
 
 
+let points = 0
 const parts = []
+const parts_deleted = new Set()
 const links = []
 const links_set = new Set()
 const grid = []
@@ -193,9 +197,9 @@ const add_part = (x,y,dx,dy, kind) => {
 }
 
 
-const add_link = (a_idx, b_idx) => {
+const add_link = (a_idx, b_idx, force) => {
   const link_id = a_idx < b_idx ? `${a_idx}|${b_idx}`:`${b_idx}|${a_idx}`
-  if (! links_set.has(link_id)) {
+  if ( (! links_set.has(link_id)) || force ) {
     links.push({
       a: a_idx,
       b: b_idx,
@@ -210,7 +214,7 @@ const add_link = (a_idx, b_idx) => {
 const key_bindings = new Map()
 
 
-const add_ship_2 = (ship, x, y) => {
+const add_player_ship = (ship, x, y) => {
   const p1_idx = parts.length
   for (let part of ship.parts) {
     const idx = add_part(
@@ -220,6 +224,7 @@ const add_ship_2 = (ship, x, y) => {
       0,
       part.kind
     )
+    parts[idx].player_id = 1
     if (part.binding) {
       if (!key_bindings.has(part.binding)) {
         key_bindings.set(part.binding, new Set())
@@ -297,6 +302,9 @@ const render = (context) => {
   //   }
   // }
   for (let p of parts) {
+    if (p.deleted) {
+      continue
+    }
     if (p.activated && p.kind == 'booster')
     {
       fill_circle_2(context, add(p.p, mul(p.direction, 0.007+Math.random()*0.003)), p.d*0.7, colors[p.kind].value_3)
@@ -311,6 +319,9 @@ const render = (context) => {
     for (let l of links) {
       const p1 = parts[l.a]
       const p2 = parts[l.b]
+      if (p1.deleted || p2.deleted || l.deleted) {
+        continue
+      }
       const wa = wrap_around(p1.np, p2.np)
       const delt = mul(delta(wa.a, wa.b), 0.5)
       const color_id = colors[p1.kind].score > colors[p2.kind].score ? p1.kind : p2.kind
@@ -337,6 +348,7 @@ const render = (context) => {
   }
   document.getElementById("fps").innerHTML = get_fps()
   document.getElementById("ups").innerHTML = get_ups()
+  document.getElementById("points").innerHTML = points
   window.requestAnimationFrame(()=>{
     render(context)
   })
@@ -375,6 +387,9 @@ const compute = () => {
   update_grid()
   let dp = 0
   for (let p of parts) {
+    if (p.deleted) {
+      continue
+    }
     p.direction = {x:0,y:0}
     for (let p2_idx of p.links) {
       const p2 = parts[p2_idx]
@@ -398,8 +413,14 @@ const compute = () => {
     dp += distance_sqrd(p.dp)
   }
   for (let p1 of parts) {
+    if (p1.deleted) {
+      continue
+    }
     for ( let idx2 of neighbours(p1.p) ) {
       const p2 = parts[idx2]
+      if (p2.deleted) {
+        continue
+      }
       if (p1.idx < p2.idx ) {
         const wa = wrap_around(p1.np, p2.np)
         wa.a.np = {
@@ -416,6 +437,19 @@ const compute = () => {
         const diams = (p1.d + p2.d)*0.5
         const diams_sqrd = diams*diams
         if ( d < diams_sqrd ) {
+
+          let emerald_idx = null
+
+          if (p1.player_id && p2.kind == 'emerald') {
+            emerald_idx = p2.idx
+          } else if (p2.player_id && p1.kind == 'emerald') {
+            emerald_idx = p1.idx
+          }
+          if (emerald_idx) {
+            parts[emerald_idx].deleted = true
+            parts_deleted.add(emerald_idx)
+            points += 1
+          }
           let cr = collision_response(wa.a, wa.b)
           if (links_set.has(`${p1.idx}|${p2.idx}`)) {
             cr.x *= 0.5;
@@ -434,6 +468,12 @@ const compute = () => {
   for (let link of links) {
     const p1 = parts[link.a]
     const p2 = parts[link.b]
+    if (p1.deleted && p2.deleted) {
+      link.deleted = true
+    }
+    if (p1.deleted || p2.deleted || link.deleted) {
+      continue
+    }
     const wa = wrap_around(p1.np, p2.np)
     const d = Math.sqrt(wa.d_sqrd)
     const n = normalize(delta(wa.a, wa.b), d)
@@ -445,6 +485,9 @@ const compute = () => {
     p2.link_response.y += n.y * factor * 0.5
   }
   for (let p of parts) {
+    if (p.deleted) {
+      continue
+    }
     if (p.collision_response.count) {
       p.collision_response.x /= p.collision_response.count
       p.collision_response.y /= p.collision_response.count
@@ -458,10 +501,150 @@ const compute = () => {
     p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x
     p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y
   }
+
+  for (var i = 0; i < emeralds.length; i++) {
+    const emerald = emeralds[i]
+    let s = 0
+    for (var idx of emerald) {
+      if (parts[idx].deleted) {
+        s += 1
+      }
+    }
+    if (s === 4) {
+      emeralds[i] = new_emerald()
+    }
+  }
   update_ups()
   window.setTimeout(() => {
     compute()
   }, 10-get_ups_avg_delta())
+}
+
+
+const emeralds = []
+
+const is_in_emerald = (idx) => {
+  for (var emerald of emeralds) {
+    for (var idx_2 of emerald) {
+      if (idx == idx_2) {
+        return true
+      }
+    }
+  }
+}
+
+
+const get_free_idx = () => {
+  if (parts_deleted.size) {
+    const idx = parts_deleted.keys().next().value
+    if (!is_in_emerald(idx)) {
+      parts_deleted.delete(idx)
+      return idx
+    }
+  }
+  const idx = parts.length
+  parts.push({})
+  return idx
+}
+
+
+const new_emerald = (x,y) => {
+  if (!x) {
+    x = Math.random() * 0.8 + 0.1
+  }
+  if (!y) {
+    y = Math.random() * 0.8 + 0.1
+  }
+  for (var part of parts) {
+    const wa = wrap_around(part.p, {x:x, y:y})
+    if (wa.d_sqrd < DIAM*DIAM*4*4) {
+      return new_emerald()
+    }
+  }
+  const free_ids = new Set()
+  for (var i = 0; i < 4; i++) {
+    free_ids.add( get_free_idx() )
+  }
+  add_ship_2(emerald,x, y, [...free_ids])
+  return free_ids
+}
+
+
+const add_ship_2 = (ship, x, y, idxs) => {
+  const core_1_idx = idxs[0]
+  const core_2_idx = idxs[1]
+  set_part(x - DIAM*0.5, y, 0, 0, ship.p1, idxs[0])
+  set_part(x + DIAM*0.5, y, 0, 0, ship.p2, idxs[1])
+  for (var i = 0; i < ship.parts.length; i++) {
+    const part = ship.parts[i]
+    const p1 = parts[idxs[part[0]]]
+    const p2 = parts[idxs[part[1]]]
+    const pos = rotate(p1.p, p2.p, 1/6)
+    const idx = idxs[i+2]
+    set_part(pos.x, pos.y, 0, 0, part[2], idx)
+    add_link(idx, p1.idx, true)
+    add_link(idx, p2.idx, true)
+  }
+  add_link(core_1_idx, core_2_idx, true)
+  for (let linki of ship.links) {
+    add_link(idxs[linki[0]], idxs[linki[1]], true)
+  }
+  for (let k of Object.keys(ship.key_bindings)) {
+    if (!key_bindings.has(k)) {
+      key_bindings.set(k, new Set())
+    }
+    for (let idx of ship.key_bindings[k]) {
+      key_bindings.get(k).add(idxs[idx])
+    }
+  }
+}
+
+
+const set_part = (x,y,dx,dy, kind, idx) => {
+  parts[idx] = {
+    idx: idx,
+    kind: kind,
+    d: DIAM,
+    dp: {
+      x: dx,
+      y: dy,
+    },
+    pp: {
+      x: x-dx,
+      y: y-dy,
+    },
+    p: {
+      x: x,
+      y: y,
+    },
+    np: {
+      x: x,
+      y: y,
+    },
+    collision_response: {
+      x: 0,
+      y: 0,
+      count: 0,
+    },
+    link_response: {
+      x: 0,
+      y: 0,
+    },
+    links: new Set(),
+    direction: {x:0, y:0},
+  }
+  return idx
+}
+
+
+const add_emerald = (x, y) => {
+  add_ship(emerald, x, y)
+  emeralds.push(new Set([
+    parts.length - 4,
+    parts.length - 3,
+    parts.length - 2,
+    parts.length - 1,
+  ]))
 }
 
 
@@ -480,7 +663,7 @@ const local_main = () => {
   if (!localStorage.getItem('ship')) {
     localStorage.setItem('ship', ship_1)
   }
-  add_ship_2(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
+  add_player_ship(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
   add_ship(ship_2, 0.27, 0.5)
   add_ship(ship_2, 0.5, 0.27)
   add_ship(ship_2, 0.73, 0.5)
@@ -489,6 +672,10 @@ const local_main = () => {
   add_ship(ship_2, 0.2, 0.8)
   add_ship(ship_2, 0.8, 0.2)
   add_ship(ship_2, 0.2, 0.2)
+  add_emerald(0.5, 0.6)
+  add_emerald(0.6, 0.5)
+  add_emerald(0.4, 0.5)
+  add_emerald(0.5, 0.4)
   render(context)
   compute()
   document.addEventListener("keydown", (e) => {
