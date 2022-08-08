@@ -1,4 +1,8 @@
 const colors = {
+  'emerald': {
+    value: '#0ff8',
+    score: 3,
+  },
   'glass': {
     value: '#aaf3',
     score: 4,

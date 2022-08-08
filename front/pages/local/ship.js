@@ -47,8 +47,22 @@ const ship_2 = {
   key_bindings: {},
 }
 
+
+const emerald = {
+  p1: 'emerald',
+  p2: 'emerald',
+  parts: [
+    [0,1, 'emerald'],
+    [1,0, 'emerald'],
+  ],
+  links: [],
+  key_bindings: {},
+}
+
+
 export {
   ship_0,
   ship_1,
   ship_2,
+  emerald,
 }
