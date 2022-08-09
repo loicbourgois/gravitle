@@ -47,12 +47,13 @@ const html = () => {
   return `
     <div>
       <p id="move_with_instructions"></p>
+      <p><span id="score_player_1"></span></p>
       <p> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div>
       <p>FPS: <span id="fps">...</span></p>
-      <p><span id="points"></span></p>
+      <p><span id="score_player_2"></span></p>
       <p>UPS: <span id="ups">...</span></p>
     </div>
   `
@@ -120,7 +121,7 @@ const grid_id_3 = (x,y) => {
 const DIAM = 0.0125
 
 
-let points = 0
+let score = [0,0]
 const parts = []
 const parts_deleted = new Set()
 const links = []
@@ -224,7 +225,7 @@ const add_player_ship = (ship, x, y) => {
       0,
       part.kind
     )
-    parts[idx].player_id = 1
+    parts[idx].player_id = part.player_id
     if (part.binding) {
       if (!key_bindings.has(part.binding)) {
         key_bindings.set(part.binding, new Set())
@@ -310,10 +311,14 @@ const render = (context) => {
       fill_circle_2(context, add(p.p, mul(p.direction, 0.007+Math.random()*0.003)), p.d*0.7, colors[p.kind].value_3)
       fill_circle_2(context, add(p.p, mul(p.direction, 0.005+Math.random()*0.001)), p.d*0.9, colors[p.kind].value_2)
       fill_circle_2(context, p.p, p.d, colors[p.kind].value_1)
-    } else {
+    }
+    else if (p.kind == 'booster') {
       fill_circle_2(context, p.p, p.d, colors[p.kind].value)
     }
 
+    else {
+      fill_circle_2(context, p.p, p.d, colors[p.kind].value[p.player_id])
+    }
   }
   for (let c_ of Object.keys(colors) ) {
     for (let l of links) {
@@ -326,7 +331,7 @@ const render = (context) => {
       const delt = mul(delta(wa.a, wa.b), 0.5)
       const color_id = colors[p1.kind].score > colors[p2.kind].score ? p1.kind : p2.kind
       if (c_ == color_id) {
-        const color = colors[color_id].value
+        const color = colors[color_id].value[p1.player_id]
         const aa = 0.75
         fill_circle_2(context, add(p1.p, delt), p1.d*aa, color)
         fill_circle_2(context, del(p2.p, delt), p2.d*aa, color)
@@ -348,7 +353,8 @@ const render = (context) => {
   }
   document.getElementById("fps").innerHTML = get_fps()
   document.getElementById("ups").innerHTML = get_ups()
-  document.getElementById("points").innerHTML = points
+  document.getElementById("score_player_1").innerHTML = score[0]
+  document.getElementById("score_player_2").innerHTML = score[1]
   window.requestAnimationFrame(()=>{
     render(context)
   })
@@ -439,16 +445,19 @@ const compute = () => {
         if ( d < diams_sqrd ) {
 
           let emerald_idx = null
+          let player_id = null
 
-          if (p1.player_id && p2.kind == 'emerald') {
+          if (p1.player_id !== undefined && p2.kind == 'emerald') {
             emerald_idx = p2.idx
-          } else if (p2.player_id && p1.kind == 'emerald') {
+            player_id = p1.player_id
+          } else if (p2.player_id !== undefined && p1.kind == 'emerald') {
             emerald_idx = p1.idx
+            player_id = p2.player_id
           }
           if (emerald_idx) {
             parts[emerald_idx].deleted = true
             parts_deleted.add(emerald_idx)
-            points += 1
+            score[player_id] += 1
           }
           let cr = collision_response(wa.a, wa.b)
           if (links_set.has(`${p1.idx}|${p2.idx}`)) {
@@ -660,8 +669,10 @@ const local_main = () => {
   const canvas = document.querySelector('#canvas')
   resize_square(canvas)
   const context = canvas.getContext('2d')
-  if (!localStorage.getItem('ship')) {
+  const version = '2022.08.09'
+  if (!localStorage.getItem('ship') || localStorage.getItem('version') !== version ) {
     localStorage.setItem('ship', ship_1)
+    localStorage.setItem('version', version)
   }
   add_player_ship(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
   add_ship(ship_2, 0.27, 0.5)
@@ -672,10 +683,10 @@ const local_main = () => {
   add_ship(ship_2, 0.2, 0.8)
   add_ship(ship_2, 0.8, 0.2)
   add_ship(ship_2, 0.2, 0.2)
-  add_emerald(0.5, 0.6)
-  add_emerald(0.6, 0.5)
-  add_emerald(0.4, 0.5)
-  add_emerald(0.5, 0.4)
+  emeralds.push(new_emerald())
+  emeralds.push(new_emerald())
+  emeralds.push(new_emerald())
+  emeralds.push(new_emerald())
   render(context)
   compute()
   document.addEventListener("keydown", (e) => {

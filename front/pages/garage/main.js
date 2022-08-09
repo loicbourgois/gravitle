@@ -26,6 +26,10 @@ const html = () => {
     </div>
     <canvas id="canvas"></canvas>
     <div>
+      <p><select id="select_player_id">
+        <option value="0">Player 1</option>
+        <option value="1">Player 2</option>
+      </select></p>
       <p><select id="select_kind">
         <option value="armor">Armor</option>
         <option value="booster">Booster</option>
@@ -104,7 +108,7 @@ const is_inside = (point, part, precision=1.0) => {
 }
 
 
-const add_part = (x,y,dx,dy, kind, d=DIAM) => {
+const add_part = (x,y,dx,dy, kind, player_id, d=DIAM) => {
   const idx = parts.length
   parts.push({
     idx: idx,
@@ -114,6 +118,7 @@ const add_part = (x,y,dx,dy, kind, d=DIAM) => {
       x: x,
       y: y,
     },
+    player_id:player_id,
     links: new Set(),
     direction: {x:0, y:0},
   })
@@ -265,89 +270,6 @@ const save_ship = () => {
 }
 
 
-const garage_main = () => {
-  set_html(html())
-  set_css(css())
-  const canvas = document.querySelector('#canvas')
-  canvas.addEventListener("click", (e) => {
-    const x = (e.x - e.target.offsetLeft)/e.target.width
-    const y = 1.0 - (e.y - e.target.offsetTop)/e.target.height
-    for (let part of parts) {
-      if (is_inside({x:x,y:y}, part)) {
-        //if (part.idx > 0)
-        {
-          part.deleted = !part.deleted
-          if (part.deleted) {
-            for (var l_ of part.links) {
-              links[l_.link_idx].deleted = true
-            }
-          } else {
-            add_links(part)
-            part.kind = document.querySelector("#select_kind").value
-          }
-          reset_options()
-        }
-        return
-      }
-    }
-    for (let option of options) {
-      if (is_inside({x:x,y:y}, option)) {
-        const aa = add_part(option.p.x, option.p.y, 0, 0, document.querySelector("#select_kind").value)
-        reset_options()
-        return
-      }
-    }
-  })
-  canvas.addEventListener("mousemove", (e) => {
-    const x = (e.x - e.target.offsetLeft)/e.target.width
-    const y = 1.0 - (e.y - e.target.offsetTop)/e.target.height
-    mouse_position.x = x
-    mouse_position.y = y
-  })
-  document.addEventListener("keydown", (e) => {
-    for (let part of parts) {
-      if (is_inside(mouse_position, part)) {
-        if (part.binding === e.key) {
-          part.binding = null
-        } else {
-          part.binding = e.key
-        }
-      }
-    }
-  });
-  document.querySelector("#go_button").addEventListener("click", () => {
-    save_ship()
-    window.location.href = ".."
-  })
-  const context = canvas.getContext('2d')
-  resize_square(canvas)
-  render_loop(context)
-  const ship = JSON.parse(localStorage.getItem('ship'))
-  if (ship && ship.parts.length) {
-    for (let part of ship.parts) {
-      parts.push({
-        idx: parts.length,
-        p: {
-          x: (part.p.x - 0.8)/0.25+0.5,
-          y: (part.p.y - 0.8)/0.25+0.5,
-        },
-        d: part.d/0.25,
-        kind: part.kind,
-        binding: part.binding,
-        links: new Set(),
-        direction: {x:0, y:0},
-      })
-    }
-    for (let link of ship.links) {
-      add_link(link.a, link.b)
-    }
-  } else {
-    add_part(0.5, 0.5, 0, 0, 'core')
-  }
-  reset_options()
-}
-
-
 const true_ship = () => {
   const links_mieux = JSON.parse(JSON.stringify(links))
   const parts_mieux = JSON.parse(JSON.stringify(parts))
@@ -372,6 +294,7 @@ const true_ship = () => {
           x: (part.p.x - 0.5)*0.25+0.8,
           y: (part.p.y - 0.5)*0.25+0.8,
         },
+        player_id: part.player_id,
         kind: part.kind,
         binding: part.binding,
       })
@@ -415,6 +338,98 @@ const render_loop = (context) => {
   window.requestAnimationFrame(()=>{
     render_loop(context)
   })
+}
+
+
+const garage_main = () => {
+  set_html(html())
+  set_css(css())
+  const canvas = document.querySelector('#canvas')
+  canvas.addEventListener("click", (e) => {
+    const x = (e.x - e.target.offsetLeft)/e.target.width
+    const y = 1.0 - (e.y - e.target.offsetTop)/e.target.height
+    for (let part of parts) {
+      if (is_inside({x:x,y:y}, part)) {
+        //if (part.idx > 0)
+        {
+          part.deleted = !part.deleted
+          if (part.deleted) {
+            for (var l_ of part.links) {
+              links[l_.link_idx].deleted = true
+            }
+          } else {
+            add_links(part)
+            part.kind = document.querySelector("#select_kind").value
+            part.player_id = document.querySelector("#select_player_id").value
+          }
+          reset_options()
+        }
+        return
+      }
+    }
+    for (let option of options) {
+      if (is_inside({x:x,y:y}, option)) {
+        const aa = add_part(
+          option.p.x,
+          option.p.y,
+          0, 0,
+          document.querySelector("#select_kind").value,
+          document.querySelector("#select_player_id").value)
+        reset_options()
+        return
+      }
+    }
+  })
+  canvas.addEventListener("mousemove", (e) => {
+    const x = (e.x - e.target.offsetLeft)/e.target.width
+    const y = 1.0 - (e.y - e.target.offsetTop)/e.target.height
+    mouse_position.x = x
+    mouse_position.y = y
+  })
+  document.addEventListener("keydown", (e) => {
+    for (let part of parts) {
+      if (is_inside(mouse_position, part)) {
+        if (part.binding === e.key) {
+          part.binding = null
+        } else {
+          part.binding = e.key
+        }
+      }
+    }
+  });
+  document.querySelector("#go_button").addEventListener("click", () => {
+    save_ship()
+    window.location.href = ".."
+  })
+  const context = canvas.getContext('2d')
+  resize_square(canvas)
+  render_loop(context)
+  const ship = JSON.parse(localStorage.getItem('ship'))
+  if (ship && ship.parts.length) {
+    for (let part of ship.parts) {
+      parts.push({
+        idx: parts.length,
+        p: {
+          x: (part.p.x - 0.8)/0.25+0.5,
+          y: (part.p.y - 0.8)/0.25+0.5,
+        },
+        d: part.d/0.25,
+        kind: part.kind,
+        binding: part.binding,
+        player_id: part.player_id,
+        links: new Set(),
+        direction: {x:0, y:0},
+      })
+    }
+    for (let link of ship.links) {
+      add_link(link.a, link.b)
+    }
+  }
+  else
+  {
+    add_part(0.5, 0.5, 0, 0, 'core')
+  }
+  reset_options()
 }
 
 
