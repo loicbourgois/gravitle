@@ -1,3 +1,7 @@
+import {
+  distance_sqrd,
+} from "./math"
+
 const context_coordinates = (context, p) => {
   return {
     x: min_dim(context) * p.x,
@@ -24,6 +28,17 @@ const fill_text = (context, p, text, size=14, color="#fff") => {
 
 
 const fill_circle = (context, p, diameter, color) => {
+  const aa = 0.005
+  if (
+    p.x < aa
+    || p.y < aa
+    || p.x > 1-aa
+    || p.y > 1-aa
+  ) {
+    return
+  }
+
+
   const cc = context_coordinates(context, p)
   const radius = diameter * min_dim(context) * 0.5;
   context.beginPath();
@@ -56,12 +71,16 @@ const stroke_circle_2 = (context, p, diameter, color, lineWidth) => {
 
 
 const fill_circle_2 = (context, p, diameter, color) => {
-  for (var xy of [[0,0],[1,0],[0,1],[0,-1],[-1,0]]) {
-    const pp = {
-      x: p.x + xy[0],
-      y: p.y + xy[1],
+  if ( distance_sqrd(p, {x:0.5,y:0.5}) < 0.45 * 0.45 ) {
+    fill_circle(context, p, diameter, color)
+  } else {
+    for (var xy of [[0,0],[1,0],[0,1],[0,-1],[-1,0]]) {
+      const pp = {
+        x: p.x + xy[0],
+        y: p.y + xy[1],
+      }
+      fill_circle(context, pp, diameter, color)
     }
-    fill_circle(context, pp, diameter, color)
   }
 }
 
