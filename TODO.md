@@ -1,5 +1,4 @@
 # Backlog
-- feat: diamond part giving reward
 - feat: exploding parts
 - feat: guns
 - feat: render options

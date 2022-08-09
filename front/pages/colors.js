@@ -1,10 +1,18 @@
 const colors = {
   'emerald': {
-    value: '#0ff8',
+    value: {
+      '0': '#0ff8',
+      '1': '#0ff8',
+      undefined: '#0ff8',
+    },
     score: 3,
   },
   'glass': {
-    value: '#aaf3',
+    value: {
+      '0': '#aaf3',
+      '1': '#aaf3',
+      undefined: '#aaf3',
+    },
     score: 4,
   },
   'booster': {
@@ -15,22 +23,42 @@ const colors = {
     score: 2,
   },
   'core': {
-    value: '#ffa',
+    value: {
+      '0': '#ffa',
+      '1': '#ffa',
+      undefined: '#ffa',
+    },
     score: 4,
   },
   'armor': {
-    value: '#aaf',
+    value: {
+      '0': '#aaf',
+      '1': '#afa',
+      undefined: '#faa',
+    },
     score: 3,
   },
   'gun': {
-    value: '#f88',
+    value: {
+      '0': '#f88',
+      '1': '#f88',
+      undefined: '#f88',
+    },
     score: 1,
   },
   'option': {
-    value: '#faf',
+    value: {
+      '0': '#faf',
+      '1': '#faf',
+      undefined: '#faf',
+    },
   },
   'link-option': {
-    value: '#afa',
+    value: {
+      '0': '#afa',
+      '1': '#afa',
+      undefined: '#afa',
+    },
   }
 }
 
