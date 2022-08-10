@@ -14,11 +14,19 @@ import {localhost_3d} from "./pages/localhost_3d";
 import {playground} from "./pages/playground";
 import {local_main} from "./pages/local/main"
 import {garage_main} from "./pages/garage/main"
+import {sound_main} from "./pages/sound/main"
+import {journey_main} from "./pages/journey/main"
 if (window.location.pathname === "/") {
   local_main()
 }
 else if (window.location.pathname === "/garage") {
   garage_main()
+}
+else if (window.location.pathname === "/journey") {
+  journey_main()
+}
+else if (window.location.pathname === "/sound") {
+  sound_main()
 }
 else if (window.location.pathname === "/home") {
   home()

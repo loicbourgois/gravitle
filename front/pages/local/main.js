@@ -65,7 +65,7 @@ const html = () => {
       <p><span id="score_player_2"></span></p>
       <p>FPS: <span id="fps">...</span></p>
       <p>UPS: <span id="ups">...</span></p>
-      <p> <a href="garage">Single Player Journey</a> </p>
+      <p> <a href="journey">Journey</a> </p>
       <p> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
   `
