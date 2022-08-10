@@ -41,27 +41,70 @@ import {
 const LINK_STRENGH = 0.2
 const GRID_SIDE = 20
 const CELL_COUNT = GRID_SIDE * GRID_SIDE
+const DIAM = 0.0125
+const LOADING_AWAIT = 1
+let scores = [0,0]
+let CONTINUE_RENDER = true
 
 
 const html = () => {
   return `
-    <div>
-      <p id="move_with_instructions"></p>
+    <div id="winner" class="hide">
+      <p><span id="winner_name">..</span> Wins!</p>
+      <button onclick="again()">Play Again</button>
+    </div>
+    <div class="bob">
       <p><span id="score_player_1"></span></p>
+      <p id="move_with_instructions">Loading...</p>
+      <p>${select_mode()}</p>
       <p> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
-    <div>
-      <p>FPS: <span id="fps">...</span></p>
+    <div class="bob">
       <p><span id="score_player_2"></span></p>
+      <p>FPS: <span id="fps">...</span></p>
       <p>UPS: <span id="ups">...</span></p>
+      <p> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
   `
 }
 
 
+const update_select_mode_option = () => {
+  const value = document.querySelector("#select_mode").value
+  localStorage.setItem('select_mode_option', value)
+  again()
+}
+
+
+const select_mode = () => {
+  const options = [{
+    'value': 'first_16',
+    'text': 'First to 16',
+  },{
+    'value': 'first_32',
+    'text': 'First to 32',
+  }]
+  const selected_option = localStorage.getItem('select_mode_option')
+  const options_str = options.map(x => `<option value=${x.value} ${x.value==selected_option?'selected':''}>${x.text}</option>`)
+  return `<select id="select_mode" onchange="update_select_mode_option()">
+    ${options_str}
+  </select>`
+}
+
+
 const style = () => {
   return `
+    * {
+      color: #ffa;
+      background: #113;
+      font-size: 1.05rem;
+    }
+    select {
+      border: none;
+    }
+    option {
+    }
     #content {
       display: flex;
       width: 100%;
@@ -79,7 +122,10 @@ const style = () => {
     a:hover {
       background-color: #fff2;
     }
-    #content > div {
+    #score_player_1, #score_player_2 {
+      font-size: 2rem;
+    }
+    #content > div.bob {
       width: 0;
       flex-grow: 1;
       display: flex;
@@ -103,6 +149,45 @@ const style = () => {
     body {
       background: #113;
     }
+    #winner {
+      position: absolute;
+      height: 100vh;
+      width: 100vw;
+      background: #0000;
+      display: flex;
+      flex-direction: column;
+      align-content: center;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    #winner > p {
+      background: #ffaa;
+      padding: 5rem;
+      border-radius: 10rem;
+      border: solid 5px #ffa;
+    }
+    #winner > p > span, #winner > p  {
+      color: #ffa;
+      font-size: 3rem;
+    }
+    #winner > p > span {
+      background: transparent;
+    }
+    #winner > button {
+      border: none;
+      margin: 2rem;
+      cursor: pointer;
+      pointer-events: all;
+      padding: 1rem;
+      border-radius: 10rem;
+    }
+    #winner > button:hover {
+      background: #fff2;
+    }
+    .hide {
+      display: none !important;
+    }
   `
 }
 
@@ -118,16 +203,8 @@ const grid_id_3 = (x,y) => {
 }
 
 
-const DIAM = 0.0125
-
-
-let score = [0,0]
-const parts = []
-const parts_deleted = new Set()
-const links = []
-const links_set = new Set()
-const grid = []
 const grid_ids = []
+const grid = []
 for (var x = 0; x < GRID_SIDE; x++) {
   for (var y = 0; y < GRID_SIDE; y++) {
     const grid_x = x
@@ -156,6 +233,25 @@ for (var x = 0; x < GRID_SIDE; x++) {
       grid_id_3(grid_xs[2], grid_ys[2]),
     ]
     grid.push(new Set())
+  }
+}
+
+
+let parts = []
+let parts_deleted = new Set()
+let links = []
+let links_set = new Set()
+let key_bindings = new Map()
+let emeralds = []
+let key_allowed = false
+let winner = undefined
+
+
+const sleep = (ms) => {
+  if (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  } else {
+    return new Promise(resolve => resolve());
   }
 }
 
@@ -212,10 +308,7 @@ const add_link = (a_idx, b_idx, force) => {
 }
 
 
-const key_bindings = new Map()
-
-
-const add_player_ship = (ship, x, y) => {
+const add_player_ship = async (ship, x, y) => {
   const p1_idx = parts.length
   for (let part of ship.parts) {
     const idx = add_part(
@@ -232,29 +325,37 @@ const add_player_ship = (ship, x, y) => {
       }
       key_bindings.get(part.binding).add(idx)
     }
+    await sleep(LOADING_AWAIT)
   }
   for (let link of ship.links) {
     add_link(link.a+p1_idx, link.b+p1_idx)
+    await sleep(LOADING_AWAIT)
   }
 }
 
 
-const add_ship = (ship, x, y) => {
+const add_ship = async (ship, x, y) => {
   const core_1_idx = parts.length
   const core_2_idx = parts.length + 1
   add_part(x - DIAM*0.5, y, 0, 0, ship.p1)
+  await sleep(LOADING_AWAIT)
   add_part(x + DIAM*0.5, y, 0, 0, ship.p2)
+  await sleep(LOADING_AWAIT)
   for (let part of ship.parts) {
     const p1 = parts[core_1_idx + part[0]]
     const p2 = parts[core_1_idx + part[1]]
     const pos = rotate(p1.p, p2.p, 1/6)
     const idx = add_part(pos.x, pos.y, 0, 0, part[2])
     add_link(idx, p1.idx)
+    await sleep(LOADING_AWAIT)
     add_link(idx, p2.idx)
+    await sleep(LOADING_AWAIT)
   }
   add_link(core_1_idx, core_2_idx)
+  await sleep(LOADING_AWAIT)
   for (let linki of ship.links) {
     add_link(linki[0]+core_1_idx, linki[1]+core_1_idx)
+    await sleep(LOADING_AWAIT)
   }
   for (let k of Object.keys(ship.key_bindings)) {
     if (!key_bindings.has(k)) {
@@ -353,11 +454,15 @@ const render = (context) => {
   }
   document.getElementById("fps").innerHTML = get_fps()
   document.getElementById("ups").innerHTML = get_ups()
-  document.getElementById("score_player_1").innerHTML = score[0]
-  document.getElementById("score_player_2").innerHTML = score[1]
-  window.requestAnimationFrame(()=>{
-    render(context)
-  })
+  document.getElementById("score_player_1").innerHTML = scores[0]
+  document.getElementById("score_player_2").innerHTML = scores[1]
+  if (CONTINUE_RENDER) {
+    window.requestAnimationFrame(()=>{
+      render(context)
+    })
+  } else {
+    again_2()
+  }
 }
 
 
@@ -443,10 +548,8 @@ const compute = () => {
         const diams = (p1.d + p2.d)*0.5
         const diams_sqrd = diams*diams
         if ( d < diams_sqrd ) {
-
           let emerald_idx = null
           let player_id = null
-
           if (p1.player_id !== undefined && p2.kind == 'emerald') {
             emerald_idx = p2.idx
             player_id = p1.player_id
@@ -457,7 +560,7 @@ const compute = () => {
           if (emerald_idx) {
             parts[emerald_idx].deleted = true
             parts_deleted.add(emerald_idx)
-            score[player_id] += 1
+            scores[player_id] += 1
           }
           let cr = collision_response(wa.a, wa.b)
           if (links_set.has(`${p1.idx}|${p2.idx}`)) {
@@ -510,7 +613,6 @@ const compute = () => {
     p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x
     p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y
   }
-
   for (var i = 0; i < emeralds.length; i++) {
     const emerald = emeralds[i]
     let s = 0
@@ -524,13 +626,39 @@ const compute = () => {
     }
   }
   update_ups()
+  winning_condition()
   window.setTimeout(() => {
     compute()
   }, 10-get_ups_avg_delta())
 }
 
 
-const emeralds = []
+const winning_condition = () => {
+  if (winner != undefined) {
+    return
+  }
+  let time_limit = Infinity
+  let score_limit = Infinity
+  if (document.querySelector('#select_mode').value == 'first_16') {
+    score_limit = 16
+  } else if (document.querySelector('#select_mode').value == 'first_32') {
+    score_limit = 32
+  }
+  for (var i = 0; i < scores.length; i++) {
+    if (scores[i] >= score_limit) {
+      winner = i
+      console.log(`${i} wins`)
+    }
+  }
+  if (winner != undefined) {
+    document.querySelector('#winner').classList.remove("hide")
+    document.querySelector('#winner_name').innerHTML = {
+      0: 'Blue',
+      1: 'Green',
+    }[winner]
+  }
+}
+
 
 const is_in_emerald = (idx) => {
   for (var emerald of emeralds) {
@@ -646,18 +774,24 @@ const set_part = (x,y,dx,dy, kind, idx) => {
 }
 
 
-const add_emerald = (x, y) => {
-  add_ship(emerald, x, y)
-  emeralds.push(new Set([
-    parts.length - 4,
-    parts.length - 3,
-    parts.length - 2,
-    parts.length - 1,
-  ]))
+const again = () => {
+  CONTINUE_RENDER = false
 }
 
 
-const local_main = () => {
+const again_2 = async () => {
+  CONTINUE_RENDER = true
+  console.log("again")
+  parts = []
+  parts_deleted = new Set()
+  links = []
+  links_set = new Set()
+  key_bindings = new Map()
+  emeralds = []
+  key_allowed = false
+  winner = undefined
+  scores = [0,0]
+
   document.querySelector('#content').innerHTML = html()
   const style_element = document.createElement('style')
   document.head.appendChild(style_element)
@@ -674,35 +808,9 @@ const local_main = () => {
     localStorage.setItem('ship', ship_1)
     localStorage.setItem('version', version)
   }
-  add_player_ship(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
-  add_ship(ship_2, 0.27, 0.5)
-  add_ship(ship_2, 0.5, 0.27)
-  add_ship(ship_2, 0.73, 0.5)
-  add_ship(ship_2, 0.5, 0.73)
-  add_ship(ship_2, 0.8, 0.8)
-  add_ship(ship_2, 0.2, 0.8)
-  add_ship(ship_2, 0.8, 0.2)
-  add_ship(ship_2, 0.2, 0.2)
-  emeralds.push(new_emerald())
-  emeralds.push(new_emerald())
-  emeralds.push(new_emerald())
-  emeralds.push(new_emerald())
   render(context)
-  compute()
-  document.addEventListener("keydown", (e) => {
-    if (key_bindings.get(e.key)) {
-      for (let idx of key_bindings.get(e.key)) {
-        parts[idx].activated = true
-      }
-    }
-  });
-  document.addEventListener("keyup", (e) => {
-    if (key_bindings.get(e.key)) {
-      for (let idx of key_bindings.get(e.key)) {
-        parts[idx].activated = false
-      }
-    }
-  });
+  key_allowed = false
+  await add_player_ship(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
   const move_with_keys = new Set()
   for (let kv of key_bindings ) {
     const key = kv[0]
@@ -717,6 +825,40 @@ const local_main = () => {
     document.querySelector("#move_with_instructions").innerHTML =
       `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
   }
+  await add_ship(ship_2, 0.27, 0.5)
+  await add_ship(ship_2, 0.5, 0.27)
+  await add_ship(ship_2, 0.73, 0.5)
+  await add_ship(ship_2, 0.5, 0.73)
+  await add_ship(ship_2, 0.8, 0.8)
+  await add_ship(ship_2, 0.2, 0.8)
+  await add_ship(ship_2, 0.8, 0.2)
+  await add_ship(ship_2, 0.2, 0.2)
+  emeralds.push(new_emerald())
+  emeralds.push(new_emerald())
+  console.log("go")
+  key_allowed = true
+}
+
+
+const local_main = async () => {
+  window.update_select_mode_option = update_select_mode_option
+  window.again = again
+  document.addEventListener("keydown", (e) => {
+    if (key_bindings.get(e.key) && key_allowed) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = true
+      }
+    }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (key_bindings.get(e.key)) {
+      for (let idx of key_bindings.get(e.key)) {
+        parts[idx].activated = false
+      }
+    }
+  });
+  again_2()
+  compute()
 }
 
 

@@ -26,15 +26,15 @@ const colors = {
     value: {
       '0': '#ffa',
       '1': '#ffa',
-      undefined: '#ffa',
+      undefined: '#fda',
     },
     score: 4,
   },
   'armor': {
     value: {
-      '0': '#aaf',
-      '1': '#afa',
-      undefined: '#faa',
+      '0': '#aafe',
+      '1': '#afae',
+      undefined: '#faae',
     },
     score: 3,
   },
