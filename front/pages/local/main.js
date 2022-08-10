@@ -193,13 +193,10 @@ const style = () => {
 
 
 const grid_id = (position) => {
-  return parseInt(position.y * GRID_SIDE) * GRID_SIDE + parseInt(position.x * GRID_SIDE)
-}
-const grid_id_2 = (position) => {
-  return parseInt(position.y) * GRID_SIDE + parseInt(position.x)
+  return (parseInt(position.y * GRID_SIDE) % GRID_SIDE) * GRID_SIDE + parseInt(position.x * GRID_SIDE) % GRID_SIDE
 }
 const grid_id_3 = (x,y) => {
-  return y * GRID_SIDE + x
+  return (y% GRID_SIDE) * GRID_SIDE  + x % GRID_SIDE
 }
 
 
@@ -235,6 +232,8 @@ for (var x = 0; x < GRID_SIDE; x++) {
     grid.push(new Set())
   }
 }
+
+
 
 
 let parts = []
@@ -647,7 +646,6 @@ const winning_condition = () => {
   for (var i = 0; i < scores.length; i++) {
     if (scores[i] >= score_limit) {
       winner = i
-      console.log(`${i} wins`)
     }
   }
   if (winner != undefined) {
@@ -781,7 +779,6 @@ const again = () => {
 
 const again_2 = async () => {
   CONTINUE_RENDER = true
-  console.log("again")
   parts = []
   parts_deleted = new Set()
   links = []
@@ -791,7 +788,6 @@ const again_2 = async () => {
   key_allowed = false
   winner = undefined
   scores = [0,0]
-
   document.querySelector('#content').innerHTML = html()
   const style_element = document.createElement('style')
   document.head.appendChild(style_element)
@@ -835,7 +831,6 @@ const again_2 = async () => {
   await add_ship(ship_2, 0.2, 0.2)
   emeralds.push(new_emerald())
   emeralds.push(new_emerald())
-  console.log("go")
   key_allowed = true
 }
 
