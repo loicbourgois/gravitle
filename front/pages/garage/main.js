@@ -173,7 +173,7 @@ const add_links = (p1) => {
 }
 
 
-const DIAM = 0.05
+const DIAM = 0.04
 
 
 const add_option = (x,y,d=DIAM) => {
@@ -405,15 +405,16 @@ const garage_main = () => {
   resize_square(canvas)
   render_loop(context)
   const ship = JSON.parse(localStorage.getItem('ship'))
+  const factor = ship.DIAM / DIAM
   if (ship && ship.parts.length) {
     for (let part of ship.parts) {
       parts.push({
         idx: parts.length,
         p: {
-          x: (part.p.x - 0.8)/0.25+0.5,
-          y: (part.p.y - 0.8)/0.25+0.5,
+          x: (part.p.x - ship.center.x)/factor+0.5,
+          y: (part.p.y - ship.center.y)/factor+0.5,
         },
-        d: part.d/0.25,
+        d: part.d/factor,
         kind: part.kind,
         binding: part.binding,
         player_id: part.player_id,

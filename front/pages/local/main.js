@@ -181,12 +181,16 @@ const style = () => {
       pointer-events: all;
       padding: 1rem;
       border-radius: 10rem;
+      background: #fff0;
     }
     #winner > button:hover {
       background: #fff2;
     }
     .hide {
       display: none !important;
+    }
+    a {
+      border-radius: 10rem;
     }
   `
 }
