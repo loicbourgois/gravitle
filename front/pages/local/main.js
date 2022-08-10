@@ -57,6 +57,7 @@ const html = () => {
       <p><span id="score_player_1"></span></p>
       <p id="move_with_instructions">Loading...</p>
       <p>${select_mode()}</p>
+      <p>${select_arena()}</p>
       <p> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
@@ -64,6 +65,7 @@ const html = () => {
       <p><span id="score_player_2"></span></p>
       <p>FPS: <span id="fps">...</span></p>
       <p>UPS: <span id="ups">...</span></p>
+      <p> <a href="garage">Single Player Journey</a> </p>
       <p> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
   `
@@ -88,6 +90,29 @@ const select_mode = () => {
   const selected_option = localStorage.getItem('select_mode_option')
   const options_str = options.map(x => `<option value=${x.value} ${x.value==selected_option?'selected':''}>${x.text}</option>`)
   return `<select id="select_mode" onchange="update_select_mode_option()">
+    ${options_str}
+  </select>`
+}
+
+
+const update_select_arena_option = () => {
+  const value = document.querySelector("#select_arena").value
+  localStorage.setItem('select_arena_option', value)
+  again()
+}
+
+
+const select_arena = () => {
+  const options = [{
+    'value': 'octo',
+    'text': 'Octo',
+  },{
+    'value': 'empty',
+    'text': 'Empty',
+  }]
+  const selected_option = localStorage.getItem('select_arena_option')
+  const options_str = options.map(x => `<option value=${x.value} ${x.value==selected_option?'selected':''}>${x.text}</option>`)
+  return `<select id="select_arena" onchange="update_select_arena_option()">
     ${options_str}
   </select>`
 }
@@ -825,14 +850,18 @@ const again_2 = async () => {
     document.querySelector("#move_with_instructions").innerHTML =
       `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
   }
-  await add_ship(ship_2, 0.27, 0.5)
-  await add_ship(ship_2, 0.5, 0.27)
-  await add_ship(ship_2, 0.73, 0.5)
-  await add_ship(ship_2, 0.5, 0.73)
-  await add_ship(ship_2, 0.8, 0.8)
-  await add_ship(ship_2, 0.2, 0.8)
-  await add_ship(ship_2, 0.8, 0.2)
-  await add_ship(ship_2, 0.2, 0.2)
+  if (document.querySelector("#select_arena").value == 'octo') {
+    await add_ship(ship_2, 0.27, 0.5)
+    await add_ship(ship_2, 0.5, 0.27)
+    await add_ship(ship_2, 0.73, 0.5)
+    await add_ship(ship_2, 0.5, 0.73)
+    await add_ship(ship_2, 0.8, 0.8)
+    await add_ship(ship_2, 0.2, 0.8)
+    await add_ship(ship_2, 0.8, 0.2)
+    await add_ship(ship_2, 0.2, 0.2)
+  } else {
+
+  }
   emeralds.push(new_emerald())
   emeralds.push(new_emerald())
   key_allowed = true
@@ -841,12 +870,16 @@ const again_2 = async () => {
 
 const local_main = async () => {
   window.update_select_mode_option = update_select_mode_option
+  window.update_select_arena_option = update_select_arena_option
   window.again = again
   document.addEventListener("keydown", (e) => {
     if (key_bindings.get(e.key) && key_allowed) {
       for (let idx of key_bindings.get(e.key)) {
         parts[idx].activated = true
       }
+    }
+    if (e.key == " " && winner != undefined) {
+      again()
     }
   });
   document.addEventListener("keyup", (e) => {
