@@ -1,5 +1,7 @@
 # Backlog
-- feat: github link
+- feat: single player mode
+- feat: level selection
+- feat: high scores with: duration (in steps), fuel spent, duration*fuel spent
 - feat: exploding parts
 - feat: guns
 - feat: render options
