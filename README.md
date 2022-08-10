@@ -1,15 +1,13 @@
 # Gravitle
 
-## Dev
+## Development
 ```sh
-gravitle="$HOME/github.com/loicbourgois/gravitle"
-alias g="cargo run --release --manifest-path $gravitle/cli/Cargo.toml -- "
-g start server
+gravitle_dir="$HOME/github.com/loicbourgois/gravitle"
+alias g="cargo run --release --manifest-path $gravitle_dir/cli/Cargo.toml -- "
 g start front
 ```
 
-## Deploy
+## Release
 ```sh
 g release front
-g host kill && g host sync && g host run && g host log;
 ```
