@@ -10,7 +10,8 @@ import {
 } from "../canvas"
 
 
-const level_count = 4
+const level_count = 2
+const progress = localStorage.getItem("progress")
 
 
 const levels = () => {
@@ -19,17 +20,24 @@ const levels = () => {
   for (var i = 0; i < level_count; i++) {
     const uu = []
     for (var j = 0; j < level_count; j++) {
-      uu.push(i * level_count + j + 1)
-    }
-    u.push(
-      uu.map(idx => {
-        const hey = idx.toLocaleString('en-US', {
+      const idx = i * level_count + j
+      uu.push({
+        locked: idx > progress ? 'locked' : '',
+        idx: idx,
+        label: (i * level_count + j + 1).toLocaleString('en-US', {
           minimumIntegerDigits: 2,
           useGrouping: false
         })
-        return `<a href="journey/${hey}">${hey}</a>`
+      })
+    }
+    u.push(
+      uu.map(x => {
+        if (x.locked) {
+          return `<p class="level_link locked">${x.label}</p>`
+        } else {
+          return `<a class="level_link" href="journey-${x.idx+1}">${x.label}</a>`
+        }
       }).join("")
-
     )
   }
   return u.map(x => `<div class="line">${x}</div>`).join("")
@@ -76,11 +84,14 @@ const style = () => {
       align-items: center;
       flex-direction: row;
     }
-    a {
+    a, .level_link {
       color: #ffa;
       text-decoration: none;
       background-color: #fff0;
       padding: 0.8rem;
+    }
+    .level_link.locked {
+      color: #aaa;
     }
     a:hover {
       background-color: #fff2;

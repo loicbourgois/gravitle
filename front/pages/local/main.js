@@ -51,22 +51,22 @@ const html = () => {
   return `
     <div id="winner" class="hide">
       <p><span id="winner_name">..</span> Wins!</p>
-      <button onclick="again()">Play Again</button>
+      <button onclick="again()">Play Again<br>[space]</button>
     </div>
     <div class="bob">
       <p><span id="score_player_1"></span></p>
-      <p id="move_with_instructions">Loading...</p>
-      <p>${select_mode()}</p>
-      <p>${select_arena()}</p>
-      <p> <a href="garage">Go to Garage</a> </p>
+      <p id="move_with_instructions" class="disappearable disappear">Loading...</p>
+      <p class="disappearable disappear">${select_mode()}</p>
+      <p class="disappearable disappear">${select_arena()}</p>
+      <p class="disappearable disappear"> <a href="garage">Go to Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div class="bob">
       <p><span id="score_player_2"></span></p>
-      <p>FPS: <span id="fps">...</span></p>
-      <p>UPS: <span id="ups">...</span></p>
-      <p> <a href="journey">Journey</a> </p>
-      <p> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
+      <p class="disappearable disappear">FPS: <span id="fps">...</span></p>
+      <p class="disappearable disappear">UPS: <span id="ups">...</span></p>
+      <p class="disappearable disappear"> <a href="journey">Journey</a> </p>
+      <p class="disappearable disappear"> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
   `
 }
@@ -144,6 +144,10 @@ const style = () => {
       background-color: #fff0;
       padding: 0.8rem;
     }
+    .disappear, .disappear * {
+      color: #0000;
+      transition: color 5s;
+    }
     a:hover {
       background-color: #fff2;
     }
@@ -207,6 +211,7 @@ const style = () => {
       padding: 1rem;
       border-radius: 10rem;
       background: #fff0;
+      line-height: 1.5rem;
     }
     #winner > button:hover {
       background: #fff2;
@@ -419,18 +424,6 @@ const average_color = (c1,c2) => {
 const render = (context) => {
   update_fps()
   clear(context)
-
-  // for (var x = 0; x < GRID_SIDE; x++) {
-  //   for (var y = 0; y < GRID_SIDE; y++) {
-  //     const p = {
-  //       x: x/GRID_SIDE + 0.5/GRID_SIDE,
-  //       y: y/GRID_SIDE + 0.5/GRID_SIDE,
-  //     }
-  //     fill_circle(context, p, 1/GRID_SIDE, "#555")
-  //     const c = grid[grid_id(p)].size
-  //     fill_text(context, p, c, 14, "#fff")
-  //   }
-  // }
   for (let p of parts) {
     if (p.deleted) {
       continue
@@ -444,7 +437,6 @@ const render = (context) => {
     else if (p.kind == 'booster') {
       fill_circle_2(context, p.p, p.d, colors[p.kind].value)
     }
-
     else {
       fill_circle_2(context, p.p, p.d, colors[p.kind].value[p.player_id])
     }
@@ -465,20 +457,7 @@ const render = (context) => {
         fill_circle_2(context, add(p1.p, delt), p1.d*aa, color)
         fill_circle_2(context, del(p2.p, delt), p2.d*aa, color)
       }
-      // line(context, p2.p, del(p2.p, delt), "grey")
     }
-  }
-  for (let l of links) {
-    const p1 = parts[l.a]
-    const p2 = parts[l.b]
-    const wa = wrap_around(p1.np, p2.np)
-    const delt = delta(wa.a, wa.b)
-    // line(context, p1.p, add(p1.p, delt), "grey")
-    // line(context, p2.p, del(p2.p, delt), "grey")
-  }
-  for (let p of parts) {
-    // fill_text(context, p.p, p.idx, )
-    //line(context, p.p, add(p.p, mul(p.direction, 0.02)), "red")
   }
   document.getElementById("fps").innerHTML = get_fps()
   document.getElementById("ups").innerHTML = get_ups()
@@ -846,10 +825,6 @@ const again_2 = async () => {
       }
     }
   }
-  if (move_with_keys.size) {
-    document.querySelector("#move_with_instructions").innerHTML =
-      `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
-  }
   if (document.querySelector("#select_arena").value == 'octo') {
     await add_ship(ship_2, 0.27, 0.5)
     await add_ship(ship_2, 0.5, 0.27)
@@ -862,6 +837,10 @@ const again_2 = async () => {
   } else {
 
   }
+  if (move_with_keys.size) {
+    document.querySelector("#move_with_instructions").innerHTML =
+      `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
+  }
   emeralds.push(new_emerald())
   emeralds.push(new_emerald())
   key_allowed = true
@@ -873,14 +852,26 @@ const local_main = async () => {
   window.update_select_arena_option = update_select_arena_option
   window.again = again
   document.addEventListener("keydown", (e) => {
-    if (key_bindings.get(e.key) && key_allowed) {
-      for (let idx of key_bindings.get(e.key)) {
-        parts[idx].activated = true
+    if (key_bindings.get(e.key)) {
+      if (key_allowed) {
+        document.querySelectorAll(".disappearable").forEach((x, i) => {
+          x.classList.add('disappear')
+        });
+        for (let idx of key_bindings.get(e.key)) {
+          parts[idx].activated = true
+        }
       }
+      return
     }
-    if (e.key == " " && winner != undefined) {
-      again()
+    if (e.key == " " ) {
+      if (winner != undefined && key_allowed) {
+        again()
+      }
+      return
     }
+    document.querySelectorAll(".disappearable").forEach((x, i) => {
+      x.classList.remove('disappear')
+    });
   });
   document.addEventListener("keyup", (e) => {
     if (key_bindings.get(e.key)) {
@@ -889,8 +880,16 @@ const local_main = async () => {
       }
     }
   });
+  document.addEventListener("mousemove", (e) => {
+    document.querySelectorAll(".disappearable").forEach((x, i) => {
+      x.classList.remove('disappear')
+    });
+  })
   again_2()
   compute()
+  document.querySelectorAll(".disappearable").forEach((x, i) => {
+    x.classList.remove('disappear')
+  });
 }
 
 
