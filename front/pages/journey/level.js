@@ -873,7 +873,9 @@ const again_2 = async () => {
   }
   let level_max = 4
   const prog = parseInt(localStorage.getItem("progress") )
-  if ( prog >= level-1 && prog <= level_max) {
+  console.log(prog)
+  console.log(level)
+  if ( prog >= level-1 && level <= level_max) {
     console.log("ok")
     scores[0] = 0
   } else {
@@ -886,6 +888,7 @@ const again_2 = async () => {
   key_allowed = true
   score_to_win = parts.filter(x => x.kind == 'emerald').length
   start_time = performance.now()
+  console.log(scores)
 }
 
 
