@@ -1,7 +1,7 @@
 import {
   set_css,
   set_html,
-} from "./utils"
+} from "../utils"
 import {
   render,
   render_skeleton,

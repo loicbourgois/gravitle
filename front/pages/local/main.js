@@ -29,13 +29,13 @@ import {
   get_ups,
   update_ups,
   get_ups_avg_delta,
-} from "./perf"
+} from "../perf"
 import {
   ship_0,
   ship_2,
   ship_1,
   emerald,
-} from "./ship"
+} from "../ship"
 
 
 const LINK_STRENGH = 0.2
@@ -146,7 +146,7 @@ const style = () => {
     }
     .disappear, .disappear * {
       color: #0000;
-      transition: color 5s;
+      transition: color 0.2s;
     }
     a:hover {
       background-color: #fff2;
