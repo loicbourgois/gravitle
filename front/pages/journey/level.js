@@ -968,10 +968,6 @@ const again_2 = async () => {
   key_allowed = true
   score_to_win = parts.filter(x => x.kind == 'emerald').length
   start_time = performance.now()
-
-  console.log(document.querySelector("#best_duration_current_player").offsetTop)
-  console.log(document.querySelector("#best_duration").offsetTop)
-
 }
 
 
