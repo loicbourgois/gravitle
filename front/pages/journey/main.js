@@ -11,6 +11,9 @@ import {
 
 
 const level_count = 2
+if (!localStorage.getItem("progress")) {
+  localStorage.setItem("progress", 0)
+}
 const progress = localStorage.getItem("progress")
 
 
