@@ -33,7 +33,7 @@ import {
 import {
   ship_0,
   ship_2,
-  ship_1,
+  default_ship_journey,
   emerald,
 } from "../ship"
 
@@ -45,82 +45,119 @@ const DIAM = 0.0125
 const LOADING_AWAIT = 1
 let scores = [0,0]
 let CONTINUE_RENDER = true
+let score_to_win
+let start_time
+
+
+const msToTime = (s) => {
+  // Pad to 2 or 3 digits, default is 2
+  function pad(n, z) {
+    z = z || 2;
+    return ('00' + n).slice(-z);
+  }
+  var ms = s % 1000;
+  s = (s - ms) / 1000;
+  var secs = s % 60;
+  s = (s - secs) / 60;
+  var mins = s % 60;
+  var hrs = (s - mins) / 60;
+  return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+}
+
+
+const get_best_by_player = (player_name) => {
+  const best_id = `best_${parseInt(window.location.pathname.split('journey-')[1])}_${player_name}`
+  let data = localStorage.getItem(best_id)
+  if (data && data.length) {
+    data = JSON.parse(data)
+  }
+  if (!data || !data.id) {
+    data = {}
+  }
+  data.id = best_id
+  return data
+}
+
+
+const get_best = () => {
+  const best_id = `best_${parseInt(window.location.pathname.split('journey-')[1])}`
+  let data = localStorage.getItem(best_id)
+  if (data && data.length) {
+    data = JSON.parse(data)
+  }
+  if (!data || !data.id) {
+    data = {}
+  }
+  data.id = best_id
+  return data
+}
+
+
+const update_best = (duration, player_name) => {
+  const current_best = get_best()
+  if ( current_best.duration && current_best.duration <= duration ) {
+    // pass
+  } else {
+    current_best.duration = duration
+    current_best.player_name = player_name
+    localStorage.setItem(current_best.id, JSON.stringify(current_best))
+  }
+  const best_by_player = get_best_by_player(player_name)
+  if ( best_by_player.duration && best_by_player.duration <= duration ) {
+    // pass
+  } else {
+    best_by_player.duration = duration
+    best_by_player.player_name = player_name
+    localStorage.setItem(best_by_player.id, JSON.stringify(best_by_player))
+  }
+}
+
+
+const player_name = () => {
+  return localStorage.getItem('player_journey_name') ? localStorage.getItem('player_journey_name') :  "Blue"
+}
+
+
+const update_player_info = () => {
+  localStorage.setItem('player_journey_name', document.querySelector('#player_journey_name').value)
+  const data_2 = get_best_by_player(player_name())
+  const best_duration_current_player = data_2.duration ? msToTime(data_2.duration) : '--:--:--:---'
+  document.querySelector("#best_duration_current_player").innerHTML = best_duration_current_player
+}
 
 
 const html = () => {
+  const data = get_best()
+  const best_duration_str = data.duration ? msToTime(data.duration) : '--:--:--:---'
+  const best_player_name = data.player_name ? data.player_name : ''
+  const data_2 = get_best_by_player(player_name())
+  const best_duration_current_player = data_2.duration ? msToTime(data_2.duration) : '--:--:--:---'
   return `
     <div id="winner" class="hide">
-      <p><span id="winner_name">..</span> Wins!</p>
-      <button onclick="again()">Play Again<br>[space]</button>
+      <p><span id="duration"></span></p>
+      <div>
+        <button onclick="again()">Play Again<br>[space]</button>
+        <button onclick="next()">Next<br>[enter]</button>
+      </div>
     </div>
     <div class="bob">
-      <input class="player_name"  id="player_1_name"
-        value="${localStorage.getItem('player_1_name') ? localStorage.getItem('player_1_name') :  "Blue"}"
-        oninput="localStorage.setItem('player_1_name', document.querySelector('#player_1_name').value)"></input>
-      <p><span id="score_player_1"></span></p>
+      <input class="player_name"  id="player_journey_name"
+        value="${player_name()}"
+        oninput="update_player_info()"></input>
+      <p class="disappearable disappear" id="best_duration_current_player">${best_duration_current_player}</p>
       <p id="move_with_instructions" class="disappearable disappear">Loading...</p>
-      <p class="disappearable disappear"> <a href="garage">Go to Garage</a> </p>
-      <p class="disappearable disappear"> <a href="journey">Journey</a> </p>
-      <p class="disappearable disappear"> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
+      <p class="disappearable disappear"> <a href="/journey">Levels</a> </p>
+      <p class="disappearable disappear"> <a href="/journey-garage">Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div class="bob">
-      <input class="player_name"  id="player_2_name"
-        value="${localStorage.getItem('player_2_name') ? localStorage.getItem('player_2_name') :  "Green"}"
-        oninput="localStorage.setItem('player_2_name', document.querySelector('#player_2_name').value)"></input>
-      <p><span id="score_player_2"></span></p>
-      <p class="disappearable disappear">${select_mode()}</p>
-      <p class="disappearable disappear">${select_arena()}</p>
+      <p class="disappearable disappear" id="best_name">${best_player_name}</p>
+      <p class="disappearable disappear" id="best_duration">${best_duration_str}</p>
       <p class="disappearable disappear">FPS: <span id="fps">...</span></p>
       <p class="disappearable disappear">UPS: <span id="ups">...</span></p>
+      <p class="disappearable disappear"> <a href="/">Home</a> </p>
     </div>
   `
-}
-
-
-const update_select_mode_option = () => {
-  const value = document.querySelector("#select_mode").value
-  localStorage.setItem('select_mode_option', value)
-  again()
-}
-
-
-const select_mode = () => {
-  const options = [{
-    'value': 'first_16',
-    'text': 'First to 16',
-  },{
-    'value': 'first_32',
-    'text': 'First to 32',
-  }]
-  const selected_option = localStorage.getItem('select_mode_option')
-  const options_str = options.map(x => `<option value=${x.value} ${x.value==selected_option?'selected':''}>${x.text}</option>`)
-  return `<select id="select_mode" onchange="update_select_mode_option()">
-    ${options_str}
-  </select>`
-}
-
-
-const update_select_arena_option = () => {
-  const value = document.querySelector("#select_arena").value
-  localStorage.setItem('select_arena_option', value)
-  again()
-}
-
-
-const select_arena = () => {
-  const options = [{
-    'value': 'octo',
-    'text': 'Octo',
-  },{
-    'value': 'empty',
-    'text': 'Empty',
-  }]
-  const selected_option = localStorage.getItem('select_arena_option')
-  const options_str = options.map(x => `<option value=${x.value} ${x.value==selected_option?'selected':''}>${x.text}</option>`)
-  return `<select id="select_arena" onchange="update_select_arena_option()">
-    ${options_str}
-  </select>`
 }
 
 
@@ -209,7 +246,7 @@ const style = () => {
     #winner > p > span {
       background: transparent;
     }
-    #winner > button {
+    #winner button {
       border: none;
       margin: 2rem;
       cursor: pointer;
@@ -219,7 +256,10 @@ const style = () => {
       background: #fff0;
       line-height: 1.5rem;
     }
-    #winner > button:hover {
+    #winner div {
+      background: #fff0;
+    }
+    #winner button:hover {
       background: #fff2;
     }
     .hide {
@@ -239,6 +279,13 @@ const style = () => {
     }
     .player_name:hover {
       border: solid 2px #ffdd;
+    }
+    #best_name {
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 0.5rem;
+      font-size: 1.5rem;
+      border: solid 2px #0000;
     }
   `
 }
@@ -479,8 +526,6 @@ const render = (context) => {
   }
   document.getElementById("fps").innerHTML = get_fps()
   document.getElementById("ups").innerHTML = get_ups()
-  document.getElementById("score_player_1").innerHTML = scores[0]
-  document.getElementById("score_player_2").innerHTML = scores[1]
   if (CONTINUE_RENDER) {
     window.requestAnimationFrame(()=>{
       render(context)
@@ -638,18 +683,18 @@ const compute = () => {
     p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x
     p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y
   }
-  for (var i = 0; i < emeralds.length; i++) {
-    const emerald = emeralds[i]
-    let s = 0
-    for (var idx of emerald) {
-      if (parts[idx].deleted) {
-        s += 1
-      }
-    }
-    if (s === 4) {
-      emeralds[i] = new_emerald()
-    }
-  }
+  // for (var i = 0; i < emeralds.length; i++) {
+  //   const emerald = emeralds[i]
+  //   let s = 0
+  //   for (var idx of emerald) {
+  //     if (parts[idx].deleted) {
+  //       s += 1
+  //     }
+  //   }
+  //   if (s === 4) {
+  //     emeralds[i] = new_emerald()
+  //   }
+  // }
   update_ups()
   winning_condition()
   window.setTimeout(() => {
@@ -662,24 +707,22 @@ const winning_condition = () => {
   if (winner != undefined) {
     return
   }
-  let time_limit = Infinity
-  let score_limit = Infinity
-  if (document.querySelector('#select_mode').value == 'first_16') {
-    score_limit = 16
-  } else if (document.querySelector('#select_mode').value == 'first_32') {
-    score_limit = 32
-  }
+  let duration
   for (var i = 0; i < scores.length; i++) {
-    if (scores[i] >= score_limit) {
+    if (scores[i] >= score_to_win) {
       winner = i
+      duration = performance.now() - start_time
+      break
     }
   }
   if (winner != undefined) {
+    localStorage.setItem("progress", parseInt(Math.max(
+      parseInt(window.location.pathname.split('journey-')[1]),
+      parseInt(localStorage.getItem("progress"))
+    )))
+    update_best(duration, player_name())
+    document.querySelector('#duration').innerHTML = `${msToTime(duration)}`
     document.querySelector('#winner').classList.remove("hide")
-    document.querySelector('#winner_name').innerHTML = {
-      0: document.querySelector('#player_1_name').value,
-      1: document.querySelector('#player_2_name').value,
-    }[winner]
   }
 }
 
@@ -803,6 +846,12 @@ const again = () => {
 }
 
 
+const next = () => {
+  const level = window.location.pathname.split('journey-')[1]
+  window.location.pathname = `/journey-${parseInt(level)+1}`
+}
+
+
 const again_2 = async () => {
   CONTINUE_RENDER = true
   parts = []
@@ -813,7 +862,7 @@ const again_2 = async () => {
   emeralds = []
   key_allowed = false
   winner = undefined
-  scores = [0,0]
+  scores = [-1,-1]
   document.querySelector('#content').innerHTML = html()
   const style_element = document.createElement('style')
   document.head.appendChild(style_element)
@@ -826,13 +875,13 @@ const again_2 = async () => {
   resize_square(canvas)
   const context = canvas.getContext('2d')
   const version = '2022.08.09'
-  if (!localStorage.getItem('ship') || localStorage.getItem('version') !== version ) {
-    localStorage.setItem('ship', ship_1)
+  if (!localStorage.getItem('ship_journey') || localStorage.getItem('version') !== version ) {
+    localStorage.setItem('ship_journey', default_ship_journey)
     localStorage.setItem('version', version)
   }
   render(context)
   key_allowed = false
-  await add_player_ship(JSON.parse(localStorage.getItem('ship')), 0.5, 0.5)
+  await add_player_ship(JSON.parse(localStorage.getItem('ship_journey')), 0.5, 0.5)
   const move_with_keys = new Set()
   for (let kv of key_bindings ) {
     const key = kv[0]
@@ -843,7 +892,12 @@ const again_2 = async () => {
       }
     }
   }
-  if (document.querySelector("#select_arena").value == 'octo') {
+  const level = parseInt(window.location.pathname.split('journey-')[1])
+  if (level === 0) {
+    emeralds.push(new_emerald(0.5, 0.7))
+    emeralds.push(new_emerald(0.5, 0.3))
+  }
+  else if (level === 1) {
     await add_ship(ship_2, 0.27, 0.5)
     await add_ship(ship_2, 0.5, 0.27)
     await add_ship(ship_2, 0.73, 0.5)
@@ -852,23 +906,79 @@ const again_2 = async () => {
     await add_ship(ship_2, 0.2, 0.8)
     await add_ship(ship_2, 0.8, 0.2)
     await add_ship(ship_2, 0.2, 0.2)
+    emeralds.push(new_emerald(0.33, 0.33))
+    emeralds.push(new_emerald(0.67, 0.33))
+    emeralds.push(new_emerald(0.33, 0.67))
+    emeralds.push(new_emerald(0.67, 0.67))
+  }
+  else if (level === 2) {
+    emeralds.push(new_emerald(0.27, 0.5))
+    emeralds.push(new_emerald(0.5, 0.27))
+    emeralds.push(new_emerald(0.73, 0.5))
+    emeralds.push(new_emerald(0.5, 0.73))
+    emeralds.push(new_emerald(0.8, 0.8))
+    emeralds.push(new_emerald(0.8, 0.2))
+    emeralds.push(new_emerald(0.2, 0.8))
+    emeralds.push(new_emerald(0.2, 0.2))
+    emeralds.push(new_emerald(0.33, 0.33))
+    emeralds.push(new_emerald(0.67, 0.33))
+    emeralds.push(new_emerald(0.33, 0.67))
+    emeralds.push(new_emerald(0.67, 0.67))
+  }
+  else if (level === 3) {
+    emeralds.push(new_emerald(0.27, 0.5))
+    emeralds.push(new_emerald(0.73, 0.5))
+    emeralds.push(new_emerald(0.8, 0.5))
+    emeralds.push(new_emerald(0.2, 0.5))
+    emeralds.push(new_emerald(0.33, 0.5))
+    emeralds.push(new_emerald(0.67, 0.5))
+  }
+  else if (level === 4) {
+    emeralds.push(new_emerald(0.27, 0.5))
+    emeralds.push(new_emerald(0.5, 0.27))
+    emeralds.push(new_emerald(0.73, 0.5))
+    emeralds.push(new_emerald(0.5, 0.73))
+    emeralds.push(new_emerald(0.8, 0.8))
+    emeralds.push(new_emerald(0.2, 0.8))
+    emeralds.push(new_emerald(0.8, 0.2))
+    emeralds.push(new_emerald(0.2, 0.2))
+    await add_ship(ship_2, 0.33, 0.33)
+    await add_ship(ship_2, 0.67, 0.33)
+    await add_ship(ship_2, 0.33, 0.67)
+    await add_ship(ship_2, 0.67, 0.67)
+  }
+  else {
+    emeralds.push(new_emerald())
+    emeralds.push(new_emerald())
+    emeralds.push(new_emerald())
+    emeralds.push(new_emerald())
+  }
+  let level_max = 4
+  const prog = parseInt(localStorage.getItem("progress") )
+  if ( prog >= level-1 && level <= level_max) {
+    console.log("ok")
+    scores[0] = 0
   } else {
-
+    console.log("not ok")
   }
   if (move_with_keys.size) {
     document.querySelector("#move_with_instructions").innerHTML =
       `Move with ${Array.from(move_with_keys).map(x=>x.toUpperCase()).join(", ")}`
   }
-  emeralds.push(new_emerald())
-  emeralds.push(new_emerald())
   key_allowed = true
+  score_to_win = parts.filter(x => x.kind == 'emerald').length
+  start_time = performance.now()
+
+  console.log(document.querySelector("#best_duration_current_player").offsetTop)
+  console.log(document.querySelector("#best_duration").offsetTop)
+
 }
 
 
-const local_main = async () => {
-  window.update_select_mode_option = update_select_mode_option
-  window.update_select_arena_option = update_select_arena_option
+const journey_level = async (id) => {
   window.again = again
+  window.next = next
+  window.update_player_info = update_player_info
   document.addEventListener("keydown", (e) => {
     if (key_bindings.get(e.key)) {
       if (key_allowed) {
@@ -882,8 +992,14 @@ const local_main = async () => {
       return
     }
     if (e.key == " " ) {
-      if (winner != undefined && key_allowed) {
+      if (key_allowed) {
         again()
+      }
+      return
+    }
+    if (e.key == "Enter" ) {
+      if (key_allowed && winner !== undefined) {
+        next()
       }
       return
     }
@@ -912,5 +1028,5 @@ const local_main = async () => {
 
 
 export {
-  local_main
+  journey_level
 }

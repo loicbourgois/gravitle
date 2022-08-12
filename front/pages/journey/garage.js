@@ -14,6 +14,9 @@ import {
   add,
   distance_sqrd,
 } from "../math"
+import {
+  default_ship_journey,
+} from "../ship"
 
 
 const html = () => {
@@ -26,10 +29,6 @@ const html = () => {
     </div>
     <canvas id="canvas"></canvas>
     <div>
-      <p><select id="select_player_id">
-        <option value="0">Player 1</option>
-        <option value="1">Player 2</option>
-      </select></p>
       <p><select id="select_kind">
         <option value="armor">Armor</option>
         <option value="booster">Booster</option>
@@ -38,8 +37,6 @@ const html = () => {
       <p>Parts: <span id="parts_count">...</span></p>
       <p>Links: <span id="links_count">...</span></p>
       <p><button id="go_button">Let's Go</button></p>
-      <!--<button id="reset_button">Reset</button>
-      <button id="save_button">Save</button>-->
     </div>
   `
 }
@@ -265,7 +262,7 @@ const mouse_position = {
 
 
 const save_ship = () => {
-  localStorage.setItem('ship', JSON.stringify(small_ship(true_ship())));
+  localStorage.setItem('ship_journey', JSON.stringify(small_ship(true_ship())));
   console.log("Ship saved")
 }
 
@@ -341,7 +338,7 @@ const render_loop = (context) => {
 }
 
 
-const garage_main = () => {
+const journey_garage = () => {
   set_html(html())
   set_css(css())
   const canvas = document.querySelector('#canvas')
@@ -350,7 +347,6 @@ const garage_main = () => {
     const y = 1.0 - (e.y - e.target.offsetTop)/e.target.height
     for (let part of parts) {
       if (is_inside({x:x,y:y}, part)) {
-        //if (part.idx > 0)
         {
           part.deleted = !part.deleted
           if (part.deleted) {
@@ -360,7 +356,7 @@ const garage_main = () => {
           } else {
             add_links(part)
             part.kind = document.querySelector("#select_kind").value
-            part.player_id = document.querySelector("#select_player_id").value
+            part.player_id = 0
           }
           reset_options()
         }
@@ -374,7 +370,7 @@ const garage_main = () => {
           option.p.y,
           0, 0,
           document.querySelector("#select_kind").value,
-          document.querySelector("#select_player_id").value)
+          0)
         reset_options()
         return
       }
@@ -396,15 +392,17 @@ const garage_main = () => {
         }
       }
     }
+    save_ship()
   });
   document.querySelector("#go_button").addEventListener("click", () => {
     save_ship()
-    window.location.href = ".."
+    window.location.href = "/journey"
   })
   const context = canvas.getContext('2d')
   resize_square(canvas)
   render_loop(context)
-  const ship = JSON.parse(localStorage.getItem('ship'))
+  let ship = JSON.parse(localStorage.getItem('ship_journey'))
+  ship = ship ? ship : JSON.parse(default_ship_journey)
   const factor = ship.DIAM / DIAM
   if (ship && ship.parts.length) {
     for (let part of ship.parts) {
@@ -435,5 +433,5 @@ const garage_main = () => {
 
 
 export {
-  garage_main
+  journey_garage
 }
