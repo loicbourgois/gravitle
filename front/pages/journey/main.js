@@ -48,7 +48,7 @@ const html = () => {
   return `
     <div class="bob">
       <p> <a href="/">Home</a> </p>
-      <p> <a href="/journey-garage">Garage</a> </p>
+
     </div>
 
     <div id="levels">
@@ -56,7 +56,8 @@ const html = () => {
     </div>
 
     <div class="bob">
-      <p> <a href="/leaderboard">Leaderboard</a> </p>
+    <!--  <p> <a href="/leaderboard">Leaderboard</a> </p>-->
+      <p> <a href="/journey-garage">Garage</a> </p>
     </div>
   `
 }

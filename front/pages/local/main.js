@@ -54,19 +54,25 @@ const html = () => {
       <button onclick="again()">Play Again<br>[space]</button>
     </div>
     <div class="bob">
+      <input class="player_name"  id="player_1_name"
+        value="${localStorage.getItem('player_1_name') ? localStorage.getItem('player_1_name') :  "Blue"}"
+        oninput="localStorage.setItem('player_1_name', document.querySelector('#player_1_name').value)"></input>
       <p><span id="score_player_1"></span></p>
       <p id="move_with_instructions" class="disappearable disappear">Loading...</p>
-      <p class="disappearable disappear">${select_mode()}</p>
-      <p class="disappearable disappear">${select_arena()}</p>
       <p class="disappearable disappear"> <a href="garage">Go to Garage</a> </p>
+      <p class="disappearable disappear"> <a href="journey">Journey</a> </p>
+      <p class="disappearable disappear"> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div class="bob">
+      <input class="player_name"  id="player_2_name"
+        value="${localStorage.getItem('player_2_name') ? localStorage.getItem('player_2_name') :  "Green"}"
+        oninput="localStorage.setItem('player_2_name', document.querySelector('#player_2_name').value)"></input>
       <p><span id="score_player_2"></span></p>
+      <p class="disappearable disappear">${select_mode()}</p>
+      <p class="disappearable disappear">${select_arena()}</p>
       <p class="disappearable disappear">FPS: <span id="fps">...</span></p>
       <p class="disappearable disappear">UPS: <span id="ups">...</span></p>
-      <p class="disappearable disappear"> <a href="journey">Journey</a> </p>
-      <p class="disappearable disappear"> <a href="https://github.com/loicbourgois/gravitle">Github</a> </p>
     </div>
   `
 }
@@ -221,6 +227,18 @@ const style = () => {
     }
     a {
       border-radius: 10rem;
+    }
+    .player_name {
+      text-align: center;
+      background: none;
+      border: solid 2px transparent;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 0.5rem;
+      font-size: 1.5rem;
+    }
+    .player_name:hover {
+      border: solid 2px #ffdd;
     }
   `
 }
@@ -659,8 +677,8 @@ const winning_condition = () => {
   if (winner != undefined) {
     document.querySelector('#winner').classList.remove("hide")
     document.querySelector('#winner_name').innerHTML = {
-      0: 'Blue',
-      1: 'Green',
+      0: document.querySelector('#player_1_name').value,
+      1: document.querySelector('#player_2_name').value,
     }[winner]
   }
 }

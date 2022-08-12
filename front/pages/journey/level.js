@@ -65,10 +65,73 @@ const msToTime = (s) => {
 }
 
 
-const html = () => {
+const get_best_by_player = (player_name) => {
+  const best_id = `best_${parseInt(window.location.pathname.split('journey-')[1])}_${player_name}`
+  let data = localStorage.getItem(best_id)
+  if (data && data.length) {
+    data = JSON.parse(data)
+  }
+  if (!data || !data.id) {
+    data = {}
+  }
+  data.id = best_id
+  return data
+}
+
+
+const get_best = () => {
   const best_id = `best_${parseInt(window.location.pathname.split('journey-')[1])}`
-  const current_best = parseInt(localStorage.getItem(best_id))
-  const best_str = current_best ? msToTime(current_best) : '--:--:--:---'
+  let data = localStorage.getItem(best_id)
+  if (data && data.length) {
+    data = JSON.parse(data)
+  }
+  if (!data || !data.id) {
+    data = {}
+  }
+  data.id = best_id
+  return data
+}
+
+
+const update_best = (duration, player_name) => {
+  const current_best = get_best()
+  if ( current_best.duration && current_best.duration <= duration ) {
+    // pass
+  } else {
+    current_best.duration = duration
+    current_best.player_name = player_name
+    localStorage.setItem(current_best.id, JSON.stringify(current_best))
+  }
+  const best_by_player = get_best_by_player(player_name)
+  if ( best_by_player.duration && best_by_player.duration <= duration ) {
+    // pass
+  } else {
+    best_by_player.duration = duration
+    best_by_player.player_name = player_name
+    localStorage.setItem(best_by_player.id, JSON.stringify(best_by_player))
+  }
+}
+
+
+const player_name = () => {
+  return localStorage.getItem('player_journey_name') ? localStorage.getItem('player_journey_name') :  "Blue"
+}
+
+
+const update_player_info = () => {
+  localStorage.setItem('player_journey_name', document.querySelector('#player_journey_name').value)
+  const data_2 = get_best_by_player(player_name())
+  const best_duration_current_player = data_2.duration ? msToTime(data_2.duration) : '--:--:--:---'
+  document.querySelector("#best_duration_current_player").innerHTML = best_duration_current_player
+}
+
+
+const html = () => {
+  const data = get_best()
+  const best_duration_str = data.duration ? msToTime(data.duration) : '--:--:--:---'
+  const best_player_name = data.player_name ? data.player_name : ''
+  const data_2 = get_best_by_player(player_name())
+  const best_duration_current_player = data_2.duration ? msToTime(data_2.duration) : '--:--:--:---'
   return `
     <div id="winner" class="hide">
       <p><span id="duration"></span></p>
@@ -78,14 +141,18 @@ const html = () => {
       </div>
     </div>
     <div class="bob">
-      <p>#${window.location.pathname.split('journey-')[1]}</p>
+      <input class="player_name"  id="player_journey_name"
+        value="${player_name()}"
+        oninput="update_player_info()"></input>
+      <p class="disappearable disappear" id="best_duration_current_player">${best_duration_current_player}</p>
       <p id="move_with_instructions" class="disappearable disappear">Loading...</p>
       <p class="disappearable disappear"> <a href="/journey">Levels</a> </p>
       <p class="disappearable disappear"> <a href="/journey-garage">Garage</a> </p>
     </div>
     <canvas id="canvas"></canvas>
     <div class="bob">
-      <p>${best_str}</p>
+      <p class="disappearable disappear" id="best_name">${best_player_name}</p>
+      <p class="disappearable disappear" id="best_duration">${best_duration_str}</p>
       <p class="disappearable disappear">FPS: <span id="fps">...</span></p>
       <p class="disappearable disappear">UPS: <span id="ups">...</span></p>
       <p class="disappearable disappear"> <a href="/">Home</a> </p>
@@ -200,6 +267,25 @@ const style = () => {
     }
     a {
       border-radius: 10rem;
+    }
+    .player_name {
+      text-align: center;
+      background: none;
+      border: solid 2px transparent;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 0.5rem;
+      font-size: 1.5rem;
+    }
+    .player_name:hover {
+      border: solid 2px #ffdd;
+    }
+    #best_name {
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 0.5rem;
+      font-size: 1.5rem;
+      border: solid 2px #0000;
     }
   `
 }
@@ -634,11 +720,7 @@ const winning_condition = () => {
       parseInt(window.location.pathname.split('journey-')[1]),
       parseInt(localStorage.getItem("progress"))
     )))
-    const best_id = `best_${parseInt(window.location.pathname.split('journey-')[1])}`
-    const current_best = parseInt(localStorage.getItem(best_id))
-    localStorage.setItem(best_id, parseInt(Math.min(
-      duration,
-      current_best ? current_best : duration)))
+    update_best(duration, player_name())
     document.querySelector('#duration').innerHTML = `${msToTime(duration)}`
     document.querySelector('#winner').classList.remove("hide")
   }
@@ -873,8 +955,6 @@ const again_2 = async () => {
   }
   let level_max = 4
   const prog = parseInt(localStorage.getItem("progress") )
-  console.log(prog)
-  console.log(level)
   if ( prog >= level-1 && level <= level_max) {
     console.log("ok")
     scores[0] = 0
@@ -888,13 +968,17 @@ const again_2 = async () => {
   key_allowed = true
   score_to_win = parts.filter(x => x.kind == 'emerald').length
   start_time = performance.now()
-  console.log(scores)
+
+  console.log(document.querySelector("#best_duration_current_player").offsetTop)
+  console.log(document.querySelector("#best_duration").offsetTop)
+
 }
 
 
 const journey_level = async (id) => {
   window.again = again
   window.next = next
+  window.update_player_info = update_player_info
   document.addEventListener("keydown", (e) => {
     if (key_bindings.get(e.key)) {
       if (key_allowed) {
