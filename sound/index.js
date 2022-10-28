@@ -16,7 +16,6 @@ const funcs = {}
 
 
 const elements = () => {
-  console.log(document.body)
   let ih = "<canvas id='canvas_0'></canvas>"
   for (var i = 0; i < 10; i++) {
     const value = localStorage.getItem(`slider_${i}.value`) ? localStorage.getItem(`slider_${i}.value`) : 100;
@@ -30,7 +29,6 @@ const elements = () => {
     sliders[slider_id] = {}
     sliders[slider_id].slider = document.getElementById(slider_id)
     sliders[slider_id].ff = (sv) => {
-      // console.log(`todo: ${slider_id}, ${sv}`)
     }
     sliders[slider_id].f = () => {
       const s = sliders[slider_id].slider
@@ -85,7 +83,6 @@ const sound = (_) => {
 
 window.onload = async () => {
   window.sliders = sliders
-  console.log("yo")
   elements()
   const context = new AudioContext()
 
