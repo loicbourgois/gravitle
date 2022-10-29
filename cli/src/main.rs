@@ -367,14 +367,14 @@ fn build() -> bool {
             .arg("--release")
             .current_dir(format!("{}/server/", base_dir())),
     ) && test_server()
-        && runshellcmd(
-            "Building wasm",
-            Command::new("wasm-pack")
-                .arg("build")
-                .arg("--release")
-                .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
-                .current_dir(format!("{}/wasm/", base_dir())),
-        )
+        // && runshellcmd(
+        //     "Building wasm",
+        //     Command::new("wasm-pack")
+        //         .arg("build")
+        //         .arg("--release")
+        //         .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
+        //         .current_dir(format!("{}/wasm/", base_dir())),
+        // )
         && runshellcmd(
             "Fixing",
             Command::new("npm")

@@ -43,17 +43,4 @@ mod tests {
 
 
 fn main() {
-    // let mut a = f32x4::from_array([0.0, 0.0, 0.0, 0.0]);
-    // let b = f32x4::from_array([1.0, 1.0, 1.0, 1.0]);
-    // for _ in 0..10_000 {
-    //     add(&mut a, &b);
-    // }
-    //
-    // let mut a2 = [0.0, 0.0, 0.0, 0.0];
-    // let b2 = [1.0, 1.0, 1.0, 1.0];
-    // for _ in 0..10_000 {
-    //     add2(&mut a2,&b2);
-    // }
-    // println!("{:?}", a);
-    // println!("{:?}", a2);
 }
