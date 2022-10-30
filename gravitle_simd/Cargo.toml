@@ -7,3 +7,10 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
+tokio-tungstenite = "*"
+futures-channel = "*"
+# tokio = "*"
+tungstenite = "*"
+futures-util = "*"
+
+tokio = {  features = ["macros", "rt", "rt-multi-thread", "io-util"] }

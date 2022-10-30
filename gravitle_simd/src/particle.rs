@@ -1,7 +1,34 @@
+use rand::Rng;
+
+pub type Particles = Vec<Particle>;
+
 pub struct Particle {
     pub p: Vector, // position
     pub v: Vector, // velocity
     pub m: f32,    // mass
+    pub idx: usize,
+    pub grid_id: usize,
+}
+
+pub fn new_particles(c: usize) -> Particles {
+    let mut rng = rand::thread_rng();
+    let mut particles: Particles = Vec::new();
+    for _ in 0..c {
+        particles.push(Particle {
+            p: Vector {
+                x: rng.gen(),
+                y: rng.gen(),
+            },
+            v: Vector {
+                x: rng.gen(),
+                y: rng.gen(),
+            },
+            m: rng.gen(),
+            idx: particles.len(),
+            grid_id: 0,
+        })
+    }
+    return particles;
 }
 
 #[derive(Clone, Debug)]
@@ -82,72 +109,152 @@ pub fn distance(a: &Vector, b: &Vector) -> f32 {
 }
 
 pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
-    let mut dsqrd_min = 1.0;
-    let mut bbb = Vector {
-        x: b.x,
-        y: b.x,
-    };
+    let mut dsqrd_min = distance_sqrd(&a, &b);
+    let mut bbb = Vector { x: b.x, y: b.x };
     let ijs = [
-        [-1.0, -1.0], [-1.0, 0.0], [-1.0, 1.0],
-        [0.0, -1.0], [0.0, 0.0], [0.0, 1.0],
-        [1.0, -1.0], [1.0, 0.0], [1.0, 1.0]
+        [-1.0, -1.0],
+        [-1.0, 0.0],
+        [-1.0, 1.0],
+        [0.0, -1.0],
+        [0.0, 1.0],
+        [1.0, -1.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
     ];
     for ij in ijs {
         let bb = Vector {
-            x: (b.x + ij[0]),
-            y: (b.y + ij[1]),
+            x: b.x + ij[0],
+            y: b.y + ij[1],
         };
         let dsqrd = distance_sqrd(&a, &bb);
-        if (dsqrd < dsqrd_min) {
+        if dsqrd < dsqrd_min {
             dsqrd_min = dsqrd;
-            bbb=bb;
+            bbb = bb;
         }
     }
     return WrapAroundResponse {
-        a: Vector {
-            x: a.x,
-            y: a.x,
-        },
+        a: Vector { x: a.x, y: a.x },
         b: bbb,
         d_sqrd: dsqrd_min,
     };
 }
 
+pub fn wrap_around_3(a: &Vector, b: &Vector) -> WrapAroundResponse {
+    let mut dsqrd_min = distance_sqrd(&a, &b);
+    if dsqrd_min < 0.25 {
+        return WrapAroundResponse {
+            a: Vector { x: a.x, y: a.x },
+            b: Vector { x: b.x, y: b.x },
+            d_sqrd: dsqrd_min,
+        };
+    } else {
+        let mut bbb = Vector { x: b.x, y: b.x };
+        let ijs = [
+            [-1.0, -1.0],
+            [-1.0, 0.0],
+            [-1.0, 1.0],
+            [0.0, -1.0],
+            [0.0, 1.0],
+            [1.0, -1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
+        ];
+        for ij in ijs {
+            let bb = Vector {
+                x: (b.x + ij[0]),
+                y: (b.y + ij[1]),
+            };
+            let dsqrd = distance_sqrd(&a, &bb);
+            if dsqrd < dsqrd_min {
+                dsqrd_min = dsqrd;
+                bbb = bb;
+            }
+        }
+        return WrapAroundResponse {
+            a: Vector { x: a.x, y: a.x },
+            b: bbb,
+            d_sqrd: dsqrd_min,
+        };
+    }
+}
+
 pub fn wrap_around_2(a: &Vector, b: &Vector) -> WrapAroundResponse {
-    let mut dsqrd_min = 1.0;
-    let mut bbb = Vector {
-        x: b.x,
-        y: b.x,
-    };
     let mut ois = [
-        [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
     ];
     let ijs = [
-        [-1.0, -1.0], [-1.0, 0.0], [-1.0, 1.0],
-        [0.0, -1.0], [0.0, 0.0], [0.0, 1.0],
-        [1.0, -1.0], [1.0, 0.0], [1.0, 1.0]
+        [-1.0, -1.0],
+        [-1.0, 0.0],
+        [-1.0, 1.0],
+        [0.0, -1.0],
+        [0.0, 0.0],
+        [0.0, 1.0],
+        [1.0, -1.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
     ];
     for idx in 0..9 {
         let ij = ijs[idx];
         ois[idx][0] = (b.x + ij[0]);
         ois[idx][1] = (b.x + ij[0]);
-        ois[idx][2] = distance_sqrd(&a, &Vector {
-            x: (b.x + ij[0]),
-            y: (b.y + ij[1]),
-        });
+        ois[idx][2] = distance_sqrd(
+            &a,
+            &Vector {
+                x: b.x + ij[0],
+                y: b.y + ij[1],
+            },
+        );
     }
-    ois.iter().max_by(|a, b| a[2].partial_cmp(&b[2]).unwrap() );
+    let oi = ois
+        .iter()
+        .max_by(|a, b| a[2].partial_cmp(&b[2]).unwrap())
+        .unwrap();
     return WrapAroundResponse {
-        a: Vector {
-            x: a.x,
-            y: a.x,
-        },
-        b: Vector {
-            x: a.x,
-            y: a.x,
-        },
+        a: Vector { x: a.x, y: a.x },
+        b: Vector { x: oi[0], y: oi[1] },
+        d_sqrd: oi[2],
+    };
+}
+
+pub fn wrap_around_4(a: &Vector, b: &Vector) -> WrapAroundResponse {
+    let mut dsqrd_min = distance_sqrd(&a, &b);
+    let mut bbb = Vector { x: b.x, y: b.x };
+    let ijs = [
+        [-1.0, -1.0],
+        [-1.0, 0.0],
+        [-1.0, 1.0],
+        [0.0, -1.0],
+        [0.0, 1.0],
+        [1.0, -1.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+    ];
+    for ij in ijs {
+        let bbx = b.x + ij[0];
+        let bby = b.y + ij[1];
+        let dsqrd = distance_sqrd_4(a.x, a.y, bbx, bby);
+        if dsqrd < dsqrd_min {
+            dsqrd_min = dsqrd;
+            bbb = Vector { x: bbx, y: bby };
+        }
+    }
+    return WrapAroundResponse {
+        a: Vector { x: a.x, y: a.x },
+        b: bbb,
         d_sqrd: dsqrd_min,
     };
+}
+
+pub fn distance_sqrd_4(ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
+    let dx = ax - bx;
+    let dy = ay - by;
+    return dx * dx + dy * dy;
 }
