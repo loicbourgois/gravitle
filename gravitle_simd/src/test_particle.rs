@@ -58,6 +58,11 @@ fn bench_collision_response(bencher: &mut Bencher) {
             m: rng.gen(),
             idx: ps.len(),
             grid_id: 0,
+            colliding: 0,
+            pp: Vector {
+                x: rng.gen(),
+                y: rng.gen(),
+            },
         });
     }
     bencher.iter(|| collision_response(&ps[0], &ps[1]));

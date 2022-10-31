@@ -3,35 +3,44 @@ use rand::Rng;
 pub type Particles = Vec<Particle>;
 
 pub struct Particle {
-    pub p: Vector, // position
-    pub v: Vector, // velocity
-    pub m: f32,    // mass
+    pub pp: Vector, // previous position
+    pub p: Vector,  // position
+    pub v: Vector,  // velocity
+    pub m: f32,     // mass
     pub idx: usize,
     pub grid_id: usize,
+    pub colliding: u8,
 }
 
-pub fn new_particles(c: usize) -> Particles {
+pub fn new_particles(count: usize, diameter: f32) -> Particles {
     let mut rng = rand::thread_rng();
     let mut particles: Particles = Vec::new();
-    for _ in 0..c {
+    for _ in 0..count {
+        let p = Vector {
+            x: rng.gen::<f32>(),
+            y: rng.gen::<f32>(),
+        };
+        let v = Vector {
+            x: diameter * 0.1 * rng.gen::<f32>() - 0.5 * diameter * 0.1,
+            y: diameter * 0.1 * rng.gen::<f32>() - 0.5 * diameter * 0.1,
+        };
         particles.push(Particle {
-            p: Vector {
-                x: rng.gen(),
-                y: rng.gen(),
+            p: p,
+            pp: Vector {
+                x: p.x - v.x,
+                y: p.y - v.y,
             },
-            v: Vector {
-                x: rng.gen(),
-                y: rng.gen(),
-            },
+            v: v,
             m: rng.gen(),
             idx: particles.len(),
             grid_id: 0,
+            colliding: 0,
         })
     }
     return particles;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,

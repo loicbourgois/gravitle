@@ -1,5 +1,6 @@
 use crate::Particle;
 use crate::Particles;
+use crate::Vector;
 use std::collections::HashSet;
 
 pub struct Grid {
@@ -67,5 +68,12 @@ pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (particle.p.x * side_f32) as usize;
     let y: usize = (particle.p.y * side_f32) as usize;
+    return grid_id(x, y, side);
+}
+
+pub fn grid_id_position(position: &Vector, side: usize) -> usize {
+    let side_f32: f32 = side as f32;
+    let x: usize = (position.x * side_f32) as usize;
+    let y: usize = (position.y * side_f32) as usize;
     return grid_id(x, y, side);
 }
