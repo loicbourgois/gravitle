@@ -1,26 +1,33 @@
-use crate::wrap_around;
-use crate::Particle;
-// use crate::neighbours;
 use crate::grid::grid_id_position;
-use crate::grid_id_particle;
 use crate::new_particles;
+use crate::particle::new_particle_deltas;
+use crate::particle::wrap_around;
+use crate::particle::ParticleDeltas;
+use crate::particle::TParticleDeltas;
+use crate::particle::TParticles;
 use crate::Grid;
 use crate::Particles;
 use crate::Vector;
 use std::collections::HashSet;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::sync::RwLockReadGuard;
+use std::sync::RwLockWriteGuard;
 
 pub struct World {
     pub particle_diameter: f32,
     pub particle_diameter_sqrd: f32,
-    pub grid: Grid,
+    pub grid: Arc<RwLock<Grid>>,
     pub particles: Particles,
+    pub particle_deltas: ParticleDeltas,
     pub step: usize,
     pub collissions: usize,
     pub thread_count: usize,
     pub particles_per_thread: usize,
+    pub particle_count: usize,
 }
 
-pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a HashSet<usize>; 9] {
+pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<(usize, usize)>; 9] {
     let gid = grid_id_position(position, grid.side);
     return [
         &grid.pidxs[grid.gids[gid][0]],
@@ -35,89 +42,95 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a HashSet<usiz
     ];
 }
 
-
-pub struct WrapperType(pub *mut World);
-
-
-unsafe impl Send for WrapperType {}
-unsafe impl Sync for WrapperType {}
-
-
 impl World {
-    pub fn new(particle_diameter: f32, particle_count: usize, grid_side: usize, thread_count: usize) -> World {
+    pub fn new(
+        particle_diameter: f32,
+        particle_count: usize,
+        grid_side: usize,
+        thread_count: usize,
+    ) -> World {
         assert!((particle_diameter * grid_side as f32) <= 1.0);
+        let particles_per_thread = particle_count / thread_count;
         World {
             particle_diameter: particle_diameter,
-            grid: Grid::new(grid_side),
-            particles: new_particles(particle_count, particle_diameter),
+            grid: Arc::new(RwLock::new(Grid::new(grid_side))),
+            particles: new_particles(particle_diameter, thread_count, particles_per_thread),
             particle_diameter_sqrd: particle_diameter * particle_diameter,
             step: 0,
             collissions: 0,
             thread_count: thread_count,
-            particles_per_thread: particle_count/thread_count,
+            particles_per_thread: particles_per_thread,
+            particle_deltas: new_particle_deltas(thread_count, particles_per_thread),
+            particle_count: particle_count,
         }
     }
-    pub fn reset_common(& self) {
 
-    }
-    pub fn reset(&mut self, thread_id: usize) {
-        // let start = thread_id*self.particles_per_thread;
-        // let end = start + self.particles_per_thread;
-        // for idx in start..end  {
-        //     let p1 = &mut self.particles[idx];
-        //     p1.colliding = 0;
-        // }
-    }
-    pub fn update(&mut self) {
+    pub fn update_00(&mut self) {
         self.collissions = 0;
-        self.grid.update(&mut self.particles);
-        for p1 in &mut self.particles {
-            p1.colliding = 0;
+        let mut grid = self.grid.write().unwrap();
+        let mut particles_w: Vec<RwLockWriteGuard<TParticles>> =
+            self.particles.iter().map(|x| x.write().unwrap()).collect();
+        grid.update_01();
+        for particles in &mut particles_w {
+            grid.update_02(particles);
         }
-        unsafe {
-            let particles = &mut self.particles as *mut Particles;
-            for p1 in &mut self.particles {
-                for pidx2s in neighbours(&p1.p, &self.grid) {
-                    for pidx2 in pidx2s {
-                        let p2: &mut Particle = &mut (*particles)[*pidx2];
-                        if (p1.idx < p2.idx) {
+    }
+
+    pub fn update_01(tparticles: &mut TParticles, tdeltas: &mut TParticleDeltas) {
+        for p1 in tparticles {
+            p1.collisions = 0;
+        }
+        for p1 in tdeltas {
+            p1.collisions = 0;
+        }
+    }
+
+    pub fn update_02(
+        particles: &Particles,
+        tdeltas: &mut TParticleDeltas,
+        grid: &Grid,
+        particle_diameter_sqrd: f32,
+    ) {
+        let mut particles_r: Vec<RwLockReadGuard<TParticles>> =
+            particles.iter().map(|x| x.read().unwrap()).collect();
+        for tparticles in &particles_r {
+            for p1 in tparticles.iter() {
+                for ns in neighbours(&p1.p, grid) {
+                    for n in ns {
+                        let thid = n.0;
+                        let idx = n.1;
+                        let p2 = &particles_r[thid][idx];
+                        if (p1.fidx < p2.fidx) {
                             let wa = wrap_around(&p1.p, &p2.p);
-                            if wa.d_sqrd < self.particle_diameter_sqrd {
-                                self.collissions += 1;
-                                p1.colliding = 1;
-                                p2.colliding = 1;
+                            if wa.d_sqrd < particle_diameter_sqrd {
+                                tdeltas[p1.fidx].collisions += 1;
+                                tdeltas[p2.fidx].collisions += 1;
                             }
                         }
                     }
                 }
             }
         }
-        for p1 in &mut self.particles {
-            p1.v.x = p1.p.x - p1.pp.x;
-            p1.v.y = p1.p.y - p1.pp.y;
-            p1.p.x = (1.0 + p1.p.x + p1.v.x) % 1.0;
-            p1.p.y = (1.0 + p1.p.y + p1.v.y) % 1.0;
-            p1.pp.x = p1.p.x - p1.v.x;
-            p1.pp.y = p1.p.y - p1.v.y;
-        }
-        self.step += 1;
     }
-    pub fn update_b(&mut self) {
-        self.collissions = 0;
-        self.grid.update(&mut self.particles);
-        for p1 in &self.particles {
-            for pidx2s in neighbours(&p1.p, &self.grid) {
-                for pidx2 in pidx2s {
-                    let p2: &Particle = &self.particles[*pidx2];
-                    if (p1.idx < p2.idx) {
-                        let wa = wrap_around(&p1.p, &p2.p);
-                        if wa.d_sqrd < self.particle_diameter_sqrd {
-                            self.collissions += 1;
-                        }
-                    }
-                }
-            }
-        }
+
+    pub fn update_03(tparticles: &mut TParticles, deltas: &ParticleDeltas) {
+        // let deltas_r: Vec<RwLockReadGuard<TParticleDeltas>> =
+        //     deltas.iter().map(|x| x.read().unwrap()).collect();
+        // for p1 in tparticles {
+        //     for xx in &deltas_r {
+        //         let delta = &xx[p1.fidx];
+        //         p1.collisions += delta.collisions;
+        //     }
+        //     p1.v.x = p1.p.x - p1.pp.x;
+        //     p1.v.y = p1.p.y - p1.pp.y;
+        //     p1.p.x = (1.0 + p1.p.x + p1.v.x) % 1.0;
+        //     p1.p.y = (1.0 + p1.p.y + p1.v.y) % 1.0;
+        //     p1.pp.x = p1.p.x - p1.v.x;
+        //     p1.pp.y = p1.p.y - p1.v.y;
+        // }
+    }
+
+    pub fn update_04(&mut self) {
         self.step += 1;
     }
 }

@@ -1,10 +1,11 @@
+use crate::particle::TParticles;
 use crate::Particle;
 use crate::Particles;
 use crate::Vector;
 use std::collections::HashSet;
 
 pub struct Grid {
-    pub pidxs: Vec<HashSet<usize>>, // particle indexes
+    pub pidxs: Vec<Vec<(usize, usize)>>, // particle indexes
     pub gids: Vec<Vec<usize>>,      // grid ids
     pub cell_count: usize,
     pub side: usize,
@@ -42,19 +43,22 @@ impl Grid {
                     grid_id(grid_xs[2], grid_ys[1], grid.side),
                     grid_id(grid_xs[2], grid_ys[2], grid.side),
                 ]);
-                grid.pidxs.push(HashSet::new())
+                grid.pidxs.push(Vec::new())
             }
         }
         return grid;
     }
 
-    pub fn update(&mut self, particles: &mut Particles) {
+    pub fn update_01(&mut self) {
         for x in self.pidxs.iter_mut() {
             x.clear()
         }
+    }
+
+    pub fn update_02(&mut self, particles: &mut TParticles) {
         for p in particles {
             let grid_id_ = grid_id_particle(p, self.side);
-            self.pidxs[grid_id_].insert(p.idx);
+            self.pidxs[grid_id_].push((p.thid, p.idx));
             p.grid_id = grid_id_
         }
     }

@@ -1,6 +1,7 @@
 import {
   resize_square,
   fill_circle_2,
+  fill_text,
   clear,
 } from "./canvas.js"
 
@@ -27,38 +28,74 @@ socket.addEventListener('open', (event) => {
 
 socket.binaryType = "arraybuffer";
 
+let image = context.createImageData(canvas.width, canvas.height);
+let data = image.data;
+const dim = canvas.width;
+// console.log(canvas.width)
+
+function drawPixel(x, y, c) {
+  	let roundedX = Math.round(x*dim);
+  	let roundedY = Math.round(y*dim);
+  	let index = 4 * (canvas.width * roundedY + roundedX);
+  	data[index + 0] = c.r;
+    data[index + 1] = c.g;
+    data[index + 2] = c.b;
+    data[index + 3] = c.a;
+}
+
+
+const colors = [
+  	{r: 220, g: 220, b:   0, a: 255},
+  	{r: 220, g: 0,   b:   0, a: 255},
+];
+
 // Listen for messages
+let refreshing = false
+console.log(socket)
 socket.addEventListener('message', (event) => {
-  if (event.data instanceof ArrayBuffer) {
+  if (!refreshing && event.data instanceof ArrayBuffer) {
+    refreshing = true
+
     const view = new DataView(event.data);
-    const step = view.getInt32(0)
-    const elapsed = view.getInt32(4)
-    const collisions = view.getInt32(8)
-    const diameter = view.getFloat32(12)
-    const particle_count = view.getInt32(16)
-    clear(context)
-    for (var i = 0; i < particle_count; i++) {
-      const x = view.getFloat32(20 + 9*i)
-      const y = view.getFloat32(24 + 9*i)
-      const colliding = view.getInt8(28 + 9*i)
-      const color = {
-        0: '#dd8',
-        1: '#d88'
-      }[colliding]
-      fill_circle_2(context, {
-        x: x,
-        y: y,
-      }, diameter, color)
-    }
+    let ii = -4;
+    const step = view.getInt32(ii+=4)
+    const elapsed = view.getInt32(ii+=4)
+    const elapsed_compute = view.getInt32(ii+=4)
+    const elapsed_compute_total = view.getInt32(ii+=4)
+    const collisions = view.getInt32(ii+=4)
+    const diameter = view.getFloat32(ii+=4)
+    const particle_count = view.getInt32(ii+=4)
+    ii += 4
     right.innerHTML = `
       <p>bytes: ${event.data.byteLength}</p>
       <p>step: ${step}</p>
+      <p>compute: ${elapsed_compute} μs</p>
+      <p>compute avg: ${parseInt(elapsed_compute_total/step)} μs</p>
       <p>elapsed: ${elapsed} μs</p>
       <p>collisions: ${collisions}</p>
       <p>particle_count: ${particle_count}</p>
     `
+    image = context.createImageData(canvas.width, canvas.height);
+    data = image.data;
+    for (var i = 0; i < Math.min(particle_count, 100000); i++) {
+      const oi = 20
+      const x = view.getFloat32(ii + oi*i)
+      const y = view.getFloat32(ii + 4 + oi*i)
+      const colliding = view.getInt32(ii + 8 + oi*i)
+      const thid = view.getInt32(ii + 12 + oi*i)
+      const fidx = view.getInt32(ii + 16 + oi*i)
+
+      let color = colors[0]
+        if (colliding) {
+          color = colors[1]
+        }
+      drawPixel(x,y, color);
+    }
+    clear(context)
+    context.putImageData(image, 0, 0);
+    refreshing = false
   } else {
     // text frame
-    console.log(event.data);
+    // console.log(event.data);
   }
 });

@@ -1,4 +1,5 @@
 use crate::*;
+use test::Bencher;
 
 #[bench]
 fn bench_add(bencher: &mut Bencher) {

@@ -1,43 +1,86 @@
 use rand::Rng;
-
-pub type Particles = Vec<Particle>;
+use std::sync::Arc;
+pub type TParticles = Vec<Particle>;
+pub type Particles = Vec<Arc<RwLock<TParticles>>>;
+pub type TParticleDeltas = Vec<ParticleDelta>;
+pub type ParticleDeltas = Vec<Arc<RwLock<TParticleDeltas>>>;
+use std::sync::RwLock;
 
 pub struct Particle {
     pub pp: Vector, // previous position
     pub p: Vector,  // position
     pub v: Vector,  // velocity
     pub m: f32,     // mass
+    pub thid: usize,
     pub idx: usize,
+    pub fidx: usize, // full idx
     pub grid_id: usize,
-    pub colliding: u8,
+    pub collisions: u32,
 }
 
-pub fn new_particles(count: usize, diameter: f32) -> Particles {
+pub struct ParticleDelta {
+    pub collisions: u32,
+    pub dp: Vector, // delta position
+    pub thid: usize,
+    pub idx: usize,
+    pub fidx: usize, // full idx
+}
+
+pub fn new_particles(diameter: f32, thread_count: usize, particles_per_thread: usize) -> Particles {
     let mut rng = rand::thread_rng();
     let mut particles: Particles = Vec::new();
-    for _ in 0..count {
-        let p = Vector {
-            x: rng.gen::<f32>(),
-            y: rng.gen::<f32>(),
-        };
-        let v = Vector {
-            x: diameter * 0.1 * rng.gen::<f32>() - 0.5 * diameter * 0.1,
-            y: diameter * 0.1 * rng.gen::<f32>() - 0.5 * diameter * 0.1,
-        };
-        particles.push(Particle {
-            p: p,
-            pp: Vector {
-                x: p.x - v.x,
-                y: p.y - v.y,
-            },
-            v: v,
-            m: rng.gen(),
-            idx: particles.len(),
-            grid_id: 0,
-            colliding: 0,
-        })
+    for thid in 0..thread_count {
+        let mut t_particles = Vec::new();
+        for idx in 0..particles_per_thread {
+            let p = Vector {
+                x: rng.gen::<f32>(),
+                y: rng.gen::<f32>(),
+            };
+            let v = Vector {
+                x: diameter * 0.9 * rng.gen::<f32>() - 0.5 * diameter * 0.9,
+                y: diameter * 0.9 * rng.gen::<f32>() - 0.5 * diameter * 0.9,
+            };
+            let fidx = idx * thread_count + thid;
+            t_particles.push(Particle {
+                p: p,
+                pp: Vector {
+                    x: p.x - v.x,
+                    y: p.y - v.y,
+                },
+                v: v,
+                m: rng.gen(),
+                thid: thid,
+                idx: idx,
+                grid_id: 0,
+                collisions: 0,
+                fidx: fidx,
+            })
+        }
+        particles.push(Arc::new(RwLock::new(t_particles)))
     }
     return particles;
+}
+
+pub fn new_particle_deltas(thread_count: usize, particles_per_thread: usize) -> ParticleDeltas {
+    let mut deltas: ParticleDeltas = Vec::new();
+    for thid in 0..thread_count {
+        let mut tdeltas = Vec::new();
+        for idx in 0..particles_per_thread {
+            for thid in 0..thread_count {
+                let fidx = idx * thread_count + thid;
+                assert!(tdeltas.len() == fidx);
+                tdeltas.push(ParticleDelta {
+                    dp: Vector { x: 0.0, y: 0.0 },
+                    collisions: 0,
+                    thid: thid,
+                    idx: idx,
+                    fidx: fidx,
+                })
+            }
+        }
+        deltas.push(Arc::new(RwLock::new(tdeltas)))
+    }
+    return deltas;
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -212,8 +255,8 @@ pub fn wrap_around_2(a: &Vector, b: &Vector) -> WrapAroundResponse {
     ];
     for idx in 0..9 {
         let ij = ijs[idx];
-        ois[idx][0] = (b.x + ij[0]);
-        ois[idx][1] = (b.x + ij[0]);
+        ois[idx][0] = b.x + ij[0];
+        ois[idx][1] = b.x + ij[0];
         ois[idx][2] = distance_sqrd(
             &a,
             &Vector {
