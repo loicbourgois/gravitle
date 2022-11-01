@@ -78,13 +78,12 @@ socket.addEventListener('message', (event) => {
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
     for (var i = 0; i < Math.min(particle_count, 100000); i++) {
-      const oi = 20
+      const oi = 12
       const x = view.getFloat32(ii + oi*i)
       const y = view.getFloat32(ii + 4 + oi*i)
       const colliding = view.getInt32(ii + 8 + oi*i)
-      const thid = view.getInt32(ii + 12 + oi*i)
-      const fidx = view.getInt32(ii + 16 + oi*i)
-
+      // const thid = view.getInt32(ii + 12 + oi*i)
+      // const fidx = view.getInt32(ii + 16 + oi*i)
       let color = colors[0]
         if (colliding) {
           color = colors[1]

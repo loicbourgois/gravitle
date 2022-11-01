@@ -1,15 +1,15 @@
+use crate::grid::grid_id_position;
+use crate::grid::Grid;
+use crate::grid::GridConfiguration;
+use crate::math::wrap_around;
+use rand::Rng;
+use std::sync::atomic::AtomicPtr;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
-use std::sync::atomic::AtomicPtr;
-use std::sync::RwLock;
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
-use rand::Rng;
-use crate::grid::GridConfiguration;
-use crate::grid::Grid;
-use crate::math::wrap_around;
-use crate::grid::grid_id_position;
 mod grid;
 mod math;
 struct Configuration {
@@ -28,13 +28,13 @@ pub struct Particle {
     pub v: Vector,
     pub pp: Vector,
     pub m: f32,
-    pub collisions: usize,
+    pub collisions: u32,
     pub pid: usize, // particle id
     pub tid: usize, // thread id
     pub gid: usize,
 }
 struct Delta {
-    collisions: usize,
+    collisions: u32,
     pid: usize, // particle id
     tid: usize, // thread id
     dtid: usize,
@@ -53,7 +53,7 @@ impl World {
             particle_count: c.particle_count,
             thread_count: c.thread_count,
             diameter: c.diameter,
-            particle_per_thread: c.particle_count/c.thread_count,
+            particle_per_thread: c.particle_count / c.thread_count,
             particle_diameter_sqrd: c.diameter * c.diameter,
         }
     }
@@ -78,7 +78,7 @@ pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
         for s in subsyncers {
             let a = *(subsyncers[i].read().unwrap());
             let b = *(s.read().unwrap());
-            if a > b || a < b-1 {
+            if a > b || a < b - 1 {
                 ok = false;
                 break;
             }
@@ -88,22 +88,28 @@ pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
         }
     }
 }
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), IoError> {
+    let addr = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+    let peers = Peers::new(Mutex::new(HashMap::new()));
+    let try_socket = TcpListener::bind(&addr).await;
+    let listener = try_socket.expect("Failed to bind");
+    println!("Listening on: {}", addr);
     let world = World::new(&Configuration {
         particle_count: 100_000,
         thread_count: 5,
         diameter: 0.001,
     });
-    let mut grid = Grid::new(&GridConfiguration {
-        side: 1000,
-    });
+    let mut grid = Grid::new(&GridConfiguration { side: 1000 });
     let mut particles = Vec::new();
     let mut deltas = Vec::new();
     let mut rng = rand::thread_rng();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
             let tid = pid % world.thread_count;
-            assert!( deltas.len() == dtid * world.particle_count + pid );
+            assert!(deltas.len() == dtid * world.particle_count + pid);
             deltas.push(Delta {
                 collisions: 0,
                 pid: pid,
@@ -123,7 +129,7 @@ fn main() {
             x: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
             y: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
         };
-        particles.push(Particle{
+        particles.push(Particle {
             p: p,
             pp: Vector {
                 x: p.x - v.x,
@@ -139,27 +145,27 @@ fn main() {
     }
     for tid in 0..world.thread_count {
         for i in 0..world.particle_per_thread {
-            let pid = i*world.thread_count + tid;
-            assert!( particles[pid].pid == pid );
-            assert!( particles[pid].tid == tid );
+            let pid = i * world.thread_count + tid;
+            assert!(particles[pid].pid == pid);
+            assert!(particles[pid].tid == tid);
         }
     }
-    assert!( deltas.len() == world.particle_count * world.thread_count );
+    assert!(deltas.len() == world.particle_count * world.thread_count);
     for did in 0..deltas.len() {
         let delta = &deltas[did];
-        assert!( delta.did == delta.dtid * world.particle_count + delta.pid );
-        assert!( delta.pid == did % world.particle_count );
-        assert!( delta.tid == (did % world.particle_count) % world.thread_count );
-        assert!( delta.dtid == did / world.particle_count );
-        assert!( delta.did == did );
-        assert!( particles[delta.pid].pid == delta.pid );
-        assert!( particles[delta.pid].tid == delta.tid );
+        assert!(delta.did == delta.dtid * world.particle_count + delta.pid);
+        assert!(delta.pid == did % world.particle_count);
+        assert!(delta.tid == (did % world.particle_count) % world.thread_count);
+        assert!(delta.dtid == did / world.particle_count);
+        assert!(delta.did == did);
+        assert!(particles[delta.pid].pid == delta.pid);
+        assert!(particles[delta.pid].tid == delta.tid);
     }
     let mut threads = Vec::new();
     let mut syncers = Vec::new();
     for _ in 0..4 {
         let mut subsyncers = Vec::new();
-        for _ in 0..world.thread_count+1 {
+        for _ in 0..world.thread_count + 1 {
             subsyncers.push(Arc::new(RwLock::new(0)));
         }
         syncers.push(subsyncers)
@@ -174,7 +180,7 @@ fn main() {
                 let particles = &mut (*particles_ptr.load(Ordering::Relaxed));
                 let deltas = &mut (*deltas_ptr.load(Ordering::Relaxed));
                 let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
-                let grid = & (*grid_ptr.load(Ordering::Relaxed));
+                let grid = &(*grid_ptr.load(Ordering::Relaxed));
                 loop {
                     {
                         let mut w = syncers[0][tid].write().unwrap();
@@ -188,7 +194,7 @@ fn main() {
                     {
                         let mut w = syncers[1][tid].write().unwrap();
                         for i in 0..world.particle_per_thread {
-                            let pid1 = i*world.thread_count + tid;
+                            let pid1 = i * world.thread_count + tid;
                             let mut p1 = &mut particles[pid1];
                             p1.collisions = 0;
                             for ns in neighbours(&p1.p, &grid) {
@@ -197,9 +203,9 @@ fn main() {
                                     if p1.pid < p2.pid {
                                         let wa = wrap_around(&p1.p, &p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
-                                            let did1 = tid * world.particle_count + p1.pid ;
+                                            let did1 = tid * world.particle_count + p1.pid;
                                             deltas[did1].collisions += 1;
-                                            let did2 = tid * world.particle_count + p2.pid ;
+                                            let did2 = tid * world.particle_count + p2.pid;
                                             deltas[did2].collisions += 1;
                                         }
                                     }
@@ -216,7 +222,7 @@ fn main() {
                     {
                         let mut w = syncers[2][tid].write().unwrap();
                         for i in 0..world.particle_per_thread {
-                            let pid1 = i*world.thread_count + tid;
+                            let pid1 = i * world.thread_count + tid;
                             let mut p1 = &mut particles[pid1];
                             for tid in 0..world.thread_count {
                                 let did1 = tid * world.particle_count + p1.pid;
@@ -247,38 +253,107 @@ fn main() {
         }));
     }
     let mut elapsed_total = 0;
-    let mut c = 0;
-    loop {
-        let start = Instant::now();
-        {
-            let mut w = syncers[0][world.thread_count].write().unwrap();
-            grid.update_01();
-            grid.update_02(&mut particles);
-            *w += 1;
-        }
-        wait(&syncers[0], world.thread_count);
-        {
-            let mut w = syncers[1][world.thread_count].write().unwrap();
-            *w += 1;
-        }
-        wait(&syncers[1], world.thread_count);
-        {
-            let mut w = syncers[2][world.thread_count].write().unwrap();
-            *w += 1;
-        }
-        wait(&syncers[2], world.thread_count);
-        {
-            let mut w = syncers[3][world.thread_count].write().unwrap();
-            let mut collisions_count = 0;
-            for p in &particles {
-                collisions_count += p.collisions;
+    let mut step = 0;
+    {
+        let peers = peers.clone();
+        thread::spawn(move || loop {
+            let start = Instant::now();
+            {
+                let mut w = syncers[0][world.thread_count].write().unwrap();
+                grid.update_01();
+                grid.update_02(&mut particles);
+                *w += 1;
             }
-            *w += 1;
-        }
-        wait(&syncers[3], world.thread_count);
-        elapsed_total += start.elapsed().as_micros();
-        c += 1;
-        println!("{} μs", elapsed_total/c);
-        thread::sleep(Duration::from_millis(10));
+            wait(&syncers[0], world.thread_count);
+            {
+                let mut w = syncers[1][world.thread_count].write().unwrap();
+                *w += 1;
+            }
+            wait(&syncers[1], world.thread_count);
+            {
+                let mut w = syncers[2][world.thread_count].write().unwrap();
+                *w += 1;
+            }
+            wait(&syncers[2], world.thread_count);
+            {
+                let mut w = syncers[3][world.thread_count].write().unwrap();
+                let mut collisions_count = 0;
+                for p in &particles {
+                    collisions_count += p.collisions;
+                }
+                let elapsed_compute = start.elapsed().as_micros();
+                let capacity = 3 * 4 * world.particle_count + 7 * 4;
+                let mut data = Vec::with_capacity(capacity);
+                data.extend((step as u32).to_be_bytes().to_vec());
+                data.extend((elapsed_total as u32).to_be_bytes().to_vec());
+                data.extend((elapsed_compute as u32).to_be_bytes().to_vec());
+                data.extend((elapsed_total as u32).to_be_bytes().to_vec());
+                data.extend((collisions_count as u32).to_be_bytes().to_vec());
+                data.extend((world.diameter).to_be_bytes().to_vec());
+                data.extend((world.particle_count as u32).to_be_bytes().to_vec());
+                let mut data_2: Vec<u8> = vec![0; 3 * 4 * world.particle_count];
+                for pid in 0..particles.len() {
+                    let i = pid * 3 * 4;
+                    let xs = particles[pid].p.x.to_be_bytes();
+                    for j in 0..4 {
+                        data_2[i+j] = xs[j];
+                    }
+                    let ys = particles[pid].p.y.to_be_bytes();
+                    for j in 0..4 {
+                        data_2[i+j+4] = ys[j];
+                    }
+                    let cs = particles[pid].collisions.to_be_bytes();
+                    for j in 0..4 {
+                        data_2[i+j+8] = cs[j];
+                    }
+                }
+                data.extend(data_2);
+                assert!(data.len() == capacity);
+                let m = Message::Binary(data);
+                for x in peers.lock().unwrap().values() {
+                    x.unbounded_send(m.clone()).unwrap();
+                }
+                *w += 1;
+            }
+            wait(&syncers[3], world.thread_count);
+            elapsed_total += start.elapsed().as_micros();
+            step += 1;
+            println!("{} μs", elapsed_total / step);
+            thread::sleep(Duration::from_millis(10));
+        });
     }
+    while let Ok((stream, addr)) = listener.accept().await {
+        tokio::spawn(handle_connection(peers.clone(), stream, addr));
+    }
+    Ok(())
+}
+use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
+use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
+use tokio::net::{TcpListener, TcpStream};
+use tungstenite::protocol::Message;
+type Tx = UnboundedSender<Message>;
+type Peers = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
+async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr) {
+    println!("Incoming TCP connection from: {}", addr);
+    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+        .await
+        .expect("Error during the websocket handshake occurred");
+    println!("WebSocket connection established: {}", addr);
+    let (tx, rx) = unbounded();
+    peers.lock().unwrap().insert(addr, tx);
+    let (outgoing, incoming) = ws_stream.split();
+    let broadcast_incoming = incoming.try_for_each(|msg| {
+        println!(
+            "Received a message from {}: {}",
+            addr,
+            msg.to_text().unwrap()
+        );
+        future::ok(())
+    });
+    let receive_from_others = rx.map(Ok).forward(outgoing);
+    pin_mut!(broadcast_incoming, receive_from_others);
+    future::select(broadcast_incoming, receive_from_others).await;
+    println!("{} disconnected", &addr);
+    peers.lock().unwrap().remove(&addr);
 }
