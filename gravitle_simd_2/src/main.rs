@@ -92,100 +92,14 @@ async fn main() -> Result<(), IoError> {
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
     let peers_2 = peers.clone();
-    const THREAD_COUNT: usize = 2;
+    const THREAD_COUNT: usize = 1;
     let mut world = World::new(0.001, 50_000, 500, THREAD_COUNT);
-    let mut syncers = Vec::new();
-    for ph in 0..10 {
-        let mut aa = Vec::new();
-        for i in 0..THREAD_COUNT + 1 {
-            aa.push(Arc::new(RwLock::new(0)));
-        }
-        syncers.push(aa)
-    }
-    for i in 0..THREAD_COUNT {
-        let syncers = syncers.clone();
-        let particles = world.particles.clone();
-        let deltas = world.particle_deltas.clone();
-        let grid = world.grid.clone();
-        thread::spawn(move || {
-            let mut rng = rand::thread_rng();
-            loop {
-                {
-                    let mut w = syncers[0][i].write().unwrap();
-                    *w += 1;
-                }
-                wait(&syncers[0], i);
-                {
-                    let mut w = syncers[1][i].write().unwrap();
-                    World::update_01(
-                        &mut particles[i].write().unwrap(),
-                        &mut deltas[i].write().unwrap(),
-                    );
-                    *w += 1;
-                    // println!("  #{} - update_01 - {}", i, *w);
-                }
-                wait(&syncers[1], i);
-
-                {
-                    let mut w = syncers[2][i].write().unwrap();
-                    World::update_02(
-                        &particles,
-                        &mut deltas[i].write().unwrap(),
-                        &grid.read().unwrap(),
-                        world.particle_diameter_sqrd,
-                    );
-                    *w += 1;
-                    // println!("  #{} - update_02 - {}", i, *w);
-                }
-                wait(&syncers[2], i);
-                {
-                    let mut w = syncers[3][i].write().unwrap();
-                    World::update_03(&mut particles[i].write().unwrap(), &deltas);
-                    *w += 1;
-                    // println!("  #{} - update_03 - {}", i, *w);
-                }
-                wait(&syncers[3], i);
-                {
-                    let mut w = syncers[4][i].write().unwrap();
-                    *w += 1;
-                }
-                wait(&syncers[4], i);
-            }
-        });
-    }
     thread::spawn(move || {
         let mut last = Instant::now();
         let mut elapsed_compute_total = 0;
         loop {
             let start = Instant::now();
-            {
-                let mut w = syncers[0][THREAD_COUNT].write().unwrap();
-                world.update_00();
-                *w += 1;
-                // println!("Main - update_00 - {}", *w);
-            }
-            wait(&syncers[0], THREAD_COUNT);
-            {
-                let mut w = syncers[1][THREAD_COUNT].write().unwrap();
-                *w += 1;
-            }
-            wait(&syncers[1], THREAD_COUNT);
-            {
-                let mut w = syncers[2][THREAD_COUNT].write().unwrap();
-                *w += 1;
-            }
-            wait(&syncers[2], THREAD_COUNT);
-            {
-                let mut w = syncers[3][THREAD_COUNT].write().unwrap();
-                *w += 1;
-            }
-            wait(&syncers[3], THREAD_COUNT);
-            {
-                let mut w = syncers[4][THREAD_COUNT].write().unwrap();
-                world.update_04();
-                *w += 1;
-            }
-            wait(&syncers[4], THREAD_COUNT);
+            world.update();
             let elapsed_compute = start.elapsed().as_micros();
             elapsed_compute_total += elapsed_compute;
             let elapsed = last.elapsed().as_micros();
@@ -199,15 +113,15 @@ async fn main() -> Result<(), IoError> {
             data.extend((world.collissions as u32).to_be_bytes().to_vec());
             data.extend((world.particle_diameter).to_be_bytes().to_vec());
             data.extend((world.particle_count as u32).to_be_bytes().to_vec());
-            for tparticles in &*world.particles {
-                for particle in tparticles.read().unwrap().iter() {
-                    data.extend((particle.p.x).to_be_bytes().to_vec());
-                    data.extend((particle.p.y).to_be_bytes().to_vec());
-                    data.extend((particle.collisions).to_be_bytes().to_vec());
-                    data.extend((particle.thid as u32 ).to_be_bytes().to_vec());
-                    data.extend((particle.fidx as u32 ).to_be_bytes().to_vec());
-                }
+            // for tparticles in &*world.particles {
+            for particle in &world.particles {
+                data.extend((particle.p.x).to_be_bytes().to_vec());
+                data.extend((particle.p.y).to_be_bytes().to_vec());
+                data.extend((particle.collisions).to_be_bytes().to_vec());
+                data.extend((particle.thid as u32 ).to_be_bytes().to_vec());
+                data.extend((particle.fidx as u32 ).to_be_bytes().to_vec());
             }
+            // }
             // println!("elapsed data: {}", start_data.elapsed().as_micros());
             let start_send = Instant::now();
             let m = Message::Binary(data);
