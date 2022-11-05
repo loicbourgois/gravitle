@@ -306,9 +306,8 @@ async fn main() -> Result<(), IoError> {
 }
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
-use std::net::TcpListener;
-use std::net::TcpStream;
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
+use tokio::net::{TcpListener, TcpStream};
 use tungstenite::protocol::Message;
 type Tx = UnboundedSender<Message>;
 type Peers = Arc<Mutex<HashMap<SocketAddr, Tx>>>;

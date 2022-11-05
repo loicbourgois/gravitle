@@ -11,4 +11,4 @@ tokio-tungstenite = "*"
 futures-channel = "*"
 tungstenite = "*"
 futures-util = "*"
-tokio = { version = "0", features = ["macros", "rt", "rt-multi-thread", "io-util"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "io-util"] }
