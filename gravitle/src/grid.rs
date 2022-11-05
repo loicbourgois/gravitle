@@ -48,7 +48,7 @@ impl Grid {
                 grid.pids.push(Vec::new())
             }
         }
-        return grid;
+        grid
     }
 
     pub fn update_01(&mut self) {
@@ -67,16 +67,16 @@ impl Grid {
 }
 
 pub fn grid_id(x: usize, y: usize, side: usize) -> usize {
-    return (y % side) * side + x % side;
+    (y % side) * side + x % side
 }
 
 pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
-    return grid_id_position(&particle.p, side);
+    grid_id_position(&particle.p, side)
 }
 
 pub fn grid_id_position(position: &Vector, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
-    return grid_id(x, y, side);
+    grid_id(x, y, side)
 }

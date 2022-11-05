@@ -34,18 +34,18 @@ impl Particle {
         //     y: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
         // };
         let v = Vector { x: 0.0, y: 0.0 };
-        return Particle {
-            p: p,
+        Particle {
+            p,
             pp: Vector {
                 x: p.x - v.x,
                 y: p.y - v.y,
             },
-            v: v,
+            v,
             m: 1.0,
-            tid: tid,
+            tid,
             pid: c.pid,
             collisions: 0,
             gid: 0,
-        };
+        }
     }
 }

@@ -51,7 +51,7 @@ impl World {
 }
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(position, grid.side);
-    return [
+    [
         &grid.pids[grid.gids[gid][0]],
         &grid.pids[grid.gids[gid][1]],
         &grid.pids[grid.gids[gid][2]],
@@ -61,7 +61,7 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
         &grid.pids[grid.gids[gid][6]],
         &grid.pids[grid.gids[gid][7]],
         &grid.pids[grid.gids[gid][8]],
-    ];
+    ]
 }
 pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
     loop {
@@ -103,18 +103,15 @@ async fn main() -> Result<(), IoError> {
             assert!(deltas.len() == dtid * world.particle_count + pid);
             deltas.push(Delta {
                 collisions: 0,
-                pid: pid,
-                tid: tid,
-                dtid: dtid,
+                pid,
+                tid,
+                dtid,
                 did: deltas.len(),
             });
         }
     }
     for pid in 0..world.particle_count {
-        particles.push(Particle::new(&ParticleConfiguration {
-            pid: pid,
-            world: &world,
-        }));
+        particles.push(Particle::new(&ParticleConfiguration { pid, world: &world }));
     }
     for tid in 0..world.thread_count {
         for i in 0..world.particle_per_thread {
@@ -170,7 +167,7 @@ async fn main() -> Result<(), IoError> {
                             let pid1 = i * world.thread_count + tid;
                             let mut p1 = &mut particles[pid1];
                             p1.collisions = 0;
-                            for ns in neighbours(&p1.p, &grid) {
+                            for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
                                     let p2 = &mut (*particles2)[*pid2];
                                     if p1.pid < p2.pid {
@@ -261,24 +258,29 @@ async fn main() -> Result<(), IoError> {
                 data.extend((elapsed_total as u32).to_be_bytes().to_vec());
                 data.extend((elapsed_compute as u32).to_be_bytes().to_vec());
                 data.extend((elapsed_total as u32).to_be_bytes().to_vec());
-                data.extend((collisions_count as u32).to_be_bytes().to_vec());
+                data.extend(collisions_count.to_be_bytes().to_vec());
                 data.extend((world.diameter).to_be_bytes().to_vec());
                 data.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 let mut data_2: Vec<u8> = vec![0; 3 * 4 * world.particle_count];
                 for pid in 0..particles.len() {
                     let i = pid * 3 * 4;
                     let xs = particles[pid].p.x.to_be_bytes();
-                    for j in 0..4 {
-                        data_2[i + j] = xs[j];
-                    }
                     let ys = particles[pid].p.y.to_be_bytes();
-                    for j in 0..4 {
-                        data_2[i + j + 4] = ys[j];
-                    }
                     let cs = particles[pid].collisions.to_be_bytes();
-                    for j in 0..4 {
-                        data_2[i + j + 8] = cs[j];
-                    }
+                    data_2[i..(4 + i)].copy_from_slice(&xs[..4]);
+                    data_2[(4 + i)..(8 + i)].copy_from_slice(&ys[..4]);
+                    data_2[(8 + i)..(12 + i)].copy_from_slice(&cs[..4]);
+                    // for j in 0..4 {
+                    //     data_2[i + j] = xs[j];
+                    // }
+                    //
+                    // for j in 0..4 {
+                    //     data_2[i + j + 4] = ys[j];
+                    // }
+                    //
+                    // for j in 0..4 {
+                    //     data_2[i + j + 8] = cs[j];
+                    // }
                 }
                 data.extend(data_2);
                 assert!(data.len() == capacity);
