@@ -3,7 +3,7 @@ use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::collision_response;
 use crate::math::wrap_around;
-use crate::particle::Particles;
+
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -15,7 +15,7 @@ mod grid;
 mod math;
 mod particle;
 use crate::particle::Particle;
-use crate::particle::ParticleConfiguration;
+
 pub struct Configuration {
     pub particle_count: usize,
     pub thread_count: usize,
@@ -95,10 +95,11 @@ async fn main() -> Result<(), IoError> {
     println!("Listening on: {}", addr);
     let world = World::new(&Configuration {
         particle_count: 100_000,
-        thread_count: 1,
+        thread_count: 6,
         diameter: 0.001,
     });
-    let mut grid = Grid::new(&GridConfiguration { side: 1000 });
+    let CRD = 0.0005;
+    let mut grid = Grid::new(&GridConfiguration { side: 2000 });
     let mut particles = Particle::new_particles_2(&world);
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
@@ -175,14 +176,16 @@ async fn main() -> Result<(), IoError> {
                                     if p1.pid < p2.pid {
                                         let wa = wrap_around(&p1.p, &p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
-                                            let cr = collision_response(&wa, &p1, &p2);
-                                            if cr.x.is_nan() == false && cr.y.is_nan() == false {
+                                            let cr = collision_response(&wa, p1, p2);
+                                            if !cr.x.is_nan() && !cr.y.is_nan() {
                                                 {
                                                     let d1 = &mut deltas
                                                         [tid * world.particle_count + p1.pid];
                                                     d1.collisions += 1;
                                                     d1.v.x -= cr.x * 0.5;
                                                     d1.v.y -= cr.y * 0.5;
+                                                    d1.p.x += wa.d.x * CRD;
+                                                    d1.p.y += wa.d.y * CRD;
                                                 }
                                                 {
                                                     let d2 = &mut deltas
@@ -190,9 +193,10 @@ async fn main() -> Result<(), IoError> {
                                                     d2.collisions += 1;
                                                     d2.v.x += cr.x * 0.5;
                                                     d2.v.y += cr.y * 0.5;
+                                                    d2.p.x -= wa.d.x * CRD;
+                                                    d2.p.y -= wa.d.y * CRD;
                                                 }
                                             }
-
                                             //   if (links_set.has(`${p1.idx}|${p2.idx}`)) {
                                             //     cr.x *= 0.5;
                                             //     cr.y *= 0.5;
@@ -217,23 +221,35 @@ async fn main() -> Result<(), IoError> {
                             let mut p1 = &mut particles[pid1];
                             for tid in 0..world.thread_count {
                                 let d1 = &mut deltas[tid * world.particle_count + p1.pid];
-                                assert!(d1.p.x >= 0.0, "\n{:?}", d1);
-                                assert!(d1.p.y >= 0.0, "\n{:?}", d1);
-                                assert!(d1.p.x <= 1.0, "\n{:?}", d1);
-                                assert!(d1.p.y <= 1.0, "\n{:?}", d1);
+                                // assert!(d1.p.x >= 0.0, "\n{:?}", d1);
+                                // assert!(d1.p.y >= 0.0, "\n{:?}", d1);
+                                // assert!(d1.p.x <= 1.0, "\n{:?}", d1);
+                                // assert!(d1.p.y <= 1.0, "\n{:?}", d1);
                                 assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
                                 assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
                                 p1.collisions += d1.collisions;
                                 p1.v.x = p1.p.x - p1.pp.x + d1.v.x;
                                 p1.v.y = p1.p.y - p1.pp.y + d1.v.y;
-                                p1.p.x = (1.0 + p1.p.x + p1.v.x + d1.p.x) % 1.0;
-                                // p1.p.y = (1.0 + p1.p.y + p1.v.y + d1.p.y) % 1.0;
+
+                                p1.v.x = p1.v.x.max(-world.diameter*0.5);
+                                p1.v.x = p1.v.x.min(world.diameter*0.5);
+                                p1.v.y = p1.v.y.max(-world.diameter*0.5);
+                                p1.v.y = p1.v.y.min(world.diameter*0.5);
+
+                                p1.p.x = (10.0 + p1.p.x + p1.v.x + d1.p.x) % 1.0;
+                                p1.p.y = (10.0 + p1.p.y + p1.v.y + d1.p.y) % 1.0;
                                 p1.pp.x = p1.p.x - p1.v.x;
                                 p1.pp.y = p1.p.y - p1.v.y;
-                                // assert!( d1.v.x != f32::NAN, "\n{:?}", d1 );
-                                // assert!( d1.v.y != f32::NAN, "\n{:?}", d1 );
-                                // assert!( ! p1.p.x.is_nan(), "\n{:?}", p1 );
-                                // assert!( p1.p.y != f32::NAN, "\n{:?}", p1 );
+                                assert!( ! d1.v.x.is_nan(), "\n{:?}", d1 );
+                                assert!( ! d1.v.y.is_nan(), "\n{:?}", d1 );
+                                assert!( ! p1.p.x.is_nan(), "\n{:?}", p1 );
+                                assert!( ! p1.p.y.is_nan(), "\n{:?}", p1 );
+
+                                assert!( p1.v.x >= -world.diameter, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.v.y >= -world.diameter, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.v.x <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.v.y <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
+
                                 // assert!( p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1 );
                                 // assert!( p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1 );
                                 // assert!( p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1 );
@@ -322,10 +338,10 @@ async fn main() -> Result<(), IoError> {
             elapsed_total += start.elapsed().as_micros();
             step += 1;
             let delta = Duration::from_millis(10);
-            if start.elapsed() < delta {
-                let sleep_duration = delta - start.elapsed();
-                thread::sleep(sleep_duration);
-            }
+            // if start.elapsed() < delta {
+            //     let sleep_duration = delta - start.elapsed();
+            //     thread::sleep(sleep_duration);
+            // }
         });
     }
     while let Ok((stream, addr)) = listener.accept().await {

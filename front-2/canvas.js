@@ -107,10 +107,10 @@ const line = (context, p1, p2, color, line_width) => {
 }
 
 
-const resize_square = (canvas) => {
+const resize_square = (canvas, zoom=1) => {
   const dim = Math.min(window.innerWidth, window.innerHeight)
-  canvas.width = dim
-  canvas.height = dim
+  canvas.width = dim*zoom
+  canvas.height = dim*zoom
 }
 
 

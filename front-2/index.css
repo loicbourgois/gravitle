@@ -4,14 +4,20 @@
 }
 
 body {
-  background: #111;
+  background: #050505;
   display: flex;
 }
 p {
-  color: #ddd;
+  color: #dd8d;
   font-family: monospace;
+  padding-top: 0.4rem;
+  padding-left: 0.8rem;
+  width: 0;
 }
 canvas {
-  height: 100vh;
-  width: 100vh;
+  height: 90vh;
+  width: 90vh;
+  margin: auto;
+  margin-top: 5vh;
+  cursor: none;
 }

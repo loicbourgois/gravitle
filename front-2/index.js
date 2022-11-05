@@ -6,12 +6,41 @@ import {
 } from "./canvas.js"
 document.body.innerHTML = `
   <canvas id="canvas"></canvas>
-  <div id="right"></div>
+  <div id="right">
+    <button onclick="openFullscreen()">Fullscreen</button>
+    <div id="texts">
+    </div>
+  </div>
 `
-const right = document.querySelector("#right");
+function openFullscreen() {
+  const elem = document.body
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { /* Safari */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE11 */
+    elem.msRequestFullscreen();
+  }
+
+  // resize_square(canvas,2*0.9)
+
+}
+
+window.addEventListener("resize", () => {
+  resize_square(canvas,2*0.9)
+  const aa = Math.min(window.innerWidth, window.innerHeight)
+  canvas.style.width = `${aa*0.9}px`
+  canvas.style.height = `${aa*0.9}px`
+  image = context.createImageData(canvas.width, canvas.height);
+  dim = canvas.width
+  document.querySelector("#right").innerHTML = ""
+});
+
+window.openFullscreen = openFullscreen
+const texts = document.querySelector("#texts");
 const canvas = document.querySelector("#canvas");
 const context = canvas.getContext('2d')
-resize_square(canvas)
+resize_square(canvas,2*0.9)
 const socket = new WebSocket('ws://localhost:8080');
 socket.addEventListener('open', (event) => {
     socket.send('Hello Server!');
@@ -19,7 +48,7 @@ socket.addEventListener('open', (event) => {
 socket.binaryType = "arraybuffer";
 let image = context.createImageData(canvas.width, canvas.height);
 let data = image.data;
-const dim = canvas.width;
+let dim = canvas.width;
 const drawPixel = (x, y, c) => {
   	let roundedX = Math.round(x*dim);
   	let roundedY = Math.round(y*dim);
@@ -30,8 +59,8 @@ const drawPixel = (x, y, c) => {
     data[index + 3] = c.a;
 }
 const colors = [
-  	{r: 220, g: 220, b:   0, a: 255},
-  	{r: 220, g: 0,   b:   0, a: 255},
+  	{r: 255, g: 190, b:   0, a: 255},
+  	{r: 255, g: 255,   b:  100, a: 255},
   	{r: 0,   g: 255, b:   0, a: 255},
 ];
 let refreshing = false
@@ -49,7 +78,7 @@ socket.addEventListener('message', (event) => {
     const diameter = view.getFloat32(ii+=4)
     const particle_count = view.getInt32(ii+=4)
     ii += 4
-    right.innerHTML = `
+    texts.innerHTML = `
       <p>bytes: ${event.data.byteLength}</p>
       <p>step: ${step}</p>
       <p>compute: ${elapsed_compute} μs</p>
@@ -60,7 +89,7 @@ socket.addEventListener('message', (event) => {
     `
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
-    for (var i = 0; i < Math.min(particle_count, 100000); i++) {
+    for (var i = 0; i < Math.min(particle_count, 200000); i++) {
       const oi = 12
       const x = view.getFloat32(ii + oi*i)
       const y = view.getFloat32(ii + 4 + oi*i)

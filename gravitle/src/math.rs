@@ -4,6 +4,7 @@ use crate::Vector;
 pub struct WrapAroundResponse {
     pub a: Vector,
     pub b: Vector,
+    pub d: Vector,
     pub d_sqrd: f32,
 }
 pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
@@ -19,6 +20,7 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
         [1.0, 0.0],
         [1.0, 1.0],
     ];
+    let mut ijwin = ijs[0];
     for ij in ijs {
         let bb = Vector {
             x: b.x + ij[0],
@@ -28,11 +30,18 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
         if dsqrd < dsqrd_min {
             dsqrd_min = dsqrd;
             bbb = bb;
+            ijwin = ij;
         }
     }
+    let a_ = Vector {
+        x: a.x + ijwin[0],
+        y: a.y + ijwin[1],
+    };
     WrapAroundResponse {
-        a: Vector { x: a.x, y: a.x },
+        a: a_,
         b: bbb,
+        d: delta(&a_,&bbb),
+        // d: Vector { x: 0.01, y: 0.0 },
         d_sqrd: dsqrd_min,
     }
 }
@@ -62,11 +71,10 @@ pub fn collision_response(wa: &WrapAroundResponse, p1: &Particle, p2: &Particle)
     let dot_vp = dot(&delta_velocity, &delta_position);
     let n_sqrd = norm_sqrd(&delta_position);
     let factor = mass_factor * dot_vp / n_sqrd;
-    let acceleration = Vector {
+    Vector {
         x: delta_position.x * factor,
         y: delta_position.y * factor,
-    };
-    return acceleration;
+    }
 }
 // pub fn norm(v: &Vector) -> f32 {
 //     (v.x * v.x + v.y * v.y).sqrt()
