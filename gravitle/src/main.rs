@@ -121,8 +121,7 @@ async fn main() -> Result<(), IoError> {
         }
     }
     assert!(deltas.len() == world.particle_count * world.thread_count);
-    for did in 0..deltas.len() {
-        let delta = &deltas[did];
+    for (did, delta) in deltas.iter().enumerate() {
         assert!(delta.did == delta.dtid * world.particle_count + delta.pid);
         assert!(delta.pid == did % world.particle_count);
         assert!(delta.tid == (did % world.particle_count) % world.thread_count);
@@ -262,11 +261,11 @@ async fn main() -> Result<(), IoError> {
                 data.extend((world.diameter).to_be_bytes().to_vec());
                 data.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 let mut data_2: Vec<u8> = vec![0; 3 * 4 * world.particle_count];
-                for pid in 0..particles.len() {
+                for (pid, particle) in particles.iter().enumerate() {
                     let i = pid * 3 * 4;
-                    let xs = particles[pid].p.x.to_be_bytes();
-                    let ys = particles[pid].p.y.to_be_bytes();
-                    let cs = particles[pid].collisions.to_be_bytes();
+                    let xs = particle.p.x.to_be_bytes();
+                    let ys = particle.p.y.to_be_bytes();
+                    let cs = particle.collisions.to_be_bytes();
                     data_2[i..(4 + i)].copy_from_slice(&xs[..4]);
                     data_2[(4 + i)..(8 + i)].copy_from_slice(&ys[..4]);
                     data_2[(8 + i)..(12 + i)].copy_from_slice(&cs[..4]);
