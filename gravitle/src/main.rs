@@ -2,7 +2,6 @@ use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::wrap_around;
-use rand::Rng;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -12,26 +11,18 @@ use std::time::Duration;
 use std::time::Instant;
 mod grid;
 mod math;
-struct Configuration {
-    particle_count: usize,
-    thread_count: usize,
-    diameter: f32,
+mod particle;
+use crate::particle::Particle;
+use crate::particle::ParticleConfiguration;
+pub struct Configuration {
+    pub particle_count: usize,
+    pub thread_count: usize,
+    pub diameter: f32,
 }
 #[derive(Clone, Copy)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,
-}
-type Particles = Vec<Particle>;
-pub struct Particle {
-    pub p: Vector,
-    pub v: Vector,
-    pub pp: Vector,
-    pub m: f32,
-    pub collisions: u32,
-    pub pid: usize, // particle id
-    pub tid: usize, // thread id
-    pub gid: usize,
 }
 struct Delta {
     collisions: u32,
@@ -40,12 +31,12 @@ struct Delta {
     dtid: usize,
     did: usize,
 }
-struct World {
-    particle_count: usize,
-    thread_count: usize,
-    diameter: f32,
-    particle_per_thread: usize,
-    particle_diameter_sqrd: f32,
+pub struct World {
+    pub particle_count: usize,
+    pub thread_count: usize,
+    pub diameter: f32,
+    pub particle_per_thread: usize,
+    pub particle_diameter_sqrd: f32,
 }
 impl World {
     pub fn new(c: &Configuration) -> World {
@@ -105,7 +96,7 @@ async fn main() -> Result<(), IoError> {
     let mut grid = Grid::new(&GridConfiguration { side: 1000 });
     let mut particles = Vec::new();
     let mut deltas = Vec::new();
-    let mut rng = rand::thread_rng();
+    // let mut rng = rand::thread_rng();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
             let tid = pid % world.thread_count;
@@ -120,28 +111,10 @@ async fn main() -> Result<(), IoError> {
         }
     }
     for pid in 0..world.particle_count {
-        let tid = pid % world.thread_count;
-        let p = Vector {
-            x: rng.gen::<f32>(),
-            y: rng.gen::<f32>(),
-        };
-        let v = Vector {
-            x: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
-            y: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
-        };
-        particles.push(Particle {
-            p: p,
-            pp: Vector {
-                x: p.x - v.x,
-                y: p.y - v.y,
-            },
-            v: v,
-            m: rng.gen(),
-            tid: tid,
+        particles.push(Particle::new(&ParticleConfiguration {
             pid: pid,
-            collisions: 0,
-            gid: 0,
-        });
+            world: &world,
+        }));
     }
     for tid in 0..world.thread_count {
         for i in 0..world.particle_per_thread {
@@ -296,15 +269,15 @@ async fn main() -> Result<(), IoError> {
                     let i = pid * 3 * 4;
                     let xs = particles[pid].p.x.to_be_bytes();
                     for j in 0..4 {
-                        data_2[i+j] = xs[j];
+                        data_2[i + j] = xs[j];
                     }
                     let ys = particles[pid].p.y.to_be_bytes();
                     for j in 0..4 {
-                        data_2[i+j+4] = ys[j];
+                        data_2[i + j + 4] = ys[j];
                     }
                     let cs = particles[pid].collisions.to_be_bytes();
                     for j in 0..4 {
-                        data_2[i+j+8] = cs[j];
+                        data_2[i + j + 8] = cs[j];
                     }
                 }
                 data.extend(data_2);
@@ -318,8 +291,11 @@ async fn main() -> Result<(), IoError> {
             wait(&syncers[3], world.thread_count);
             elapsed_total += start.elapsed().as_micros();
             step += 1;
-            println!("{} μs", elapsed_total / step);
-            thread::sleep(Duration::from_millis(10));
+            let delta = Duration::from_millis(100);
+            if start.elapsed() < delta {
+                let sleep_duration = delta - start.elapsed();
+                thread::sleep(sleep_duration);
+            }
         });
     }
     while let Ok((stream, addr)) = listener.accept().await {

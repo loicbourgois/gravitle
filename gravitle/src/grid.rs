@@ -1,5 +1,5 @@
-use crate::Particle;
-use crate::Particles;
+use crate::particle::Particle;
+use crate::particle::Particles;
 use crate::Vector;
 
 pub struct GridConfiguration {
