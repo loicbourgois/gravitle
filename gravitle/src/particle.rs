@@ -26,7 +26,7 @@ impl Particle {
         for pid in 0..world.particle_count {
             particles.push(Particle::new(&ParticleConfiguration { pid, world: &world }));
         }
-        return particles
+        return particles;
     }
     pub fn new_particles_2(world: &World) -> Particles {
         let mut particles = Vec::new();
@@ -51,7 +51,7 @@ impl Particle {
             x: p.p.x - p.v.x,
             y: p.p.y - p.v.y,
         };
-        return particles
+        return particles;
     }
     pub fn new(c: &ParticleConfiguration) -> Particle {
         let mut rng = rand::thread_rng();

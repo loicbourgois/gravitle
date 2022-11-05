@@ -1,5 +1,5 @@
-use crate::Vector;
 use crate::Particle;
+use crate::Vector;
 #[derive(Clone)]
 pub struct WrapAroundResponse {
     pub a: Vector,

@@ -1,15 +1,15 @@
 use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::grid::GridConfiguration;
+use crate::math::collision_response;
 use crate::math::wrap_around;
+use crate::particle::Particles;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use crate::math::collision_response;
-use crate::particle::Particles;
 use std::time::Instant;
 mod grid;
 mod math;
@@ -111,14 +111,8 @@ async fn main() -> Result<(), IoError> {
                 tid,
                 dtid,
                 did: deltas.len(),
-                p: Vector {
-                    x:0.0,
-                    y:0.0,
-                },
-                v: Vector {
-                    x:0.0,
-                    y:0.0,
-                },
+                p: Vector { x: 0.0, y: 0.0 },
+                v: Vector { x: 0.0, y: 0.0 },
             });
         }
     }
@@ -181,18 +175,18 @@ async fn main() -> Result<(), IoError> {
                                     if p1.pid < p2.pid {
                                         let wa = wrap_around(&p1.p, &p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
-                                            let cr = collision_response(&wa,&p1,&p2);
-                                            if
-                                                cr.x.is_nan() == false && cr.y.is_nan() == false
-                                            {
+                                            let cr = collision_response(&wa, &p1, &p2);
+                                            if cr.x.is_nan() == false && cr.y.is_nan() == false {
                                                 {
-                                                    let d1 = &mut deltas[tid * world.particle_count + p1.pid];
+                                                    let d1 = &mut deltas
+                                                        [tid * world.particle_count + p1.pid];
                                                     d1.collisions += 1;
                                                     d1.v.x -= cr.x * 0.5;
                                                     d1.v.y -= cr.y * 0.5;
                                                 }
                                                 {
-                                                    let d2 = &mut deltas[tid * world.particle_count + p2.pid];
+                                                    let d2 = &mut deltas
+                                                        [tid * world.particle_count + p2.pid];
                                                     d2.collisions += 1;
                                                     d2.v.x += cr.x * 0.5;
                                                     d2.v.y += cr.y * 0.5;
@@ -203,7 +197,6 @@ async fn main() -> Result<(), IoError> {
                                             //     cr.x *= 0.5;
                                             //     cr.y *= 0.5;
                                             //   }
-
                                         }
                                     }
                                 }
@@ -224,12 +217,12 @@ async fn main() -> Result<(), IoError> {
                             let mut p1 = &mut particles[pid1];
                             for tid in 0..world.thread_count {
                                 let d1 = &mut deltas[tid * world.particle_count + p1.pid];
-                                assert!( d1.p.x >= 0.0, "\n{:?}", d1 );
-                                assert!( d1.p.y >= 0.0, "\n{:?}", d1 );
-                                assert!( d1.p.x <= 1.0, "\n{:?}", d1 );
-                                assert!( d1.p.y <= 1.0, "\n{:?}", d1 );
-                                assert!( ! d1.v.x.is_nan(), "\n{:?}", d1 );
-                                assert!( ! d1.v.y.is_nan(), "\n{:?}", d1 );
+                                assert!(d1.p.x >= 0.0, "\n{:?}", d1);
+                                assert!(d1.p.y >= 0.0, "\n{:?}", d1);
+                                assert!(d1.p.x <= 1.0, "\n{:?}", d1);
+                                assert!(d1.p.y <= 1.0, "\n{:?}", d1);
+                                assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
+                                assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
                                 p1.collisions += d1.collisions;
                                 p1.v.x = p1.p.x - p1.pp.x + d1.v.x;
                                 p1.v.y = p1.p.y - p1.pp.y + d1.v.y;
