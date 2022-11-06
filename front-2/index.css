@@ -2,22 +2,43 @@
   padding: 0;
   margin: 0;
 }
-
 body {
   background: #050505;
   display: flex;
 }
-p {
+p, button,label, input {
   color: #dd8d;
   font-family: monospace;
-  padding-top: 0.4rem;
-  padding-left: 0.8rem;
-  width: 0;
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+  white-space: break-spaces;
+  background: none;
+  border: none;
+  /* word-break: break-all; */
+}
+#right {
+  margin-top: 5vh;
+  margin-right: 5vh;
+}
+#left {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  flex-direction: column;
 }
 canvas {
   height: 90vh;
   width: 90vh;
-  margin: auto;
-  margin-top: 5vh;
-  cursor: none;
+  margin: 5vh;
+}
+button {
+  background: none;
+  color: #dd8d;
+  cursor:pointer;
+  border: none;
+  margin-bottom: 0.3rem;
+  margin-right: 1rem;
+}
+button:hover {
+  color: #eeaf;
 }

@@ -5,14 +5,31 @@ import {
   clear,
 } from "./canvas.js"
 document.body.innerHTML = `
-  <canvas id="canvas"></canvas>
+  <div id="left">
+    <canvas id="canvas"></canvas>
+  </div>
   <div id="right">
-    <button onclick="openFullscreen()">Fullscreen</button>
-    <div id="texts">
+    <button id="go_fullscreen" onclick="go_fullscreen()">Fullscreen</button>
+    <button id="exit_fullscreen" onclick="exit_fullscreen()" style="display:none">Exit Fullscreen</button>
+    <!-- <button id="expand" onclick="expand()">Expand</button>
+    <button id="square" onclick="square()" style="display:none">Square</button> -->
+    <button id="zen_mode" onclick="zen_mode()">Zen</button>
+    <div id="texts"></div>
+    <div>
+      <label>collide color:</label>
+      <input id="color_0" value="#ff4" />
+    </div>
+    <div>
+      <label>base color:   </label>
+      <input id="color_1" value="#fc0" />
+    </div>
+    <div>
+      <label>edge color:   </label>
+      <input id="color_2" value="#e80" />
     </div>
   </div>
 `
-function openFullscreen() {
+function go_fullscreen() {
   const elem = document.body
   if (elem.requestFullscreen) {
     elem.requestFullscreen();
@@ -21,26 +38,70 @@ function openFullscreen() {
   } else if (elem.msRequestFullscreen) { /* IE11 */
     elem.msRequestFullscreen();
   }
-
-  // resize_square(canvas,2*0.9)
-
+  document.querySelector("#go_fullscreen").style.display = "none"
+  document.querySelector("#exit_fullscreen").style.display = ""
 }
-
-window.addEventListener("resize", () => {
+const exit_fullscreen = () => {
+  const docElm = document
+  if (docElm.exitFullscreen) {
+			docElm.exitFullscreen();
+	} else if (docElm.webkitExitFullscreen) {
+		docElm.webkitExitFullscreen();
+	} else if (docElm.mozCancelFullScreen) {
+		docElm.mozCancelFullScreen();
+	} else if (docElm.msExitFullscreen) {
+		docElm.msExitFullscreen();
+	}
+  document.querySelector("#go_fullscreen").style.display = ""
+  document.querySelector("#exit_fullscreen").style.display = "none"
+}
+let zen_mode_active = false
+const zen_mode = () => {
+  document.querySelector("#right").style.display = "none"
+  zen_mode_active = true
+  document.querySelector("#canvas").style.cursor = "none"
+  event.stopPropagation()
+}
+const unzen_mode = () => {
+  if (zen_mode_active) {
+    document.querySelector("#right").style.display = ""
+    document.querySelector("#canvas").style.cursor = ""
+    zen_mode_active = false;
+  }
+}
+const resize = () => {
   resize_square(canvas,2*0.9)
   const aa = Math.min(window.innerWidth, window.innerHeight)
   canvas.style.width = `${aa*0.9}px`
   canvas.style.height = `${aa*0.9}px`
   image = context.createImageData(canvas.width, canvas.height);
   dim = canvas.width
-  document.querySelector("#right").innerHTML = ""
-});
-
-window.openFullscreen = openFullscreen
+  // document.querySelector("#right").innerHTML = ""
+}
+window.addEventListener("resize", resize)
+window.addEventListener("click", unzen_mode)
+window.addEventListener("keydown", unzen_mode)
+const expand = () => {
+  document.querySelector("#expand").style.display = "none"
+  document.querySelector("#square").style.display = ""
+  document.querySelector("#canvas").style.flexGrow = "1"
+}
+const square = () => {
+  document.querySelector("#expand").style.display = ""
+  document.querySelector("#square").style.display = "none"
+  document.querySelector("#canvas").style.flexGrow = ""
+}
+window.go_fullscreen = go_fullscreen
+window.exit_fullscreen = exit_fullscreen
+window.zen_mode = zen_mode
+window.square = square
+window.expand = expand
 const texts = document.querySelector("#texts");
 const canvas = document.querySelector("#canvas");
 const context = canvas.getContext('2d')
-resize_square(canvas,2*0.9)
+const ZOOM = 2
+const DELTA_DRAW = 0.001/ZOOM
+resize_square(canvas,ZOOM*0.9)
 const socket = new WebSocket('ws://localhost:8080');
 socket.addEventListener('open', (event) => {
     socket.send('Hello Server!');
@@ -53,40 +114,56 @@ const drawPixel = (x, y, c) => {
   	let roundedX = Math.round(x*dim);
   	let roundedY = Math.round(y*dim);
   	let index = 4 * (canvas.width * roundedY + roundedX);
-  	data[index + 0] = c.r;
-    data[index + 1] = c.g;
-    data[index + 2] = c.b;
-    data[index + 3] = c.a;
+  	data[index + 0] = c[0];
+    data[index + 1] = c[1];
+    data[index + 2] = c[2];
+    data[index + 3] = c[3];
 }
-const colors = [
-  	{r: 255, g: 190, b:   0, a: 255},
-  	{r: 255, g: 255,   b:  100, a: 255},
-  	{r: 0,   g: 255, b:   0, a: 255},
-];
+const to_rgb = (str_) => {
+  str_ = str_.replace("#", "")
+  if(str_.length == 3){
+    const aRgbHex = str_.match(/.{1}/g);
+    return [
+        parseInt(aRgbHex[0], 16)*16,
+        parseInt(aRgbHex[1], 16)*16,
+        parseInt(aRgbHex[2], 16)*16,
+        255,
+    ];
+  }
+  return [
+      120,
+      120,
+      120,
+      255,
+  ];
+}
 let refreshing = false
-console.log(socket)
+let render_duration_total = 0;
+let render_step = 0;
+// console.log(socket)
 socket.addEventListener('message', (event) => {
   if (!refreshing && event.data instanceof ArrayBuffer) {
     refreshing = true
+    const start = performance.now()
+
+    const colors = [
+      to_rgb(document.querySelector("#color_0").value),
+      to_rgb(document.querySelector("#color_1").value),
+      to_rgb(document.querySelector("#color_2").value),
+    ];
+
+    render_step += 1
     const view = new DataView(event.data);
     let ii = -4;
-    const step = view.getInt32(ii+=4)
-    const elapsed = view.getInt32(ii+=4)
-    const elapsed_compute = view.getInt32(ii+=4)
-    const elapsed_compute_total = view.getInt32(ii+=4)
+    const step = view.getFloat32(ii+=4)
+    const elapsed = view.getFloat32(ii+=4)
+    const elapsed_compute = view.getFloat32(ii+=4)
+    const elapsed_compute_total = view.getFloat32(ii+=4)
+    const clients = view.getInt32(ii+=4)
     const collisions = view.getInt32(ii+=4)
     const diameter = view.getFloat32(ii+=4)
     const particle_count = view.getInt32(ii+=4)
     ii += 4
-    texts.innerHTML = `
-      <p>bytes: ${event.data.byteLength}</p>
-      <p>step: ${step}</p>
-      <p>compute: ${elapsed_compute} μs</p>
-      <p>compute avg: ${parseInt(elapsed_compute_total/step)} μs</p>
-      <p>elapsed: ${elapsed} μs</p>
-      <p>collisions: ${collisions}</p>
-      <p>particle_count: ${particle_count}</p>
-    `
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
     for (var i = 0; i < Math.min(particle_count, 200000); i++) {
@@ -98,10 +175,43 @@ socket.addEventListener('message', (event) => {
       if (colliding) {
         color = colors[1]
       }
-      drawPixel(x,y, color);
+      // drawPixel(x, y, color);
+      drawPixel(x+DELTA_DRAW, y, colors[2]);
+      drawPixel(x-DELTA_DRAW, y, colors[2]);
+      drawPixel(x, y-DELTA_DRAW, colors[2]);
+      drawPixel(x, y+DELTA_DRAW, colors[2]);
     }
-    clear(context)
+    for (var i = 0; i < Math.min(particle_count, 200000); i++) {
+      const oi = 12
+      const x = view.getFloat32(ii + oi*i)
+      const y = view.getFloat32(ii + 4 + oi*i)
+      const colliding = view.getInt32(ii + 8 + oi*i)
+      let color = colors[1]
+      if (colliding) {
+        color = colors[0]
+      }
+      drawPixel(x, y, color);
+    }
+    // clear(context)
     context.putImageData(image, 0, 0);
+    const render_duration = performance.now() - start
+    let render_duration_str = `${render_duration.toFixed(3)}`
+    render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str
+    let avg_render_duration_str = `${(render_duration_total/render_step).toFixed(3)}`
+    avg_render_duration_str = Array.apply(null, Array(  Math.max(0, 7-avg_render_duration_str.length)  )).map(x => " ").join("") + avg_render_duration_str
+    texts.innerHTML = `
+      <p>step: ${step}</p>
+      <p>time: ${(elapsed/1000000).toFixed(1)} s</p>
+      <p>instant compute: ${(elapsed_compute/1000).toFixed(3)} ms</p>
+      <p>average compute: ${(elapsed_compute_total/step/1000).toFixed(3)} ms</p>
+      <p>instant render: ${render_duration_str} ms</p>
+      <p>average render: ${avg_render_duration_str} ms</p>
+      <p>particles: ${particle_count}</p>
+      <p>collisions: ${collisions}</p>
+      <p>clients: ${clients}</p>
+      <p>bytes: ${event.data.byteLength}</p>
+    `
+    render_duration_total += performance.now() - start
     refreshing = false
   } else {  }
 });

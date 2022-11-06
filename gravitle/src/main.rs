@@ -95,12 +95,12 @@ async fn main() -> Result<(), IoError> {
     println!("Listening on: {}", addr);
     let world = World::new(&Configuration {
         particle_count: 100_000,
-        thread_count: 6,
+        thread_count: 5,
         diameter: 0.001,
     });
-    let CRD = 0.0005;
-    let mut grid = Grid::new(&GridConfiguration { side: 2000 });
-    let mut particles = Particle::new_particles_2(&world);
+    let crd = 0.0005; // collision desponse delta
+    let mut grid = Grid::new(&GridConfiguration { side: 2048 });
+    let mut particles = Particle::new_particles_3(&world);
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
@@ -184,8 +184,8 @@ async fn main() -> Result<(), IoError> {
                                                     d1.collisions += 1;
                                                     d1.v.x -= cr.x * 0.5;
                                                     d1.v.y -= cr.y * 0.5;
-                                                    d1.p.x += wa.d.x * CRD;
-                                                    d1.p.y += wa.d.y * CRD;
+                                                    d1.p.x += wa.d.x * crd;
+                                                    d1.p.y += wa.d.y * crd;
                                                 }
                                                 {
                                                     let d2 = &mut deltas
@@ -193,8 +193,8 @@ async fn main() -> Result<(), IoError> {
                                                     d2.collisions += 1;
                                                     d2.v.x += cr.x * 0.5;
                                                     d2.v.y += cr.y * 0.5;
-                                                    d2.p.x -= wa.d.x * CRD;
-                                                    d2.p.y -= wa.d.y * CRD;
+                                                    d2.p.x -= wa.d.x * crd;
+                                                    d2.p.y -= wa.d.y * crd;
                                                 }
                                             }
                                             //   if (links_set.has(`${p1.idx}|${p2.idx}`)) {
@@ -307,12 +307,13 @@ async fn main() -> Result<(), IoError> {
                     collisions_count += p.collisions;
                 }
                 let elapsed_compute = start.elapsed().as_micros();
-                let capacity = 3 * 4 * world.particle_count + 7 * 4;
+                let capacity = 3 * 4 * world.particle_count + 8 * 4;
                 let mut data = Vec::with_capacity(capacity);
-                data.extend((step as u32).to_be_bytes().to_vec());
-                data.extend((elapsed_total as u32).to_be_bytes().to_vec());
-                data.extend((elapsed_compute as u32).to_be_bytes().to_vec());
-                data.extend((elapsed_total as u32).to_be_bytes().to_vec());
+                data.extend((step as f32).to_be_bytes().to_vec());
+                data.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data.extend((elapsed_compute as f32).to_be_bytes().to_vec());
+                data.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data.extend((peers.lock().unwrap().len() as u32).to_be_bytes().to_vec());
                 data.extend(collisions_count.to_be_bytes().to_vec());
                 data.extend((world.diameter).to_be_bytes().to_vec());
                 data.extend((world.particle_count as u32).to_be_bytes().to_vec());
@@ -338,10 +339,10 @@ async fn main() -> Result<(), IoError> {
             elapsed_total += start.elapsed().as_micros();
             step += 1;
             let delta = Duration::from_millis(10);
-            // if start.elapsed() < delta {
-            //     let sleep_duration = delta - start.elapsed();
-            //     thread::sleep(sleep_duration);
-            // }
+            if start.elapsed() < delta {
+                let sleep_duration = delta - start.elapsed();
+                thread::sleep(sleep_duration);
+            }
         });
     }
     while let Ok((stream, addr)) = listener.accept().await {
