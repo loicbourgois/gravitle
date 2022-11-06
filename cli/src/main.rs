@@ -160,21 +160,27 @@ fn host_sync(host: &str) -> bool {
             .arg("--verbose")
             .arg("--exclude")
             .arg("target")
-            .arg(format!("{}/server/", base_dir()))
-            .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/server/", host)),
-    ) && runshellcmd_default_title(
-        Command::new("rsync")
-            .arg("--recursive")
-            .arg("--verbose")
-            .arg("--exclude")
-            .arg("target")
-            .arg(format!("{}/core/", base_dir()))
-            .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/core/", host)),
+            .arg(format!("{}/gravitle/", base_dir()))
+            .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/gravitle/", host)),
+    )
+    // && runshellcmd_default_title(
+    //     Command::new("rsync")
+    //         .arg("--recursive")
+    //         .arg("--verbose")
+    //         .arg("--exclude")
+    //         .arg("target")
+    //         .arg(format!("{}/core/", base_dir()))
+    //         .arg(format!("gravitle@{}:/home/gravitle/github.com/loicbourgois/gravitle/core/", host)),
+    // )
+    && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
+            .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/gravitle/Cargo.toml"),
     )
     && runshellcmd_default_title(
         Command::new("ssh")
             .arg(format!("gravitle@{}", host))
-            .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml"),
+            .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/gravitle/Cargo.toml"),
     )
 }
 
@@ -276,14 +282,15 @@ fn host_setup(host: &str) -> bool {
 fn host_run(host: &str) -> bool {
     let filename = "gravitle";
     let file_path = &format!("{}/.ssh/{}", home_dir(), filename);
-    let screen_run = "screen -L -Logfile /home/gravitle/server.log -d -m -S server /home/gravitle/.cargo/bin/cargo run --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/server/Cargo.toml";
+    let screen_run = "screen -L -Logfile /home/gravitle/gravitle.log -d -m -S server /home/gravitle/.cargo/bin/cargo run --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/gravitle/Cargo.toml";
+    // runshellcmd_default_title(
+    //     Command::new("ssh")
+    //         .arg("-i")
+    //         .arg(file_path)
+    //         .arg(format!("gravitle@{}", host))
+    //         .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle_local/dna"),
+    // )&&
     runshellcmd_default_title(
-        Command::new("ssh")
-            .arg("-i")
-            .arg(file_path)
-            .arg(format!("gravitle@{}", host))
-            .arg("mkdir -p /home/gravitle/github.com/loicbourgois/gravitle_local/dna"),
-    ) && runshellcmd_default_title(
         Command::new("ssh")
             .arg("-i")
             .arg(file_path)
@@ -305,7 +312,7 @@ fn host_log(host: &str) -> bool {
             .arg("-i")
             .arg(file_path)
             .arg(format!("gravitle@{}", host))
-            .arg("tail -f server.log"),
+            .arg("tail -f gravitle.log"),
     )
 }
 

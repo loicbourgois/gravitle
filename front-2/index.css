@@ -42,3 +42,6 @@ button {
 button:hover {
   color: #eeaf;
 }
+input {
+  width: 6rem;
+}

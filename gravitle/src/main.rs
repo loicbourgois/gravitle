@@ -3,7 +3,7 @@ use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::collision_response;
 use crate::math::wrap_around;
-
+use chrono::{DateTime, Local, Utc};
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -15,7 +15,8 @@ mod grid;
 mod math;
 mod particle;
 use crate::particle::Particle;
-
+type Tx = Sender<Message>;
+type Peers = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 pub struct Configuration {
     pub particle_count: usize,
     pub thread_count: usize,
@@ -88,7 +89,7 @@ pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
 async fn main() -> Result<(), IoError> {
     let addr = env::args()
         .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        .unwrap_or_else(|| "0.0.0.0:8000".to_string());
     let peers = Peers::new(Mutex::new(HashMap::new()));
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
@@ -96,7 +97,7 @@ async fn main() -> Result<(), IoError> {
     let world = World::new(&Configuration {
         particle_count: 100_000,
         thread_count: 5,
-        diameter: 0.001,
+        diameter: 0.001*0.5,
     });
     let crd = 0.0005; // collision desponse delta
     let mut grid = Grid::new(&GridConfiguration { side: 2048 });
@@ -307,8 +308,12 @@ async fn main() -> Result<(), IoError> {
                     collisions_count += p.collisions;
                 }
                 let elapsed_compute = start.elapsed().as_micros();
-                let capacity = 3 * 4 * world.particle_count + 8 * 4;
+                let part_bytes = (4+4+1);
+                let capacity = world.particle_count * part_bytes
+                    + 8 * 4
+                    + 1 * 8;
                 let mut data = Vec::with_capacity(capacity);
+                data.extend  ( Utc::now().timestamp_millis().to_be_bytes().to_vec()  )  ;
                 data.extend((step as f32).to_be_bytes().to_vec());
                 data.extend((elapsed_total as f32).to_be_bytes().to_vec());
                 data.extend((elapsed_compute as f32).to_be_bytes().to_vec());
@@ -317,21 +322,28 @@ async fn main() -> Result<(), IoError> {
                 data.extend(collisions_count.to_be_bytes().to_vec());
                 data.extend((world.diameter).to_be_bytes().to_vec());
                 data.extend((world.particle_count as u32).to_be_bytes().to_vec());
-                let mut data_2: Vec<u8> = vec![0; 3 * 4 * world.particle_count];
+                let mut data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
-                    let i = pid * 3 * 4;
+                    let i = pid * part_bytes;
                     let xs = particle.p.x.to_be_bytes();
                     let ys = particle.p.y.to_be_bytes();
-                    let cs = particle.collisions.to_be_bytes();
+                    let cs = (particle.collisions.min(255) as u8).to_be_bytes();
                     data_2[i..(4 + i)].copy_from_slice(&xs[..4]);
                     data_2[(4 + i)..(8 + i)].copy_from_slice(&ys[..4]);
-                    data_2[(8 + i)..(12 + i)].copy_from_slice(&cs[..4]);
+                    data_2[(8 + i)..(9 + i)].copy_from_slice(&cs[..1]);
                 }
                 data.extend(data_2);
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
-                for x in peers.lock().unwrap().values() {
-                    x.unbounded_send(m.clone()).unwrap();
+                for x in &mut peers.lock().unwrap().values_mut() {
+                    match x.start_send(m.clone()) {
+                        Ok(_) => {
+                            // println!("send ok");
+                        }
+                        Err(e) => {
+                            // println!("send error: {}",e);
+                        }
+                    }
                 }
                 *w += 1;
             }
@@ -350,20 +362,18 @@ async fn main() -> Result<(), IoError> {
     }
     Ok(())
 }
-use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_channel::mpsc::{channel, Sender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tungstenite::protocol::Message;
-type Tx = UnboundedSender<Message>;
-type Peers = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr) {
     println!("Incoming TCP connection from: {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
         .expect("Error during the websocket handshake occurred");
     println!("WebSocket connection established: {}", addr);
-    let (tx, rx) = unbounded();
+    let (tx, rx) = channel(0);
     peers.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {

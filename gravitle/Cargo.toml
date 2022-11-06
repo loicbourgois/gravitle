@@ -12,3 +12,4 @@ futures-channel = "*"
 tungstenite = "*"
 futures-util = "*"
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "io-util"] }
+chrono = "*"

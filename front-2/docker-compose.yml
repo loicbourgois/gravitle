@@ -3,6 +3,6 @@ services:
     client:
         image: nginx
         ports:
-            - 8000:80
+            - 80:80
         volumes:
             - $HOME/github.com/loicbourgois/gravitle/front-2:/usr/share/nginx/html

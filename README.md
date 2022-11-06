@@ -6,11 +6,21 @@
 # $HOME/github.com/loicbourgois/gravitle/front/go.sh
 $HOME/github.com/loicbourgois/gravitle/gravitle/run.sh
 $HOME/github.com/loicbourgois/gravitle/front-2/go.sh
-open http://127.0.0.1:8000/
+open http://127.0.0.1:
 ```
 
 
-## Release
+## Release - front
 ```sh
 g release front
+```
+
+
+## Release - server
+```sh
+$HOME/github.com/loicbourgois/gravitle/cli/cli.sh host status
+$HOME/github.com/loicbourgois/gravitle/cli/cli.sh host log
+$HOME/github.com/loicbourgois/gravitle/cli/cli.sh host sync
+$HOME/github.com/loicbourgois/gravitle/cli/cli.sh host kill
+$HOME/github.com/loicbourgois/gravitle/cli/cli.sh host run
 ```
