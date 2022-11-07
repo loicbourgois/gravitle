@@ -309,7 +309,7 @@ async fn main() -> Result<(), IoError> {
                 }
                 let elapsed_compute = start.elapsed().as_micros();
                 let part_bytes = 2 + 2 + 1;
-                let capacity = world.particle_count * part_bytes + 8 * 4 + 1 * 8;
+                let capacity = world.particle_count * part_bytes + 8 * 4 + 8;
                 let mut data = Vec::with_capacity(capacity);
                 data.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
                 data.extend((step as f32).to_be_bytes().to_vec());
@@ -326,7 +326,7 @@ async fn main() -> Result<(), IoError> {
                     let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
                     let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
                     let cs = (particle.collisions.min(255) as u8).to_be_bytes();
-                    data_2[i..(0 + 2 + i)].copy_from_slice(&xs[..2]);
+                    data_2[i..(2 + i)].copy_from_slice(&xs[..2]);
                     data_2[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
                     data_2[(4 + i)..(4 + 1 + i)].copy_from_slice(&cs[..1]);
                 }
@@ -334,13 +334,10 @@ async fn main() -> Result<(), IoError> {
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
                 for x in &mut peers.lock().unwrap().values_mut() {
-                    match x.start_send(m.clone()) {
-                        Ok(_) => {
-                            // println!("send ok");
-                        }
-                        Err(_) => {
-                            // println!("send error: {}",e);
-                        }
+                    if let Ok(_) = x.start_send(m.clone()) {
+                        // println!("send ok");
+                    } else {
+
                     }
                 }
                 *w += 1;
