@@ -150,28 +150,31 @@ const to_rgb = (str_) => {
 let refreshing = false
 let render_duration_total = 0;
 let render_step = 0;
-let messages = 0;
+let start_step = undefined
 // console.log(socket)
 socket.addEventListener('message', (event) => {
   if (event.data instanceof ArrayBuffer) {
-    messages += 1;
-    let ii = 0;
-    const view = new DataView(event.data);
-    const server_timestamp = view.getBigInt64(ii) ; ii+=8
-    const client_timestamp = BigInt( (new Date()).getTime() );
-    // console.log("ping", client_timestamp-server_timestamp)
-    // if (client_timestamp > server_timestamp + BigInt(1*100) ) {
-    const lag = client_timestamp - server_timestamp;
-    //   return
-    // }
     const start = performance.now()
+
+    render_step += 1
+    const view = new DataView(event.data);
     const colors = [
       to_rgb(document.querySelector("#color_0").value),
       to_rgb(document.querySelector("#color_1").value),
       to_rgb(document.querySelector("#color_2").value),
     ];
-    render_step += 1
+    let ii = 0;
+
+    const server_timestamp = view.getBigInt64(ii) ; ii+=8
+    const client_timestamp = BigInt( (new Date()).getTime() );
+    const lag = client_timestamp - server_timestamp;
     const step = view.getFloat32(ii) ; ii+=4
+
+    if (start_step == undefined) {
+      start_step = step
+    }
+    const messages = step-start_step+1;
+
     const elapsed = view.getFloat32(ii) ; ii+=4
     const elapsed_compute = view.getFloat32(ii) ; ii+=4
     const elapsed_compute_total = view.getFloat32(ii) ; ii+=4
@@ -182,30 +185,49 @@ socket.addEventListener('message', (event) => {
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
     const oi = 2+2+1
-    for (var i = 0; i < Math.min(particle_count, 200000); i++) {
-      const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)
-      const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)
-      drawPixel(x+DELTA_DRAW, y, colors[2]);
-      drawPixel(x-DELTA_DRAW, y, colors[2]);
-      drawPixel(x, y-DELTA_DRAW, colors[2]);
-      drawPixel(x, y+DELTA_DRAW, colors[2]);
-    }
+    const ratio = 1.0 / (256.0 * 256.0)
     for (var i = 0; i < particle_count ; i++) {
-      const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)
-      const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)
-      const colliding = view.getInt8(ii + 4 + oi*i)
-      let color = colors[1]
-      if (colliding) {
-        color = colors[0]
-      }
+      const idx = ii + oi*i
+      const x = view.getUint16(idx) * ratio
+      const y = view.getUint16(idx+2) * ratio
+      const colliding = ( view.getInt8(idx+4) != 0)
+      const color = {
+        true: colors[0],
+        false: colors[0],
+      }[colliding]
       drawPixel(x, y, color);
-      // drawPixel(x+DELTA_DRAW, y, colors[2]);
-      //   drawPixel(x-DELTA_DRAW, y, colors[2]);
-      //   drawPixel(x, y-DELTA_DRAW, colors[2]);
-      //   drawPixel(x, y+DELTA_DRAW, colors[2]);
     }
-    clear(context)
     context.putImageData(image, 0, 0);
+    // for (var i = 0; i < Math.min(particle_count, 200000); i++) {
+    //   const x = view.getUint16(ii + oi*i) / (256.0 * 256.0) * 0.5
+    //   const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)* 0.5
+    //   drawPixel(x+DELTA_DRAW, y, colors[2]);
+    //   drawPixel(x-DELTA_DRAW, y, colors[2]);
+    //   drawPixel(x, y-DELTA_DRAW, colors[2]);
+    //   drawPixel(x, y+DELTA_DRAW, colors[2]);
+    // }
+    // for (let hey of [[0.0, 0.0], [0.5, 0.0], [0.5, 0.5], [0.0, 0.5]]) {
+    //   for (var i = 0; i < particle_count ; i++) {
+    //     const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)* 0.5
+    //     const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)* 0.5
+    //     const colliding = view.getInt8(ii + 4 + oi*i)
+    //     let color = colors[1]
+    //     if (colliding) {
+    //       color = colors[0]
+    //     }
+    //     drawPixel(x, y, color);
+    //     // drawPixel(x+DELTA_DRAW, y, colors[2]);
+    //     //   drawPixel(x-DELTA_DRAW, y, colors[2]);
+    //     //   drawPixel(x, y-DELTA_DRAW, colors[2]);
+    //     //   drawPixel(x, y+DELTA_DRAW, colors[2]);
+    //   }
+    // // }
+    // // clear(context)
+    // // context.putImageData(image, 0, 0);
+    // context.putImageData(image, image.width * 0.0, image.height * 0.0);
+    // context.putImageData(image, image.width * 0.0, image.height * 0.5);
+    // context.putImageData(image, image.width * 0.5, image.height * 0.0);
+    // context.putImageData(image, image.width * 0.5, image.height * 0.5);
     const render_duration = performance.now() - start
     let render_duration_str = `${render_duration.toFixed(3)}`
     render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str
