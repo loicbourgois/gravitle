@@ -40,7 +40,7 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
     WrapAroundResponse {
         a: a_,
         b: bbb,
-        d: delta(&a_,&bbb),
+        d: delta(&a_, &bbb),
         // d: Vector { x: 0.01, y: 0.0 },
         d_sqrd: dsqrd_min,
     }

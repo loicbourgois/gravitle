@@ -97,7 +97,7 @@ async fn main() -> Result<(), IoError> {
     let world = World::new(&Configuration {
         particle_count: 100_000,
         thread_count: 5,
-        diameter: 0.001*0.5,
+        diameter: 0.001 * 0.5,
     });
     let crd = 0.0005; // collision desponse delta
     let mut grid = Grid::new(&GridConfiguration { side: 2048 });
@@ -232,29 +232,29 @@ async fn main() -> Result<(), IoError> {
                                 p1.v.x = p1.p.x - p1.pp.x + d1.v.x;
                                 p1.v.y = p1.p.y - p1.pp.y + d1.v.y;
 
-                                p1.v.x = p1.v.x.max(-world.diameter*0.5);
-                                p1.v.x = p1.v.x.min(world.diameter*0.5);
-                                p1.v.y = p1.v.y.max(-world.diameter*0.5);
-                                p1.v.y = p1.v.y.min(world.diameter*0.5);
+                                p1.v.x = p1.v.x.max(-world.diameter * 0.5);
+                                p1.v.x = p1.v.x.min(world.diameter * 0.5);
+                                p1.v.y = p1.v.y.max(-world.diameter * 0.5);
+                                p1.v.y = p1.v.y.min(world.diameter * 0.5);
 
                                 p1.p.x = (10.0 + p1.p.x + p1.v.x + d1.p.x) % 1.0;
                                 p1.p.y = (10.0 + p1.p.y + p1.v.y + d1.p.y) % 1.0;
                                 p1.pp.x = p1.p.x - p1.v.x;
                                 p1.pp.y = p1.p.y - p1.v.y;
-                                assert!( ! d1.v.x.is_nan(), "\n{:?}", d1 );
-                                assert!( ! d1.v.y.is_nan(), "\n{:?}", d1 );
-                                assert!( ! p1.p.x.is_nan(), "\n{:?}", p1 );
-                                assert!( ! p1.p.y.is_nan(), "\n{:?}", p1 );
+                                assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
+                                assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
+                                assert!(!p1.p.x.is_nan(), "\n{:?}", p1);
+                                assert!(!p1.p.y.is_nan(), "\n{:?}", p1);
 
-                                assert!( p1.v.x >= -world.diameter, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.v.y >= -world.diameter, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.v.x <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.v.y <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
+                                assert!(p1.v.x >= -world.diameter, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.v.y >= -world.diameter, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.v.x <= world.diameter, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.v.y <= world.diameter, "\n{:?}\n{:?}", p1, d1);
 
-                                assert!( p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1 );
-                                assert!( p1.p.y <= 1.0, "\n{:?}\n{:?}", p1, d1 );
+                                assert!(p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1);
+                                assert!(p1.p.y <= 1.0, "\n{:?}\n{:?}", p1, d1);
                                 d1.collisions = 0;
                                 d1.p.x = 0.0;
                                 d1.p.y = 0.0;
@@ -308,12 +308,10 @@ async fn main() -> Result<(), IoError> {
                     collisions_count += p.collisions;
                 }
                 let elapsed_compute = start.elapsed().as_micros();
-                let part_bytes = 2+2+1;
-                let capacity = world.particle_count * part_bytes
-                    + 8 * 4
-                    + 1 * 8;
+                let part_bytes = 2 + 2 + 1;
+                let capacity = world.particle_count * part_bytes + 8 * 4 + 1 * 8;
                 let mut data = Vec::with_capacity(capacity);
-                data.extend  ( Utc::now().timestamp_millis().to_be_bytes().to_vec()  )  ;
+                data.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
                 data.extend((step as f32).to_be_bytes().to_vec());
                 data.extend((elapsed_total as f32).to_be_bytes().to_vec());
                 data.extend((elapsed_compute as f32).to_be_bytes().to_vec());

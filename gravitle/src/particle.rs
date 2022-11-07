@@ -39,8 +39,8 @@ impl Particle {
             let mut p = &mut particles[i];
             p.p.x = 0.05 * rng.gen::<f32>();
             p.p.y = 0.05 * rng.gen::<f32>();
-            p.v.x = world.diameter*0.125;
-            p.v.y = world.diameter*0.125;
+            p.v.x = world.diameter * 0.125;
+            p.v.y = world.diameter * 0.125;
             p.pp = Vector {
                 x: p.p.x - p.v.x,
                 y: p.p.y - p.v.y,
@@ -58,8 +58,8 @@ impl Particle {
             let mut p = &mut particles[i];
             p.p.x = rng.gen::<f32>();
             p.p.y = rng.gen::<f32>();
-            p.v.x = world.diameter*0.125 * (rng.gen::<f32>()-0.5);
-            p.v.y = world.diameter*0.125 * (rng.gen::<f32>()-0.5);
+            p.v.x = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
+            p.v.y = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
             p.pp = Vector {
                 x: p.p.x - p.v.x,
                 y: p.p.y - p.v.y,
