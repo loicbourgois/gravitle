@@ -337,7 +337,6 @@ async fn main() -> Result<(), IoError> {
                     if let Ok(_) = x.start_send(m.clone()) {
                         // println!("send ok");
                     } else {
-
                     }
                 }
                 *w += 1;
