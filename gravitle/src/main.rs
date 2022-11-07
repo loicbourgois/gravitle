@@ -3,7 +3,7 @@ use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::collision_response;
 use crate::math::wrap_around;
-use chrono::{DateTime, Local, Utc};
+use chrono::Utc;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -251,10 +251,10 @@ async fn main() -> Result<(), IoError> {
                                 assert!( p1.v.x <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
                                 assert!( p1.v.y <= world.diameter, "\n{:?}\n{:?}", p1, d1 );
 
-                                // assert!( p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1 );
-                                // assert!( p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1 );
-                                // assert!( p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1 );
-                                // assert!( p1.p.y <= 1.0, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1 );
+                                assert!( p1.p.y <= 1.0, "\n{:?}\n{:?}", p1, d1 );
                                 d1.collisions = 0;
                                 d1.p.x = 0.0;
                                 d1.p.y = 0.0;
@@ -308,7 +308,7 @@ async fn main() -> Result<(), IoError> {
                     collisions_count += p.collisions;
                 }
                 let elapsed_compute = start.elapsed().as_micros();
-                let part_bytes = (4+4+1);
+                let part_bytes = 2+2+1;
                 let capacity = world.particle_count * part_bytes
                     + 8 * 4
                     + 1 * 8;
@@ -325,12 +325,12 @@ async fn main() -> Result<(), IoError> {
                 let mut data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
                     let i = pid * part_bytes;
-                    let xs = particle.p.x.to_be_bytes();
-                    let ys = particle.p.y.to_be_bytes();
+                    let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
+                    let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
                     let cs = (particle.collisions.min(255) as u8).to_be_bytes();
-                    data_2[i..(4 + i)].copy_from_slice(&xs[..4]);
-                    data_2[(4 + i)..(8 + i)].copy_from_slice(&ys[..4]);
-                    data_2[(8 + i)..(9 + i)].copy_from_slice(&cs[..1]);
+                    data_2[i..(0 + 2 + i)].copy_from_slice(&xs[..2]);
+                    data_2[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
+                    data_2[(4 + i)..(4 + 1 + i)].copy_from_slice(&cs[..1]);
                 }
                 data.extend(data_2);
                 assert!(data.len() == capacity);
@@ -340,7 +340,7 @@ async fn main() -> Result<(), IoError> {
                         Ok(_) => {
                             // println!("send ok");
                         }
-                        Err(e) => {
+                        Err(_) => {
                             // println!("send error: {}",e);
                         }
                     }

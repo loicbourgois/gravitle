@@ -181,19 +181,19 @@ socket.addEventListener('message', (event) => {
     const particle_count = view.getInt32(ii) ; ii+=4
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
-    const oi = 9
-    // for (var i = 0; i < Math.min(particle_count, 200000); i++) {
-    //   const x = view.getFloat32(ii + oi*i)
-    //   const y = view.getFloat32(ii + 4 + oi*i)
-    //   drawPixel(x+DELTA_DRAW, y, colors[2]);
-    //   drawPixel(x-DELTA_DRAW, y, colors[2]);
-    //   drawPixel(x, y-DELTA_DRAW, colors[2]);
-    //   drawPixel(x, y+DELTA_DRAW, colors[2]);
-    // }
+    const oi = 2+2+1
     for (var i = 0; i < Math.min(particle_count, 200000); i++) {
-      const x = view.getFloat32(ii + oi*i)
-      const y = view.getFloat32(ii + 4 + oi*i)
-      const colliding = view.getInt8(ii + 8 + oi*i)
+      const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)
+      const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)
+      drawPixel(x+DELTA_DRAW, y, colors[2]);
+      drawPixel(x-DELTA_DRAW, y, colors[2]);
+      drawPixel(x, y-DELTA_DRAW, colors[2]);
+      drawPixel(x, y+DELTA_DRAW, colors[2]);
+    }
+    for (var i = 0; i < particle_count ; i++) {
+      const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)
+      const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)
+      const colliding = view.getInt8(ii + 4 + oi*i)
       let color = colors[1]
       if (colliding) {
         color = colors[0]
