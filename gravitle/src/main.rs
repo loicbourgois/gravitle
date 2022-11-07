@@ -334,9 +334,8 @@ async fn main() -> Result<(), IoError> {
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
                 for x in &mut peers.lock().unwrap().values_mut() {
-                    if let Ok(_) = x.start_send(m.clone()) {
+                    if x.start_send(m.clone()).is_ok() {
                         // println!("send ok");
-                    } else {
                     }
                 }
                 *w += 1;

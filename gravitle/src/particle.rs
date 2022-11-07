@@ -54,8 +54,8 @@ impl Particle {
         for pid in 0..world.particle_count {
             particles.push(Particle::new(&ParticleConfiguration { pid, world }));
         }
-        for i in 0..world.particle_count {
-            let mut p = &mut particles[i];
+        for p in &mut particles {
+            // let mut p = &mut particles[i];
             p.p.x = rng.gen::<f32>();
             p.p.y = rng.gen::<f32>();
             p.v.x = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
