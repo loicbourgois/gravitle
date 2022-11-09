@@ -14,10 +14,10 @@ use std::time::Instant;
 mod grid;
 mod math;
 mod particle;
-use uuid::Uuid;
-use crate::particle::Particle;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
+use crate::particle::Particle;
+use uuid::Uuid;
 type Tx = Sender<Message>;
 pub struct Peer {
     user_id: Option<u128>,
@@ -331,7 +331,7 @@ async fn main() -> Result<(), IoError> {
                 let part_bytes = 2 + 2 + 1;
                 let common_capacity = 4 * 9 + 8 * 1;
                 let capacity = world.particle_count * part_bytes + common_capacity;
-                let mut data =  vec![0; capacity];
+                let mut data = vec![0; capacity];
                 let mut data_common = Vec::with_capacity(common_capacity);
                 data_common.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
                 data_common.extend((step as f32).to_be_bytes().to_vec());
@@ -360,7 +360,7 @@ async fn main() -> Result<(), IoError> {
                     match x.user_id {
                         Some(user_id) => {
                             let mut data = data_common.clone();
-                            let mut count:u32 = 0;
+                            let mut count: u32 = 0;
                             let p1 = &particles[0];
                             let grid_xy = grid_xy(&p1.p, grid.side);
                             let gx = grid_xy.x as i32;
@@ -368,29 +368,29 @@ async fn main() -> Result<(), IoError> {
                             let uu = 64;
                             data.extend(p1.p.x.to_be_bytes());
                             data.extend(p1.p.y.to_be_bytes());
-                            data.extend( (p1.collisions.min(255) as u8).to_be_bytes());
+                            data.extend((p1.collisions.min(255) as u8).to_be_bytes());
                             count += 1;
-                            for x in gx-uu..gx+uu+1 {
-                                let x_ = (x as usize+grid.side) % grid.side;
-                                for y in gy-uu..gy+uu+1 {
-                                    let y_ = (y as usize+grid.side)   % grid.side;
+                            for x in gx - uu..gx + uu + 1 {
+                                let x_ = (x as usize + grid.side) % grid.side;
+                                for y in gy - uu..gy + uu + 1 {
+                                    let y_ = (y as usize + grid.side) % grid.side;
                                     let gid = grid_id(x as usize, y as usize, grid.side);
                                     for pid2 in &grid.pids[gid] {
                                         let p2 = &particles[*pid2];
                                         data.extend(p2.p.x.to_be_bytes());
                                         data.extend(p2.p.y.to_be_bytes());
-                                        data.extend( (p2.collisions.min(255) as u8).to_be_bytes());
+                                        data.extend((p2.collisions.min(255) as u8).to_be_bytes());
                                         count += 1;
                                     }
                                 }
                             }
-                            data[8+7*4..8+8*4].copy_from_slice( &count.to_be_bytes() );
-                            data[8+8*4..8+9*4].copy_from_slice( &(1.0 as f32).to_be_bytes() );
+                            data[8 + 7 * 4..8 + 8 * 4].copy_from_slice(&count.to_be_bytes());
+                            data[8 + 8 * 4..8 + 9 * 4].copy_from_slice(&(1.0 as f32).to_be_bytes());
                             let m = Message::Binary(data);
                             if x.tx.start_send(m).is_ok() {
                                 // println!("send ok");
                             }
-                        },
+                        }
                         None => {
                             if x.tx.start_send(m.clone()).is_ok() {
                                 // println!("send ok");
@@ -411,7 +411,12 @@ async fn main() -> Result<(), IoError> {
         });
     }
     while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(peers.clone(), stream, addr, users.clone()));
+        tokio::spawn(handle_connection(
+            peers.clone(),
+            stream,
+            addr,
+            users.clone(),
+        ));
     }
     Ok(())
 }
@@ -420,42 +425,36 @@ use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tungstenite::protocol::Message;
-async fn handle_connection(
-    peers: Peers,
-    raw_stream: TcpStream,
-    addr: SocketAddr,
-    users: Users,
-) {
+async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr, users: Users) {
     println!("connecting {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
         .expect("Error during the websocket handshake occurred");
     println!("connected {}", addr);
     let (tx, rx) = channel(0);
-    peers.lock().unwrap().insert(addr, Peer{
-        tx:tx,
-        user_id: None,
-        addr: addr,
-    });
+    peers.lock().unwrap().insert(
+        addr,
+        Peer {
+            tx: tx,
+            user_id: None,
+            addr: addr,
+        },
+    );
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
         let msg_txt = msg.to_text().unwrap();
-        println!(
-            "message from {}: {}",
-            addr,
-            msg.to_text().unwrap()
-        );
-        if msg_txt.starts_with("request ship ") && msg_txt.len() == 13+36 {
+        println!("message from {}: {}", addr, msg.to_text().unwrap());
+        if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
-            println!(
-                "adding user {}",
-                uuid_str,
+            println!("adding user {}", uuid_str,);
+            users.lock().unwrap().insert(
+                uuid_u128,
+                User {
+                    user_id: uuid_u128,
+                    addr: addr,
+                },
             );
-            users.lock().unwrap().insert(uuid_u128, User {
-                user_id: uuid_u128,
-                addr: addr,
-            });
             peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
         }
         future::ok(())
