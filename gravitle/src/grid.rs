@@ -1,6 +1,7 @@
 use crate::particle::Particle;
 use crate::particle::Particles;
 use crate::Vector;
+use crate::Vector_u;
 
 pub struct GridConfiguration {
     pub side: usize,
@@ -79,4 +80,14 @@ pub fn grid_id_position(position: &Vector, side: usize) -> usize {
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
     grid_id(x, y, side)
+}
+
+pub fn grid_xy (position: &Vector, side: usize) -> Vector_u {
+    let side_f32: f32 = side as f32;
+    let x: usize = (position.x * side_f32) as usize;
+    let y: usize = (position.y * side_f32) as usize;
+    return Vector_u {
+        x:x,
+        y:y,
+    }
 }

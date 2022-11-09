@@ -3,7 +3,13 @@ import {
   fill_circle_2,
   fill_text,
   clear,
-} from "./canvas.js"
+} from "../canvas.js"
+import {
+  uuid,
+} from '../utils.js'
+import {
+  rotate,
+} from '../math.js'
 const ZOOM = 2
 const DELTA_DRAW = 0.001/ZOOM
 // const ip = '136.243.64.165'
@@ -104,9 +110,10 @@ const canvas = document.querySelector("#canvas");
 const context = canvas.getContext('2d')
 resize_square(canvas, ZOOM * 0.9)
 const socket = new WebSocket(url);
-// socket.addEventListener('open', (event) => {
-//     // socket.send('Hello Server!');
-// });
+const uuid_ = uuid()
+socket.addEventListener('open', (event) => {
+  socket.send(`request ship ${uuid_}`);
+});
 socket.binaryType = "arraybuffer";
 let image = context.createImageData(canvas.width, canvas.height);
 let data = image.data;
@@ -155,7 +162,6 @@ let start_step = undefined
 socket.addEventListener('message', (event) => {
   if (event.data instanceof ArrayBuffer) {
     const start = performance.now()
-
     render_step += 1
     const view = new DataView(event.data);
     const colors = [
@@ -164,17 +170,14 @@ socket.addEventListener('message', (event) => {
       to_rgb(document.querySelector("#color_2").value),
     ];
     let ii = 0;
-
     const server_timestamp = view.getBigInt64(ii) ; ii+=8
     const client_timestamp = BigInt( (new Date()).getTime() );
     const lag = client_timestamp - server_timestamp;
     const step = view.getFloat32(ii) ; ii+=4
-
     if (start_step == undefined) {
       start_step = step
     }
     const messages = step-start_step+1;
-
     const elapsed = view.getFloat32(ii) ; ii+=4
     const elapsed_compute = view.getFloat32(ii) ; ii+=4
     const elapsed_compute_total = view.getFloat32(ii) ; ii+=4
@@ -185,50 +188,63 @@ socket.addEventListener('message', (event) => {
     const ratio = 1.0 / view.getFloat32(ii)  ; ii+=4
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
-    const oi = 2+2+1
-    // const ratio = 1.0 / (256.0 * 256.0)
-    for (var i = 0; i < particle_count ; i++) {
-      const idx = ii + oi*i
-      const x = view.getUint16(idx) * ratio
-      const y = view.getUint16(idx+2) * ratio
-      const colliding = ( view.getInt8(idx+4) != 0)
-      const color = {
-        true: colors[0],
-        false: colors[0],
-      }[colliding]
-      drawPixel(x, y, color);
+    // const diameter = 0.001 * 0.5;
+    if (ratio <= 0.5) {
+      const oi = 2+2+1
+      for (var i = 0; i < particle_count ; i++) {
+        const idx = ii + oi*i
+        const x = view.getUint16(idx) * ratio
+        const y = view.getUint16(idx+2) * ratio
+        const colliding = ( view.getInt8(idx+4) != 0)
+        const color = {
+          true: colors[0],
+          false: colors[0],
+        }[colliding]
+        drawPixel(x, y, color);
+      }
+    } else {
+      const oi = 4+4+1
+      let x_0 = view.getFloat32(ii)
+      let y_0 = view.getFloat32(ii+4)
+      for (var i = 0; i < particle_count ; i++) {
+        const idx = ii + oi*i
+        const x = view.getFloat32(idx)
+        const y = view.getFloat32(idx+4)
+        const colliding = ( view.getInt8(idx+8) != 0)
+        const color = {
+          true: colors[0],
+          false: colors[0],
+        }[colliding]
+        const zoom = 24
+        const x2 = (x - x_0)*zoom + 0.5
+        const y2 = (y - y_0)*zoom + 0.5
+        const x3 = x2 + diameter * 0.5 * zoom
+        const y3 = y2
+        drawPixel(
+          x2,
+          y2,
+          color
+        );
+        for (var u = 0; u < 100; u++) {
+
+          const p3 = rotate({
+            x: x2,
+            y: y2,
+          }, {
+            x: x3,
+            y: y3,
+          }, u/100)
+            // Rotates p2 around p1
+
+            drawPixel(
+              p3.x,
+              p3.y,
+              color
+            );
+        }
+      }
     }
     context.putImageData(image, 0, 0);
-    // for (var i = 0; i < Math.min(particle_count, 200000); i++) {
-    //   const x = view.getUint16(ii + oi*i) / (256.0 * 256.0) * 0.5
-    //   const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)* 0.5
-    //   drawPixel(x+DELTA_DRAW, y, colors[2]);
-    //   drawPixel(x-DELTA_DRAW, y, colors[2]);
-    //   drawPixel(x, y-DELTA_DRAW, colors[2]);
-    //   drawPixel(x, y+DELTA_DRAW, colors[2]);
-    // }
-    // for (let hey of [[0.0, 0.0], [0.5, 0.0], [0.5, 0.5], [0.0, 0.5]]) {
-    //   for (var i = 0; i < particle_count ; i++) {
-    //     const x = view.getUint16(ii + oi*i) / (256.0 * 256.0)* 0.5
-    //     const y = view.getUint16(ii + 2 + oi*i) / (256.0 * 256.0)* 0.5
-    //     const colliding = view.getInt8(ii + 4 + oi*i)
-    //     let color = colors[1]
-    //     if (colliding) {
-    //       color = colors[0]
-    //     }
-    //     drawPixel(x, y, color);
-    //     // drawPixel(x+DELTA_DRAW, y, colors[2]);
-    //     //   drawPixel(x-DELTA_DRAW, y, colors[2]);
-    //     //   drawPixel(x, y-DELTA_DRAW, colors[2]);
-    //     //   drawPixel(x, y+DELTA_DRAW, colors[2]);
-    //   }
-    // // }
-    // // clear(context)
-    // // context.putImageData(image, 0, 0);
-    // context.putImageData(image, image.width * 0.0, image.height * 0.0);
-    // context.putImageData(image, image.width * 0.0, image.height * 0.5);
-    // context.putImageData(image, image.width * 0.5, image.height * 0.0);
-    // context.putImageData(image, image.width * 0.5, image.height * 0.5);
     const render_duration = performance.now() - start
     let render_duration_str = `${render_duration.toFixed(3)}`
     render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str

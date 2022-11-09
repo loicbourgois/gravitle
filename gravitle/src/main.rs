@@ -14,9 +14,22 @@ use std::time::Instant;
 mod grid;
 mod math;
 mod particle;
+use uuid::Uuid;
 use crate::particle::Particle;
+use crate::grid::grid_id;
+use crate::grid::grid_xy;
 type Tx = Sender<Message>;
-type Peers = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
+pub struct Peer {
+    user_id: Option<u128>,
+    addr: SocketAddr,
+    tx: Tx,
+}
+type Peers = Arc<Mutex<HashMap<SocketAddr, Peer>>>;
+pub struct User {
+    user_id: u128,
+    addr: SocketAddr,
+}
+type Users = Arc<Mutex<HashMap<u128, User>>>;
 pub struct Configuration {
     pub particle_count: usize,
     pub thread_count: usize,
@@ -26,6 +39,11 @@ pub struct Configuration {
 pub struct Vector {
     pub x: f32,
     pub y: f32,
+}
+#[derive(Clone, Copy, Debug)]
+pub struct Vector_u {
+    pub x: usize,
+    pub y: usize,
 }
 #[derive(Debug)]
 struct Delta {
@@ -91,6 +109,7 @@ async fn main() -> Result<(), IoError> {
         .nth(1)
         .unwrap_or_else(|| "0.0.0.0:8000".to_string());
     let peers = Peers::new(Mutex::new(HashMap::new()));
+    let users = Users::new(Mutex::new(HashMap::new()));
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
@@ -99,7 +118,7 @@ async fn main() -> Result<(), IoError> {
         thread_count: 5,
         diameter: 0.001 * 0.5,
     });
-    let crd = 0.0005; // collision desponse delta
+    let crd = 0.0001; // collision response delta
     let mut grid = Grid::new(&GridConfiguration { side: 2048 });
     let mut particles = Particle::new_particles_3(&world);
     let mut deltas = Vec::new();
@@ -282,6 +301,7 @@ async fn main() -> Result<(), IoError> {
     let mut step = 0;
     {
         let peers = peers.clone();
+        let users = users.clone();
         thread::spawn(move || loop {
             let start = Instant::now();
             {
@@ -309,33 +329,73 @@ async fn main() -> Result<(), IoError> {
                 }
                 let elapsed_compute = start.elapsed().as_micros();
                 let part_bytes = 2 + 2 + 1;
-                let capacity = world.particle_count * part_bytes + 8 * 4 + 8;
-                let mut data = Vec::with_capacity(capacity);
-                data.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
-                data.extend((step as f32).to_be_bytes().to_vec());
-                data.extend((elapsed_total as f32).to_be_bytes().to_vec());
-                data.extend((elapsed_compute as f32).to_be_bytes().to_vec());
-                data.extend((elapsed_total as f32).to_be_bytes().to_vec());
-                data.extend((peers.lock().unwrap().len() as u32).to_be_bytes().to_vec());
-                data.extend(collisions_count.to_be_bytes().to_vec());
-                data.extend((world.diameter).to_be_bytes().to_vec());
-                data.extend((world.particle_count as u32).to_be_bytes().to_vec());
+                let common_capacity = 4 * 9 + 8 * 1;
+                let capacity = world.particle_count * part_bytes + common_capacity;
+                let mut data =  vec![0; capacity];
+                let mut data_common = Vec::with_capacity(common_capacity);
+                data_common.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
+                data_common.extend((step as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data_common.extend((peers.lock().unwrap().len() as u32).to_be_bytes().to_vec());
+                data_common.extend(collisions_count.to_be_bytes().to_vec());
+                data_common.extend((world.diameter).to_be_bytes().to_vec());
+                data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
+                data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
+                data[..common_capacity].copy_from_slice(&data_common);
                 let mut data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
-                    let i = pid * part_bytes;
+                    let i = common_capacity + pid * part_bytes;
                     let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
                     let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
                     let cs = (particle.collisions.min(255) as u8).to_be_bytes();
-                    data_2[i..(2 + i)].copy_from_slice(&xs[..2]);
-                    data_2[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
-                    data_2[(4 + i)..(4 + 1 + i)].copy_from_slice(&cs[..1]);
+                    data[i..(2 + i)].copy_from_slice(&xs[..2]);
+                    data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
+                    data[(4 + i)..(4 + 1 + i)].copy_from_slice(&cs[..1]);
                 }
-                data.extend(data_2);
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
                 for x in &mut peers.lock().unwrap().values_mut() {
-                    if x.start_send(m.clone()).is_ok() {
-                        // println!("send ok");
+                    match x.user_id {
+                        Some(user_id) => {
+                            let mut data = data_common.clone();
+                            let mut count:u32 = 0;
+                            let p1 = &particles[0];
+                            let grid_xy = grid_xy(&p1.p, grid.side);
+                            let gx = grid_xy.x as i32;
+                            let gy = grid_xy.y as i32;
+                            let uu = 64;
+                            data.extend(p1.p.x.to_be_bytes());
+                            data.extend(p1.p.y.to_be_bytes());
+                            data.extend( (p1.collisions.min(255) as u8).to_be_bytes());
+                            count += 1;
+                            for x in gx-uu..gx+uu+1 {
+                                let x_ = (x as usize+grid.side) % grid.side;
+                                for y in gy-uu..gy+uu+1 {
+                                    let y_ = (y as usize+grid.side)   % grid.side;
+                                    let gid = grid_id(x as usize, y as usize, grid.side);
+                                    for pid2 in &grid.pids[gid] {
+                                        let p2 = &particles[*pid2];
+                                        data.extend(p2.p.x.to_be_bytes());
+                                        data.extend(p2.p.y.to_be_bytes());
+                                        data.extend( (p2.collisions.min(255) as u8).to_be_bytes());
+                                        count += 1;
+                                    }
+                                }
+                            }
+                            data[8+7*4..8+8*4].copy_from_slice( &count.to_be_bytes() );
+                            data[8+8*4..8+9*4].copy_from_slice( &(1.0 as f32).to_be_bytes() );
+                            let m = Message::Binary(data);
+                            if x.tx.start_send(m).is_ok() {
+                                // println!("send ok");
+                            }
+                        },
+                        None => {
+                            if x.tx.start_send(m.clone()).is_ok() {
+                                // println!("send ok");
+                            }
+                        }
                     }
                 }
                 *w += 1;
@@ -351,7 +411,7 @@ async fn main() -> Result<(), IoError> {
         });
     }
     while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(peers.clone(), stream, addr));
+        tokio::spawn(handle_connection(peers.clone(), stream, addr, users.clone()));
     }
     Ok(())
 }
@@ -360,26 +420,49 @@ use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tungstenite::protocol::Message;
-async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr) {
-    println!("Incoming TCP connection from: {}", addr);
+async fn handle_connection(
+    peers: Peers,
+    raw_stream: TcpStream,
+    addr: SocketAddr,
+    users: Users,
+) {
+    println!("connecting {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
         .expect("Error during the websocket handshake occurred");
-    println!("WebSocket connection established: {}", addr);
+    println!("connected {}", addr);
     let (tx, rx) = channel(0);
-    peers.lock().unwrap().insert(addr, tx);
+    peers.lock().unwrap().insert(addr, Peer{
+        tx:tx,
+        user_id: None,
+        addr: addr,
+    });
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
+        let msg_txt = msg.to_text().unwrap();
         println!(
-            "Received a message from {}: {}",
+            "message from {}: {}",
             addr,
             msg.to_text().unwrap()
         );
+        if msg_txt.starts_with("request ship ") && msg_txt.len() == 13+36 {
+            let uuid_str = &msg_txt.replace("request ship ", "");
+            let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
+            println!(
+                "adding user {}",
+                uuid_str,
+            );
+            users.lock().unwrap().insert(uuid_u128, User {
+                user_id: uuid_u128,
+                addr: addr,
+            });
+            peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+        }
         future::ok(())
     });
     let receive_from_others = rx.map(Ok).forward(outgoing);
     pin_mut!(broadcast_incoming, receive_from_others);
     future::select(broadcast_incoming, receive_from_others).await;
-    println!("{} disconnected", &addr);
+    println!("disconnected {}", &addr);
     peers.lock().unwrap().remove(&addr);
 }

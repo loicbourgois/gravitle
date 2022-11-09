@@ -12,7 +12,7 @@ open http://127.0.0.1:
 
 ## Release - front
 ```sh
-g release front
+# TODO g release front
 ```
 
 
