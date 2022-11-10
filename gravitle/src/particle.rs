@@ -1,6 +1,6 @@
+use crate::math::rotate;
 use crate::Vector;
 use crate::World;
-use crate::math::rotate;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
 #[derive(Debug)]
@@ -35,7 +35,7 @@ impl Particle {
         }
         for p in particles.iter_mut().take(100) {
             p.p.x = 0.01 * rng.gen::<f32>();
-            p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05*0.5;
+            p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05 * 0.5;
             p.v.x = world.diameter * 0.125;
             p.v.y = world.diameter * 0.0;
             p.pp = Vector {
@@ -129,7 +129,6 @@ impl Particle {
         particles
     }
 
-
     pub fn new_particles_5(world: &World) -> Particles {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
@@ -147,18 +146,18 @@ impl Particle {
             };
         }
         {
-        let mut p0 = &mut particles[0];
-        p0.p.x = 0.5;
-        p0.p.y = 0.76;
-        p0.v.x = 0.0;
-        p0.v.y = 0.0;
-        p0.pp = Vector {
-            x: p0.p.x - p0.v.x,
-            y: p0.p.y - p0.v.y,
-        };
+            let mut p0 = &mut particles[0];
+            p0.p.x = 0.5;
+            p0.p.y = 0.76;
+            p0.v.x = 0.0;
+            p0.v.y = 0.0;
+            p0.pp = Vector {
+                x: p0.p.x - p0.v.x,
+                y: p0.p.y - p0.v.y,
+            };
         }
         let mut p1 = &mut particles[1];
-        particles[1].p.x = particles[0].p.x ;
+        particles[1].p.x = particles[0].p.x;
         particles[1].p.y = particles[0].p.y + world.diameter;
         particles[1].v.x = 0.0;
         particles[1].v.y = 0.0;
@@ -178,7 +177,6 @@ impl Particle {
         // };
         particles
     }
-
 
     pub fn new(c: &ParticleConfiguration) -> Particle {
         let mut rng = rand::thread_rng();
@@ -209,4 +207,3 @@ impl Particle {
         }
     }
 }
-

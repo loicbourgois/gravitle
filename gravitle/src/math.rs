@@ -1,6 +1,6 @@
 use crate::Particle;
 use crate::Vector;
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct WrapAroundResponse {
     pub a: Vector,
     pub b: Vector,
@@ -9,7 +9,7 @@ pub struct WrapAroundResponse {
 }
 pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
     let mut dsqrd_min = distance_sqrd(a, b);
-    let mut ijwin = [0.0,0.0];
+    let mut ijwin = [0.0, 0.0];
     let ijs = [
         [-1.0, -1.0],
         [-1.0, 0.0],
@@ -21,10 +21,13 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
         [1.0, 1.0],
     ];
     for ij in ijs {
-        let dsqrd = distance_sqrd(a, &Vector {
-            x: b.x + ij[0],
-            y: b.y + ij[1],
-        });
+        let dsqrd = distance_sqrd(
+            a,
+            &Vector {
+                x: b.x + ij[0],
+                y: b.y + ij[1],
+            },
+        );
         if dsqrd < dsqrd_min {
             dsqrd_min = dsqrd;
             ijwin = ij;
@@ -79,15 +82,14 @@ pub fn dot(a: &Vector, b: &Vector) -> f32 {
     a.x * b.x + a.y * b.y
 }
 
-
-pub fn normalize(p: &Vector, d:f32) -> Vector {
+pub fn normalize(p: &Vector, d: f32) -> Vector {
     return Vector {
         x: p.x / d,
         y: p.y / d,
-    }
+    };
 }
 
-pub fn rotate(p1: &Vector, p2: &Vector, angle:f32) -> Vector {
+pub fn rotate(p1: &Vector, p2: &Vector, angle: f32) -> Vector {
     // Rotates p2 around p1
     let angle = std::f32::consts::PI * 2.0 * angle;
     let dx = p2.x - p1.x;
@@ -95,9 +97,9 @@ pub fn rotate(p1: &Vector, p2: &Vector, angle:f32) -> Vector {
     let cos_ = angle.cos();
     let sin_ = angle.sin();
     return Vector {
-      x: p1.x + dx*cos_ - dy*sin_,
-      y: p1.y + dy*cos_ + dx*sin_
-    }
+        x: p1.x + dx * cos_ - dy * sin_,
+        y: p1.y + dy * cos_ + dx * sin_,
+    };
 }
 
 // pub fn norm(v: &Vector) -> f32 {

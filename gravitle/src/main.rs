@@ -2,6 +2,7 @@ use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::collision_response;
+use crate::math::normalize;
 use crate::math::wrap_around;
 use chrono::Utc;
 use std::sync::atomic::AtomicPtr;
@@ -9,13 +10,12 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
-use crate::math::normalize;
 use std::time::Duration;
 use std::time::Instant;
 mod grid;
-mod test_math;
 mod math;
 mod particle;
+mod test_math;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
 use crate::particle::Particle;
@@ -124,12 +124,12 @@ async fn main() -> Result<(), IoError> {
     let crd = 0.1; // collision response delta
     let crdv = 0.9;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 });
-    assert!( 1.0 / grid.side as f32 > world.diameter );
+    assert!(1.0 / grid.side as f32 > world.diameter);
     let mut particles = Particle::new_particles_5(&world);
     let mut links = Vec::new();
-    links.push([0,1]);
-    links.push([0,2]);
-    links.push([1,2]);
+    links.push([0, 1]);
+    links.push([0, 2]);
+    links.push([1, 2]);
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
@@ -256,19 +256,17 @@ async fn main() -> Result<(), IoError> {
                             let LINK_STRENGH = 0.2;
                             let factor = (world.diameter - d) * LINK_STRENGH;
                             {
-                                let d1 = &mut deltas
-                                    [tid * world.particle_count + p1.pid];
+                                let d1 = &mut deltas[tid * world.particle_count + p1.pid];
                                 d1.p.x -= n.x * factor * 0.5;
                                 d1.p.y -= n.y * factor * 0.5;
                             }
                             {
-                                let d2 = &mut deltas
-                                    [tid * world.particle_count + p2.pid];
+                                let d2 = &mut deltas[tid * world.particle_count + p2.pid];
                                 d2.p.x += n.x * factor * 0.5;
                                 d2.p.y += n.y * factor * 0.5;
                             }
-                            
-                            // p1.link_response.x -= 
+
+                            // p1.link_response.x -=
                             // p1.link_response.y -= n.y * factor * 0.5
                             // p2.link_response.x += n.x * factor * 0.5
                             // p2.link_response.y += n.y * factor * 0.5

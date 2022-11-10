@@ -1,36 +1,27 @@
 use crate::Vector;
 
-
-fn approx_equal (a: f32, b: f32) -> bool {
-    (a-b).abs() < 0.00000001
+fn approx_equal(a: f32, b: f32) -> bool {
+    (a - b).abs() < 0.00000001
 }
-
-
 
 use crate::wrap_around;
 #[test]
 fn test_wrap_around() {
     println!("boby");
-    let a = Vector {
-        x: 0.1,
-        y: 0.09,
-    };
-    let b = Vector {
-        x: 0.1015,
-        y: 0.09,
-    };
+    let a = Vector { x: 0.1, y: 0.09 };
+    let b = Vector { x: 0.1015, y: 0.09 };
     let wa = wrap_around(&a, &b);
     let diam = 0.001 * 2.0;
-    let diam_sqrd = diam*diam;
+    let diam_sqrd = diam * diam;
     println!("wa.d_sqrd: {}", wa.d_sqrd);
     println!("diam_sqrd: {}", diam_sqrd);
     println!("wa.d: {:?}", wa.d);
     println!("diam: {}", diam);
     println!("wa: {:?}", wa);
-    assert!( approx_equal( a.x, wa.a.x ) );
-    assert!( approx_equal( b.x, wa.b.x ) );
-    assert!( approx_equal( a.y, wa.a.y ) );
-    assert!( approx_equal( b.y, wa.b.y ) );
+    assert!(approx_equal(a.x, wa.a.x));
+    assert!(approx_equal(b.x, wa.b.x));
+    assert!(approx_equal(a.y, wa.a.y));
+    assert!(approx_equal(b.y, wa.b.y));
     // let a = [
     //     Vector {
     //         x: 0.9431783,
