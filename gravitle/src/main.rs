@@ -9,6 +9,7 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
+use crate::math::normalize;
 use std::time::Duration;
 use std::time::Instant;
 mod grid;
@@ -124,7 +125,11 @@ async fn main() -> Result<(), IoError> {
     let crdv = 0.9;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 });
     assert!( 1.0 / grid.side as f32 > world.diameter );
-    let mut particles = Particle::new_particles_2(&world);
+    let mut particles = Particle::new_particles_5(&world);
+    let mut links = Vec::new();
+    links.push([0,1]);
+    links.push([0,2]);
+    links.push([1,2]);
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
@@ -169,12 +174,14 @@ async fn main() -> Result<(), IoError> {
     }
     for tid in 0..world.thread_count {
         let particles_ptr = AtomicPtr::new(&mut particles);
+        let links_ptr = AtomicPtr::new(&mut links);
         let deltas_ptr = AtomicPtr::new(&mut deltas);
         let grid_ptr = AtomicPtr::new(&mut grid);
         let syncers = syncers.clone();
         threads.push(thread::spawn(move || {
             unsafe {
                 let particles = &mut (*particles_ptr.load(Ordering::Relaxed));
+                let links = &mut (*links_ptr.load(Ordering::Relaxed));
                 let deltas = &mut (*deltas_ptr.load(Ordering::Relaxed));
                 let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
                 let grid = &(*grid_ptr.load(Ordering::Relaxed));
@@ -235,6 +242,40 @@ async fn main() -> Result<(), IoError> {
                             //     println!("{}", neigh_c);
                             // }
                         }
+
+                        let size = links.len() / world.thread_count + 1;
+                        let start = size * tid;
+                        let end = (start + size).min(links.len());
+
+                        for lid in start..end {
+                            let p1 = &particles[links[lid][0]];
+                            let p2 = &particles[links[lid][1]];
+                            let wa = wrap_around(&p1.p, &p2.p);
+                            let d = wa.d_sqrd.sqrt();
+                            let n = normalize(&wa.d, d);
+                            let LINK_STRENGH = 0.2;
+                            let factor = (world.diameter - d) * LINK_STRENGH;
+                            {
+                                let d1 = &mut deltas
+                                    [tid * world.particle_count + p1.pid];
+                                d1.p.x -= n.x * factor * 0.5;
+                                d1.p.y -= n.y * factor * 0.5;
+                            }
+                            {
+                                let d2 = &mut deltas
+                                    [tid * world.particle_count + p2.pid];
+                                d2.p.x += n.x * factor * 0.5;
+                                d2.p.y += n.y * factor * 0.5;
+                            }
+                            
+                            // p1.link_response.x -= 
+                            // p1.link_response.y -= n.y * factor * 0.5
+                            // p2.link_response.x += n.x * factor * 0.5
+                            // p2.link_response.y += n.y * factor * 0.5
+
+                            // println!("tid:{} lid:{}", tid, lid);
+                        }
+
                         *w += 1;
                     }
                     wait(&syncers[1], tid);

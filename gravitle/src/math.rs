@@ -78,6 +78,28 @@ pub fn norm_sqrd(v: &Vector) -> f32 {
 pub fn dot(a: &Vector, b: &Vector) -> f32 {
     a.x * b.x + a.y * b.y
 }
+
+
+pub fn normalize(p: &Vector, d:f32) -> Vector {
+    return Vector {
+        x: p.x / d,
+        y: p.y / d,
+    }
+}
+
+pub fn rotate(p1: &Vector, p2: &Vector, angle:f32) -> Vector {
+    // Rotates p2 around p1
+    let angle = std::f32::consts::PI * 2.0 * angle;
+    let dx = p2.x - p1.x;
+    let dy = p2.y - p1.y;
+    let cos_ = angle.cos();
+    let sin_ = angle.sin();
+    return Vector {
+      x: p1.x + dx*cos_ - dy*sin_,
+      y: p1.y + dy*cos_ + dx*sin_
+    }
+}
+
 // pub fn norm(v: &Vector) -> f32 {
 //     (v.x * v.x + v.y * v.y).sqrt()
 // }

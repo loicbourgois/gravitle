@@ -1,5 +1,6 @@
 use crate::Vector;
 use crate::World;
+use crate::math::rotate;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
 #[derive(Debug)]
@@ -12,6 +13,7 @@ pub struct Particle {
     pub pid: usize, // particle id
     pub tid: usize, // thread id
     pub gid: usize,
+    pub activation: f32,
 }
 pub struct ParticleConfiguration<'a> {
     pub world: &'a World,
@@ -126,6 +128,58 @@ impl Particle {
 
         particles
     }
+
+
+    pub fn new_particles_5(world: &World) -> Particles {
+        let mut rng = rand::thread_rng();
+        let mut particles = Vec::new();
+        for pid in 0..world.particle_count {
+            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+        }
+        for p in &mut particles {
+            p.p.x = rng.gen::<f32>() * 0.5 + 0.25;
+            p.p.y = rng.gen::<f32>() * 0.5 + 0.25;
+            p.v.x = 0.0;
+            p.v.y = 0.0;
+            p.pp = Vector {
+                x: p.p.x - p.v.x,
+                y: p.p.y - p.v.y,
+            };
+        }
+        {
+        let mut p0 = &mut particles[0];
+        p0.p.x = 0.5;
+        p0.p.y = 0.76;
+        p0.v.x = 0.0;
+        p0.v.y = 0.0;
+        p0.pp = Vector {
+            x: p0.p.x - p0.v.x,
+            y: p0.p.y - p0.v.y,
+        };
+        }
+        let mut p1 = &mut particles[1];
+        particles[1].p.x = particles[0].p.x ;
+        particles[1].p.y = particles[0].p.y + world.diameter;
+        particles[1].v.x = 0.0;
+        particles[1].v.y = 0.0;
+        particles[1].pp = Vector {
+            x: particles[1].p.x - particles[1].v.x,
+            y: particles[1].p.y - particles[1].v.y,
+        };
+        // let mut p = &mut particles[2];
+        // let pos = rotate(&particles[0].p, &particles[1].p, 1.0/6.0);
+        // p.p.x = pos.x;
+        // p.p.y = pos.y;
+        // p.v.x = 0.0;
+        // p.v.y = 0.0;
+        // p.pp = Vector {
+        //     x: p.p.x - p.v.x,
+        //     y: p.p.y - p.v.y,
+        // };
+        particles
+    }
+
+
     pub fn new(c: &ParticleConfiguration) -> Particle {
         let mut rng = rand::thread_rng();
         let world = c.world;
@@ -151,6 +205,8 @@ impl Particle {
             pid: c.pid,
             collisions: 0,
             gid: 0,
+            activation: 0.0,
         }
     }
 }
+
