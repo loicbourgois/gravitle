@@ -12,6 +12,7 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 mod grid;
+mod test_math;
 mod math;
 mod particle;
 use crate::grid::grid_id;
@@ -116,11 +117,14 @@ async fn main() -> Result<(), IoError> {
     let world = World::new(&Configuration {
         particle_count: 100_000,
         thread_count: 5,
+        // diameter: 0.001 * 4.0,
         diameter: 0.001 * 0.5,
     });
-    let crd = 0.0001; // collision response delta
-    let mut grid = Grid::new(&GridConfiguration { side: 2048 });
-    let mut particles = Particle::new_particles_3(&world);
+    let crd = 0.1; // collision response delta
+    let crdv = 0.9;
+    let mut grid = Grid::new(&GridConfiguration { side: 1024 });
+    assert!( 1.0 / grid.side as f32 > world.diameter );
+    let mut particles = Particle::new_particles_2(&world);
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
@@ -188,12 +192,14 @@ async fn main() -> Result<(), IoError> {
                         let mut w = syncers[1][tid].write().unwrap();
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
+                            let mut neigh_c = 0;
                             let mut p1 = &mut particles[pid1];
                             p1.collisions = 0;
                             for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
                                     let p2 = &mut (*particles2)[*pid2];
                                     if p1.pid < p2.pid {
+                                        neigh_c += 1;
                                         let wa = wrap_around(&p1.p, &p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
                                             let cr = collision_response(&wa, p1, p2);
@@ -202,19 +208,19 @@ async fn main() -> Result<(), IoError> {
                                                     let d1 = &mut deltas
                                                         [tid * world.particle_count + p1.pid];
                                                     d1.collisions += 1;
-                                                    d1.v.x -= cr.x * 0.5;
-                                                    d1.v.y -= cr.y * 0.5;
-                                                    d1.p.x += wa.d.x * crd;
-                                                    d1.p.y += wa.d.y * crd;
+                                                    d1.v.x += cr.x * crdv;
+                                                    d1.v.y += cr.y * crdv;
+                                                    d1.p.x -= wa.d.x * crd;
+                                                    d1.p.y -= wa.d.y * crd;
                                                 }
                                                 {
                                                     let d2 = &mut deltas
                                                         [tid * world.particle_count + p2.pid];
                                                     d2.collisions += 1;
-                                                    d2.v.x += cr.x * 0.5;
-                                                    d2.v.y += cr.y * 0.5;
-                                                    d2.p.x -= wa.d.x * crd;
-                                                    d2.p.y -= wa.d.y * crd;
+                                                    d2.v.x -= cr.x * crdv;
+                                                    d2.v.y -= cr.y * crdv;
+                                                    d2.p.x += wa.d.x * crd;
+                                                    d2.p.y += wa.d.y * crd;
                                                 }
                                             }
                                             //   if (links_set.has(`${p1.idx}|${p2.idx}`)) {
@@ -225,6 +231,9 @@ async fn main() -> Result<(), IoError> {
                                     }
                                 }
                             }
+                            // if (pid1 == 0) {
+                            //     println!("{}", neigh_c);
+                            // }
                         }
                         *w += 1;
                     }
@@ -301,7 +310,7 @@ async fn main() -> Result<(), IoError> {
     let mut step = 0;
     {
         let peers = peers.clone();
-        let users = users.clone();
+        let _users = users.clone();
         thread::spawn(move || loop {
             let start = Instant::now();
             {
@@ -329,7 +338,7 @@ async fn main() -> Result<(), IoError> {
                 }
                 let elapsed_compute = start.elapsed().as_micros();
                 let part_bytes = 2 + 2 + 1;
-                let common_capacity = 4 * 9 + 8 * 1;
+                let common_capacity = 4 * 9 + 8;
                 let capacity = world.particle_count * part_bytes + common_capacity;
                 let mut data = vec![0; capacity];
                 let mut data_common = Vec::with_capacity(common_capacity);
@@ -344,7 +353,7 @@ async fn main() -> Result<(), IoError> {
                 data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
                 data[..common_capacity].copy_from_slice(&data_common);
-                let mut data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
+                let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
                     let i = common_capacity + pid * part_bytes;
                     let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
@@ -358,7 +367,7 @@ async fn main() -> Result<(), IoError> {
                 let m = Message::Binary(data);
                 for x in &mut peers.lock().unwrap().values_mut() {
                     match x.user_id {
-                        Some(user_id) => {
+                        Some(_user_id) => {
                             let mut data = data_common.clone();
                             let mut count: u32 = 0;
                             let p1 = &particles[0];
@@ -371,9 +380,9 @@ async fn main() -> Result<(), IoError> {
                             data.extend((p1.collisions.min(255) as u8).to_be_bytes());
                             count += 1;
                             for x in gx - uu..gx + uu + 1 {
-                                let x_ = (x as usize + grid.side) % grid.side;
+                                let _x_ = (x as usize + grid.side) % grid.side;
                                 for y in gy - uu..gy + uu + 1 {
-                                    let y_ = (y as usize + grid.side) % grid.side;
+                                    let _y_ = (y as usize + grid.side) % grid.side;
                                     let gid = grid_id(x as usize, y as usize, grid.side);
                                     for pid2 in &grid.pids[gid] {
                                         let p2 = &particles[*pid2];
@@ -385,7 +394,7 @@ async fn main() -> Result<(), IoError> {
                                 }
                             }
                             data[8 + 7 * 4..8 + 8 * 4].copy_from_slice(&count.to_be_bytes());
-                            data[8 + 8 * 4..8 + 9 * 4].copy_from_slice(&(1.0 as f32).to_be_bytes());
+                            data[8 + 8 * 4..8 + 9 * 4].copy_from_slice(&1.0_f32.to_be_bytes());
                             let m = Message::Binary(data);
                             if x.tx.start_send(m).is_ok() {
                                 // println!("send ok");
@@ -435,9 +444,9 @@ async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr
     peers.lock().unwrap().insert(
         addr,
         Peer {
-            tx: tx,
+            tx,
             user_id: None,
-            addr: addr,
+            addr,
         },
     );
     let (outgoing, incoming) = ws_stream.split();
@@ -452,7 +461,7 @@ async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr
                 uuid_u128,
                 User {
                     user_id: uuid_u128,
-                    addr: addr,
+                    addr,
                 },
             );
             peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);

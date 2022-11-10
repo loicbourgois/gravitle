@@ -2,9 +2,6 @@ use crate::Vector;
 use crate::World;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
-// impl Particles {
-//
-// }
 #[derive(Debug)]
 pub struct Particle {
     pub p: Vector,
@@ -20,7 +17,6 @@ pub struct ParticleConfiguration<'a> {
     pub world: &'a World,
     pub pid: usize,
 }
-// todo: elapsed to frontedn as float
 impl Particle {
     pub fn new_particles(world: &World) -> Particles {
         let mut particles = Vec::new();
@@ -35,11 +31,11 @@ impl Particle {
         for pid in 0..world.particle_count {
             particles.push(Particle::new(&ParticleConfiguration { pid, world }));
         }
-        for p in particles.iter_mut().take(1000) {
-            p.p.x = 0.05 * rng.gen::<f32>();
-            p.p.y = 0.05 * rng.gen::<f32>();
+        for p in particles.iter_mut().take(100) {
+            p.p.x = 0.01 * rng.gen::<f32>();
+            p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05*0.5;
             p.v.x = world.diameter * 0.125;
-            p.v.y = world.diameter * 0.125;
+            p.v.y = world.diameter * 0.0;
             p.pp = Vector {
                 x: p.p.x - p.v.x,
                 y: p.p.y - p.v.y,
@@ -54,7 +50,6 @@ impl Particle {
             particles.push(Particle::new(&ParticleConfiguration { pid, world }));
         }
         for p in &mut particles {
-            // let mut p = &mut particles[i];
             p.p.x = rng.gen::<f32>();
             p.p.y = rng.gen::<f32>();
             p.v.x = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
@@ -64,6 +59,71 @@ impl Particle {
                 y: p.p.y - p.v.y,
             };
         }
+        particles
+    }
+    pub fn new_particles_4(world: &World) -> Particles {
+        let mut rng = rand::thread_rng();
+        let mut particles = Vec::new();
+        for pid in 0..world.particle_count {
+            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+        }
+        for p in &mut particles {
+            p.p.x = rng.gen::<f32>() * 0.5 + 0.25;
+            p.p.y = rng.gen::<f32>() * 0.5 + 0.25;
+            p.v.x = 0.0;
+            p.v.y = 0.0;
+            p.pp = Vector {
+                x: p.p.x - p.v.x,
+                y: p.p.y - p.v.y,
+            };
+        }
+        let mut p = &mut particles[0];
+        p.p.x = 0.1;
+        p.p.y = 0.09;
+        p.v.x = 0.0;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+        let mut p = &mut particles[1];
+        p.p.x = 0.1015;
+        p.p.y = 0.09;
+        p.v.x = 0.0;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+
+        let mut p = &mut particles[4];
+        p.p.x = 0.1;
+        p.p.y = 0.1;
+        p.v.x = 0.0;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+        let mut p = &mut particles[3];
+        p.p.x = 0.11;
+        p.p.y = 0.1;
+        p.v.x = -0.000003;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+        let mut p = &mut particles[2];
+        p.p.x = 0.1015;
+        p.p.y = 0.1;
+        p.v.x = 0.0;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+
         particles
     }
     pub fn new(c: &ParticleConfiguration) -> Particle {

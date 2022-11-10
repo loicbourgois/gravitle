@@ -121,11 +121,13 @@ let dim = canvas.width;
 const drawPixel = (x, y, c) => {
   	let roundedX = Math.round(x*dim);
   	let roundedY = Math.round(y*dim);
-  	let index = 4 * (canvas.width * roundedY + roundedX);
-  	data[index + 0] = c[0];
-    data[index + 1] = c[1];
-    data[index + 2] = c[2];
-    data[index + 3] = c[3];
+    if (roundedX > 0 && roundedX < dim && roundedY > 0 && roundedY < dim) {
+      let index = 4 * (canvas.width * roundedY + roundedX);
+      data[index + 0] = c[0];
+      data[index + 1] = c[1];
+      data[index + 2] = c[2];
+      data[index + 3] = c[3];
+    }
 }
 const to_rgb = (str_) => {
   str_ = str_.replace("#", "")
@@ -173,6 +175,9 @@ socket.addEventListener('message', (event) => {
     const server_timestamp = view.getBigInt64(ii) ; ii+=8
     const client_timestamp = BigInt( (new Date()).getTime() );
     const lag = client_timestamp - server_timestamp;
+    if (lag > 100 && render_step%2 == 0) {
+      return
+    } 
     const step = view.getFloat32(ii) ; ii+=4
     if (start_step == undefined) {
       start_step = step
@@ -198,7 +203,7 @@ socket.addEventListener('message', (event) => {
         const colliding = ( view.getInt8(idx+4) != 0)
         const color = {
           true: colors[0],
-          false: colors[0],
+          false: colors[1],
         }[colliding]
         drawPixel(x, y, color);
       }
@@ -213,9 +218,9 @@ socket.addEventListener('message', (event) => {
         const colliding = ( view.getInt8(idx+8) != 0)
         const color = {
           true: colors[0],
-          false: colors[0],
+          false: colors[1],
         }[colliding]
-        const zoom = 24
+        const zoom = 20
         const x2 = (x - x_0)*zoom + 0.5
         const y2 = (y - y_0)*zoom + 0.5
         const x3 = x2 + diameter * 0.5 * zoom
@@ -225,17 +230,16 @@ socket.addEventListener('message', (event) => {
           y2,
           color
         );
-        for (var u = 0; u < 100; u++) {
-
+        const reso = 20
+        for (var u = 0; u < reso; u++) {
           const p3 = rotate({
             x: x2,
             y: y2,
           }, {
             x: x3,
             y: y3,
-          }, u/100)
+          }, u/reso)
             // Rotates p2 around p1
-
             drawPixel(
               p3.x,
               p3.y,
@@ -250,13 +254,16 @@ socket.addEventListener('message', (event) => {
     render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str
     let avg_render_duration_str = `${(render_duration_total/render_step).toFixed(3)}`
     avg_render_duration_str = Array.apply(null, Array(  Math.max(0, 7-avg_render_duration_str.length)  )).map(x => " ").join("") + avg_render_duration_str
+   
+    let instant_compute_str = `${(elapsed_compute/1000).toFixed(3)}`
+    instant_compute_str = Array.apply(null, Array(  Math.max(0, 6-instant_compute_str.length)  )).map(x => " ").join("") + instant_compute_str
     texts.innerHTML = `
       <p>server time: ${server_timestamp}</p>
       <p>client time: ${client_timestamp}</p>
       <p>lag: ${lag}</p>
       <p>step: ${step}</p>
       <p>time: ${(elapsed/1000000).toFixed(1)} s</p>
-      <p>instant compute: ${(elapsed_compute/1000).toFixed(3)} ms</p>
+      <p>instant compute: ${instant_compute_str} ms</p>
       <p>average compute: ${(elapsed_compute_total/step/1000).toFixed(3)} ms</p>
       <p>instant render: ${render_duration_str} ms</p>
       <p>average render: ${avg_render_duration_str} ms</p>

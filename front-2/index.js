@@ -6,8 +6,8 @@ import {
 } from "./canvas.js"
 const ZOOM = 2
 const DELTA_DRAW = 0.001/ZOOM
-// const ip = '136.243.64.165'
-const ip = 'localhost'
+const ip = '136.243.64.165'
+// const ip = 'localhost'
 const url = `ws://${ip}:8000`
 document.body.innerHTML = `
   <div id="left">

@@ -86,5 +86,5 @@ pub fn grid_xy(position: &Vector, side: usize) -> Vector_u {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
-    return Vector_u { x: x, y: y };
+    Vector_u { x, y }
 }
