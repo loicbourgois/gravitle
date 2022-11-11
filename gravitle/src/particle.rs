@@ -37,7 +37,7 @@ impl Particle {
         for p in particles.iter_mut().take(100) {
             p.p.x = 0.01 * rng.gen::<f32>();
             p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05 * 0.5;
-            p.v.x = world.diameter * 0.125;
+            p.v.x = world.diameter * 0.5;
             p.v.y = world.diameter * 0.0;
             p.pp = Vector {
                 x: p.p.x - p.v.x,
@@ -90,7 +90,7 @@ impl Particle {
             y: p.p.y - p.v.y,
         };
         let mut p = &mut particles[1];
-        p.p.x = 0.1015;
+        p.p.x = 0.105;
         p.p.y = 0.09;
         p.v.x = 0.0;
         p.v.y = 0.0;
@@ -126,7 +126,6 @@ impl Particle {
             x: p.p.x - p.v.x,
             y: p.p.y - p.v.y,
         };
-
         particles
     }
 
@@ -137,8 +136,8 @@ impl Particle {
             particles.push(Particle::new(&ParticleConfiguration { pid, world }));
         }
         for p in &mut particles {
-            p.p.x = rng.gen::<f32>() * 0.5 + 0.25;
-            p.p.y = rng.gen::<f32>() * 0.5 + 0.25;
+            p.p.x = rng.gen::<f32>() ;
+            p.p.y = rng.gen::<f32>() ;
             p.v.x = 0.0;
             p.v.y = 0.0;
             p.pp = Vector {
@@ -149,7 +148,7 @@ impl Particle {
         {
             let mut p0 = &mut particles[0];
             p0.p.x = 0.5;
-            p0.p.y = 0.76;
+            p0.p.y = 0.765;
             p0.v.x = 0.0;
             p0.v.y = 0.0;
             p0.pp = Vector {
@@ -157,25 +156,52 @@ impl Particle {
                 y: p0.p.y - p0.v.y,
             };
         }
-        particles[1].p.x = particles[0].p.x;
-        particles[1].p.y = particles[0].p.y + world.diameter;
+        let pos = rotate(&particles[0].p, &Vector {
+            x: particles[0].p.x + world.diameter ,
+            y: particles[0].p.y
+        }, 4.0 / 12.0);
+        particles[1].p = pos;
         particles[1].v.x = 0.0;
         particles[1].v.y = 0.0;
         particles[1].pp = Vector {
             x: particles[1].p.x - particles[1].v.x,
             y: particles[1].p.y - particles[1].v.y,
         };
-        let pos = rotate(&particles[0].p, &particles[1].p, 1.0 / 6.0);
-        let mut p = &mut particles[2];
-        p.p.x = pos.x;
-        p.p.y = pos.y;
-        p.v.x = 0.0;
-        p.v.y = 0.0;
-        p.pp = Vector {
-            x: p.p.x - p.v.x,
-            y: p.p.y - p.v.y,
-        };
-        p.activation = 1.0;
+
+        let parts = [
+            (0,1, "armor"),
+            (0,2, "armor"),
+            (0,3, "armor"),
+            (0,4, "armor"),
+            (0,5, "armor"),
+            (3,2, "armor"),
+            (3,7, "armor"),
+            (8,7, "armor"),
+            (9,7, "armor"),
+            (1,6, "armor"),
+            (11,6, "armor"),
+            (11,12, "armor"),
+            (11,13, "armor"),
+          ];
+
+        let mut pid3 = 2;
+        for part in parts {
+            let pid1 = part.0;
+            let pid2 = part.1;
+            let pos = rotate(&particles[pid1].p, &particles[pid2].p, -1.0 / 6.0);
+            let mut p = &mut particles[pid3];
+            p.p.x = pos.x;
+            p.p.y = pos.y;
+            p.v.x = 0.0;
+            p.v.y = 0.0;
+            p.pp = Vector {
+                x: p.p.x - p.v.x,
+                y: p.p.y - p.v.y,
+            };
+            pid3 += 1;
+        }
+        // particles[14].activation = 1.0;
+        // particles[10].activation = 1.0;
         particles
     }
 

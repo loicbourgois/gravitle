@@ -89,6 +89,14 @@ pub fn normalize(p: &Vector, d: f32) -> Vector {
     }
 }
 
+pub fn normalize_2(p: &Vector) -> Vector {
+    let d = (p.x * p.x + p.y * p.y).sqrt();
+    Vector {
+        x: p.x / d,
+        y: p.y / d,
+    }
+}
+
 pub fn rotate(p1: &Vector, p2: &Vector, angle: f32) -> Vector {
     // Rotates p2 around p1
     let angle = std::f32::consts::PI * 2.0 * angle;

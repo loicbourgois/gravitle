@@ -12,8 +12,8 @@ import {
 } from '../math.js'
 const ZOOM = 1
 const DELTA_DRAW = 0.001/ZOOM
-// const ip = '136.243.64.165'
-const ip = 'localhost'
+const ip = '136.243.64.165'
+// const ip = 'localhost'
 const url = `ws://${ip}:8000`
 document.body.innerHTML = `
   <div id="left">
@@ -30,7 +30,7 @@ document.body.innerHTML = `
     </div>
     <div>
       <label>colission:   </label>
-      <input id="color_1" value="#f00" />
+      <input id="color_1" value="#ff8" />
     </div>
     <div>
       <label>activation:   </label>
@@ -38,7 +38,7 @@ document.body.innerHTML = `
     </div>
     <div>
       <label>activattion+colission:   </label>
-      <input id="color_3" value="#f00" />
+      <input id="color_3" value="#b0f" />
     </div>
   </div>
 `
@@ -115,9 +115,59 @@ const context = canvas.getContext('2d')
 resize_square(canvas, ZOOM * 0.9)
 const socket = new WebSocket(url);
 const uuid_ = uuid()
-socket.addEventListener('open', (event) => {
-  socket.send(`request ship ${uuid_}`);
+
+
+
+document.addEventListener("keydown", (e) => {
+  // if (key_bindings.get(e.key)) {
+  //   if (key_allowed) {
+  //     document.querySelectorAll(".disappearable").forEach((x, i) => {
+  //       x.classList.add('disappear')
+  //     });
+  //     for (let idx of key_bindings.get(e.key)) {
+  //       parts[idx].activated = true
+  //     }
+  //   }
+  //   return
+  // }
+  // if (e.key == " " ) {
+  //   if (winner != undefined && key_allowed) {
+  //     again()
+  //   }
+  //   return
+  // }
+  // document.querySelectorAll(".disappearable").forEach((x, i) => {
+  //   x.classList.remove('disappear')
+  // });
+  if (e.key == "s") {
+    send("14 1")
+  }
+  if (e.key == "d") {
+    send("10 1")
+  }
 });
+document.addEventListener("keyup", (e) => {
+  if (e.key == "s") {
+    send("14 0")
+  }
+  if (e.key == "d") {
+    send("10 0")
+  }
+});
+
+
+
+const send = (m) => {
+  console.log(m)
+  socket.send(m)
+}
+
+
+socket.addEventListener('open', (event) => {
+  send(`request ship ${uuid_}`)
+});
+
+
 socket.binaryType = "arraybuffer";
 let image = context.createImageData(canvas.width, canvas.height);
 let data = image.data;
@@ -205,11 +255,8 @@ socket.addEventListener('message', (event) => {
         const idx = ii + oi*i
         const x = view.getUint16(idx) * ratio
         const y = view.getUint16(idx+2) * ratio
-        const colliding = ( view.getInt8(idx+4) != 0)
-        const color = {
-          true: colors[0],
-          false: colors[1],
-        }[colliding]
+        const status = view.getInt8(idx+4)
+        const color = colors[status]
         drawPixel(x, y, color);
       }
     } else {
@@ -222,7 +269,7 @@ socket.addEventListener('message', (event) => {
         const y = view.getFloat32(idx+4)
         const status = view.getInt8(idx+8)
         const color = colors[status]
-        const zoom = 30
+        const zoom = 40
         const x2 = (x - x_0)*zoom + 0.5
         const y2 = (y - y_0)*zoom + 0.5
         const x3 = x2 + diameter * 0.5 * zoom
@@ -232,7 +279,7 @@ socket.addEventListener('message', (event) => {
           y2,
           color
         );
-        const reso = 20
+        const reso = 30
         for (var u = 0; u < reso; u++) {
           const p3 = rotate({
             x: x2,

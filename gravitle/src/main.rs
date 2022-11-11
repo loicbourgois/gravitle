@@ -11,11 +11,13 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
+use crate::math::normalize_2;
 use std::time::Instant;
 mod grid;
 mod math;
 mod network;
 mod particle;
+// use std::collections::HashMap;
 mod test_math;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
@@ -31,6 +33,7 @@ use uuid::Uuid;
 pub struct User {
     pub user_id: u128,
     pub addr: SocketAddr,
+    pub orders: HashMap<usize, f32>,
 }
 type Users = Arc<Mutex<HashMap<u128, User>>>;
 pub struct Configuration {
@@ -57,6 +60,7 @@ struct Delta {
     tid: usize, // thread id
     dtid: usize,
     did: usize,
+    direction: Vector,
 }
 pub struct World {
     pub particle_count: usize,
@@ -117,20 +121,55 @@ async fn main() -> Result<(), IoError> {
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
     let world = World::new(&Configuration {
-        particle_count: 100_000,
+        particle_count: 50_000,
         thread_count: 5,
-        // diameter: 0.001 * 4.0,
-        diameter: 0.001 * 0.5,
+        diameter: 0.001 * 0.5 ,
     });
-    let crd = 0.1; // collision response delta
-    let crdv = 0.9;
+    let crd = 0.01;    // collision response delta (position)
+    let crdv = 0.9;     // collision response delta (velocity)
+    let LINK_STRENGH = 0.2;
+    let linkt_length_ratio = 1.0;
+    let booster_acceleration = 0.0001*0.05;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 });
     assert!(1.0 / grid.side as f32 > world.diameter);
-    let mut particles = Particle::new_particles_5(&world);
-    let mut links = Vec::new();
-    links.push([0, 1]);
-    links.push([0, 2]);
-    links.push([1, 2]);
+    let mut links: Vec<[usize;2]> = Vec::new();
+    let setup = 5;
+    let mut particles = Particle::new_particles_4(&world);
+    if setup == 5 {
+        particles = Particle::new_particles_5(&world);
+        links.push([0, 1]);
+        links.push([0, 2]);
+        links.push([0, 3]);
+        links.push([0, 4]);
+        links.push([0, 5]);
+        links.push([0, 6]);
+        links.push([1, 2]);
+        links.push([2, 3]);
+        links.push([3, 4]);
+        links.push([4, 5]);
+        links.push([5, 6]);
+        links.push([1, 6]);
+        links.push([3, 8]);
+        links.push([3, 7]);
+        links.push([2, 7]);
+        links.push([7, 8]);
+        links.push([8, 9]);
+        links.push([7, 9]);
+        links.push([9, 10]);
+        links.push([7, 10]);
+        links.push([6, 11]);
+        links.push([11, 12]);
+        links.push([1, 11]);
+        links.push([11, 13]);
+        links.push([11, 14]);
+        links.push([6, 12]);
+        links.push([12, 13]);
+        links.push([13, 14]);
+    }
+    for link in &links {
+        assert!(link[0] < link[1]);
+    }
+
     let mut deltas = Vec::new();
     for dtid in 0..world.thread_count {
         for pid in 0..world.particle_count {
@@ -144,6 +183,7 @@ async fn main() -> Result<(), IoError> {
                 did: deltas.len(),
                 p: Vector { x: 0.0, y: 0.0 },
                 v: Vector { x: 0.0, y: 0.0 },
+                direction: Vector { x: 0.0, y: 0.0 },
             });
         }
     }
@@ -194,6 +234,7 @@ async fn main() -> Result<(), IoError> {
                     wait(&syncers[0], tid);
                     //
                     // Read particles
+                    // Read link
                     // Write deltas
                     //
                     {
@@ -202,7 +243,6 @@ async fn main() -> Result<(), IoError> {
                             let pid1 = i * world.thread_count + tid;
                             let mut neigh_c = 0;
                             let mut p1 = &mut particles[pid1];
-                            p1.collisions = 0;
                             for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
                                     let p2 = &mut (*particles2)[*pid2];
@@ -254,40 +294,68 @@ async fn main() -> Result<(), IoError> {
                             let wa = wrap_around(&p1.p, &p2.p);
                             let d = wa.d_sqrd.sqrt();
                             let n = normalize(&wa.d, d);
-                            let LINK_STRENGH = 0.2;
-                            let factor = (world.diameter - d) * LINK_STRENGH;
+                            let factor = (world.diameter*linkt_length_ratio - d) * LINK_STRENGH;
+
+                            if wa.d_sqrd < world.particle_diameter_sqrd {
+                                let cr = collision_response(&wa, p1, p2);
+                                if !cr.x.is_nan() && !cr.y.is_nan() {
+                                    {
+                                        let d1 = &mut deltas
+                                            [tid * world.particle_count + p1.pid];
+                                        d1.collisions += 1;
+                                        d1.v.x -= cr.x * crdv * 0.5;
+                                        d1.v.y -= cr.y * crdv * 0.5;
+                                        d1.p.x += wa.d.x * crd;
+                                        d1.p.y += wa.d.y * crd;
+                                    }
+                                    {
+                                        let d2 = &mut deltas
+                                            [tid * world.particle_count + p2.pid];
+                                        d2.collisions += 1;
+                                        d2.v.x += cr.x * crdv * 0.5;
+                                        d2.v.y += cr.y * crdv * 0.5;
+                                        d2.p.x -= wa.d.x * crd;
+                                        d2.p.y -= wa.d.y * crd;
+                                    }
+                                }
+                            }
+                            if !n.x.is_nan() && !n.y.is_nan() {
+
                             {
                                 let d1 = &mut deltas[tid * world.particle_count + p1.pid];
-                                d1.p.x -= n.x * factor * 0.5;
-                                d1.p.y -= n.y * factor * 0.5;
+                                d1.v.x -= n.x * factor;
+                                d1.v.y -= n.y * factor;
+                                d1.direction.x += wa.d.x;
+                                d1.direction.y += wa.d.y;
                             }
                             {
                                 let d2 = &mut deltas[tid * world.particle_count + p2.pid];
-                                d2.p.x += n.x * factor * 0.5;
-                                d2.p.y += n.y * factor * 0.5;
+                                d2.v.x += n.x * factor;
+                                d2.v.y += n.y * factor;
+                                d2.direction.x -= wa.d.x;
+                                d2.direction.y -= wa.d.y;
                             }
-
-                            // p1.link_response.x -=
-                            // p1.link_response.y -= n.y * factor * 0.5
-                            // p2.link_response.x += n.x * factor * 0.5
-                            // p2.link_response.y += n.y * factor * 0.5
-
-                            // println!("tid:{} lid:{}", tid, lid);
                         }
-
+                        }
                         *w += 1;
                     }
                     wait(&syncers[1], tid);
                     //
+                    // Reset particle
                     // Read delta
-                    // Write particle
                     // Reset delta
+                    // Write particle
                     //
                     {
                         let mut w = syncers[2][tid].write().unwrap();
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
                             let mut p1 = &mut particles[pid1];
+                            p1.collisions = 0;
+                            p1.direction.x = 0.0;
+                            p1.direction.y = 0.0;
+                            p1.v.x = p1.p.x - p1.pp.x;
+                            p1.v.y = p1.p.y - p1.pp.y;
                             for tid in 0..world.thread_count {
                                 let d1 = &mut deltas[tid * world.particle_count + p1.pid];
                                 // assert!(d1.p.x >= 0.0, "\n{:?}", d1);
@@ -296,39 +364,48 @@ async fn main() -> Result<(), IoError> {
                                 // assert!(d1.p.y <= 1.0, "\n{:?}", d1);
                                 assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
                                 assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
+                                assert!(!d1.p.x.is_nan(), "\n{:?}", d1);
+                                assert!(!d1.p.y.is_nan(), "\n{:?}", d1);
                                 p1.collisions += d1.collisions;
-                                p1.v.x = p1.p.x - p1.pp.x + d1.v.x;
-                                p1.v.y = p1.p.y - p1.pp.y + d1.v.y;
-
-                                p1.v.x = p1.v.x.max(-world.diameter * 0.5);
-                                p1.v.x = p1.v.x.min(world.diameter * 0.5);
-                                p1.v.y = p1.v.y.max(-world.diameter * 0.5);
-                                p1.v.y = p1.v.y.min(world.diameter * 0.5);
-
-                                p1.p.x = (10.0 + p1.p.x + p1.v.x + d1.p.x) % 1.0;
-                                p1.p.y = (10.0 + p1.p.y + p1.v.y + d1.p.y) % 1.0;
-                                p1.pp.x = p1.p.x - p1.v.x;
-                                p1.pp.y = p1.p.y - p1.v.y;
-                                assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
-                                assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
-                                assert!(!p1.p.x.is_nan(), "\n{:?}", p1);
-                                assert!(!p1.p.y.is_nan(), "\n{:?}", p1);
-
-                                assert!(p1.v.x >= -world.diameter, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.v.y >= -world.diameter, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.v.x <= world.diameter, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.v.y <= world.diameter, "\n{:?}\n{:?}", p1, d1);
-
-                                assert!(p1.p.x >= 0.0, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.p.y >= 0.0, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.p.x <= 1.0, "\n{:?}\n{:?}", p1, d1);
-                                assert!(p1.p.y <= 1.0, "\n{:?}\n{:?}", p1, d1);
+                                p1.direction.x += d1.direction.x;
+                                p1.direction.y += d1.direction.y;
+                                p1.v.x += d1.v.x;
+                                p1.v.y += d1.v.y;
+                                p1.p.x += d1.p.x;
+                                p1.p.y += d1.p.y;
                                 d1.collisions = 0;
                                 d1.p.x = 0.0;
                                 d1.p.y = 0.0;
                                 d1.v.x = 0.0;
                                 d1.v.y = 0.0;
+                                d1.direction.x = 0.0;
+                                d1.direction.y = 0.0;
                             }
+                            p1.direction = normalize_2(&p1.direction);
+                            if p1.direction.x.is_nan() || p1.direction.y.is_nan() {
+                                p1.direction.x = 0.0;
+                                p1.direction.y = 0.0;
+                            }
+                            p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
+                            p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
+                            p1.v.x = p1.v.x.max(-world.diameter * 0.5);
+                            p1.v.x = p1.v.x.min(world.diameter * 0.5);
+                            p1.v.y = p1.v.y.max(-world.diameter * 0.5);
+                            p1.v.y = p1.v.y.min(world.diameter * 0.5);
+                            p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
+                            p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
+                            p1.pp.x = p1.p.x - p1.v.x;
+                            p1.pp.y = p1.p.y - p1.v.y;
+                            assert!(!p1.p.x.is_nan(), "\n{:?}", p1);
+                            assert!(!p1.p.y.is_nan(), "\n{:?}", p1);
+                            assert!(p1.v.x >= -world.diameter, "\n{:?}", p1);
+                            assert!(p1.v.y >= -world.diameter, "\n{:?}", p1);
+                            assert!(p1.v.x <= world.diameter, "\n{:?}", p1);
+                            assert!(p1.v.y <= world.diameter, "\n{:?}", p1);
+                            assert!(p1.p.x >= 0.0, "\n{:?}", p1);
+                            assert!(p1.p.y >= 0.0, "\n{:?}", p1);
+                            assert!(p1.p.x <= 1.0, "\n{:?}", p1);
+                            assert!(p1.p.y <= 1.0, "\n{:?}", p1);
                         }
                         *w += 1;
                     }
@@ -350,13 +427,19 @@ async fn main() -> Result<(), IoError> {
     let mut step = 0;
     {
         let peers = peers.clone();
-        let _users = users.clone();
+        let users = users.clone();
         thread::spawn(move || loop {
             let start = Instant::now();
             {
                 let mut w = syncers[0][world.thread_count].write().unwrap();
                 grid.update_01();
                 grid.update_02(&mut particles);
+                for user in users.lock().unwrap().values_mut() {
+                    for (pid, activation) in &user.orders {
+                        particles[*pid].activation = *activation;
+                    }
+                    user.orders.clear();
+                }
                 *w += 1;
             }
             wait(&syncers[0], world.thread_count);
@@ -398,10 +481,17 @@ async fn main() -> Result<(), IoError> {
                     let i = common_capacity + pid * part_bytes;
                     let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
                     let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
-                    let cs = (particle.collisions.min(255) as u8).to_be_bytes();
+                    // let cs = (particle.collisions.min(255) as u8).to_be_bytes();
+                    let mut status: u8 = 0;
+                    if particle.collisions > 0 {
+                        status += 1;
+                    }
+                    if particle.activation > 0.01 {
+                        status += 2;
+                    }
                     data[i..(2 + i)].copy_from_slice(&xs[..2]);
                     data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
-                    data[(4 + i)..(4 + 1 + i)].copy_from_slice(&cs[..1]);
+                    data[(4 + i)..(4 + 1 + i)].copy_from_slice(&status.to_be_bytes()[..1]);
                 }
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
