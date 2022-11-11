@@ -1,10 +1,7 @@
-use crate::Vector;
-
 fn approx_equal(a: f32, b: f32) -> bool {
     (a - b).abs() < 0.00000001
 }
 
-use crate::wrap_around;
 #[test]
 fn test_wrap_around() {
     println!("boby");

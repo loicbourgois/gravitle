@@ -10,7 +10,7 @@ import {
 import {
   rotate,
 } from '../math.js'
-const ZOOM = 2
+const ZOOM = 1
 const DELTA_DRAW = 0.001/ZOOM
 // const ip = '136.243.64.165'
 const ip = 'localhost'
@@ -25,16 +25,20 @@ document.body.innerHTML = `
     <button id="zen_mode" onclick="zen_mode()">Zen</button>
     <div id="texts"></div>
     <div>
-      <label>collide color:</label>
-      <input id="color_0" value="#ff4" />
+      <label>base color:</label>
+      <input id="color_0" value="#ff0" />
     </div>
     <div>
-      <label>base color:   </label>
-      <input id="color_1" value="#fc0" />
+      <label>colission:   </label>
+      <input id="color_1" value="#f00" />
     </div>
     <div>
-      <label>edge color:   </label>
-      <input id="color_2" value="#e80" />
+      <label>activation:   </label>
+      <input id="color_2" value="#0ff" />
+    </div>
+    <div>
+      <label>activattion+colission:   </label>
+      <input id="color_3" value="#f00" />
     </div>
   </div>
 `
@@ -170,6 +174,7 @@ socket.addEventListener('message', (event) => {
       to_rgb(document.querySelector("#color_0").value),
       to_rgb(document.querySelector("#color_1").value),
       to_rgb(document.querySelector("#color_2").value),
+      to_rgb(document.querySelector("#color_3").value),
     ];
     let ii = 0;
     const server_timestamp = view.getBigInt64(ii) ; ii+=8
@@ -215,12 +220,9 @@ socket.addEventListener('message', (event) => {
         const idx = ii + oi*i
         const x = view.getFloat32(idx)
         const y = view.getFloat32(idx+4)
-        const colliding = ( view.getInt8(idx+8) != 0)
-        const color = {
-          true: colors[0],
-          false: colors[1],
-        }[colliding]
-        const zoom = 20
+        const status = view.getInt8(idx+8)
+        const color = colors[status]
+        const zoom = 30
         const x2 = (x - x_0)*zoom + 0.5
         const y2 = (y - y_0)*zoom + 0.5
         const x3 = x2 + diameter * 0.5 * zoom

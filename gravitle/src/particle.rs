@@ -14,6 +14,7 @@ pub struct Particle {
     pub tid: usize, // thread id
     pub gid: usize,
     pub activation: f32,
+    pub direction: Vector,
 }
 pub struct ParticleConfiguration<'a> {
     pub world: &'a World,
@@ -156,7 +157,6 @@ impl Particle {
                 y: p0.p.y - p0.v.y,
             };
         }
-        let mut p1 = &mut particles[1];
         particles[1].p.x = particles[0].p.x;
         particles[1].p.y = particles[0].p.y + world.diameter;
         particles[1].v.x = 0.0;
@@ -165,16 +165,17 @@ impl Particle {
             x: particles[1].p.x - particles[1].v.x,
             y: particles[1].p.y - particles[1].v.y,
         };
-        // let mut p = &mut particles[2];
-        // let pos = rotate(&particles[0].p, &particles[1].p, 1.0/6.0);
-        // p.p.x = pos.x;
-        // p.p.y = pos.y;
-        // p.v.x = 0.0;
-        // p.v.y = 0.0;
-        // p.pp = Vector {
-        //     x: p.p.x - p.v.x,
-        //     y: p.p.y - p.v.y,
-        // };
+        let pos = rotate(&particles[0].p, &particles[1].p, 1.0 / 6.0);
+        let mut p = &mut particles[2];
+        p.p.x = pos.x;
+        p.p.y = pos.y;
+        p.v.x = 0.0;
+        p.v.y = 0.0;
+        p.pp = Vector {
+            x: p.p.x - p.v.x,
+            y: p.p.y - p.v.y,
+        };
+        p.activation = 1.0;
         particles
     }
 
@@ -204,6 +205,7 @@ impl Particle {
             collisions: 0,
             gid: 0,
             activation: 0.0,
+            direction: Vector { x: 0.0, y: 0.0 },
         }
     }
 }

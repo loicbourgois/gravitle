@@ -14,22 +14,23 @@ use std::time::Duration;
 use std::time::Instant;
 mod grid;
 mod math;
+mod network;
 mod particle;
 mod test_math;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
+use crate::network::handle_connection;
+use crate::network::Peers;
 use crate::particle::Particle;
+use futures_channel::mpsc::{channel, Sender};
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
+use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
+use tokio::net::{TcpListener, TcpStream};
+use tungstenite::protocol::Message;
 use uuid::Uuid;
-type Tx = Sender<Message>;
-pub struct Peer {
-    user_id: Option<u128>,
-    addr: SocketAddr,
-    tx: Tx,
-}
-type Peers = Arc<Mutex<HashMap<SocketAddr, Peer>>>;
 pub struct User {
-    user_id: u128,
-    addr: SocketAddr,
+    pub user_id: u128,
+    pub addr: SocketAddr,
 }
 type Users = Arc<Mutex<HashMap<u128, User>>>;
 pub struct Configuration {
@@ -416,7 +417,14 @@ async fn main() -> Result<(), IoError> {
                             let uu = 64;
                             data.extend(p1.p.x.to_be_bytes());
                             data.extend(p1.p.y.to_be_bytes());
-                            data.extend((p1.collisions.min(255) as u8).to_be_bytes());
+                            let mut status: u8 = 0;
+                            if p1.collisions > 0 {
+                                status += 1;
+                            }
+                            if p1.activation > 0.01 {
+                                status += 2;
+                            }
+                            data.extend(status.to_be_bytes());
                             count += 1;
                             for x in gx - uu..gx + uu + 1 {
                                 let _x_ = (x as usize + grid.side) % grid.side;
@@ -427,7 +435,14 @@ async fn main() -> Result<(), IoError> {
                                         let p2 = &particles[*pid2];
                                         data.extend(p2.p.x.to_be_bytes());
                                         data.extend(p2.p.y.to_be_bytes());
-                                        data.extend((p2.collisions.min(255) as u8).to_be_bytes());
+                                        let mut status: u8 = 0;
+                                        if p2.collisions > 0 {
+                                            status += 1;
+                                        }
+                                        if p2.activation > 0.01 {
+                                            status += 2;
+                                        }
+                                        data.extend(status.to_be_bytes());
                                         count += 1;
                                     }
                                 }
@@ -467,49 +482,4 @@ async fn main() -> Result<(), IoError> {
         ));
     }
     Ok(())
-}
-use futures_channel::mpsc::{channel, Sender};
-use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
-use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
-use tokio::net::{TcpListener, TcpStream};
-use tungstenite::protocol::Message;
-async fn handle_connection(peers: Peers, raw_stream: TcpStream, addr: SocketAddr, users: Users) {
-    println!("connecting {}", addr);
-    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
-        .await
-        .expect("Error during the websocket handshake occurred");
-    println!("connected {}", addr);
-    let (tx, rx) = channel(0);
-    peers.lock().unwrap().insert(
-        addr,
-        Peer {
-            tx,
-            user_id: None,
-            addr,
-        },
-    );
-    let (outgoing, incoming) = ws_stream.split();
-    let broadcast_incoming = incoming.try_for_each(|msg| {
-        let msg_txt = msg.to_text().unwrap();
-        println!("message from {}: {}", addr, msg.to_text().unwrap());
-        if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
-            let uuid_str = &msg_txt.replace("request ship ", "");
-            let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
-            println!("adding user {}", uuid_str,);
-            users.lock().unwrap().insert(
-                uuid_u128,
-                User {
-                    user_id: uuid_u128,
-                    addr,
-                },
-            );
-            peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
-        }
-        future::ok(())
-    });
-    let receive_from_others = rx.map(Ok).forward(outgoing);
-    pin_mut!(broadcast_incoming, receive_from_others);
-    future::select(broadcast_incoming, receive_from_others).await;
-    println!("disconnected {}", &addr);
-    peers.lock().unwrap().remove(&addr);
 }

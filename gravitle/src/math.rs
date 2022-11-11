@@ -43,7 +43,7 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
             y: a.y + ijwin[1],
         },
         b: bbb,
-        d: delta(&a, &bbb),
+        d: delta(a, &bbb),
         d_sqrd: dsqrd_min,
     }
 }
@@ -83,10 +83,10 @@ pub fn dot(a: &Vector, b: &Vector) -> f32 {
 }
 
 pub fn normalize(p: &Vector, d: f32) -> Vector {
-    return Vector {
+    Vector {
         x: p.x / d,
         y: p.y / d,
-    };
+    }
 }
 
 pub fn rotate(p1: &Vector, p2: &Vector, angle: f32) -> Vector {
@@ -96,10 +96,10 @@ pub fn rotate(p1: &Vector, p2: &Vector, angle: f32) -> Vector {
     let dy = p2.y - p1.y;
     let cos_ = angle.cos();
     let sin_ = angle.sin();
-    return Vector {
+    Vector {
         x: p1.x + dx * cos_ - dy * sin_,
         y: p1.y + dy * cos_ + dx * sin_,
-    };
+    }
 }
 
 // pub fn norm(v: &Vector) -> f32 {
