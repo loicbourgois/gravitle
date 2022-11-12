@@ -194,7 +194,7 @@ async fn main() -> Result<(), IoError> {
             let mut rng = rand::thread_rng();
             unsafe {
                 let particles = &mut (*particles_ptr.load(Ordering::Relaxed));
-                let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
+                let _particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
                 let links = &mut (*links_ptr.load(Ordering::Relaxed));
                 let deltas = &mut (*deltas_ptr.load(Ordering::Relaxed));
                 let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
@@ -439,10 +439,9 @@ async fn main() -> Result<(), IoError> {
                                 p1.activation = *activation;
                             }
                             Pkind::Gun => {
-                                if approx_equal(*activation, 0.0) {
-                                    p1.activation = *activation;
-                                } else if approx_equal(*activation, 1.0)
-                                    && approx_equal(p1.activation, 0.0)
+                                if approx_equal(*activation, 0.0)
+                                    || approx_equal(*activation, 1.0)
+                                        && approx_equal(p1.activation, 0.0)
                                 {
                                     p1.activation = *activation;
                                 }
