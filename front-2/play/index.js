@@ -11,7 +11,7 @@ import {
   rotate,
 } from '../math.js'
 const ZOOM = 1
-const zoom = 16
+const zoom = 10
 const DELTA_DRAW = 0.001/ZOOM
 // const ip = '136.243.64.165'
 const ip = 'localhost'
@@ -43,7 +43,7 @@ document.body.innerHTML = `
     </div>
     <div>
       <label>Particle resolution:   </label>
-      <input id="particle_resolution" value="50" />
+      <input id="particle_resolution" value="20" />
     </div>
   </div>
 `

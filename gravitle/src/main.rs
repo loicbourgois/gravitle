@@ -5,10 +5,12 @@ use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::rotate;
+use crate::network::FreeShipPids;
 use crate::math::wrap_around;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
 use particle::Pkind;
+use std::collections::HashSet;
 use rand::Rng;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
@@ -36,7 +38,9 @@ pub struct User {
     pub user_id: u128,
     pub addr: SocketAddr,
     pub orders: HashMap<usize, f32>,
+    pub ship_pid: usize,
 }
+pub type Pid = usize;
 pub type Links = Vec<[usize; 2]>;
 type Users = Arc<Mutex<HashMap<u128, User>>>;
 pub struct Configuration {
@@ -115,6 +119,7 @@ async fn main() -> Result<(), IoError> {
         .unwrap_or_else(|| "0.0.0.0:8000".to_string());
     let peers = Peers::new(Mutex::new(HashMap::new()));
     let users = Users::new(Mutex::new(HashMap::new()));
+    let mut free_ship_pids = FreeShipPids::new((Mutex::new(HashSet::new())));
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
@@ -125,8 +130,8 @@ async fn main() -> Result<(), IoError> {
     });
     let crd = 0.01; // collision response delta (position)
     let crdv = 0.9; // collision response delta (velocity)
-    let link_strengh = 0.2;
-    let linkt_length_ratio = 1.0;
+    let link_strengh = 0.1;
+    let linkt_length_ratio = 1.01;
     let booster_acceleration = world.diameter * 0.01;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 / 2 });
     assert!(1.0 / grid.side as f32 > world.diameter);
@@ -134,7 +139,7 @@ async fn main() -> Result<(), IoError> {
     let setup = 5;
     let mut particles = Particle::new_particles_4(&world);
     if setup == 5 {
-        setup_5(&mut links, &mut particles, &world);
+        setup_5(&mut links, &mut particles, &world, &mut free_ship_pids.lock().unwrap() );
     }
     for link in &links {
         assert!(link[0] < link[1]);
@@ -358,7 +363,6 @@ async fn main() -> Result<(), IoError> {
                             p1.v.x = p1.v.x.min(world.diameter * 0.5);
                             p1.v.y = p1.v.y.max(-world.diameter * 0.5);
                             p1.v.y = p1.v.y.min(world.diameter * 0.5);
-
                             p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
                             p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
                             p1.pp.x = p1.p.x - p1.v.x;
@@ -377,7 +381,7 @@ async fn main() -> Result<(), IoError> {
                                 Pkind::Gun => {
                                     if gun_ok && p1.activation >= 0.9 {
                                         let mut p2 =
-                                            &mut particles2[rng.gen_range(20..2000) as usize];
+                                            &mut particles2[rng.gen_range(p1.pid+20..p1.pid+500) as usize];
                                         p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
                                         p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
                                         p2.pp.x =
@@ -431,7 +435,7 @@ async fn main() -> Result<(), IoError> {
                 grid.update_02(&mut particles);
                 for user in users.lock().unwrap().values_mut() {
                     for (pid, activation) in &user.orders {
-                        let mut p1 = &mut particles[*pid];
+                        let mut p1 = &mut particles[*pid + user.ship_pid];
                         match p1.kind {
                             Pkind::Booster => {
                                 p1.activation = *activation;
@@ -510,10 +514,11 @@ async fn main() -> Result<(), IoError> {
                 let m = Message::Binary(data);
                 for x in &mut peers.lock().unwrap().values_mut() {
                     match x.user_id {
-                        Some(_user_id) => {
+                        Some(user_id) => {
+                            let ship_pid = users.lock().unwrap().get(&user_id).unwrap().ship_pid;
                             let mut data = data_common.clone();
                             let mut count: u32 = 0;
-                            let p1 = &particles[0];
+                            let p1 = &particles[ship_pid];
                             let grid_xy = grid_xy(&p1.p, grid.side);
                             let gx = grid_xy.x as i32;
                             let gy = grid_xy.y as i32;
@@ -585,6 +590,7 @@ async fn main() -> Result<(), IoError> {
             stream,
             addr,
             users.clone(),
+            free_ship_pids.clone(),
         ));
     }
     Ok(())

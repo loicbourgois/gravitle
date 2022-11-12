@@ -7,7 +7,8 @@ use std::sync::Arc;
 use std::{collections::HashMap, net::SocketAddr, sync::Mutex};
 use tokio::net::TcpStream;
 use tungstenite::protocol::Message;
-// use std::collections::HashMap;
+use crate::Pid;
+use std::collections::HashSet;
 pub type Tx = Sender<Message>;
 pub struct Peer {
     pub user_id: Option<u128>,
@@ -15,11 +16,13 @@ pub struct Peer {
     pub tx: Tx,
 }
 pub type Peers = Arc<Mutex<HashMap<SocketAddr, Peer>>>;
+pub type FreeShipPids = Arc<Mutex<HashSet<Pid>>>;
 pub async fn handle_connection(
     peers: Peers,
     raw_stream: TcpStream,
     addr: SocketAddr,
     users: Users,
+    free_ship_pids: FreeShipPids,
 ) {
     println!("connecting {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
@@ -43,15 +46,28 @@ pub async fn handle_connection(
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
             println!("adding user {}", uuid_str);
-            users.lock().unwrap().insert(
-                uuid_u128,
-                User {
-                    user_id: uuid_u128,
-                    addr,
-                    orders: HashMap::new(),
-                },
-            );
-            peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+            match free_ship_pids.lock() {
+                Ok(mut a) => {
+                    let free_ship_pids_v:Vec<_> = a.iter().collect();
+                    let pid = *free_ship_pids_v[0];
+                    if free_ship_pids_v.len() > 0 {
+                        a.remove(&pid);
+                        users.lock().unwrap().insert(
+                            uuid_u128,
+                            User {
+                                user_id: uuid_u128,
+                                addr,
+                                orders: HashMap::new(),
+                                ship_pid: pid,
+                            },
+                        );
+                        peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+                    }
+                }
+                Err(_) => {
+
+                }
+            }            
         } else {
             let strs: Vec<&str> = msg_txt.split(' ').collect();
             if strs.len() == 2 {
