@@ -50,7 +50,7 @@ pub async fn handle_connection(
                 Ok(mut a) => {
                     let free_ship_pids_v: Vec<_> = a.iter().collect();
                     let pid = *free_ship_pids_v[0];
-                    if free_ship_pids_v.len() > 0 {
+                    if !free_ship_pids_v.is_empty() {
                         a.remove(&pid);
                         users.lock().unwrap().insert(
                             uuid_u128,

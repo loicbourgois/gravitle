@@ -119,7 +119,7 @@ async fn main() -> Result<(), IoError> {
         .unwrap_or_else(|| "0.0.0.0:8000".to_string());
     let peers = Peers::new(Mutex::new(HashMap::new()));
     let users = Users::new(Mutex::new(HashMap::new()));
-    let mut free_ship_pids = FreeShipPids::new((Mutex::new(HashSet::new())));
+    let free_ship_pids = FreeShipPids::new(Mutex::new(HashSet::new()));
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
@@ -385,7 +385,7 @@ async fn main() -> Result<(), IoError> {
                                 Pkind::Gun => {
                                     if gun_ok && p1.activation >= 0.9 {
                                         let mut p2 = &mut particles2
-                                            [rng.gen_range(p1.pid + 20..p1.pid + 500) as usize];
+                                            [rng.gen_range(p1.pid + 20..p1.pid + 500)];
                                         p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
                                         p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
                                         p2.pp.x =
