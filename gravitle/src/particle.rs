@@ -160,7 +160,7 @@ impl Particle {
         let world = c.world;
         let tid = c.pid % world.thread_count;
         let p = Vector {
-            x: rng.gen::<f32>() * 0.8 + 0.1 ,
+            x: rng.gen::<f32>() * 0.8 + 0.1,
             y: rng.gen::<f32>() * 0.8 + 0.1,
         };
         let v = Vector { x: 0.0, y: 0.0 };

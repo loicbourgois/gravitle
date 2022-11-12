@@ -5,13 +5,13 @@ use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::rotate;
-use crate::network::FreeShipPids;
 use crate::math::wrap_around;
+use crate::network::FreeShipPids;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
 use particle::Pkind;
-use std::collections::HashSet;
 use rand::Rng;
+use std::collections::HashSet;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -139,7 +139,12 @@ async fn main() -> Result<(), IoError> {
     let setup = 5;
     let mut particles = Particle::new_particles_4(&world);
     if setup == 5 {
-        setup_5(&mut links, &mut particles, &world, &mut free_ship_pids.lock().unwrap() );
+        setup_5(
+            &mut links,
+            &mut particles,
+            &world,
+            &mut free_ship_pids.lock().unwrap(),
+        );
     }
     for link in &links {
         assert!(link[0] < link[1]);
@@ -355,9 +360,8 @@ async fn main() -> Result<(), IoError> {
                                 gun_ok = false;
                             }
                             if let Pkind::Booster = p1.kind {
-                                    p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
-                                    p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
-                               
+                                p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
+                                p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
                             }
                             p1.v.x = p1.v.x.max(-world.diameter * 0.5);
                             p1.v.x = p1.v.x.min(world.diameter * 0.5);
@@ -380,8 +384,8 @@ async fn main() -> Result<(), IoError> {
                             match p1.kind {
                                 Pkind::Gun => {
                                     if gun_ok && p1.activation >= 0.9 {
-                                        let mut p2 =
-                                            &mut particles2[rng.gen_range(p1.pid+20..p1.pid+500) as usize];
+                                        let mut p2 = &mut particles2
+                                            [rng.gen_range(p1.pid + 20..p1.pid + 500) as usize];
                                         p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
                                         p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
                                         p2.pp.x =

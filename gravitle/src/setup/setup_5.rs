@@ -1,15 +1,15 @@
 use crate::particle::Particles;
 use crate::particle::Pkind;
 use crate::rotate;
+use crate::HashSet;
 use crate::Links;
 use crate::Particle;
+use crate::Pid;
 use crate::Vector;
 use crate::World;
-use crate::HashSet;
-use crate::Pid;
 pub fn setup_5(
-    links: &mut Links, 
-    particles: &mut Particles, 
+    links: &mut Links,
+    particles: &mut Particles,
     world: &World,
     free_ship_pids: &mut HashSet<Pid>,
 ) {
@@ -20,15 +20,15 @@ pub fn setup_5(
     for i in 0..c {
         let pid0 = i * dl;
         free_ship_pids.insert(pid0);
-            let mut p0 = &mut particles[pid0];
-            p0.p.x = 0.5 + world.diameter * 10.0 * i as f32 - world.diameter * 5.0 * c as f32;
-            p0.p.y = 0.9 + world.diameter * 4.0;
-            p0.v.x = 0.0;
-            p0.v.y = 0.0;
-            p0.pp = Vector {
-                x: p0.p.x - p0.v.x,
-                y: p0.p.y - p0.v.y,
-            };
+        let mut p0 = &mut particles[pid0];
+        p0.p.x = 0.5 + world.diameter * 10.0 * i as f32 - world.diameter * 5.0 * c as f32;
+        p0.p.y = 0.9 + world.diameter * 4.0;
+        p0.v.x = 0.0;
+        p0.v.y = 0.0;
+        p0.pp = Vector {
+            x: p0.p.x - p0.v.x,
+            y: p0.p.y - p0.v.y,
+        };
         let pos = rotate(
             &p0.p,
             &Vector {
@@ -37,7 +37,7 @@ pub fn setup_5(
             },
             4.0 / 12.0,
         );
-        let mut p1 = &mut particles[pid0+1];
+        let mut p1 = &mut particles[pid0 + 1];
         p1.p = pos;
         p1.v.x = 0.0;
         p1.v.y = 0.0;
@@ -115,7 +115,7 @@ pub fn setup_5(
             [6, 16],
             [12, 16],
         ] {
-            links.push([aa[0]+pid0, aa[1]+pid0])
+            links.push([aa[0] + pid0, aa[1] + pid0])
         }
     }
 }
