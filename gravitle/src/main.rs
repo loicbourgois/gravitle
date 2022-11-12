@@ -17,17 +17,14 @@ mod grid;
 mod math;
 mod network;
 mod particle;
-// use std::collections::HashMap;
 mod test_math;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
 use crate::network::handle_connection;
 use crate::network::Peers;
 use crate::particle::Particle;
-use futures_channel::mpsc::{channel, Sender};
-use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::{TcpListener};
 use tungstenite::protocol::Message;
 use uuid::Uuid;
 pub struct User {
@@ -45,11 +42,6 @@ pub struct Configuration {
 pub struct Vector {
     pub x: f32,
     pub y: f32,
-}
-#[derive(Clone, Copy, Debug)]
-pub struct Vector_u {
-    pub x: usize,
-    pub y: usize,
 }
 #[derive(Debug)]
 struct Delta {
@@ -248,13 +240,11 @@ async fn main() -> Result<(), IoError> {
                         let mut w = syncers[1][tid].write().unwrap();
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
-                            let mut neigh_c = 0;
                             let p1 = &particles[pid1];
                             for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
                                     let p2 = &(*particles2)[*pid2];
                                     if p1.pid < p2.pid {
-                                        neigh_c += 1;
                                         let wa = wrap_around(&p1.p, &p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
                                             let cr = collision_response(&wa, p1, p2);
@@ -278,17 +268,10 @@ async fn main() -> Result<(), IoError> {
                                                     d2.p.y += wa.d.y * crd;
                                                 }
                                             }
-                                            //   if (links_set.has(`${p1.idx}|${p2.idx}`)) {
-                                            //     cr.x *= 0.5;
-                                            //     cr.y *= 0.5;
-                                            //   }
                                         }
                                     }
                                 }
                             }
-                            // if (pid1 == 0) {
-                            //     println!("{}", neigh_c);
-                            // }
                         }
 
                         let size = links.len() / world.thread_count + 1;

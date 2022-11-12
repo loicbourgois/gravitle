@@ -53,7 +53,7 @@ pub async fn handle_connection(
             );
             peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
         } else {
-            let strs: Vec<&str> = msg_txt.split(" ").collect();
+            let strs: Vec<&str> = msg_txt.split(' ').collect();
             if strs.len() == 2 {
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
