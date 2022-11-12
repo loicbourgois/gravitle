@@ -11,9 +11,10 @@ import {
   rotate,
 } from '../math.js'
 const ZOOM = 1
+const zoom = 24
 const DELTA_DRAW = 0.001/ZOOM
-const ip = '136.243.64.165'
-// const ip = 'localhost'
+// const ip = '136.243.64.165'
+const ip = 'localhost'
 const url = `ws://${ip}:8000`
 document.body.innerHTML = `
   <div id="left">
@@ -38,7 +39,11 @@ document.body.innerHTML = `
     </div>
     <div>
       <label>activattion+colission:   </label>
-      <input id="color_3" value="#b0f" />
+      <input id="color_3" value="#f80" />
+    </div>
+    <div>
+      <label>Particle resolution:   </label>
+      <input id="particle_resolution" value="50" />
     </div>
   </div>
 `
@@ -115,30 +120,7 @@ const context = canvas.getContext('2d')
 resize_square(canvas, ZOOM * 0.9)
 const socket = new WebSocket(url);
 const uuid_ = uuid()
-
-
-
 document.addEventListener("keydown", (e) => {
-  // if (key_bindings.get(e.key)) {
-  //   if (key_allowed) {
-  //     document.querySelectorAll(".disappearable").forEach((x, i) => {
-  //       x.classList.add('disappear')
-  //     });
-  //     for (let idx of key_bindings.get(e.key)) {
-  //       parts[idx].activated = true
-  //     }
-  //   }
-  //   return
-  // }
-  // if (e.key == " " ) {
-  //   if (winner != undefined && key_allowed) {
-  //     again()
-  //   }
-  //   return
-  // }
-  // document.querySelectorAll(".disappearable").forEach((x, i) => {
-  //   x.classList.remove('disappear')
-  // });
   if (e.key == "s") {
     send("14 1")
   }
@@ -154,20 +136,13 @@ document.addEventListener("keyup", (e) => {
     send("10 0")
   }
 });
-
-
-
 const send = (m) => {
   console.log(m)
   socket.send(m)
 }
-
-
 socket.addEventListener('open', (event) => {
   send(`request ship ${uuid_}`)
 });
-
-
 socket.binaryType = "arraybuffer";
 let image = context.createImageData(canvas.width, canvas.height);
 let data = image.data;
@@ -217,6 +192,7 @@ let start_step = undefined
 // console.log(socket)
 socket.addEventListener('message', (event) => {
   if (event.data instanceof ArrayBuffer) {
+    const reso = document.querySelector("#particle_resolution").value
     const start = performance.now()
     render_step += 1
     const view = new DataView(event.data);
@@ -246,6 +222,7 @@ socket.addEventListener('message', (event) => {
     const diameter = view.getFloat32(ii) ; ii+=4
     const particle_count = view.getInt32(ii) ; ii+=4
     const ratio = 1.0 / view.getFloat32(ii)  ; ii+=4
+    const elapsed_network = view.getFloat32(ii) ; ii+=4
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
     // const diameter = 0.001 * 0.5;
@@ -269,17 +246,11 @@ socket.addEventListener('message', (event) => {
         const y = view.getFloat32(idx+4)
         const status = view.getInt8(idx+8)
         const color = colors[status]
-        const zoom = 40
         const x2 = (x - x_0)*zoom + 0.5
         const y2 = (y - y_0)*zoom + 0.5
         const x3 = x2 + diameter * 0.5 * zoom
         const y3 = y2
-        drawPixel(
-          x2,
-          y2,
-          color
-        );
-        const reso = 30
+        drawPixel(x2, y2, color);
         for (var u = 0; u < reso; u++) {
           const p3 = rotate({
             x: x2,
@@ -288,12 +259,7 @@ socket.addEventListener('message', (event) => {
             x: x3,
             y: y3,
           }, u/reso)
-            // Rotates p2 around p1
-            drawPixel(
-              p3.x,
-              p3.y,
-              color
-            );
+            drawPixel(p3.x, p3.y, color);
         }
       }
     }
@@ -303,9 +269,9 @@ socket.addEventListener('message', (event) => {
     render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str
     let avg_render_duration_str = `${(render_duration_total/render_step).toFixed(3)}`
     avg_render_duration_str = Array.apply(null, Array(  Math.max(0, 7-avg_render_duration_str.length)  )).map(x => " ").join("") + avg_render_duration_str
-   
     let instant_compute_str = `${(elapsed_compute/1000).toFixed(3)}`
     instant_compute_str = Array.apply(null, Array(  Math.max(0, 6-instant_compute_str.length)  )).map(x => " ").join("") + instant_compute_str
+    let instant_network_str = pre_pad_spaces(`${(elapsed_network/1000).toFixed(3)}`, 7);
     texts.innerHTML = `
       <p>server time: ${server_timestamp}</p>
       <p>client time: ${client_timestamp}</p>
@@ -314,6 +280,7 @@ socket.addEventListener('message', (event) => {
       <p>time: ${(elapsed/1000000).toFixed(1)} s</p>
       <p>instant compute: ${instant_compute_str} ms</p>
       <p>average compute: ${(elapsed_compute_total/step/1000).toFixed(3)} ms</p>
+      <p>instant network: ${instant_network_str} ms</p>
       <p>instant render: ${render_duration_str} ms</p>
       <p>average render: ${avg_render_duration_str} ms</p>
       <p>particles: ${particle_count}</p>
@@ -325,3 +292,7 @@ socket.addEventListener('message', (event) => {
     render_duration_total += performance.now() - start
   } else {  }
 });
+
+const pre_pad_spaces = (x, size) => {
+  return Array.apply(null, Array(  Math.max(0, size-x.length)  )).map(x => " ").join("") + x
+}

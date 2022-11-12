@@ -127,9 +127,9 @@ async fn main() -> Result<(), IoError> {
     });
     let crd = 0.01;    // collision response delta (position)
     let crdv = 0.9;     // collision response delta (velocity)
-    let LINK_STRENGH = 0.2;
+    let link_strengh = 0.2;
     let linkt_length_ratio = 1.0;
-    let booster_acceleration = 0.0001*0.05;
+    let booster_acceleration = world.diameter * 0.01;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 });
     assert!(1.0 / grid.side as f32 > world.diameter);
     let mut links: Vec<[usize;2]> = Vec::new();
@@ -165,6 +165,13 @@ async fn main() -> Result<(), IoError> {
         links.push([6, 12]);
         links.push([12, 13]);
         links.push([13, 14]);
+
+        links.push([3, 15]);
+        links.push([4, 15]);
+        links.push([8, 15]);
+        links.push([5, 16]);
+        links.push([6, 16]);
+        links.push([12, 16]);
     }
     for link in &links {
         assert!(link[0] < link[1]);
@@ -242,10 +249,10 @@ async fn main() -> Result<(), IoError> {
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
                             let mut neigh_c = 0;
-                            let mut p1 = &mut particles[pid1];
+                            let p1 = & particles[pid1];
                             for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
-                                    let p2 = &mut (*particles2)[*pid2];
+                                    let p2 = & (*particles2)[*pid2];
                                     if p1.pid < p2.pid {
                                         neigh_c += 1;
                                         let wa = wrap_around(&p1.p, &p2.p);
@@ -294,7 +301,7 @@ async fn main() -> Result<(), IoError> {
                             let wa = wrap_around(&p1.p, &p2.p);
                             let d = wa.d_sqrd.sqrt();
                             let n = normalize(&wa.d, d);
-                            let factor = (world.diameter*linkt_length_ratio - d) * LINK_STRENGH;
+                            let factor = (world.diameter*linkt_length_ratio - d) * link_strengh;
 
                             if wa.d_sqrd < world.particle_diameter_sqrd {
                                 let cr = collision_response(&wa, p1, p2);
@@ -428,6 +435,7 @@ async fn main() -> Result<(), IoError> {
     {
         let peers = peers.clone();
         let users = users.clone();
+        let mut elapsed_network = Instant::now().elapsed().as_micros();
         thread::spawn(move || loop {
             let start = Instant::now();
             {
@@ -460,8 +468,10 @@ async fn main() -> Result<(), IoError> {
                     collisions_count += p.collisions;
                 }
                 let elapsed_compute = start.elapsed().as_micros();
+
+                let start_network = Instant::now();
                 let part_bytes = 2 + 2 + 1;
-                let common_capacity = 4 * 9 + 8;
+                let common_capacity = 4 * 10 + 8;
                 let capacity = world.particle_count * part_bytes + common_capacity;
                 let mut data = vec![0; capacity];
                 let mut data_common = Vec::with_capacity(common_capacity);
@@ -470,11 +480,14 @@ async fn main() -> Result<(), IoError> {
                 data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+
                 data_common.extend((peers.lock().unwrap().len() as u32).to_be_bytes().to_vec());
                 data_common.extend(collisions_count.to_be_bytes().to_vec());
                 data_common.extend((world.diameter).to_be_bytes().to_vec());
                 data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
+
+                data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
                 data[..common_capacity].copy_from_slice(&data_common);
                 let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
@@ -504,7 +517,7 @@ async fn main() -> Result<(), IoError> {
                             let grid_xy = grid_xy(&p1.p, grid.side);
                             let gx = grid_xy.x as i32;
                             let gy = grid_xy.y as i32;
-                            let uu = 64;
+                            let uu = 32;
                             data.extend(p1.p.x.to_be_bytes());
                             data.extend(p1.p.y.to_be_bytes());
                             let mut status: u8 = 0;
@@ -551,6 +564,7 @@ async fn main() -> Result<(), IoError> {
                         }
                     }
                 }
+                elapsed_network = start_network.elapsed().as_micros();
                 *w += 1;
             }
             wait(&syncers[3], world.thread_count);

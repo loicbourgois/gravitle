@@ -3,6 +3,16 @@ use crate::Vector;
 use crate::World;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
+
+#[derive(Debug)]
+#[repr(u8)]
+pub enum Pkind {
+    Armor = 1,
+    Booster = 2,
+    Gun = 3,
+    Matter = 4,
+    Energy = 5,
+}
 #[derive(Debug)]
 pub struct Particle {
     pub p: Vector,
@@ -15,6 +25,8 @@ pub struct Particle {
     pub gid: usize,
     pub activation: f32,
     pub direction: Vector,
+    pub kind: Pkind,
+    pub enabled: bool,
 }
 pub struct ParticleConfiguration<'a> {
     pub world: &'a World,
@@ -167,23 +179,23 @@ impl Particle {
             x: particles[1].p.x - particles[1].v.x,
             y: particles[1].p.y - particles[1].v.y,
         };
-
         let parts = [
-            (0,1, "armor"),
-            (0,2, "armor"),
-            (0,3, "armor"),
-            (0,4, "armor"),
-            (0,5, "armor"),
-            (3,2, "armor"),
-            (3,7, "armor"),
-            (8,7, "armor"),
-            (9,7, "armor"),
-            (1,6, "armor"),
-            (11,6, "armor"),
-            (11,12, "armor"),
-            (11,13, "armor"),
+            (0,1, "armor"),     // 2
+            (0,2, "armor"),     // 3
+            (0,3, "armor"),     // 4
+            (0,4, "armor"),     // 5
+            (0,5, "armor"),     // 6
+            (3,2, "armor"),     // 7
+            (3,7, "armor"),     // 8
+            (8,7, "armor"),     // 9
+            (9,7, "armor"),     // 10
+            (1,6, "armor"),     // 11
+            (11,6, "armor"),    // 12
+            (11,12, "armor"),   // 13
+            (11,13, "armor"),   // 14
+            (4, 3, "gun"),      // 15
+            (6, 5, "gun"),      // 16
           ];
-
         let mut pid3 = 2;
         for part in parts {
             let pid1 = part.0;
@@ -200,8 +212,6 @@ impl Particle {
             };
             pid3 += 1;
         }
-        // particles[14].activation = 1.0;
-        // particles[10].activation = 1.0;
         particles
     }
 
@@ -213,10 +223,6 @@ impl Particle {
             x: rng.gen::<f32>() * 0.5 + 0.25,
             y: rng.gen::<f32>() * 0.5 + 0.25,
         };
-        // let v = Vector {
-        //     x: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
-        //     y: world.diameter * 0.9 * rng.gen::<f32>() - 0.5 * world.diameter * 0.9,
-        // };
         let v = Vector { x: 0.0, y: 0.0 };
         Particle {
             p,
@@ -232,6 +238,8 @@ impl Particle {
             gid: 0,
             activation: 0.0,
             direction: Vector { x: 0.0, y: 0.0 },
+            kind: Pkind::Matter,
+            enabled: true,
         }
     }
 }
