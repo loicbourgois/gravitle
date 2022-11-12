@@ -349,12 +349,10 @@ async fn main() -> Result<(), IoError> {
                                 p1.direction.y = 0.0;
                                 gun_ok = false;
                             }
-                            match p1.kind {
-                                Pkind::Booster => {
+                            if let Pkind::Booster = p1.kind {
                                     p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
                                     p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
-                                }
-                                _ => {}
+                               
                             }
                             p1.v.x = p1.v.x.max(-world.diameter * 0.5);
                             p1.v.x = p1.v.x.min(world.diameter * 0.5);
