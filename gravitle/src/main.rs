@@ -4,12 +4,12 @@ use crate::grid::GridConfiguration;
 use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
+use crate::math::rotate;
 use crate::math::wrap_around;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
-use rand::Rng;
-use crate::math::rotate;
 use particle::Pkind;
+use rand::Rng;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -21,8 +21,8 @@ mod grid;
 mod math;
 mod network;
 mod particle;
-mod test_math;
 mod setup;
+mod test_math;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
 use crate::network::handle_connection;
@@ -128,7 +128,7 @@ async fn main() -> Result<(), IoError> {
     let link_strengh = 0.2;
     let linkt_length_ratio = 1.0;
     let booster_acceleration = world.diameter * 0.01;
-    let mut grid = Grid::new(&GridConfiguration { side: 1024/2 });
+    let mut grid = Grid::new(&GridConfiguration { side: 1024 / 2 });
     assert!(1.0 / grid.side as f32 > world.diameter);
     let mut links: Links = Vec::new();
     let setup = 5;
@@ -189,7 +189,7 @@ async fn main() -> Result<(), IoError> {
         let deltas_ptr = AtomicPtr::new(&mut deltas);
         let grid_ptr = AtomicPtr::new(&mut grid);
         let syncers = syncers.clone();
-        
+
         threads.push(thread::spawn(move || {
             let mut rng = rand::thread_rng();
             unsafe {
@@ -354,15 +354,13 @@ async fn main() -> Result<(), IoError> {
                                     p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
                                     p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
                                 }
-                                _ => {
-
-                                }
+                                _ => {}
                             }
                             p1.v.x = p1.v.x.max(-world.diameter * 0.5);
                             p1.v.x = p1.v.x.min(world.diameter * 0.5);
                             p1.v.y = p1.v.y.max(-world.diameter * 0.5);
                             p1.v.y = p1.v.y.min(world.diameter * 0.5);
-                           
+
                             p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
                             p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
                             p1.pp.x = p1.p.x - p1.v.x;
@@ -380,13 +378,17 @@ async fn main() -> Result<(), IoError> {
                             match p1.kind {
                                 Pkind::Gun => {
                                     if gun_ok && p1.activation >= 0.9 {
-                                        let mut p2 = &mut particles2[  rng.gen_range(20..2000) as usize  ];
+                                        let mut p2 =
+                                            &mut particles2[rng.gen_range(20..2000) as usize];
                                         p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
                                         p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
-                                        p2.pp.x = p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
-                                        p2.pp.y = p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
+                                        p2.pp.x =
+                                            p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
+                                        p2.pp.y =
+                                            p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
                                         for tid in 0..world.thread_count {
-                                            let d2 = &mut deltas[tid * world.particle_count + p2.pid];
+                                            let d2 =
+                                                &mut deltas[tid * world.particle_count + p2.pid];
                                             d2.collisions = 0;
                                             d2.p.x = 0.0;
                                             d2.p.y = 0.0;
@@ -398,9 +400,7 @@ async fn main() -> Result<(), IoError> {
                                         p1.activation = -1.0;
                                     }
                                 }
-                                _ => {
-                                    
-                                }
+                                _ => {}
                             }
                         }
                         *w += 1;
@@ -441,13 +441,13 @@ async fn main() -> Result<(), IoError> {
                             Pkind::Gun => {
                                 if approx_equal(*activation, 0.0) {
                                     p1.activation = *activation;
-                                } else if approx_equal(*activation, 1.0) &&  approx_equal(p1.activation, 0.0) {
+                                } else if approx_equal(*activation, 1.0)
+                                    && approx_equal(p1.activation, 0.0)
+                                {
                                     p1.activation = *activation;
                                 }
                             }
-                            _ => {
-
-                            }
+                            _ => {}
                         }
                     }
                     user.orders.clear();
@@ -506,7 +506,8 @@ async fn main() -> Result<(), IoError> {
                     data[i..(2 + i)].copy_from_slice(&xs[..2]);
                     data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
                     data[(4 + i)..(4 + 1 + i)].copy_from_slice(&status.to_be_bytes()[..1]);
-                    data[(5 + i)..(5 + 1 + i)].copy_from_slice(&(particle.kind as u8).to_be_bytes()[..1]);
+                    data[(5 + i)..(5 + 1 + i)]
+                        .copy_from_slice(&(particle.kind as u8).to_be_bytes()[..1]);
                 }
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
