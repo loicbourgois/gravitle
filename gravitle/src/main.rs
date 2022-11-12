@@ -24,7 +24,7 @@ use crate::network::handle_connection;
 use crate::network::Peers;
 use crate::particle::Particle;
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
-use tokio::net::{TcpListener};
+use tokio::net::TcpListener;
 use tungstenite::protocol::Message;
 use uuid::Uuid;
 pub struct User {

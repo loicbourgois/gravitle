@@ -2,7 +2,6 @@ use crate::particle::Particle;
 use crate::particle::Particles;
 use crate::Vector;
 
-
 #[derive(Clone, Copy, Debug)]
 pub struct VectorUsize {
     pub x: usize,

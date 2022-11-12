@@ -1,13 +1,10 @@
-
-
 #[test]
 mod test {
     use crate::wrap_around;
     fn approx_equal(a: f32, b: f32) -> bool {
         (a - b).abs() < 0.00000001
     }
-    
-    
+
     fn test_wrap_around() {
         println!("boby");
         let a = Vector { x: 0.1, y: 0.09 };
@@ -36,7 +33,7 @@ mod test {
         // ];
         // let b = wrap_around(&a[0], &a[1]);
         // assert!(b.d_sqrd.sqrt() < 0.37);
-    
+
         // let a = [
         //     Vector {
         //         x: 0.7241143,
@@ -49,7 +46,7 @@ mod test {
         // ];
         // let b = wrap_around(&a[0], &a[1]);
         // assert!(b.d_sqrd.sqrt() < 0.51);
-    
+
         // let a = [
         //     Vector {
         //         x: 0.74952763,
@@ -63,7 +60,7 @@ mod test {
         // let b = wrap_around(&a[0], &a[1]);
         // println!("{}", b.d_sqrd.sqrt());
         // assert!(b.d_sqrd.sqrt() < 0.39);
-    
+
         // let mut max_d: f32 = 0.0;
         // let mut rng = rand::thread_rng();
         // let mut ps_max = Vec::new();
@@ -90,6 +87,4 @@ mod test {
         // }
         // assert!(max_d < 0.5_f32.sqrt());
     }
-    
 }
-
