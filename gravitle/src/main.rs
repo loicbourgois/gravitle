@@ -3,6 +3,7 @@ use crate::grid::Grid;
 use crate::grid::GridConfiguration;
 use crate::math::collision_response;
 use crate::math::normalize;
+use crate::math::normalize_2;
 use crate::math::wrap_around;
 use chrono::Utc;
 use std::sync::atomic::AtomicPtr;
@@ -11,7 +12,6 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use crate::math::normalize_2;
 use std::time::Instant;
 mod grid;
 mod math;
@@ -123,16 +123,16 @@ async fn main() -> Result<(), IoError> {
     let world = World::new(&Configuration {
         particle_count: 50_000,
         thread_count: 5,
-        diameter: 0.001 * 0.5 ,
+        diameter: 0.001 * 0.5,
     });
-    let crd = 0.01;    // collision response delta (position)
-    let crdv = 0.9;     // collision response delta (velocity)
+    let crd = 0.01; // collision response delta (position)
+    let crdv = 0.9; // collision response delta (velocity)
     let link_strengh = 0.2;
     let linkt_length_ratio = 1.0;
     let booster_acceleration = world.diameter * 0.01;
     let mut grid = Grid::new(&GridConfiguration { side: 1024 });
     assert!(1.0 / grid.side as f32 > world.diameter);
-    let mut links: Vec<[usize;2]> = Vec::new();
+    let mut links: Vec<[usize; 2]> = Vec::new();
     let setup = 5;
     let mut particles = Particle::new_particles_4(&world);
     if setup == 5 {
@@ -249,10 +249,10 @@ async fn main() -> Result<(), IoError> {
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
                             let mut neigh_c = 0;
-                            let p1 = & particles[pid1];
+                            let p1 = &particles[pid1];
                             for ns in neighbours(&p1.p, grid) {
                                 for pid2 in ns {
-                                    let p2 = & (*particles2)[*pid2];
+                                    let p2 = &(*particles2)[*pid2];
                                     if p1.pid < p2.pid {
                                         neigh_c += 1;
                                         let wa = wrap_around(&p1.p, &p2.p);
@@ -301,14 +301,13 @@ async fn main() -> Result<(), IoError> {
                             let wa = wrap_around(&p1.p, &p2.p);
                             let d = wa.d_sqrd.sqrt();
                             let n = normalize(&wa.d, d);
-                            let factor = (world.diameter*linkt_length_ratio - d) * link_strengh;
+                            let factor = (world.diameter * linkt_length_ratio - d) * link_strengh;
 
                             if wa.d_sqrd < world.particle_diameter_sqrd {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
                                     {
-                                        let d1 = &mut deltas
-                                            [tid * world.particle_count + p1.pid];
+                                        let d1 = &mut deltas[tid * world.particle_count + p1.pid];
                                         d1.collisions += 1;
                                         d1.v.x -= cr.x * crdv * 0.5;
                                         d1.v.y -= cr.y * crdv * 0.5;
@@ -316,8 +315,7 @@ async fn main() -> Result<(), IoError> {
                                         d1.p.y += wa.d.y * crd;
                                     }
                                     {
-                                        let d2 = &mut deltas
-                                            [tid * world.particle_count + p2.pid];
+                                        let d2 = &mut deltas[tid * world.particle_count + p2.pid];
                                         d2.collisions += 1;
                                         d2.v.x += cr.x * crdv * 0.5;
                                         d2.v.y += cr.y * crdv * 0.5;
@@ -327,22 +325,21 @@ async fn main() -> Result<(), IoError> {
                                 }
                             }
                             if !n.x.is_nan() && !n.y.is_nan() {
-
-                            {
-                                let d1 = &mut deltas[tid * world.particle_count + p1.pid];
-                                d1.v.x -= n.x * factor;
-                                d1.v.y -= n.y * factor;
-                                d1.direction.x += wa.d.x;
-                                d1.direction.y += wa.d.y;
+                                {
+                                    let d1 = &mut deltas[tid * world.particle_count + p1.pid];
+                                    d1.v.x -= n.x * factor;
+                                    d1.v.y -= n.y * factor;
+                                    d1.direction.x += wa.d.x;
+                                    d1.direction.y += wa.d.y;
+                                }
+                                {
+                                    let d2 = &mut deltas[tid * world.particle_count + p2.pid];
+                                    d2.v.x += n.x * factor;
+                                    d2.v.y += n.y * factor;
+                                    d2.direction.x -= wa.d.x;
+                                    d2.direction.y -= wa.d.y;
+                                }
                             }
-                            {
-                                let d2 = &mut deltas[tid * world.particle_count + p2.pid];
-                                d2.v.x += n.x * factor;
-                                d2.v.y += n.y * factor;
-                                d2.direction.x -= wa.d.x;
-                                d2.direction.y -= wa.d.y;
-                            }
-                        }
                         }
                         *w += 1;
                     }

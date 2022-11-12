@@ -148,8 +148,8 @@ impl Particle {
             particles.push(Particle::new(&ParticleConfiguration { pid, world }));
         }
         for p in &mut particles {
-            p.p.x = rng.gen::<f32>() ;
-            p.p.y = rng.gen::<f32>() ;
+            p.p.x = rng.gen::<f32>();
+            p.p.y = rng.gen::<f32>();
             p.v.x = 0.0;
             p.v.y = 0.0;
             p.pp = Vector {
@@ -168,10 +168,14 @@ impl Particle {
                 y: p0.p.y - p0.v.y,
             };
         }
-        let pos = rotate(&particles[0].p, &Vector {
-            x: particles[0].p.x + world.diameter ,
-            y: particles[0].p.y
-        }, 4.0 / 12.0);
+        let pos = rotate(
+            &particles[0].p,
+            &Vector {
+                x: particles[0].p.x + world.diameter,
+                y: particles[0].p.y,
+            },
+            4.0 / 12.0,
+        );
         particles[1].p = pos;
         particles[1].v.x = 0.0;
         particles[1].v.y = 0.0;
@@ -180,22 +184,22 @@ impl Particle {
             y: particles[1].p.y - particles[1].v.y,
         };
         let parts = [
-            (0,1, "armor"),     // 2
-            (0,2, "armor"),     // 3
-            (0,3, "armor"),     // 4
-            (0,4, "armor"),     // 5
-            (0,5, "armor"),     // 6
-            (3,2, "armor"),     // 7
-            (3,7, "armor"),     // 8
-            (8,7, "armor"),     // 9
-            (9,7, "armor"),     // 10
-            (1,6, "armor"),     // 11
-            (11,6, "armor"),    // 12
-            (11,12, "armor"),   // 13
-            (11,13, "armor"),   // 14
-            (4, 3, "gun"),      // 15
-            (6, 5, "gun"),      // 16
-          ];
+            (0, 1, "armor"),   // 2
+            (0, 2, "armor"),   // 3
+            (0, 3, "armor"),   // 4
+            (0, 4, "armor"),   // 5
+            (0, 5, "armor"),   // 6
+            (3, 2, "armor"),   // 7
+            (3, 7, "armor"),   // 8
+            (8, 7, "armor"),   // 9
+            (9, 7, "armor"),   // 10
+            (1, 6, "armor"),   // 11
+            (11, 6, "armor"),  // 12
+            (11, 12, "armor"), // 13
+            (11, 13, "armor"), // 14
+            (4, 3, "gun"),     // 15
+            (6, 5, "gun"),     // 16
+        ];
         let mut pid3 = 2;
         for part in parts {
             let pid1 = part.0;

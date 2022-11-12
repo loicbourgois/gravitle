@@ -5,7 +5,7 @@ use futures_channel::mpsc::{channel, Sender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use std::sync::Arc;
 use std::{collections::HashMap, net::SocketAddr, sync::Mutex};
-use tokio::net::{TcpStream};
+use tokio::net::TcpStream;
 use tungstenite::protocol::Message;
 // use std::collections::HashMap;
 pub type Tx = Sender<Message>;
@@ -55,11 +55,23 @@ pub async fn handle_connection(
         } else {
             let strs: Vec<&str> = msg_txt.split(" ").collect();
             if strs.len() == 2 {
-                let pid:usize = strs[0].parse::<usize>().unwrap();
-                let activation:f32 = strs[1].parse::<f32>().unwrap();
+                let pid: usize = strs[0].parse::<usize>().unwrap();
+                let activation: f32 = strs[1].parse::<f32>().unwrap();
                 // println!("{} {}", pid, activation);
-                let user_id = peers.lock().unwrap().get_mut(&addr).unwrap().user_id.unwrap();
-                users.lock().unwrap().get_mut(&user_id).unwrap().orders.insert(pid, activation);
+                let user_id = peers
+                    .lock()
+                    .unwrap()
+                    .get_mut(&addr)
+                    .unwrap()
+                    .user_id
+                    .unwrap();
+                users
+                    .lock()
+                    .unwrap()
+                    .get_mut(&user_id)
+                    .unwrap()
+                    .orders
+                    .insert(pid, activation);
             }
         }
         future::ok(())
