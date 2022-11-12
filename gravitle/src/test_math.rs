@@ -3,9 +3,8 @@ mod test {
     use crate::wrap_around;
     use crate::Vector;
     fn approx_equal(a: f32, b: f32) -> bool {
-        (a - b).abs() < 0.00000001
+        (a - b).abs() < 0.000001
     }
-
     #[test]
     fn test_wrap_around() {
         println!("boby");

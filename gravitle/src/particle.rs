@@ -3,8 +3,7 @@ use crate::Vector;
 use crate::World;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
-
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum Pkind {
     Armor = 1,
@@ -110,7 +109,6 @@ impl Particle {
             x: p.p.x - p.v.x,
             y: p.p.y - p.v.y,
         };
-
         let mut p = &mut particles[4];
         p.p.x = 0.1;
         p.p.y = 0.1;
@@ -140,7 +138,6 @@ impl Particle {
         };
         particles
     }
-
     pub fn new_particles_5(world: &World) -> Particles {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
@@ -157,68 +154,8 @@ impl Particle {
                 y: p.p.y - p.v.y,
             };
         }
-        {
-            let mut p0 = &mut particles[0];
-            p0.p.x = 0.5;
-            p0.p.y = 0.765;
-            p0.v.x = 0.0;
-            p0.v.y = 0.0;
-            p0.pp = Vector {
-                x: p0.p.x - p0.v.x,
-                y: p0.p.y - p0.v.y,
-            };
-        }
-        let pos = rotate(
-            &particles[0].p,
-            &Vector {
-                x: particles[0].p.x + world.diameter,
-                y: particles[0].p.y,
-            },
-            4.0 / 12.0,
-        );
-        particles[1].p = pos;
-        particles[1].v.x = 0.0;
-        particles[1].v.y = 0.0;
-        particles[1].pp = Vector {
-            x: particles[1].p.x - particles[1].v.x,
-            y: particles[1].p.y - particles[1].v.y,
-        };
-        let parts = [
-            (0, 1, "armor"),   // 2
-            (0, 2, "armor"),   // 3
-            (0, 3, "armor"),   // 4
-            (0, 4, "armor"),   // 5
-            (0, 5, "armor"),   // 6
-            (3, 2, "armor"),   // 7
-            (3, 7, "armor"),   // 8
-            (8, 7, "armor"),   // 9
-            (9, 7, "armor"),   // 10
-            (1, 6, "armor"),   // 11
-            (11, 6, "armor"),  // 12
-            (11, 12, "armor"), // 13
-            (11, 13, "armor"), // 14
-            (4, 3, "gun"),     // 15
-            (6, 5, "gun"),     // 16
-        ];
-        let mut pid3 = 2;
-        for part in parts {
-            let pid1 = part.0;
-            let pid2 = part.1;
-            let pos = rotate(&particles[pid1].p, &particles[pid2].p, -1.0 / 6.0);
-            let mut p = &mut particles[pid3];
-            p.p.x = pos.x;
-            p.p.y = pos.y;
-            p.v.x = 0.0;
-            p.v.y = 0.0;
-            p.pp = Vector {
-                x: p.p.x - p.v.x,
-                y: p.p.y - p.v.y,
-            };
-            pid3 += 1;
-        }
         particles
     }
-
     pub fn new(c: &ParticleConfiguration) -> Particle {
         let mut rng = rand::thread_rng();
         let world = c.world;

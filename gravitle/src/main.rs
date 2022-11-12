@@ -5,7 +5,11 @@ use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::wrap_around;
+use crate::setup::setup_5::setup_5;
 use chrono::Utc;
+use rand::Rng;
+use crate::math::rotate;
+use particle::Pkind;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -18,6 +22,7 @@ mod math;
 mod network;
 mod particle;
 mod test_math;
+mod setup;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
 use crate::network::handle_connection;
@@ -32,6 +37,7 @@ pub struct User {
     pub addr: SocketAddr,
     pub orders: HashMap<usize, f32>,
 }
+pub type Links = Vec<[usize; 2]>;
 type Users = Arc<Mutex<HashMap<u128, User>>>;
 pub struct Configuration {
     pub particle_count: usize,
@@ -115,55 +121,20 @@ async fn main() -> Result<(), IoError> {
     let world = World::new(&Configuration {
         particle_count: 50_000,
         thread_count: 5,
-        diameter: 0.001 * 0.5,
+        diameter: 0.001,
     });
     let crd = 0.01; // collision response delta (position)
     let crdv = 0.9; // collision response delta (velocity)
     let link_strengh = 0.2;
     let linkt_length_ratio = 1.0;
     let booster_acceleration = world.diameter * 0.01;
-    let mut grid = Grid::new(&GridConfiguration { side: 1024 });
+    let mut grid = Grid::new(&GridConfiguration { side: 1024/2 });
     assert!(1.0 / grid.side as f32 > world.diameter);
-    let mut links: Vec<[usize; 2]> = Vec::new();
+    let mut links: Links = Vec::new();
     let setup = 5;
     let mut particles = Particle::new_particles_4(&world);
     if setup == 5 {
-        particles = Particle::new_particles_5(&world);
-        links.push([0, 1]);
-        links.push([0, 2]);
-        links.push([0, 3]);
-        links.push([0, 4]);
-        links.push([0, 5]);
-        links.push([0, 6]);
-        links.push([1, 2]);
-        links.push([2, 3]);
-        links.push([3, 4]);
-        links.push([4, 5]);
-        links.push([5, 6]);
-        links.push([1, 6]);
-        links.push([3, 8]);
-        links.push([3, 7]);
-        links.push([2, 7]);
-        links.push([7, 8]);
-        links.push([8, 9]);
-        links.push([7, 9]);
-        links.push([9, 10]);
-        links.push([7, 10]);
-        links.push([6, 11]);
-        links.push([11, 12]);
-        links.push([1, 11]);
-        links.push([11, 13]);
-        links.push([11, 14]);
-        links.push([6, 12]);
-        links.push([12, 13]);
-        links.push([13, 14]);
-
-        links.push([3, 15]);
-        links.push([4, 15]);
-        links.push([8, 15]);
-        links.push([5, 16]);
-        links.push([6, 16]);
-        links.push([12, 16]);
+        setup_5(&mut links, &mut particles, &world);
     }
     for link in &links {
         assert!(link[0] < link[1]);
@@ -218,9 +189,12 @@ async fn main() -> Result<(), IoError> {
         let deltas_ptr = AtomicPtr::new(&mut deltas);
         let grid_ptr = AtomicPtr::new(&mut grid);
         let syncers = syncers.clone();
+        
         threads.push(thread::spawn(move || {
+            let mut rng = rand::thread_rng();
             unsafe {
                 let particles = &mut (*particles_ptr.load(Ordering::Relaxed));
+                let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
                 let links = &mut (*links_ptr.load(Ordering::Relaxed));
                 let deltas = &mut (*deltas_ptr.load(Ordering::Relaxed));
                 let particles2 = &mut (*particles_ptr.load(Ordering::Relaxed));
@@ -369,16 +343,26 @@ async fn main() -> Result<(), IoError> {
                                 d1.direction.y = 0.0;
                             }
                             p1.direction = normalize_2(&p1.direction);
+                            let mut gun_ok = true;
                             if p1.direction.x.is_nan() || p1.direction.y.is_nan() {
                                 p1.direction.x = 0.0;
                                 p1.direction.y = 0.0;
+                                gun_ok = false;
                             }
-                            p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
-                            p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
+                            match p1.kind {
+                                Pkind::Booster => {
+                                    p1.v.x += p1.direction.x * p1.activation * booster_acceleration;
+                                    p1.v.y += p1.direction.y * p1.activation * booster_acceleration;
+                                }
+                                _ => {
+
+                                }
+                            }
                             p1.v.x = p1.v.x.max(-world.diameter * 0.5);
                             p1.v.x = p1.v.x.min(world.diameter * 0.5);
                             p1.v.y = p1.v.y.max(-world.diameter * 0.5);
                             p1.v.y = p1.v.y.min(world.diameter * 0.5);
+                           
                             p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
                             p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
                             p1.pp.x = p1.p.x - p1.v.x;
@@ -393,6 +377,31 @@ async fn main() -> Result<(), IoError> {
                             assert!(p1.p.y >= 0.0, "\n{:?}", p1);
                             assert!(p1.p.x <= 1.0, "\n{:?}", p1);
                             assert!(p1.p.y <= 1.0, "\n{:?}", p1);
+                            match p1.kind {
+                                Pkind::Gun => {
+                                    if gun_ok && p1.activation >= 0.9 {
+                                        let mut p2 = &mut particles2[  rng.gen_range(20..2000) as usize  ];
+                                        p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
+                                        p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
+                                        p2.pp.x = p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
+                                        p2.pp.y = p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
+                                        for tid in 0..world.thread_count {
+                                            let d2 = &mut deltas[tid * world.particle_count + p2.pid];
+                                            d2.collisions = 0;
+                                            d2.p.x = 0.0;
+                                            d2.p.y = 0.0;
+                                            d2.v.x = 0.0;
+                                            d2.v.y = 0.0;
+                                            d2.direction.x = 0.0;
+                                            d2.direction.y = 0.0;
+                                        }
+                                        p1.activation = -1.0;
+                                    }
+                                }
+                                _ => {
+                                    
+                                }
+                            }
                         }
                         *w += 1;
                     }
@@ -424,7 +433,22 @@ async fn main() -> Result<(), IoError> {
                 grid.update_02(&mut particles);
                 for user in users.lock().unwrap().values_mut() {
                     for (pid, activation) in &user.orders {
-                        particles[*pid].activation = *activation;
+                        let mut p1 = &mut particles[*pid];
+                        match p1.kind {
+                            Pkind::Booster => {
+                                p1.activation = *activation;
+                            }
+                            Pkind::Gun => {
+                                if approx_equal(*activation, 0.0) {
+                                    p1.activation = *activation;
+                                } else if approx_equal(*activation, 1.0) &&  approx_equal(p1.activation, 0.0) {
+                                    p1.activation = *activation;
+                                }
+                            }
+                            _ => {
+
+                            }
+                        }
                     }
                     user.orders.clear();
                 }
@@ -450,7 +474,7 @@ async fn main() -> Result<(), IoError> {
                 let elapsed_compute = start.elapsed().as_micros();
 
                 let start_network = Instant::now();
-                let part_bytes = 2 + 2 + 1;
+                let part_bytes = 2 + 2 + 1 + 1;
                 let common_capacity = 4 * 10 + 8;
                 let capacity = world.particle_count * part_bytes + common_capacity;
                 let mut data = vec![0; capacity];
@@ -460,13 +484,11 @@ async fn main() -> Result<(), IoError> {
                 data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
-
                 data_common.extend((peers.lock().unwrap().len() as u32).to_be_bytes().to_vec());
                 data_common.extend(collisions_count.to_be_bytes().to_vec());
                 data_common.extend((world.diameter).to_be_bytes().to_vec());
                 data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
-
                 data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
                 data[..common_capacity].copy_from_slice(&data_common);
                 let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
@@ -474,7 +496,6 @@ async fn main() -> Result<(), IoError> {
                     let i = common_capacity + pid * part_bytes;
                     let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
                     let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
-                    // let cs = (particle.collisions.min(255) as u8).to_be_bytes();
                     let mut status: u8 = 0;
                     if particle.collisions > 0 {
                         status += 1;
@@ -485,6 +506,7 @@ async fn main() -> Result<(), IoError> {
                     data[i..(2 + i)].copy_from_slice(&xs[..2]);
                     data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
                     data[(4 + i)..(4 + 1 + i)].copy_from_slice(&status.to_be_bytes()[..1]);
+                    data[(5 + i)..(5 + 1 + i)].copy_from_slice(&(particle.kind as u8).to_be_bytes()[..1]);
                 }
                 assert!(data.len() == capacity);
                 let m = Message::Binary(data);
@@ -508,6 +530,7 @@ async fn main() -> Result<(), IoError> {
                                 status += 2;
                             }
                             data.extend(status.to_be_bytes());
+                            data.extend((p1.kind as u8).to_be_bytes());
                             count += 1;
                             for x in gx - uu..gx + uu + 1 {
                                 let _x_ = (x as usize + grid.side) % grid.side;
@@ -526,6 +549,7 @@ async fn main() -> Result<(), IoError> {
                                             status += 2;
                                         }
                                         data.extend(status.to_be_bytes());
+                                        data.extend((p2.kind as u8).to_be_bytes());
                                         count += 1;
                                     }
                                 }
@@ -566,4 +590,8 @@ async fn main() -> Result<(), IoError> {
         ));
     }
     Ok(())
+}
+
+fn approx_equal(a: f32, b: f32) -> bool {
+    (a - b).abs() < 0.000001
 }

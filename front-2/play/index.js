@@ -11,7 +11,7 @@ import {
   rotate,
 } from '../math.js'
 const ZOOM = 1
-const zoom = 24
+const zoom = 16
 const DELTA_DRAW = 0.001/ZOOM
 // const ip = '136.243.64.165'
 const ip = 'localhost'
@@ -127,6 +127,12 @@ document.addEventListener("keydown", (e) => {
   if (e.key == "d") {
     send("10 1")
   }
+  if (e.key == "k") {
+    send("5 1")
+  }
+  if (e.key == "l") {
+    send("4 1")
+  }
 });
 document.addEventListener("keyup", (e) => {
   if (e.key == "s") {
@@ -134,6 +140,12 @@ document.addEventListener("keyup", (e) => {
   }
   if (e.key == "d") {
     send("10 0")
+  }
+  if (e.key == "k") {
+    send("5 0")
+  }
+  if (e.key == "l") {
+    send("4 0")
   }
 });
 const send = (m) => {
@@ -227,7 +239,7 @@ socket.addEventListener('message', (event) => {
     data = image.data;
     // const diameter = 0.001 * 0.5;
     if (ratio <= 0.5) {
-      const oi = 2+2+1
+      const oi = 2+2+1+1
       for (var i = 0; i < particle_count ; i++) {
         const idx = ii + oi*i
         const x = view.getUint16(idx) * ratio
@@ -237,7 +249,7 @@ socket.addEventListener('message', (event) => {
         drawPixel(x, y, color);
       }
     } else {
-      const oi = 4+4+1
+      const oi = 4+4+1+1
       let x_0 = view.getFloat32(ii)
       let y_0 = view.getFloat32(ii+4)
       for (var i = 0; i < particle_count ; i++) {
