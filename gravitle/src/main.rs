@@ -6,8 +6,8 @@ use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::rotate;
 use crate::math::wrap_around;
-use crate::setup::setup_5::reset_ship_particles;
 use crate::network::FreeShipPids;
+use crate::setup::setup_5::reset_ship_particles;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
 use particle::Pkind;
@@ -508,7 +508,11 @@ async fn main() -> Result<(), IoError> {
                 data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
                 data_common.extend((world.ships_count as u32).to_be_bytes().to_vec());
-                data_common.extend((free_ship_pids.lock().unwrap().len() as u32).to_be_bytes().to_vec());
+                data_common.extend(
+                    (free_ship_pids.lock().unwrap().len() as u32)
+                        .to_be_bytes()
+                        .to_vec(),
+                );
                 data[..common_capacity].copy_from_slice(&data_common);
                 let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {

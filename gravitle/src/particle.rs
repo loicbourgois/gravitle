@@ -10,7 +10,7 @@ pub enum Pkind {
     Gun = 3,
     Matter = 4,
     Energy = 5,
-    Core = 6, 
+    Core = 6,
 }
 #[derive(Debug)]
 pub struct Particle {

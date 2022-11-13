@@ -20,18 +20,14 @@ pub fn setup_5(
         let pid0 = i * dl;
         free_ship_pids.insert(pid0);
         let mut p0 = &mut particles[pid0];
-        p0.p.x = 0.5 + world.diameter * 10.0 * i as f32 - world.diameter * 5.0 * world.ships_count as f32;
+        p0.p.x = 0.5 + world.diameter * 10.0 * i as f32
+            - world.diameter * 5.0 * world.ships_count as f32;
         p0.p.y = 0.9 + world.diameter * 4.0;
         reset_ship(pid0, particles, world, links);
     }
 }
 
-
-pub fn reset_ship_particles(
-    pid0: usize, 
-    particles: &mut Particles,
-    world: &World,
-) {
+pub fn reset_ship_particles(pid0: usize, particles: &mut Particles, world: &World) {
     let mut p0 = &mut particles[pid0];
     p0.v.x = 0.0;
     p0.v.y = 0.0;
@@ -92,14 +88,7 @@ pub fn reset_ship_particles(
     }
 }
 
-
-
-pub fn reset_ship(
-    pid0: usize, 
-    particles: &mut Particles,
-    world: &World,
-    links: &mut Links,
-) {
+pub fn reset_ship(pid0: usize, particles: &mut Particles, world: &World, links: &mut Links) {
     reset_ship_particles(pid0, particles, world);
     for aa in [
         [0, 1],
