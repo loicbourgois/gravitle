@@ -71,21 +71,18 @@ pub async fn handle_connection(
             if strs.len() == 2 {
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
-                // println!("{} {}", pid, activation);
-                let user_id = peers
-                    .lock()
-                    .unwrap()
-                    .get_mut(&addr)
-                    .unwrap()
-                    .user_id
-                    .unwrap();
-                users
-                    .lock()
-                    .unwrap()
-                    .get_mut(&user_id)
-                    .unwrap()
-                    .orders
-                    .insert(pid, activation);
+                match peers.lock().unwrap().get_mut(&addr).unwrap().user_id {
+                    Some(user_id) => {
+                        users
+                            .lock()
+                            .unwrap()
+                            .get_mut(&user_id)
+                            .unwrap()
+                            .orders
+                            .insert(pid, activation);
+                    }
+                    None => {}
+                }
             }
         }
         future::ok(())
@@ -94,5 +91,25 @@ pub async fn handle_connection(
     pin_mut!(broadcast_incoming, receive_from_others);
     future::select(broadcast_incoming, receive_from_others).await;
     println!("disconnected {}", &addr);
+    match peers.lock().unwrap().get_mut(&addr) {
+        Some(peer) => match peer.user_id {
+            Some(user_id) => match users.lock().unwrap().get_mut(&user_id) {
+                Some(user) => {
+                    free_ship_pids.lock().unwrap().insert(user.ship_pid);
+                }
+                None => {}
+            },
+            None => {}
+        },
+        None => {}
+    }
     peers.lock().unwrap().remove(&addr);
 }
+
+// let user_id = peers
+//                     .lock()
+//                     .unwrap()
+//                     .get_mut(&addr)
+//                     .unwrap()
+//                     .user_id
+//                     .unwrap();

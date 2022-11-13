@@ -15,7 +15,7 @@ pub fn setup_5(
 ) {
     *particles = Particle::new_particles(world);
     let l = particles.len();
-    let c = 50;
+    let c = 2;
     let dl = l / c;
     for i in 0..c {
         let pid0 = i * dl;
