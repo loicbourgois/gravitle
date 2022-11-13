@@ -33,11 +33,12 @@ canvas {
 }
 button {
   background: none;
-  color: #dd8d;
+  border: solid 1px #eead;
+  color: #eead;
   cursor:pointer;
-  border: none;
   margin-bottom: 0.3rem;
   margin-right: 1rem;
+  padding: 0.5rem;
 }
 button:hover {
   color: #eeaf;

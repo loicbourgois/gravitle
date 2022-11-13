@@ -13,8 +13,8 @@ import {
 const ZOOM = 1
 const zoom = 10
 const DELTA_DRAW = 0.001/ZOOM
-// const ip = '136.243.64.165'
-const ip = 'localhost'
+const ip = '136.243.64.165'
+// const ip = 'localhost'
 const url = `ws://${ip}:8000`
 document.body.innerHTML = `
   <div id="left">
@@ -106,14 +106,19 @@ const square = () => {
   document.querySelector("#square").style.display = "none"
   document.querySelector("#canvas").style.flexGrow = ""
 }
+const send = (m) => {
+  console.log(m)
+  socket.send(m)
+}
 window.go_fullscreen = go_fullscreen
 window.exit_fullscreen = exit_fullscreen
 window.zen_mode = zen_mode
 window.square = square
 window.expand = expand
+window.send = send
 window.addEventListener("resize", resize)
 window.addEventListener("click", unzen_mode)
-window.addEventListener("keydown", unzen_mode)
+// window.addEventListener("keydown", unzen_mode)
 const texts = document.querySelector("#texts");
 const canvas = document.querySelector("#canvas");
 const context = canvas.getContext('2d')
@@ -124,34 +129,39 @@ document.addEventListener("keydown", (e) => {
   if (e.key == "s") {
     send("14 1")
   }
-  if (e.key == "d") {
+  else if (e.key == "d") {
     send("10 1")
   }
-  if (e.key == "k") {
+  else if (e.key == "k") {
     send("5 1")
   }
-  if (e.key == "l") {
+  else if (e.key == "l") {
     send("4 1")
+  }
+  else if (e.key == "r") {
+    send("0 1")
+  }
+  else {
+    unzen_mode()
   }
 });
 document.addEventListener("keyup", (e) => {
   if (e.key == "s") {
     send("14 0")
   }
-  if (e.key == "d") {
+  else if (e.key == "d") {
     send("10 0")
   }
-  if (e.key == "k") {
+  else if (e.key == "k") {
     send("5 0")
   }
-  if (e.key == "l") {
+  else if (e.key == "l") {
     send("4 0")
   }
+  else if (e.key == "r") {
+    send("0 0")
+  }
 });
-const send = (m) => {
-  console.log(m)
-  socket.send(m)
-}
 socket.addEventListener('open', (event) => {
   send(`request ship ${uuid_}`)
 });
@@ -203,6 +213,7 @@ let render_step = 0;
 let start_step = undefined
 // console.log(socket)
 socket.addEventListener('message', (event) => {
+  console.log("bob")
   if (event.data instanceof ArrayBuffer) {
     const reso = document.querySelector("#particle_resolution").value
     const start = performance.now()
@@ -219,6 +230,7 @@ socket.addEventListener('message', (event) => {
     const client_timestamp = BigInt( (new Date()).getTime() );
     const lag = client_timestamp - server_timestamp;
     if (lag > 100 && render_step%2 == 0) {
+      // console.log("lag")
       return
     } 
     const step = view.getFloat32(ii) ; ii+=4
@@ -235,6 +247,8 @@ socket.addEventListener('message', (event) => {
     const particle_count = view.getInt32(ii) ; ii+=4
     const ratio = 1.0 / view.getFloat32(ii)  ; ii+=4
     const elapsed_network = view.getFloat32(ii) ; ii+=4
+    const total_ships = view.getInt32(ii) ; ii+=4
+    const free_ships = total_ships - view.getInt32(ii) ; ii+=4
     image = context.createImageData(canvas.width, canvas.height);
     data = image.data;
     // const diameter = 0.001 * 0.5;
@@ -285,6 +299,8 @@ socket.addEventListener('message', (event) => {
     instant_compute_str = Array.apply(null, Array(  Math.max(0, 6-instant_compute_str.length)  )).map(x => " ").join("") + instant_compute_str
     let instant_network_str = pre_pad_spaces(`${(elapsed_network/1000).toFixed(3)}`, 7);
     texts.innerHTML = `
+      <p>clients: ${clients}</p>
+      <p>ships: ${free_ships}/${total_ships}</p>
       <p>server time: ${server_timestamp}</p>
       <p>client time: ${client_timestamp}</p>
       <p>lag: ${lag}</p>
@@ -297,7 +313,6 @@ socket.addEventListener('message', (event) => {
       <p>average render: ${avg_render_duration_str} ms</p>
       <p>particles: ${particle_count}</p>
       <p>collisions: ${collisions}</p>
-      <p>clients: ${clients}</p>
       <p>bytes: ${event.data.byteLength}</p>
       <p>skipped render: ${parseInt((1.0-render_step/messages)*100)}%</p>
     `

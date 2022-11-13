@@ -45,23 +45,25 @@ pub async fn handle_connection(
         if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
-            println!("adding user {}", uuid_str);
             match free_ship_pids.lock() {
-                Ok(mut a) => {
-                    let free_ship_pids_v: Vec<_> = a.iter().collect();
-                    let pid = *free_ship_pids_v[0];
-                    if !free_ship_pids_v.is_empty() {
-                        a.remove(&pid);
-                        users.lock().unwrap().insert(
-                            uuid_u128,
-                            User {
-                                user_id: uuid_u128,
-                                addr,
-                                orders: HashMap::new(),
-                                ship_pid: pid,
-                            },
-                        );
-                        peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+                Ok(mut free_ship_pids) => {
+                    if free_ship_pids.len() > 0 {
+                        println!("adding user {}", uuid_str);
+                        let free_ship_pids_v: Vec<_> = free_ship_pids.iter().collect();
+                        let pid = *free_ship_pids_v[0];
+                        if !free_ship_pids_v.is_empty() {
+                            free_ship_pids.remove(&pid);
+                            users.lock().unwrap().insert(
+                                uuid_u128,
+                                User {
+                                    user_id: uuid_u128,
+                                    addr,
+                                    orders: HashMap::new(),
+                                    ship_pid: pid,
+                                },
+                            );
+                            peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+                        }
                     }
                 }
                 Err(_) => {}
@@ -105,11 +107,3 @@ pub async fn handle_connection(
     }
     peers.lock().unwrap().remove(&addr);
 }
-
-// let user_id = peers
-//                     .lock()
-//                     .unwrap()
-//                     .get_mut(&addr)
-//                     .unwrap()
-//                     .user_id
-//                     .unwrap();

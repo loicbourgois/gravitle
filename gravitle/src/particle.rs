@@ -2,7 +2,7 @@ use crate::Vector;
 use crate::World;
 use rand::Rng;
 pub type Particles = Vec<Particle>;
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 #[repr(u8)]
 pub enum Pkind {
     Armor = 1,
@@ -10,6 +10,7 @@ pub enum Pkind {
     Gun = 3,
     Matter = 4,
     Energy = 5,
+    Core = 6, 
 }
 #[derive(Debug)]
 pub struct Particle {

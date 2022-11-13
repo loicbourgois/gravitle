@@ -6,6 +6,7 @@ use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::rotate;
 use crate::math::wrap_around;
+use crate::setup::setup_5::reset_ship_particles;
 use crate::network::FreeShipPids;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
@@ -47,6 +48,7 @@ pub struct Configuration {
     pub particle_count: usize,
     pub thread_count: usize,
     pub diameter: f32,
+    pub ships_count: usize,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Vector {
@@ -70,6 +72,7 @@ pub struct World {
     pub diameter: f32,
     pub particle_per_thread: usize,
     pub particle_diameter_sqrd: f32,
+    pub ships_count: usize,
 }
 impl World {
     pub fn new(c: &Configuration) -> World {
@@ -79,6 +82,7 @@ impl World {
             diameter: c.diameter,
             particle_per_thread: c.particle_count / c.thread_count,
             particle_diameter_sqrd: c.diameter * c.diameter,
+            ships_count: c.ships_count,
         }
     }
 }
@@ -127,6 +131,7 @@ async fn main() -> Result<(), IoError> {
         particle_count: 50_000,
         thread_count: 5,
         diameter: 0.001,
+        ships_count: 4,
     });
     let crd = 0.01; // collision response delta (position)
     let crdv = 0.9; // collision response delta (velocity)
@@ -257,11 +262,9 @@ async fn main() -> Result<(), IoError> {
                                 }
                             }
                         }
-
                         let size = links.len() / world.thread_count + 1;
                         let start = size * tid;
                         let end = (start + size).min(links.len());
-
                         for lid in start..end {
                             let p1 = &particles[links[lid][0]];
                             let p2 = &particles[links[lid][1]];
@@ -269,7 +272,6 @@ async fn main() -> Result<(), IoError> {
                             let d = wa.d_sqrd.sqrt();
                             let n = normalize(&wa.d, d);
                             let factor = (world.diameter * linkt_length_ratio - d) * link_strengh;
-
                             if wa.d_sqrd < world.particle_diameter_sqrd {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
@@ -411,11 +413,11 @@ async fn main() -> Result<(), IoError> {
                         }
                         *w += 1;
                     }
-                    //
-                    //
-                    //
-                    //
                     wait(&syncers[2], tid);
+                    //
+                    //
+                    //
+                    //
                     {
                         let mut w = syncers[3][tid].write().unwrap();
                         *w += 1;
@@ -430,6 +432,7 @@ async fn main() -> Result<(), IoError> {
     {
         let peers = peers.clone();
         let users = users.clone();
+        let free_ship_pids = free_ship_pids.clone();
         let mut elapsed_network = Instant::now().elapsed().as_micros();
         thread::spawn(move || loop {
             let start = Instant::now();
@@ -442,6 +445,9 @@ async fn main() -> Result<(), IoError> {
                         let mut p1 = &mut particles[*pid + user.ship_pid];
                         match p1.kind {
                             Pkind::Booster => {
+                                p1.activation = *activation;
+                            }
+                            Pkind::Core => {
                                 p1.activation = *activation;
                             }
                             Pkind::Gun => {
@@ -473,14 +479,20 @@ async fn main() -> Result<(), IoError> {
             {
                 let mut w = syncers[3][world.thread_count].write().unwrap();
                 let mut collisions_count = 0;
-                for p in &particles {
-                    collisions_count += p.collisions;
+                let mut ships_to_reset = HashSet::new();
+                for p1 in &particles {
+                    collisions_count += p1.collisions;
+                    if p1.kind == Pkind::Core && p1.activation >= 0.9 {
+                        ships_to_reset.insert(p1.pid);
+                    }
+                }
+                for pid in ships_to_reset {
+                    reset_ship_particles(pid, &mut particles, &world);
                 }
                 let elapsed_compute = start.elapsed().as_micros();
-
                 let start_network = Instant::now();
                 let part_bytes = 2 + 2 + 1 + 1;
-                let common_capacity = 4 * 10 + 8;
+                let common_capacity = 4 * 12 + 8;
                 let capacity = world.particle_count * part_bytes + common_capacity;
                 let mut data = vec![0; capacity];
                 let mut data_common = Vec::with_capacity(common_capacity);
@@ -495,6 +507,8 @@ async fn main() -> Result<(), IoError> {
                 data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
                 data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
                 data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
+                data_common.extend((world.ships_count as u32).to_be_bytes().to_vec());
+                data_common.extend((free_ship_pids.lock().unwrap().len() as u32).to_be_bytes().to_vec());
                 data[..common_capacity].copy_from_slice(&data_common);
                 let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
                 for (pid, particle) in particles.iter().enumerate() {
