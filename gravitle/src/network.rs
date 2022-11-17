@@ -74,8 +74,7 @@ pub async fn handle_connection(
             if strs.len() == 2 {
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
-                match shared_data.lock() {
-                    Ok(mut data) => {
+                if let Ok(mut data) = shared_data.lock() {
                         if let Some(user_id) = data.peers.get_mut(&addr).unwrap().user_id {
                             data.users
                                 .get_mut(&user_id)
@@ -84,18 +83,6 @@ pub async fn handle_connection(
                                 .insert(pid, activation);
                         }
                     }
-
-                    // Ok(mut data) => match data.peers.get_mut(&addr).unwrap().user_id {
-                    //     Some(user_id) => {
-                    //         data.users
-                    //             .get_mut(&user_id)
-                    //             .unwrap()
-                    //             .orders
-                    //             .insert(pid, activation);
-                    //     }
-                    //     None => {}
-                    // },
-                    Err(_) => {}
                 }
             }
         }
