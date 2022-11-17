@@ -29,7 +29,7 @@ use crate::network::handle_connection;
 use crate::network::NetworkData;
 use crate::network::SharedNetworkData;
 use crate::particle::Particle;
-use misc::*;
+use misc::{Configuration, Delta, Links, Pid, User, Vector, World, approx_equal, neighbours, wait};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::TcpListener;
 use uuid::Uuid;
@@ -47,7 +47,7 @@ async fn main() -> Result<(), IoError> {
     }));
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
-    println!("Listening on {}", addr);
+    println!("Listening on {addr}");
     println!("Try at http://localhost/play/");
     let world = World::new(&Configuration {
         particle_count: 50_000,
@@ -113,7 +113,7 @@ async fn main() -> Result<(), IoError> {
     let mut syncers: Syncers = Vec::new();
     for _ in 0..4 {
         let mut subsyncers = Vec::new();
-        for _ in 0..world.thread_count + 1 {
+        for _ in 0..=world.thread_count {
             subsyncers.push(Arc::new(RwLock::new(0)));
         }
         syncers.push(subsyncers)

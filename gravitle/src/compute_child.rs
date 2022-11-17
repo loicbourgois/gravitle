@@ -166,10 +166,10 @@ pub fn compute_child<'a>(
                                 // assert!(d1.p.y >= 0.0, "\n{:?}", d1);
                                 // assert!(d1.p.x <= 1.0, "\n{:?}", d1);
                                 // assert!(d1.p.y <= 1.0, "\n{:?}", d1);
-                                assert!(!d1.v.x.is_nan(), "\n{:?}", d1);
-                                assert!(!d1.v.y.is_nan(), "\n{:?}", d1);
-                                assert!(!d1.p.x.is_nan(), "\n{:?}", d1);
-                                assert!(!d1.p.y.is_nan(), "\n{:?}", d1);
+                                assert!(!d1.v.x.is_nan(), "\n{d1:?}");
+                                assert!(!d1.v.y.is_nan(), "\n{d1:?}");
+                                assert!(!d1.p.x.is_nan(), "\n{d1:?}");
+                                assert!(!d1.p.y.is_nan(), "\n{d1:?}");
                                 p1.collisions += d1.collisions;
                                 p1.direction.x += d1.direction.x;
                                 p1.direction.y += d1.direction.y;
@@ -204,16 +204,16 @@ pub fn compute_child<'a>(
                             p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
                             p1.pp.x = p1.p.x - p1.v.x;
                             p1.pp.y = p1.p.y - p1.v.y;
-                            assert!(!p1.p.x.is_nan(), "\n{:?}", p1);
-                            assert!(!p1.p.y.is_nan(), "\n{:?}", p1);
-                            assert!(p1.v.x >= -world.diameter, "\n{:?}", p1);
-                            assert!(p1.v.y >= -world.diameter, "\n{:?}", p1);
-                            assert!(p1.v.x <= world.diameter, "\n{:?}", p1);
-                            assert!(p1.v.y <= world.diameter, "\n{:?}", p1);
-                            assert!(p1.p.x >= 0.0, "\n{:?}", p1);
-                            assert!(p1.p.y >= 0.0, "\n{:?}", p1);
-                            assert!(p1.p.x <= 1.0, "\n{:?}", p1);
-                            assert!(p1.p.y <= 1.0, "\n{:?}", p1);
+                            assert!(!p1.p.x.is_nan(), "\n{p1:?}");
+                            assert!(!p1.p.y.is_nan(), "\n{p1:?}");
+                            assert!(p1.v.x >= -world.diameter, "\n{p1:?}");
+                            assert!(p1.v.y >= -world.diameter, "\n{p1:?}");
+                            assert!(p1.v.x <= world.diameter, "\n{p1:?}");
+                            assert!(p1.v.y <= world.diameter, "\n{p1:?}");
+                            assert!(p1.p.x >= 0.0, "\n{p1:?}");
+                            assert!(p1.p.y >= 0.0, "\n{p1:?}");
+                            assert!(p1.p.x <= 1.0, "\n{p1:?}");
+                            assert!(p1.p.y <= 1.0, "\n{p1:?}");
 
                             if p1.kind == Pkind::Gun && gun_ok && p1.activation >= 0.9 {
                                 let mut p2 =

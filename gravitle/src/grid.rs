@@ -58,7 +58,7 @@ impl Grid {
     }
 
     pub fn update_01(&mut self) {
-        for x in self.pids.iter_mut() {
+        for x in &mut self.pids {
             x.clear()
         }
     }

@@ -35,7 +35,7 @@ impl Particle {
     pub fn new_particles(world: &World) -> Particles {
         let mut particles = Vec::new();
         for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
         }
         particles
     }
@@ -43,7 +43,7 @@ impl Particle {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
         for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
         }
         for p in particles.iter_mut().take(100) {
             p.p.x = 0.01 * rng.gen::<f32>();
@@ -61,7 +61,7 @@ impl Particle {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
         for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
         }
         for p in &mut particles {
             p.p.x = rng.gen::<f32>();
@@ -79,7 +79,7 @@ impl Particle {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
         for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
         }
         for p in &mut particles {
             p.p.x = rng.gen::<f32>() * 0.5 + 0.25;
@@ -121,7 +121,7 @@ impl Particle {
         let mut p = &mut particles[3];
         p.p.x = 0.11;
         p.p.y = 0.1;
-        p.v.x = -0.000003;
+        p.v.x = -0.000_003;
         p.v.y = 0.0;
         p.pp = Vector {
             x: p.p.x - p.v.x,
@@ -142,7 +142,7 @@ impl Particle {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
         for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { pid, world }));
+            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
         }
         for p in &mut particles {
             p.p.x = rng.gen::<f32>();

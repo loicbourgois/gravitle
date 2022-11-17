@@ -84,7 +84,7 @@ pub fn compute_main(
             let mut w = syncers[3][world.thread_count].write().unwrap();
             let mut collisions_count = 0;
             let mut ships_to_reset = HashSet::new();
-            for p1 in particles.iter() {
+            for p1 in &particles {
                 collisions_count += p1.collisions;
                 if p1.kind == Pkind::Core && p1.activation >= 0.9 {
                     ships_to_reset.insert(p1.pid);
@@ -172,9 +172,9 @@ pub fn compute_main(
                             data.extend(status.to_be_bytes());
                             data.extend((p1.kind as u8).to_be_bytes());
                             count += 1;
-                            for x in gx - uu..gx + uu + 1 {
+                            for x in (gx - uu)..=(gx + uu) {
                                 let _x_ = (x as usize + grid.side) % grid.side;
-                                for y in gy - uu..gy + uu + 1 {
+                                for y in (gy - uu)..=(gy + uu) {
                                     let _y_ = (y as usize + grid.side) % grid.side;
                                     let gid = grid_id(x as usize, y as usize, grid.side);
                                     for pid2 in &grid.pids[gid] {

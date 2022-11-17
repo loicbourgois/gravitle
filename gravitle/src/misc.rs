@@ -88,5 +88,5 @@ pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
     }
 }
 pub fn approx_equal(a: f32, b: f32) -> bool {
-    (a - b).abs() < 0.000001
+    (a - b).abs() < 0.000_001
 }

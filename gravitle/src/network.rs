@@ -25,11 +25,11 @@ pub async fn handle_connection(
     addr: SocketAddr,
     shared_data: SharedNetworkData,
 ) {
-    println!("connecting {}", addr);
+    println!("connecting {addr}");
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
         .expect("Error during the websocket handshake occurred");
-    println!("connected {}", addr);
+    println!("connected {addr}");
     let (tx, rx) = channel(0);
     shared_data.lock().unwrap().peers.insert(
         addr,
@@ -48,7 +48,7 @@ pub async fn handle_connection(
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
             if let Ok(mut data) = shared_data.lock() {
                 if !data.free_ship_pids.is_empty() {
-                    println!("adding user {}", uuid_str);
+                    println!("adding user {uuid_str}");
                     let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
                     let pid = *free_ship_pids_v[0];
                     if !free_ship_pids_v.is_empty() {

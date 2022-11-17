@@ -3,7 +3,7 @@ mod test {
     use crate::wrap_around;
     use crate::Vector;
     fn approx_equal(a: f32, b: f32) -> bool {
-        (a - b).abs() < 0.000001
+        (a - b).abs() < 0.000_001
     }
     #[test]
     fn test_wrap_around() {
@@ -14,10 +14,10 @@ mod test {
         let diam = 0.001 * 2.0;
         let diam_sqrd = diam * diam;
         println!("wa.d_sqrd: {}", wa.d_sqrd);
-        println!("diam_sqrd: {}", diam_sqrd);
+        println!("diam_sqrd: {diam_sqrd}");
         println!("wa.d: {:?}", wa.d);
-        println!("diam: {}", diam);
-        println!("wa: {:?}", wa);
+        println!("diam: {diam}");
+        println!("wa: {wa:?}");
         assert!(approx_equal(a.x, wa.a.x));
         assert!(approx_equal(b.x, wa.b.x));
         assert!(approx_equal(a.y, wa.a.y));
