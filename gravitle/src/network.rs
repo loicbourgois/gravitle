@@ -75,13 +75,12 @@ pub async fn handle_connection(
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
                 if let Ok(mut data) = shared_data.lock() {
-                        if let Some(user_id) = data.peers.get_mut(&addr).unwrap().user_id {
-                            data.users
-                                .get_mut(&user_id)
-                                .unwrap()
-                                .orders
-                                .insert(pid, activation);
-                        }
+                    if let Some(user_id) = data.peers.get_mut(&addr).unwrap().user_id {
+                        data.users
+                            .get_mut(&user_id)
+                            .unwrap()
+                            .orders
+                            .insert(pid, activation);
                     }
                 }
             }
