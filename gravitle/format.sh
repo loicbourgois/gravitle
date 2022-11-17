@@ -7,5 +7,8 @@ cargo clippy --manifest-path $HOME/github.com/loicbourgois/gravitle/gravitle/Car
     -Aclippy::cast_sign_loss \
     -Aclippy::cast_possible_truncation \
     -Aclippy::similar_names \
+    -Aclippy::cast_possible_wrap \
+    -Aclippy::too_many_lines \
+    -Aclippy::too_many_arguments \
     -Aclippy::module_name_repetitions
-# cargo clippy --release --fix --manifest-path $HOME/github.com/loicbourgois/gravitle/gravitle/Cargo.toml -- -Dwarnings -Dclippy::pedantic
+cargo clippy --release --fix --manifest-path $HOME/github.com/loicbourgois/gravitle/gravitle/Cargo.toml -- -Dwarnings -Dclippy::pedantic

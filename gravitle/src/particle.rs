@@ -9,7 +9,7 @@ pub enum Pkind {
     Booster = 2,
     Gun = 3,
     Matter = 4,
-    Energy = 5,
+    // Energy = 5,
     Core = 6,
 }
 #[derive(Debug)]
@@ -39,42 +39,42 @@ impl Particle {
         }
         particles
     }
-    pub fn new_particles_2(world: &World) -> Particles {
-        let mut rng = rand::thread_rng();
-        let mut particles = Vec::new();
-        for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
-        }
-        for p in particles.iter_mut().take(100) {
-            p.p.x = 0.01 * rng.gen::<f32>();
-            p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05 * 0.5;
-            p.v.x = world.diameter * 0.5;
-            p.v.y = world.diameter * 0.0;
-            p.pp = Vector {
-                x: p.p.x - p.v.x,
-                y: p.p.y - p.v.y,
-            };
-        }
-        particles
-    }
-    pub fn new_particles_3(world: &World) -> Particles {
-        let mut rng = rand::thread_rng();
-        let mut particles = Vec::new();
-        for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
-        }
-        for p in &mut particles {
-            p.p.x = rng.gen::<f32>();
-            p.p.y = rng.gen::<f32>();
-            p.v.x = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
-            p.v.y = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
-            p.pp = Vector {
-                x: p.p.x - p.v.x,
-                y: p.p.y - p.v.y,
-            };
-        }
-        particles
-    }
+    // pub fn new_particles_2(world: &World) -> Particles {
+    //     let mut rng = rand::thread_rng();
+    //     let mut particles = Vec::new();
+    //     for pid in 0..world.particle_count {
+    //         particles.push(Particle::new(&ParticleConfiguration { world, pid }));
+    //     }
+    //     for p in particles.iter_mut().take(100) {
+    //         p.p.x = 0.01 * rng.gen::<f32>();
+    //         p.p.y = 0.01 * rng.gen::<f32>() + 0.5 - 0.05 * 0.5;
+    //         p.v.x = world.diameter * 0.5;
+    //         p.v.y = world.diameter * 0.0;
+    //         p.pp = Vector {
+    //             x: p.p.x - p.v.x,
+    //             y: p.p.y - p.v.y,
+    //         };
+    //     }
+    //     particles
+    // }
+    // pub fn new_particles_3(world: &World) -> Particles {
+    //     let mut rng = rand::thread_rng();
+    //     let mut particles = Vec::new();
+    //     for pid in 0..world.particle_count {
+    //         particles.push(Particle::new(&ParticleConfiguration { world, pid }));
+    //     }
+    //     for p in &mut particles {
+    //         p.p.x = rng.gen::<f32>();
+    //         p.p.y = rng.gen::<f32>();
+    //         p.v.x = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
+    //         p.v.y = world.diameter * 0.125 * (rng.gen::<f32>() - 0.5);
+    //         p.pp = Vector {
+    //             x: p.p.x - p.v.x,
+    //             y: p.p.y - p.v.y,
+    //         };
+    //     }
+    //     particles
+    // }
     pub fn new_particles_4(world: &World) -> Particles {
         let mut rng = rand::thread_rng();
         let mut particles = Vec::new();
@@ -138,24 +138,24 @@ impl Particle {
         };
         particles
     }
-    pub fn new_particles_5(world: &World) -> Particles {
-        let mut rng = rand::thread_rng();
-        let mut particles = Vec::new();
-        for pid in 0..world.particle_count {
-            particles.push(Particle::new(&ParticleConfiguration { world, pid }));
-        }
-        for p in &mut particles {
-            p.p.x = rng.gen::<f32>();
-            p.p.y = rng.gen::<f32>();
-            p.v.x = 0.0;
-            p.v.y = 0.0;
-            p.pp = Vector {
-                x: p.p.x - p.v.x,
-                y: p.p.y - p.v.y,
-            };
-        }
-        particles
-    }
+    // pub fn new_particles_5(world: &World) -> Particles {
+    //     let mut rng = rand::thread_rng();
+    //     let mut particles = Vec::new();
+    //     for pid in 0..world.particle_count {
+    //         particles.push(Particle::new(&ParticleConfiguration { world, pid }));
+    //     }
+    //     for p in &mut particles {
+    //         p.p.x = rng.gen::<f32>();
+    //         p.p.y = rng.gen::<f32>();
+    //         p.v.x = 0.0;
+    //         p.v.y = 0.0;
+    //         p.pp = Vector {
+    //             x: p.p.x - p.v.x,
+    //             y: p.p.y - p.v.y,
+    //         };
+    //     }
+    //     particles
+    // }
     pub fn new(c: &ParticleConfiguration) -> Particle {
         let mut rng = rand::thread_rng();
         let world = c.world;

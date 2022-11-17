@@ -125,7 +125,7 @@ async fn main() -> Result<(), IoError> {
         crdv,
         link_strengh,
         linkt_length_ratio,
-        syncers.clone(),
+        &syncers,
         &mut grid,
         &mut deltas,
         &mut particles,

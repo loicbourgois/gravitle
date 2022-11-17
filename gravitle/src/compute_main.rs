@@ -39,10 +39,7 @@ pub fn compute_main(
                 for (pid, activation) in &user.orders {
                     let mut p1 = &mut particles[*pid + user.ship_pid];
                     match p1.kind {
-                        Pkind::Booster => {
-                            p1.activation = *activation;
-                        }
-                        Pkind::Core => {
+                        Pkind::Booster | Pkind::Core => {
                             p1.activation = *activation;
                         }
                         Pkind::Gun => {
@@ -176,7 +173,7 @@ pub fn compute_main(
                                 let x = (x as usize + grid.side) % grid.side;
                                 for y in (gy - uu)..=(gy + uu) {
                                     let y = (y as usize + grid.side) % grid.side;
-                                    let gid = grid_id(x as usize, y as usize, grid.side);
+                                    let gid = grid_id(x, y, grid.side);
                                     for pid2 in &grid.pids[gid] {
                                         let p2 = &particles[*pid2];
                                         data.extend(p2.p.x.to_be_bytes());
