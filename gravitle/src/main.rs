@@ -10,10 +10,10 @@ use crate::setup::setup_5::reset_ship_particles;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
 use particle::Pkind;
-mod compute_main;
 mod compute_child;
-use compute_child::compute_child;
+mod compute_main;
 use crate::compute_main::compute_main;
+use compute_child::compute_child;
 use rand::Rng;
 use std::collections::HashSet;
 use std::sync::atomic::AtomicPtr;
@@ -139,19 +139,9 @@ async fn main() -> Result<(), IoError> {
         &mut particles,
         &mut links,
     );
-    compute_main(
-        shared_network_data.clone(),
-        syncers,
-        world,
-        particles,
-        grid,
-    );
+    compute_main(shared_network_data.clone(), syncers, world, particles, grid);
     while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(
-            stream,
-            addr,
-            shared_network_data.clone(),
-        ));
+        tokio::spawn(handle_connection(stream, addr, shared_network_data.clone()));
     }
     Ok(())
 }
