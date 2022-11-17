@@ -15,7 +15,7 @@ pub struct Peer {
     pub tx: Tx,
 }
 pub struct NetworkData {
-   pub peers: HashMap<SocketAddr, Peer>,
+    pub peers: HashMap<SocketAddr, Peer>,
     pub users: HashMap<u128, User>,
     pub free_ship_pids: HashSet<Pid>,
 }
@@ -75,17 +75,15 @@ pub async fn handle_connection(
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
                 match shared_data.lock() {
-                    Ok(mut data) => {
-                        match data.peers.get_mut(&addr).unwrap().user_id {
-                            Some(user_id) => {
-                                data.users
-                                    .get_mut(&user_id)
-                                    .unwrap()
-                                    .orders
-                                    .insert(pid, activation);
-                            }
-                            None => {}
+                    Ok(mut data) => match data.peers.get_mut(&addr).unwrap().user_id {
+                        Some(user_id) => {
+                            data.users
+                                .get_mut(&user_id)
+                                .unwrap()
+                                .orders
+                                .insert(pid, activation);
                         }
+                        None => {}
                     },
                     Err(_) => {}
                 }
@@ -97,22 +95,18 @@ pub async fn handle_connection(
     pin_mut!(broadcast_incoming, receive_from_others);
     future::select(broadcast_incoming, receive_from_others).await;
     println!("disconnected {}", &addr);
-   let ship_id = match shared_data.lock() {
-        Ok(mut data) => {
-            match data.peers.get(&addr) {
-                    Some(peer) => match peer.user_id {
-                        Some(user_id) => match data.users.get(&user_id) {
-                            Some(user) => {
-                                Some(user.ship_pid)
-                            }
-                            None => {None}
-                        },
-                        None => {None}
-                    },
-                    None => {None}
-                }
-        }
-        Err(_) => {None}
+    let ship_id = match shared_data.lock() {
+        Ok(mut data) => match data.peers.get(&addr) {
+            Some(peer) => match peer.user_id {
+                Some(user_id) => match data.users.get(&user_id) {
+                    Some(user) => Some(user.ship_pid),
+                    None => None,
+                },
+                None => None,
+            },
+            None => None,
+        },
+        Err(_) => None,
     };
     match ship_id {
         Some(ship_id) => {

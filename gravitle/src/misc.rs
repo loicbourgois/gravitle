@@ -1,10 +1,10 @@
-use std::sync::RwLock;
-use std::sync::Arc;
 use crate::grid_id_position;
 use crate::Grid;
-use std::collections::HashMap;
-use std::sync::Mutex;
 use crate::SocketAddr;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::RwLock;
 pub struct User {
     pub user_id: u128,
     pub addr: SocketAddr,

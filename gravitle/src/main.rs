@@ -7,10 +7,10 @@ use crate::math::normalize_2;
 use crate::math::rotate;
 use crate::math::wrap_around;
 // use crate::network::FreeShipPids;
+use crate::particle::Particles;
 use crate::setup::setup_5::reset_ship_particles;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
-use crate::particle::Particles;
 use particle::Pkind;
 mod compute_main;
 use crate::compute_main::compute_main;
@@ -25,23 +25,23 @@ use std::time::Duration;
 use std::time::Instant;
 mod grid;
 mod math;
+mod misc;
 mod network;
 mod particle;
 mod setup;
 mod test_math;
-mod misc;
 use crate::grid::grid_id;
 use crate::grid::grid_xy;
 use crate::network::handle_connection;
 // use crate::network::Peers;
+use crate::network::NetworkData;
+use crate::network::SharedNetworkData;
 use crate::particle::Particle;
+use misc::*;
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::TcpListener;
 use tungstenite::protocol::Message;
 use uuid::Uuid;
-use misc::*;
-use crate::network::NetworkData;
-use crate::network::SharedNetworkData;
 pub type Syncers = Vec<Vec<Arc<RwLock<usize>>>>;
 #[tokio::main]
 async fn main() -> Result<(), IoError> {
@@ -51,7 +51,7 @@ async fn main() -> Result<(), IoError> {
     // let peers = Peers::new(Mutex::new(HashMap::new()));
     // let users = Users::new(Mutex::new(HashMap::new()));
     // let free_ship_pids = FreeShipPids::new(Mutex::new(HashSet::new()));
-    let shared_network_data = SharedNetworkData::new(Mutex::new(NetworkData{
+    let shared_network_data = SharedNetworkData::new(Mutex::new(NetworkData {
         peers: HashMap::new(),
         users: HashMap::new(),
         free_ship_pids: HashSet::new(),
@@ -372,128 +372,132 @@ async fn main() -> Result<(), IoError> {
         //     // let peers = peers.clone();
         //     // let users = users.clone();
         //     // let free_ship_pids = free_ship_pids.clone();
-    
+
         //     let shared_network_data = shared_network_data.clone();
         let mut elapsed_total = 0;
         let mut step = 0;
-            let mut elapsed_network = Instant::now().elapsed().as_micros();
-            thread::spawn(move || loop {
-                let start = Instant::now();
-                // 
-                // Step 0
-                // 
-                {
-                    let mut w = syncers[0][world.thread_count].write().unwrap();
-                    grid.update_01();
-                    grid.update_02(&mut particles);
-                    for user in shared_network_data.lock().unwrap().users.values_mut() {
-                        for (pid, activation) in &user.orders {
-                            let mut p1 = &mut particles[*pid + user.ship_pid];
-                            match p1.kind {
-                                Pkind::Booster => {
-                                    p1.activation = *activation;
-                                }
-                                Pkind::Core => {
-                                    p1.activation = *activation;
-                                }
-                                Pkind::Gun => {
-                                    if approx_equal(*activation, 0.0)
-                                        || approx_equal(*activation, 1.0)
-                                            && approx_equal(p1.activation, 0.0)
-                                    {
-                                        p1.activation = *activation;
-                                    }
-                                }
-                                _ => {}
+        let mut elapsed_network = Instant::now().elapsed().as_micros();
+        thread::spawn(move || loop {
+            let start = Instant::now();
+            //
+            // Step 0
+            //
+            {
+                let mut w = syncers[0][world.thread_count].write().unwrap();
+                grid.update_01();
+                grid.update_02(&mut particles);
+                for user in shared_network_data.lock().unwrap().users.values_mut() {
+                    for (pid, activation) in &user.orders {
+                        let mut p1 = &mut particles[*pid + user.ship_pid];
+                        match p1.kind {
+                            Pkind::Booster => {
+                                p1.activation = *activation;
                             }
+                            Pkind::Core => {
+                                p1.activation = *activation;
+                            }
+                            Pkind::Gun => {
+                                if approx_equal(*activation, 0.0)
+                                    || approx_equal(*activation, 1.0)
+                                        && approx_equal(p1.activation, 0.0)
+                                {
+                                    p1.activation = *activation;
+                                }
+                            }
+                            _ => {}
                         }
-                        user.orders.clear();
                     }
-                    *w += 1;
+                    user.orders.clear();
                 }
-                wait(&syncers[0], world.thread_count);
-                //
-                // Step 1
-                //
-                {
-                    let mut w = syncers[1][world.thread_count].write().unwrap();
-                    *w += 1;
+                *w += 1;
+            }
+            wait(&syncers[0], world.thread_count);
+            //
+            // Step 1
+            //
+            {
+                let mut w = syncers[1][world.thread_count].write().unwrap();
+                *w += 1;
+            }
+            wait(&syncers[1], world.thread_count);
+            //
+            // Step 2
+            //
+            {
+                let mut w = syncers[2][world.thread_count].write().unwrap();
+                *w += 1;
+            }
+            wait(&syncers[2], world.thread_count);
+            //
+            // Step 3
+            //
+            {
+                let mut w = syncers[3][world.thread_count].write().unwrap();
+                let mut collisions_count = 0;
+                let mut ships_to_reset = HashSet::new();
+                for p1 in particles.iter() {
+                    collisions_count += p1.collisions;
+                    if p1.kind == Pkind::Core && p1.activation >= 0.9 {
+                        ships_to_reset.insert(p1.pid);
+                    }
                 }
-                wait(&syncers[1], world.thread_count);
-                // 
-                // Step 2
-                // 
-                {
-                    let mut w = syncers[2][world.thread_count].write().unwrap();
-                    *w += 1;
+                for pid in ships_to_reset {
+                    reset_ship_particles(pid, &mut particles, &world);
                 }
-                wait(&syncers[2], world.thread_count);
-                //
-                // Step 3
-                //
-                {
-                    let mut w = syncers[3][world.thread_count].write().unwrap();
-                    let mut collisions_count = 0;
-                    let mut ships_to_reset = HashSet::new();
-                    for p1 in particles.iter() {
-                        collisions_count += p1.collisions;
-                        if p1.kind == Pkind::Core && p1.activation >= 0.9 {
-                            ships_to_reset.insert(p1.pid);
-                        }
+                let elapsed_compute = start.elapsed().as_micros();
+                let start_network = Instant::now();
+                let part_bytes = 2 + 2 + 1 + 1;
+                let common_capacity = 4 * 12 + 8;
+                let capacity = world.particle_count * part_bytes + common_capacity;
+                let mut data = vec![0; capacity];
+                let mut data_common = Vec::with_capacity(common_capacity);
+                data_common.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
+                data_common.extend((step as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+                data_common.extend(
+                    (shared_network_data.lock().unwrap().peers.len() as u32)
+                        .to_be_bytes()
+                        .to_vec(),
+                );
+                data_common.extend(collisions_count.to_be_bytes().to_vec());
+                data_common.extend((world.diameter).to_be_bytes().to_vec());
+                data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
+                data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
+                data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
+                data_common.extend((world.ships_count as u32).to_be_bytes().to_vec());
+                data_common.extend(
+                    (shared_network_data.lock().unwrap().free_ship_pids.len() as u32)
+                        .to_be_bytes()
+                        .to_vec(),
+                );
+                data[..common_capacity].copy_from_slice(&data_common);
+                let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
+                for (pid, particle) in particles.iter().enumerate() {
+                    let i = common_capacity + pid * part_bytes;
+                    let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
+                    let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
+                    let mut status: u8 = 0;
+                    if particle.collisions > 0 {
+                        status += 1;
                     }
-                    for pid in ships_to_reset {
-                        reset_ship_particles(pid, &mut particles, &world);
+                    if particle.activation > 0.01 {
+                        status += 2;
                     }
-                    let elapsed_compute = start.elapsed().as_micros();
-                    let start_network = Instant::now();
-                    let part_bytes = 2 + 2 + 1 + 1;
-                    let common_capacity = 4 * 12 + 8;
-                    let capacity = world.particle_count * part_bytes + common_capacity;
-                    let mut data = vec![0; capacity];
-                    let mut data_common = Vec::with_capacity(common_capacity);
-                    data_common.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
-                    data_common.extend((step as f32).to_be_bytes().to_vec());
-                    data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
-                    data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
-                    data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
-                    data_common.extend((shared_network_data.lock().unwrap().peers.len() as u32).to_be_bytes().to_vec());
-                    data_common.extend(collisions_count.to_be_bytes().to_vec());
-                    data_common.extend((world.diameter).to_be_bytes().to_vec());
-                    data_common.extend((world.particle_count as u32).to_be_bytes().to_vec());
-                    data_common.extend(((256.0 * 256.0) as f32).to_be_bytes().to_vec());
-                    data_common.extend((elapsed_network as f32).to_be_bytes().to_vec());
-                    data_common.extend((world.ships_count as u32).to_be_bytes().to_vec());
-                    data_common.extend(
-                        (shared_network_data.lock().unwrap().free_ship_pids.len() as u32)
-                            .to_be_bytes()
-                            .to_vec(),
-                    );
-                    data[..common_capacity].copy_from_slice(&data_common);
-                    let _data_2: Vec<u8> = vec![0; part_bytes * world.particle_count];
-                    for (pid, particle) in particles.iter().enumerate() {
-                        let i = common_capacity + pid * part_bytes;
-                        let xs = ((particle.p.x * 256.0 * 256.0) as u16).to_be_bytes();
-                        let ys = ((particle.p.y * 256.0 * 256.0) as u16).to_be_bytes();
-                        let mut status: u8 = 0;
-                        if particle.collisions > 0 {
-                            status += 1;
-                        }
-                        if particle.activation > 0.01 {
-                            status += 2;
-                        }
-                        data[i..(2 + i)].copy_from_slice(&xs[..2]);
-                        data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
-                        data[(4 + i)..(4 + 1 + i)].copy_from_slice(&status.to_be_bytes()[..1]);
-                        data[(5 + i)..(5 + 1 + i)]
-                            .copy_from_slice(&(particle.kind as u8).to_be_bytes()[..1]);
-                    }
-                    assert!(data.len() == capacity);
-                    let m = Message::Binary(data);
+                    data[i..(2 + i)].copy_from_slice(&xs[..2]);
+                    data[(2 + i)..(2 + 2 + i)].copy_from_slice(&ys[..2]);
+                    data[(4 + i)..(4 + 1 + i)].copy_from_slice(&status.to_be_bytes()[..1]);
+                    data[(5 + i)..(5 + 1 + i)]
+                        .copy_from_slice(&(particle.kind as u8).to_be_bytes()[..1]);
+                }
+                assert!(data.len() == capacity);
+                let m = Message::Binary(data);
 
-                    {
+                {
                     let mut network_data = shared_network_data.lock().unwrap();
                     let mut ship_pids = HashMap::new();
-                    for (k,v) in &network_data.users {
+                    for (k, v) in &network_data.users {
                         ship_pids.insert(*k, v.ship_pid);
                     }
                     for peer in &mut network_data.peers.values_mut() {
@@ -556,23 +560,22 @@ async fn main() -> Result<(), IoError> {
                         }
                     }
                 }
-                    elapsed_network = start_network.elapsed().as_micros();
-                    *w += 1;
-                }
-                wait(&syncers[3], world.thread_count);
-                //
-                // More
-                //
-                elapsed_total += start.elapsed().as_micros();
-                step += 1;
-                let delta = Duration::from_millis(10);
-                if start.elapsed() < delta {
-                    let sleep_duration = delta - start.elapsed();
-                    thread::sleep(sleep_duration);
-                }
-            });
-        
-}
+                elapsed_network = start_network.elapsed().as_micros();
+                *w += 1;
+            }
+            wait(&syncers[3], world.thread_count);
+            //
+            // More
+            //
+            elapsed_total += start.elapsed().as_micros();
+            step += 1;
+            let delta = Duration::from_millis(10);
+            if start.elapsed() < delta {
+                let sleep_duration = delta - start.elapsed();
+                thread::sleep(sleep_duration);
+            }
+        });
+    }
 
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(handle_connection(
