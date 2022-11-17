@@ -37,8 +37,8 @@ pub fn reset_ship_particles(pid0: usize, particles: &mut Particles, world: &Worl
         y: p0.p.y - p0.v.y,
     };
     let pos = rotate(
-        &p0.p,
-        &Vector {
+        p0.p,
+        Vector {
             x: p0.p.x + world.diameter,
             y: p0.p.y,
         },
@@ -73,7 +73,7 @@ pub fn reset_ship_particles(pid0: usize, particles: &mut Particles, world: &Worl
     for part in parts {
         let pid1 = pid0 + part.0;
         let pid2 = pid0 + part.1;
-        let pos = rotate(&particles[pid1].p, &particles[pid2].p, -1.0 / 6.0);
+        let pos = rotate(particles[pid1].p, particles[pid2].p, -1.0 / 6.0);
         let mut p = &mut particles[pid3];
         p.p.x = pos.x;
         p.p.y = pos.y;
@@ -126,6 +126,6 @@ pub fn reset_ship(pid0: usize, particles: &mut Particles, world: &World, links: 
         [6, 16],
         [12, 16],
     ] {
-        links.push([aa[0] + pid0, aa[1] + pid0])
+        links.push([aa[0] + pid0, aa[1] + pid0]);
     }
 }

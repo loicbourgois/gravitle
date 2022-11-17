@@ -116,7 +116,7 @@ async fn main() -> Result<(), IoError> {
         for _ in 0..=world.thread_count {
             subsyncers.push(Arc::new(RwLock::new(0)));
         }
-        syncers.push(subsyncers)
+        syncers.push(subsyncers);
     }
     compute_child(
         &world,

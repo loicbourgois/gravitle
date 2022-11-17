@@ -156,7 +156,7 @@ pub fn compute_main(
                             let mut data = data_common.clone();
                             let mut count: u32 = 0;
                             let p1 = &particles[*ship_pid];
-                            let grid_xy = grid_xy(&p1.p, grid.side);
+                            let grid_xy = grid_xy(p1.p, grid.side);
                             let gx = grid_xy.x as i32;
                             let gy = grid_xy.y as i32;
                             let uu = 32;
@@ -173,9 +173,9 @@ pub fn compute_main(
                             data.extend((p1.kind as u8).to_be_bytes());
                             count += 1;
                             for x in (gx - uu)..=(gx + uu) {
-                                let _x_ = (x as usize + grid.side) % grid.side;
+                                let x = (x as usize + grid.side) % grid.side;
                                 for y in (gy - uu)..=(gy + uu) {
-                                    let _y_ = (y as usize + grid.side) % grid.side;
+                                    let y = (y as usize + grid.side) % grid.side;
                                     let gid = grid_id(x as usize, y as usize, grid.side);
                                     for pid2 in &grid.pids[gid] {
                                         let p2 = &particles[*pid2];

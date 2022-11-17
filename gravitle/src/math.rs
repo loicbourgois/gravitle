@@ -7,7 +7,7 @@ pub struct WrapAroundResponse {
     pub d: Vector,
     pub d_sqrd: f32,
 }
-pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
+pub fn wrap_around(a: Vector, b: Vector) -> WrapAroundResponse {
     let mut dsqrd_min = distance_sqrd(a, b);
     let mut ijwin = [0.0, 0.0];
     let ijs = [
@@ -23,7 +23,7 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
     for ij in ijs {
         let dsqrd = distance_sqrd(
             a,
-            &Vector {
+            Vector {
                 x: b.x + ij[0],
                 y: b.y + ij[1],
             },
@@ -43,30 +43,30 @@ pub fn wrap_around(a: &Vector, b: &Vector) -> WrapAroundResponse {
             y: a.y + ijwin[1],
         },
         b: bbb,
-        d: delta(a, &bbb),
+        d: delta(a, bbb),
         d_sqrd: dsqrd_min,
     }
 }
 
-pub fn delta(a: &Vector, b: &Vector) -> Vector {
+pub fn delta(a: Vector, b: Vector) -> Vector {
     Vector {
         x: b.x - a.x,
         y: b.y - a.y,
     }
 }
 
-pub fn distance_sqrd(a: &Vector, b: &Vector) -> f32 {
+pub fn distance_sqrd(a: Vector, b: Vector) -> f32 {
     let dp = delta(a, b);
     dp.x * dp.x + dp.y * dp.y
 }
 
 pub fn collision_response(wa: &WrapAroundResponse, p1: &Particle, p2: &Particle) -> Vector {
     // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
-    let delta_velocity = delta(&p1.v, &p2.v);
+    let delta_velocity = delta(p1.v, p2.v);
     let delta_position = wa.d;
     let mass_factor = 2.0 * p2.m / (p2.m + p1.m);
-    let dot_vp = dot(&delta_velocity, &delta_position);
-    let n_sqrd = norm_sqrd(&delta_position);
+    let dot_vp = dot(delta_velocity, delta_position);
+    let n_sqrd = norm_sqrd(delta_position);
     let factor = mass_factor * dot_vp / n_sqrd;
     Vector {
         x: delta_position.x * factor,
@@ -74,22 +74,22 @@ pub fn collision_response(wa: &WrapAroundResponse, p1: &Particle, p2: &Particle)
     }
 }
 
-pub fn norm_sqrd(v: &Vector) -> f32 {
+pub fn norm_sqrd(v: Vector) -> f32 {
     v.x * v.x + v.y * v.y
 }
 
-pub fn dot(a: &Vector, b: &Vector) -> f32 {
+pub fn dot(a: Vector, b: Vector) -> f32 {
     a.x * b.x + a.y * b.y
 }
 
-pub fn normalize(p: &Vector, d: f32) -> Vector {
+pub fn normalize(p: Vector, d: f32) -> Vector {
     Vector {
         x: p.x / d,
         y: p.y / d,
     }
 }
 
-pub fn normalize_2(p: &Vector) -> Vector {
+pub fn normalize_2(p: Vector) -> Vector {
     let d = (p.x * p.x + p.y * p.y).sqrt();
     Vector {
         x: p.x / d,
@@ -97,7 +97,7 @@ pub fn normalize_2(p: &Vector) -> Vector {
     }
 }
 
-pub fn rotate(p1: &Vector, p2: &Vector, angle: f32) -> Vector {
+pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
     // Rotates p2 around p1
     let angle = std::f32::consts::PI * 2.0 * angle;
     let dx = p2.x - p1.x;

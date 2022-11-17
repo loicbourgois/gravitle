@@ -61,11 +61,11 @@ pub fn compute_child<'a>(
                         for i in 0..world.particle_per_thread {
                             let pid1 = i * world.thread_count + tid;
                             let p1 = &particles[pid1];
-                            for ns in neighbours(&p1.p, grid) {
+                            for ns in neighbours(p1.p, grid) {
                                 for pid2 in ns {
                                     let p2 = &(*particles2)[*pid2];
                                     if p1.pid < p2.pid {
-                                        let wa = wrap_around(&p1.p, &p2.p);
+                                        let wa = wrap_around(p1.p, p2.p);
                                         if wa.d_sqrd < world.particle_diameter_sqrd {
                                             let cr = collision_response(&wa, p1, p2);
                                             if !cr.x.is_nan() && !cr.y.is_nan() {
@@ -99,9 +99,9 @@ pub fn compute_child<'a>(
                         for lid in start..end {
                             let p1 = &particles[links[lid][0]];
                             let p2 = &particles[links[lid][1]];
-                            let wa = wrap_around(&p1.p, &p2.p);
+                            let wa = wrap_around(p1.p, p2.p);
                             let d = wa.d_sqrd.sqrt();
-                            let n = normalize(&wa.d, d);
+                            let n = normalize(wa.d, d);
                             let factor = (world.diameter * linkt_length_ratio - d) * link_strengh;
                             if wa.d_sqrd < world.particle_diameter_sqrd {
                                 let cr = collision_response(&wa, p1, p2);
@@ -185,7 +185,7 @@ pub fn compute_child<'a>(
                                 d1.direction.x = 0.0;
                                 d1.direction.y = 0.0;
                             }
-                            p1.direction = normalize_2(&p1.direction);
+                            p1.direction = normalize_2(p1.direction);
                             let mut gun_ok = true;
                             if p1.direction.x.is_nan() || p1.direction.y.is_nan() {
                                 p1.direction.x = 0.0;

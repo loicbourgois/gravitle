@@ -51,7 +51,7 @@ impl Grid {
                     grid_id(grid_xs[2], grid_ys[1], grid.side),
                     grid_id(grid_xs[2], grid_ys[2], grid.side),
                 ]);
-                grid.pids.push(Vec::new())
+                grid.pids.push(Vec::new());
             }
         }
         grid
@@ -59,7 +59,7 @@ impl Grid {
 
     pub fn update_01(&mut self) {
         for x in &mut self.pids {
-            x.clear()
+            x.clear();
         }
     }
 
@@ -67,7 +67,7 @@ impl Grid {
         for p in particles {
             let gid = grid_id_particle(p, self.side);
             self.pids[gid].push(p.pid);
-            p.gid = gid
+            p.gid = gid;
         }
     }
 }
@@ -77,17 +77,17 @@ pub fn grid_id(x: usize, y: usize, side: usize) -> usize {
 }
 
 pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
-    grid_id_position(&particle.p, side)
+    grid_id_position(particle.p, side)
 }
 
-pub fn grid_id_position(position: &Vector, side: usize) -> usize {
+pub fn grid_id_position(position: Vector, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
     grid_id(x, y, side)
 }
 
-pub fn grid_xy(position: &Vector, side: usize) -> VectorUsize {
+pub fn grid_xy(position: Vector, side: usize) -> VectorUsize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
