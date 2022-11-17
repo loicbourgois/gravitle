@@ -29,7 +29,7 @@ use crate::network::handle_connection;
 use crate::network::NetworkData;
 use crate::network::SharedNetworkData;
 use crate::particle::Particle;
-use misc::{Configuration, Delta, Links, Pid, User, Vector, World, approx_equal, neighbours, wait};
+use misc::{approx_equal, neighbours, wait, Configuration, Delta, Links, Pid, User, Vector, World};
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::TcpListener;
 use uuid::Uuid;

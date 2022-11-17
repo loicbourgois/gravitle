@@ -22,7 +22,7 @@ pub fn compute_child<'a>(
     crdv: f32,
     link_strengh: f32,
     linkt_length_ratio: f32,
-    syncers: & Syncers,
+    syncers: &Syncers,
     grid: &'a mut Grid,
     deltas: &'a mut Deltas,
     particles: &'a mut Particles,

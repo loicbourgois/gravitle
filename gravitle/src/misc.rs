@@ -57,7 +57,7 @@ impl World {
         }
     }
 }
-pub fn neighbours(position: Vector, grid: & Grid) -> [& Vec<usize>; 9] {
+pub fn neighbours(position: Vector, grid: &Grid) -> [&Vec<usize>; 9] {
     let gid = grid_id_position(position, grid.side);
     [
         &grid.pids[grid.gids[gid][0]],
