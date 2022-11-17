@@ -42,7 +42,7 @@ pub async fn handle_connection(
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
         let msg_txt = msg.to_text().unwrap();
-        println!("message from {}: {}", addr, msg.to_text().unwrap());
+        // println!("message from {}: {}", addr, msg.to_text().unwrap());
         if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
@@ -53,7 +53,7 @@ pub async fn handle_connection(
                         let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
                         let pid = *free_ship_pids_v[0];
                         if !free_ship_pids_v.is_empty() {
-                            // data.free_ship_pids.remove(&pid);
+                            data.free_ship_pids.remove(&pid);
                             data.users.insert(
                                 uuid_u128,
                                 User {
