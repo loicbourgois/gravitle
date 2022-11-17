@@ -1,5 +1,6 @@
 #!/bin/sh
 # $HOME/github.com/loicbourgois/gravitle/gravitle/format.sh
+# https://rust-lang.github.io/rust-clippy/master/index.html
 cargo fmt --manifest-path $HOME/github.com/loicbourgois/gravitle/gravitle/Cargo.toml
 cargo clippy --release --manifest-path $HOME/github.com/loicbourgois/gravitle/gravitle/Cargo.toml \
     -- -Dwarnings -Dclippy::pedantic \

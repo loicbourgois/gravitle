@@ -175,6 +175,16 @@ fn host_sync(host: &str) -> bool {
     && runshellcmd_default_title(
         Command::new("ssh")
             .arg(format!("gravitle@{}", host))
+            .arg("/home/gravitle/.cargo/bin/rustup default stable"),
+    )
+    && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
+            .arg("/home/gravitle/.cargo/bin/rustup update"),
+    )
+    && runshellcmd_default_title(
+        Command::new("ssh")
+            .arg(format!("gravitle@{}", host))
             .arg("/home/gravitle/.cargo/bin/cargo build --release --manifest-path /home/gravitle/github.com/loicbourgois/gravitle/gravitle/Cargo.toml"),
     )
     && runshellcmd_default_title(
