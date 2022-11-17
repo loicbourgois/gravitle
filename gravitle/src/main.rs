@@ -9,17 +9,13 @@ use crate::math::wrap_around;
 use crate::setup::setup_5::reset_ship_particles;
 use crate::setup::setup_5::setup_5;
 use chrono::Utc;
-
 mod compute_child;
 mod compute_main;
 use crate::compute_main::compute_main;
 use compute_child::compute_child;
-
 use std::collections::HashSet;
-
 use std::sync::Arc;
 use std::sync::RwLock;
-
 mod grid;
 mod math;
 mod misc;
@@ -36,7 +32,6 @@ use crate::particle::Particle;
 use misc::*;
 use std::{collections::HashMap, env, io::Error as IoError, net::SocketAddr, sync::Mutex};
 use tokio::net::TcpListener;
-
 use uuid::Uuid;
 pub type Deltas = Vec<Delta>;
 pub type Syncers = Vec<Vec<Arc<RwLock<usize>>>>;
