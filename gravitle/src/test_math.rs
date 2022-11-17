@@ -10,7 +10,7 @@ mod test {
         println!("boby");
         let a = Vector { x: 0.1, y: 0.09 };
         let b = Vector { x: 0.1015, y: 0.09 };
-        let wa = wrap_around(&a, &b);
+        let wa = wrap_around(a, b);
         let diam = 0.001 * 2.0;
         let diam_sqrd = diam * diam;
         println!("wa.d_sqrd: {}", wa.d_sqrd);
