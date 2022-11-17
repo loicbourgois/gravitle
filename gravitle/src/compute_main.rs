@@ -12,7 +12,6 @@ use crate::Utc;
 use crate::World;
 use std::collections::HashSet;
 
-
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;

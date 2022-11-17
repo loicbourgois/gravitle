@@ -106,7 +106,7 @@ pub async fn handle_connection(
         Err(_) => None,
     };
     if let Some(ship_id) = ship_id {
-                shared_data.lock().unwrap().free_ship_pids.insert(ship_id);
-          };
+        shared_data.lock().unwrap().free_ship_pids.insert(ship_id);
+    };
     shared_data.lock().unwrap().peers.remove(&addr);
 }
