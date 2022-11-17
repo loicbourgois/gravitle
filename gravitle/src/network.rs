@@ -47,24 +47,24 @@ pub async fn handle_connection(
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
             if let Ok(mut data) = shared_data.lock() {
-                    if !data.free_ship_pids.is_empty() {
-                        println!("adding user {}", uuid_str);
-                        let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
-                        let pid = *free_ship_pids_v[0];
-                        if !free_ship_pids_v.is_empty() {
-                            data.free_ship_pids.remove(&pid);
-                            data.users.insert(
-                                uuid_u128,
-                                User {
-                                    user_id: uuid_u128,
-                                    addr,
-                                    orders: HashMap::new(),
-                                    ship_pid: pid,
-                                },
-                            );
-                            data.peers.get_mut(&addr).unwrap().user_id = Some(uuid_u128);
-                        }
+                if !data.free_ship_pids.is_empty() {
+                    println!("adding user {}", uuid_str);
+                    let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
+                    let pid = *free_ship_pids_v[0];
+                    if !free_ship_pids_v.is_empty() {
+                        data.free_ship_pids.remove(&pid);
+                        data.users.insert(
+                            uuid_u128,
+                            User {
+                                user_id: uuid_u128,
+                                addr,
+                                orders: HashMap::new(),
+                                ship_pid: pid,
+                            },
+                        );
+                        data.peers.get_mut(&addr).unwrap().user_id = Some(uuid_u128);
                     }
+                }
             }
         } else {
             let strs: Vec<&str> = msg_txt.split(' ').collect();

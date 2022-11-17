@@ -220,10 +220,8 @@ pub fn compute_child<'a>(
                                     &mut particles2[rng.gen_range(p1.pid + 20..p1.pid + 500)];
                                 p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
                                 p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
-                                p2.pp.x =
-                                    p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
-                                p2.pp.y =
-                                    p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
+                                p2.pp.x = p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
+                                p2.pp.y = p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
                                 for tid in 0..world.thread_count {
                                     let d2 = &mut deltas[tid * world.particle_count + p2.pid];
                                     d2.collisions = 0;
