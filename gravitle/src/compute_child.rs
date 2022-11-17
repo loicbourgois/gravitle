@@ -215,28 +215,26 @@ pub fn compute_child<'a>(
                             assert!(p1.p.x <= 1.0, "\n{:?}", p1);
                             assert!(p1.p.y <= 1.0, "\n{:?}", p1);
 
-                            if p1.kind == Pkind::Gun {
-                                if gun_ok && p1.activation >= 0.9 {
-                                    let mut p2 =
-                                        &mut particles2[rng.gen_range(p1.pid + 20..p1.pid + 500)];
-                                    p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
-                                    p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
-                                    p2.pp.x =
-                                        p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
-                                    p2.pp.y =
-                                        p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
-                                    for tid in 0..world.thread_count {
-                                        let d2 = &mut deltas[tid * world.particle_count + p2.pid];
-                                        d2.collisions = 0;
-                                        d2.p.x = 0.0;
-                                        d2.p.y = 0.0;
-                                        d2.v.x = 0.0;
-                                        d2.v.y = 0.0;
-                                        d2.direction.x = 0.0;
-                                        d2.direction.y = 0.0;
-                                    }
-                                    p1.activation = -1.0;
+                            if p1.kind == Pkind::Gun && gun_ok && p1.activation >= 0.9 {
+                                let mut p2 =
+                                    &mut particles2[rng.gen_range(p1.pid + 20..p1.pid + 500)];
+                                p2.p.x = p1.p.x - p1.direction.x * world.diameter * 1.1;
+                                p2.p.y = p1.p.y - p1.direction.y * world.diameter * 1.1;
+                                p2.pp.x =
+                                    p2.p.x + p1.direction.x * world.diameter * 0.5 - p1.v.x;
+                                p2.pp.y =
+                                    p2.p.y + p1.direction.y * world.diameter * 0.5 - p1.v.y;
+                                for tid in 0..world.thread_count {
+                                    let d2 = &mut deltas[tid * world.particle_count + p2.pid];
+                                    d2.collisions = 0;
+                                    d2.p.x = 0.0;
+                                    d2.p.y = 0.0;
+                                    d2.v.x = 0.0;
+                                    d2.v.y = 0.0;
+                                    d2.direction.x = 0.0;
+                                    d2.direction.y = 0.0;
                                 }
+                                p1.activation = -1.0;
                             }
                         }
                         *w += 1;

@@ -46,8 +46,7 @@ pub async fn handle_connection(
         if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
-            match shared_data.lock() {
-                Ok(mut data) => {
+            if let Ok(mut data) = shared_data.lock() {
                     if !data.free_ship_pids.is_empty() {
                         println!("adding user {}", uuid_str);
                         let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
@@ -66,8 +65,6 @@ pub async fn handle_connection(
                             data.peers.get_mut(&addr).unwrap().user_id = Some(uuid_u128);
                         }
                     }
-                }
-                Err(_) => {}
             }
         } else {
             let strs: Vec<&str> = msg_txt.split(' ').collect();
