@@ -17,11 +17,8 @@ use compute_child::compute_child;
 
 use std::collections::HashSet;
 
-
 use std::sync::Arc;
 use std::sync::RwLock;
-
-
 
 mod grid;
 mod math;
