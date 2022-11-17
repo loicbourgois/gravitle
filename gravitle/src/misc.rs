@@ -3,7 +3,7 @@ use crate::Grid;
 use crate::SocketAddr;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::Mutex;
+
 use std::sync::RwLock;
 pub struct User {
     pub user_id: u128,

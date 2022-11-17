@@ -48,7 +48,7 @@ pub async fn handle_connection(
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
             match shared_data.lock() {
                 Ok(mut data) => {
-                    if data.free_ship_pids.len() > 0 {
+                    if !data.free_ship_pids.is_empty() {
                         println!("adding user {}", uuid_str);
                         let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
                         let pid = *free_ship_pids_v[0];
@@ -96,23 +96,17 @@ pub async fn handle_connection(
     future::select(broadcast_incoming, receive_from_others).await;
     println!("disconnected {}", &addr);
     let ship_id = match shared_data.lock() {
-        Ok(mut data) => match data.peers.get(&addr) {
+        Ok(data) => match data.peers.get(&addr) {
             Some(peer) => match peer.user_id {
-                Some(user_id) => match data.users.get(&user_id) {
-                    Some(user) => Some(user.ship_pid),
-                    None => None,
-                },
+                Some(user_id) => data.users.get(&user_id).map(|user| user.ship_pid),
                 None => None,
             },
             None => None,
         },
         Err(_) => None,
     };
-    match ship_id {
-        Some(ship_id) => {
-            shared_data.lock().unwrap().free_ship_pids.insert(ship_id);
-        }
-        None => {}
-    };
+    if let Some(ship_id) = ship_id {
+                shared_data.lock().unwrap().free_ship_pids.insert(ship_id);
+          };
     shared_data.lock().unwrap().peers.remove(&addr);
 }
