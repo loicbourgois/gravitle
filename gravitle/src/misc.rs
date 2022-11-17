@@ -36,6 +36,7 @@ pub struct Delta {
     pub did: usize,
     pub direction: Vector,
 }
+#[derive(Clone, Copy, Debug)]
 pub struct World {
     pub particle_count: usize,
     pub thread_count: usize,
@@ -85,4 +86,7 @@ pub fn wait(subsyncers: &Vec<Arc<RwLock<usize>>>, i: usize) {
             break;
         }
     }
+}
+pub fn approx_equal(a: f32, b: f32) -> bool {
+    (a - b).abs() < 0.000001
 }

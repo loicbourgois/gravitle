@@ -11,7 +11,7 @@ use crate::Syncers;
 use crate::Utc;
 use crate::World;
 use std::collections::HashSet;
-
+use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -23,11 +23,6 @@ pub fn compute_main(
     mut particles: Particles,
     mut grid: Grid,
 ) {
-    //     // let peers = peers.clone();
-    //     // let users = users.clone();
-    //     // let free_ship_pids = free_ship_pids.clone();
-
-    //     let shared_network_data = shared_network_data.clone();
     let mut elapsed_total = 0;
     let mut step = 0;
     let mut elapsed_network = Instant::now().elapsed().as_micros();
@@ -147,67 +142,69 @@ pub fn compute_main(
             }
             assert!(data.len() == capacity);
             let m = Message::Binary(data);
-            for x in &mut shared_network_data.lock().unwrap().peers.values_mut() {
-                match x.user_id {
-                    Some(user_id) => {
-                        let ship_pid = shared_network_data
-                            .lock()
-                            .unwrap()
-                            .users
-                            .get(&user_id)
-                            .unwrap()
-                            .ship_pid;
-                        let mut data = data_common.clone();
-                        let mut count: u32 = 0;
-                        let p1 = &particles[ship_pid];
-                        let grid_xy = grid_xy(&p1.p, grid.side);
-                        let gx = grid_xy.x as i32;
-                        let gy = grid_xy.y as i32;
-                        let uu = 32;
-                        data.extend(p1.p.x.to_be_bytes());
-                        data.extend(p1.p.y.to_be_bytes());
-                        let mut status: u8 = 0;
-                        if p1.collisions > 0 {
-                            status += 1;
-                        }
-                        if p1.activation > 0.01 {
-                            status += 2;
-                        }
-                        data.extend(status.to_be_bytes());
-                        data.extend((p1.kind as u8).to_be_bytes());
-                        count += 1;
-                        for x in gx - uu..gx + uu + 1 {
-                            let _x_ = (x as usize + grid.side) % grid.side;
-                            for y in gy - uu..gy + uu + 1 {
-                                let _y_ = (y as usize + grid.side) % grid.side;
-                                let gid = grid_id(x as usize, y as usize, grid.side);
-                                for pid2 in &grid.pids[gid] {
-                                    let p2 = &particles[*pid2];
-                                    data.extend(p2.p.x.to_be_bytes());
-                                    data.extend(p2.p.y.to_be_bytes());
-                                    let mut status: u8 = 0;
-                                    if p2.collisions > 0 {
-                                        status += 1;
+
+            {
+                let mut network_data = shared_network_data.lock().unwrap();
+                let mut ship_pids = HashMap::new();
+                for (k, v) in &network_data.users {
+                    ship_pids.insert(*k, v.ship_pid);
+                }
+                for peer in &mut network_data.peers.values_mut() {
+                    match peer.user_id {
+                        Some(user_id) => {
+                            let ship_pid = ship_pids.get(&user_id).unwrap();
+                            let mut data = data_common.clone();
+                            let mut count: u32 = 0;
+                            let p1 = &particles[*ship_pid];
+                            let grid_xy = grid_xy(&p1.p, grid.side);
+                            let gx = grid_xy.x as i32;
+                            let gy = grid_xy.y as i32;
+                            let uu = 32;
+                            data.extend(p1.p.x.to_be_bytes());
+                            data.extend(p1.p.y.to_be_bytes());
+                            let mut status: u8 = 0;
+                            if p1.collisions > 0 {
+                                status += 1;
+                            }
+                            if p1.activation > 0.01 {
+                                status += 2;
+                            }
+                            data.extend(status.to_be_bytes());
+                            data.extend((p1.kind as u8).to_be_bytes());
+                            count += 1;
+                            for x in gx - uu..gx + uu + 1 {
+                                let _x_ = (x as usize + grid.side) % grid.side;
+                                for y in gy - uu..gy + uu + 1 {
+                                    let _y_ = (y as usize + grid.side) % grid.side;
+                                    let gid = grid_id(x as usize, y as usize, grid.side);
+                                    for pid2 in &grid.pids[gid] {
+                                        let p2 = &particles[*pid2];
+                                        data.extend(p2.p.x.to_be_bytes());
+                                        data.extend(p2.p.y.to_be_bytes());
+                                        let mut status: u8 = 0;
+                                        if p2.collisions > 0 {
+                                            status += 1;
+                                        }
+                                        if p2.activation > 0.01 {
+                                            status += 2;
+                                        }
+                                        data.extend(status.to_be_bytes());
+                                        data.extend((p2.kind as u8).to_be_bytes());
+                                        count += 1;
                                     }
-                                    if p2.activation > 0.01 {
-                                        status += 2;
-                                    }
-                                    data.extend(status.to_be_bytes());
-                                    data.extend((p2.kind as u8).to_be_bytes());
-                                    count += 1;
                                 }
                             }
+                            data[8 + 7 * 4..8 + 8 * 4].copy_from_slice(&count.to_be_bytes());
+                            data[8 + 8 * 4..8 + 9 * 4].copy_from_slice(&1.0_f32.to_be_bytes());
+                            let m = Message::Binary(data);
+                            if peer.tx.start_send(m).is_ok() {
+                                // println!("send ok");
+                            }
                         }
-                        data[8 + 7 * 4..8 + 8 * 4].copy_from_slice(&count.to_be_bytes());
-                        data[8 + 8 * 4..8 + 9 * 4].copy_from_slice(&1.0_f32.to_be_bytes());
-                        let m = Message::Binary(data);
-                        if x.tx.start_send(m).is_ok() {
-                            // println!("send ok");
-                        }
-                    }
-                    None => {
-                        if x.tx.start_send(m.clone()).is_ok() {
-                            // println!("send ok");
+                        None => {
+                            if peer.tx.start_send(m.clone()).is_ok() {
+                                // println!("send ok");
+                            }
                         }
                     }
                 }
