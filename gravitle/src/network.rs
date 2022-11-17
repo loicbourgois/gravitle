@@ -1,6 +1,5 @@
 use crate::Pid;
 use crate::User;
-use crate::Users;
 use crate::Uuid;
 use futures_channel::mpsc::{channel, Sender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -15,14 +14,16 @@ pub struct Peer {
     pub addr: SocketAddr,
     pub tx: Tx,
 }
-pub type Peers = Arc<Mutex<HashMap<SocketAddr, Peer>>>;
-pub type FreeShipPids = Arc<Mutex<HashSet<Pid>>>;
+pub struct NetworkData {
+   pub peers: HashMap<SocketAddr, Peer>,
+    pub users: HashMap<u128, User>,
+    pub free_ship_pids: HashSet<Pid>,
+}
+pub type SharedNetworkData = Arc<Mutex<NetworkData>>;
 pub async fn handle_connection(
-    peers: Peers,
     raw_stream: TcpStream,
     addr: SocketAddr,
-    users: Users,
-    free_ship_pids: FreeShipPids,
+    shared_data: SharedNetworkData,
 ) {
     println!("connecting {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
@@ -30,7 +31,7 @@ pub async fn handle_connection(
         .expect("Error during the websocket handshake occurred");
     println!("connected {}", addr);
     let (tx, rx) = channel(0);
-    peers.lock().unwrap().insert(
+    shared_data.lock().unwrap().peers.insert(
         addr,
         Peer {
             tx,
@@ -41,19 +42,19 @@ pub async fn handle_connection(
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
         let msg_txt = msg.to_text().unwrap();
-        // println!("message from {}: {}", addr, msg.to_text().unwrap());
+        println!("message from {}: {}", addr, msg.to_text().unwrap());
         if msg_txt.starts_with("request ship ") && msg_txt.len() == 13 + 36 {
             let uuid_str = &msg_txt.replace("request ship ", "");
             let uuid_u128 = Uuid::parse_str(uuid_str).unwrap().as_u128();
-            match free_ship_pids.lock() {
-                Ok(mut free_ship_pids) => {
-                    if free_ship_pids.len() > 0 {
+            match shared_data.lock() {
+                Ok(mut data) => {
+                    if data.free_ship_pids.len() > 0 {
                         println!("adding user {}", uuid_str);
-                        let free_ship_pids_v: Vec<_> = free_ship_pids.iter().collect();
+                        let free_ship_pids_v: Vec<_> = data.free_ship_pids.iter().collect();
                         let pid = *free_ship_pids_v[0];
                         if !free_ship_pids_v.is_empty() {
-                            free_ship_pids.remove(&pid);
-                            users.lock().unwrap().insert(
+                            // data.free_ship_pids.remove(&pid);
+                            data.users.insert(
                                 uuid_u128,
                                 User {
                                     user_id: uuid_u128,
@@ -62,7 +63,7 @@ pub async fn handle_connection(
                                     ship_pid: pid,
                                 },
                             );
-                            peers.lock().unwrap().get_mut(&addr).unwrap().user_id = Some(uuid_u128);
+                            data.peers.get_mut(&addr).unwrap().user_id = Some(uuid_u128);
                         }
                     }
                 }
@@ -73,17 +74,20 @@ pub async fn handle_connection(
             if strs.len() == 2 {
                 let pid: usize = strs[0].parse::<usize>().unwrap();
                 let activation: f32 = strs[1].parse::<f32>().unwrap();
-                match peers.lock().unwrap().get_mut(&addr).unwrap().user_id {
-                    Some(user_id) => {
-                        users
-                            .lock()
-                            .unwrap()
-                            .get_mut(&user_id)
-                            .unwrap()
-                            .orders
-                            .insert(pid, activation);
-                    }
-                    None => {}
+                match shared_data.lock() {
+                    Ok(mut data) => {
+                        match data.peers.get_mut(&addr).unwrap().user_id {
+                            Some(user_id) => {
+                                data.users
+                                    .get_mut(&user_id)
+                                    .unwrap()
+                                    .orders
+                                    .insert(pid, activation);
+                            }
+                            None => {}
+                        }
+                    },
+                    Err(_) => {}
                 }
             }
         }
@@ -93,17 +97,28 @@ pub async fn handle_connection(
     pin_mut!(broadcast_incoming, receive_from_others);
     future::select(broadcast_incoming, receive_from_others).await;
     println!("disconnected {}", &addr);
-    match peers.lock().unwrap().get_mut(&addr) {
-        Some(peer) => match peer.user_id {
-            Some(user_id) => match users.lock().unwrap().get_mut(&user_id) {
-                Some(user) => {
-                    free_ship_pids.lock().unwrap().insert(user.ship_pid);
+   let ship_id = match shared_data.lock() {
+        Ok(mut data) => {
+            match data.peers.get(&addr) {
+                    Some(peer) => match peer.user_id {
+                        Some(user_id) => match data.users.get(&user_id) {
+                            Some(user) => {
+                                Some(user.ship_pid)
+                            }
+                            None => {None}
+                        },
+                        None => {None}
+                    },
+                    None => {None}
                 }
-                None => {}
-            },
-            None => {}
-        },
+        }
+        Err(_) => {None}
+    };
+    match ship_id {
+        Some(ship_id) => {
+            shared_data.lock().unwrap().free_ship_pids.insert(ship_id);
+        }
         None => {}
-    }
-    peers.lock().unwrap().remove(&addr);
+    };
+    shared_data.lock().unwrap().peers.remove(&addr);
 }

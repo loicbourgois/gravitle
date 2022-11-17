@@ -13,8 +13,8 @@ import {
 const ZOOM = 1
 const zoom = 10
 const DELTA_DRAW = 0.001/ZOOM
-const ip = '136.243.64.165'
-// const ip = 'localhost'
+// const ip = '136.243.64.165'
+const ip = 'localhost'
 const url = `ws://${ip}:8000`
 document.body.innerHTML = `
   <div id="left">
@@ -213,7 +213,6 @@ let render_step = 0;
 let start_step = undefined
 // console.log(socket)
 socket.addEventListener('message', (event) => {
-  console.log("bob")
   if (event.data instanceof ArrayBuffer) {
     const reso = document.querySelector("#particle_resolution").value
     const start = performance.now()
