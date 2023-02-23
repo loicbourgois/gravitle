@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
-use std::time::Instant;
+// use std::time::Instant;
 use tungstenite::Message;
 pub fn compute_main(
     shared_network_data: SharedNetworkData,
@@ -23,11 +23,12 @@ pub fn compute_main(
     mut particles: Particles,
     mut grid: Grid,
 ) {
-    let mut elapsed_total = 0;
+    let mut elapsed_compute_total = 0;
     let mut step = 0;
-    let mut elapsed_network = Instant::now().elapsed().as_micros();
+    let mut elapsed_network = 0;
+    let start_total = Utc::now().timestamp_millis();
     thread::spawn(move || loop {
-        let start = Instant::now();
+        let start = Utc::now().timestamp_millis();
         //
         // Step 0
         //
@@ -90,18 +91,19 @@ pub fn compute_main(
             for pid in ships_to_reset {
                 reset_ship_particles(pid, &mut particles, &world);
             }
-            let elapsed_compute = start.elapsed().as_micros();
-            let start_network = Instant::now();
+            let elapsed_compute = Utc::now().timestamp_millis() - start;
+            let start_network = Utc::now().timestamp_millis();
             let part_bytes = 2 + 2 + 1 + 1;
             let common_capacity = 4 * 12 + 8;
             let capacity = world.particle_count * part_bytes + common_capacity;
             let mut data = vec![0; capacity];
             let mut data_common = Vec::with_capacity(common_capacity);
+            let elapsed_total = Utc::now().timestamp_millis() - start_total;
             data_common.extend(Utc::now().timestamp_millis().to_be_bytes().to_vec());
             data_common.extend((step as f32).to_be_bytes().to_vec());
             data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
             data_common.extend((elapsed_compute as f32).to_be_bytes().to_vec());
-            data_common.extend((elapsed_total as f32).to_be_bytes().to_vec());
+            data_common.extend((elapsed_compute_total as f32).to_be_bytes().to_vec());
             data_common.extend(
                 (shared_network_data.lock().unwrap().peers.len() as u32)
                     .to_be_bytes()
@@ -206,19 +208,20 @@ pub fn compute_main(
                     }
                 }
             }
-            elapsed_network = start_network.elapsed().as_micros();
+            elapsed_network = Utc::now().timestamp_millis() - start_network;
             *w += 1;
         }
         wait(&syncers[3], world.thread_count);
         //
         // More
         //
-        elapsed_total += start.elapsed().as_micros();
+        let actual_delta = Utc::now().timestamp_millis() - start;
+        elapsed_compute_total += actual_delta;
         step += 1;
-        let delta = Duration::from_millis(10);
-        if start.elapsed() < delta {
-            let sleep_duration = delta - start.elapsed();
-            thread::sleep(sleep_duration);
+        let delta = 9;
+        if actual_delta < delta {
+            let aa = (delta - actual_delta) as u64;
+            thread::sleep(Duration::from_millis(aa));
         }
     });
 }

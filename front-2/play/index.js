@@ -12,7 +12,6 @@ import {
 } from '../math.js'
 const ZOOM = 1
 const zoom = 10
-const DELTA_DRAW = 0.001/ZOOM
 const ip = '136.243.64.165'
 // const ip = 'localhost'
 const url = `ws://${ip}:8000`
@@ -43,7 +42,7 @@ document.body.innerHTML = `
     </div>
     <div>
       <label>Particle resolution:   </label>
-      <input id="particle_resolution" value="20" />
+      <input id="particle_resolution" value="50" />
     </div>
   </div>
 `
@@ -290,13 +289,20 @@ socket.addEventListener('message', (event) => {
     }
     context.putImageData(image, 0, 0);
     const render_duration = performance.now() - start
+
+    if (render_duration < 10) {
+      document.querySelector("#particle_resolution").value = parseInt(document.querySelector("#particle_resolution").value) + 1
+    } else {
+      document.querySelector("#particle_resolution").value = parseInt(parseInt(document.querySelector("#particle_resolution").value) * 0.8)
+    }
+
     let render_duration_str = `${render_duration.toFixed(3)}`
     render_duration_str = Array.apply(null, Array(  Math.max(0, 7-render_duration_str.length)  )).map(x => " ").join("") + render_duration_str
     let avg_render_duration_str = `${(render_duration_total/render_step).toFixed(3)}`
     avg_render_duration_str = Array.apply(null, Array(  Math.max(0, 7-avg_render_duration_str.length)  )).map(x => " ").join("") + avg_render_duration_str
-    let instant_compute_str = `${(elapsed_compute/1000).toFixed(3)}`
+    let instant_compute_str = `${(elapsed_compute).toFixed(3)}`
     instant_compute_str = Array.apply(null, Array(  Math.max(0, 6-instant_compute_str.length)  )).map(x => " ").join("") + instant_compute_str
-    let instant_network_str = pre_pad_spaces(`${(elapsed_network/1000).toFixed(3)}`, 7);
+    let instant_network_str = pre_pad_spaces(`${(elapsed_network).toFixed(3)}`, 7);
     texts.innerHTML = `
       <p>clients: ${clients}</p>
       <p>ships: ${free_ships}/${total_ships}</p>
@@ -304,9 +310,9 @@ socket.addEventListener('message', (event) => {
       <p>client time: ${client_timestamp}</p>
       <p>lag: ${lag}</p>
       <p>step: ${step}</p>
-      <p>time: ${(elapsed/1000000).toFixed(1)} s</p>
+      <p>time: ${(elapsed/1000).toFixed(1)} s</p>
       <p>instant compute: ${instant_compute_str} ms</p>
-      <p>average compute: ${(elapsed_compute_total/step/1000).toFixed(3)} ms</p>
+      <p>average compute: ${(elapsed_compute_total/step).toFixed(3)} ms</p>
       <p>instant network: ${instant_network_str} ms</p>
       <p>instant render: ${render_duration_str} ms</p>
       <p>average render: ${avg_render_duration_str} ms</p>
