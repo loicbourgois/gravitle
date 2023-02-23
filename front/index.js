@@ -1,57 +1,131 @@
-import * as webgpu_server from "./webgpu_server";
-import * as webgpu_renderer from "./webgpu_renderer";
-import * as canvas_renderer from "./canvas_renderer";
-import * as three_renderer from "./three/renderer";
+import init, {Gravithrust} from "./gravithrust/gravithrust.js";
 import {
-  last,
-  len,
-  player_id,
-} from "./util";
-import {home} from "./pages/home";
-// TODO: fix
-// import {gallery} from "./pages/gallery";
-// import {webgpu} from "./pages/webgpu";
-import {localhost_3d} from "./pages/localhost_3d";
-import {playground} from "./pages/playground";
-import {local_main} from "./pages/local/main"
-import {garage_main} from "./pages/garage/main"
-import {sound_main} from "./pages/sound/main"
-import {journey_main} from "./pages/journey/main"
-import {journey_level} from "./pages/journey/level"
-import {journey_garage} from "./pages/journey/garage"
-import { test } from "./pages/test"
-console.log(window.location.pathname)
-if (window.location.pathname === "/") {
-  local_main()
+  resize_square,
+  fill_circle_2,
+  clear,
+} from "./canvas.js"
+let particles
+let context
+let canvas
+let gravithrust
+let ZOOM = 1.0
+let zen_mode_active = false
+let ups = []
+const P = (id) => {
+  return {
+    x: particles.getFloat32(id*4*7, true),
+    y: particles.getFloat32(id*4*7 + 4, true),
+  }
 }
-else if (window.location.pathname === "/garage") {
-  garage_main()
+const go_fullscreen = () => {
+  const elem = document.body
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { /* Safari */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE11 */
+    elem.msRequestFullscreen();
+  }
+  document.querySelector("#go_fullscreen").style.display = "none"
+  document.querySelector("#exit_fullscreen").style.display = ""
 }
-else if (window.location.pathname === "/test") {
-  test()
+const exit_fullscreen = () => {
+  const docElm = document
+  if (docElm.exitFullscreen) {
+			docElm.exitFullscreen();
+	} else if (docElm.webkitExitFullscreen) {
+		docElm.webkitExitFullscreen();
+	} else if (docElm.mozCancelFullScreen) {
+		docElm.mozCancelFullScreen();
+	} else if (docElm.msExitFullscreen) {
+		docElm.msExitFullscreen();
+	}
+  document.querySelector("#go_fullscreen").style.display = ""
+  document.querySelector("#exit_fullscreen").style.display = "none"
 }
-else if (window.location.pathname === "/journey") {
-  journey_main()
+const zen_mode = () => {
+  document.querySelector("#right").style.display = "none"
+  zen_mode_active = true
+  document.querySelector("#canvas").style.cursor = "none"
+  event.stopPropagation()
 }
-else if (window.location.pathname === "/journey-garage") {
-  journey_garage()
+const unzen_mode = () => {
+  if (zen_mode_active) {
+    document.querySelector("#right").style.display = ""
+    document.querySelector("#canvas").style.cursor = ""
+    zen_mode_active = false;
+  }
 }
-else if (window.location.pathname.includes("/journey-") ) {
-  journey_level(window.location.pathname.split('journey-')[1])
+const resize = () => {
+  resize_square(canvas,ZOOM*0.9)
+  const dimension = Math.min(window.innerWidth, window.innerHeight)
+  canvas.style.width = `${dimension*0.9}px`
+  canvas.style.height = `${dimension*0.9}px`
 }
-else if (window.location.pathname === "/sound") {
-  sound_main()
+const draw = () => {
+  clear(context)
+  for (let i = 0; i < gravithrust.particles_count(); i++) {
+    const p = P(i);
+    fill_circle_2(context, p, gravithrust.diameter, "#fc0")
+  }
+  for (let i = 0; i < gravithrust.particles_count(); i++) {
+    const p = P(i);
+    fill_circle_2(context, p, gravithrust.diameter * 0.5, "#ff4")
+  }
+  requestAnimationFrame(draw)
 }
-else if (window.location.pathname === "/home") {
-  home()
-} else if (window.location.pathname === "/playground") {
-  playground()
-} else if (window.location.pathname === "/gallery") {
-  gallery()
-} else if (window.location.pathname === "/webgpu") {
-  webgpu()
-} else if (window.location.pathname === "/localhost_3d") {
-  localhost_3d()
-} else {
-  console.error("404")
+let target_ups = 100
+let timeout = 0
+const run = () => {
+  ups.push(performance.now())
+  for (let _ = 0; _ < 10; _++) {
+      gravithrust.tick()
+  }
+  while (ups.length > 100) {
+    ups.shift()
+  }
+  if (ups.length > 2) {
+    timeout = 1000 / target_ups - ( ups[ups.length-1] - ups[ups.length-2] )
+    timeout = Math.max(0,timeout)
+  }
+  setTimeout( run, timeout )
 }
+init().then( wasm => {
+  document.body.innerHTML = `
+    <div id="left">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div id="right">
+      <button id="go_fullscreen" onclick="go_fullscreen()">Fullscreen</button>
+      <button id="exit_fullscreen" onclick="exit_fullscreen()" style="display:none">Exit Fullscreen</button>
+      <button id="zen_mode" onclick="zen_mode()">Zen</button>
+      <div id="texts"></div>
+      <div>
+        <label>collide color:</label>
+        <input id="color_0" value="#ff4" />
+      </div>
+      <div>
+        <label>base color:   </label>
+        <input id="color_1" value="#fc0" />
+      </div>
+      <div>
+        <label>edge color:   </label>
+        <input id="color_2" value="#e80" />
+      </div>
+    </div>
+  `
+  window.go_fullscreen = go_fullscreen
+  window.exit_fullscreen = exit_fullscreen
+  window.zen_mode = zen_mode
+  window.addEventListener("resize", resize)
+  window.addEventListener("click", unzen_mode)
+  window.addEventListener("keydown", unzen_mode)
+  canvas = document.querySelector("#canvas");
+  context = canvas.getContext('2d')
+  resize_square(canvas, ZOOM * 0.9)
+  gravithrust = Gravithrust.new();
+  const data_ptr = gravithrust.particles();
+  particles = new DataView(wasm.memory.buffer, data_ptr, gravithrust.particles_size());
+  requestAnimationFrame(draw)
+  run()
+});

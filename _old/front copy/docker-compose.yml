@@ -5,4 +5,4 @@ services:
         ports:
             - 80:80
         volumes:
-            - $HOME/github.com/loicbourgois/gravitle/front-2:/usr/share/nginx/html
+            - $HOME/github.com/loicbourgois/gravitle/front:/usr/share/nginx/html
