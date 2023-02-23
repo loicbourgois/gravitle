@@ -8,8 +8,9 @@ import {
   player_id,
 } from "./util";
 import {home} from "./pages/home";
-import {gallery} from "./pages/gallery";
-import {webgpu} from "./pages/webgpu";
+// TODO: fix
+// import {gallery} from "./pages/gallery";
+// import {webgpu} from "./pages/webgpu";
 import {localhost_3d} from "./pages/localhost_3d";
 import {playground} from "./pages/playground";
 import {local_main} from "./pages/local/main"
@@ -18,12 +19,16 @@ import {sound_main} from "./pages/sound/main"
 import {journey_main} from "./pages/journey/main"
 import {journey_level} from "./pages/journey/level"
 import {journey_garage} from "./pages/journey/garage"
+import { test } from "./pages/test"
 console.log(window.location.pathname)
 if (window.location.pathname === "/") {
   local_main()
 }
 else if (window.location.pathname === "/garage") {
   garage_main()
+}
+else if (window.location.pathname === "/test") {
+  test()
 }
 else if (window.location.pathname === "/journey") {
   journey_main()

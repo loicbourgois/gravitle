@@ -1,0 +1,10 @@
+services:
+  front:
+    image: node:latest
+    command: bash -c "
+      npm --prefix /root/github.com/loicbourgois/gravitle/front/ install
+      && npm --prefix /root/github.com/loicbourgois/gravitle/front/ run start"
+    volumes:
+      - $HOME/github.com/loicbourgois/gravitle/front/:/root/github.com/loicbourgois/gravitle/front/:rw
+    ports:
+      - 8080:8080
