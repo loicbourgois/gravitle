@@ -16,6 +16,9 @@ const P = (id) => {
   return {
     x: particles.getFloat32(id*particle_size, true),
     y: particles.getFloat32(id*particle_size + 4, true),
+    k: particles.getInt32(id*particle_size + 4*9, true),
+    dx: particles.getFloat32(id*particle_size + 4*6, true),
+    dy: particles.getFloat32(id*particle_size + 4*7, true),
   }
 }
 const go_fullscreen = () => {
@@ -63,16 +66,57 @@ const resize = () => {
   canvas.style.width = `${dimension*0.9}px`
   canvas.style.height = `${dimension*0.9}px`
 }
+
+const colors = [
+  {
+    'low': "#d0d",
+    'high': "#F0F",
+  },
+  {
+    'low': "#da0",
+    'high': "#dd4",
+  }, 
+  {
+    'low': "#da0",
+    'high': "#dd4",
+  }, 
+  // {
+  //   'low': "#fc0",
+  //   'high': "#ff4",
+  // }, 
+  // {
+  //   'low': "#d80",
+  //   'high': "#da4",
+  // },
+  {
+    'low': "#d80",
+    'high': "#da4",
+  }
+]
+
 const draw = () => {
   clear(context)
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
-    fill_circle_2(context, p, gravithrust.diameter, "#fc0")
+    fill_circle_2(context, p, gravithrust.diameter*1.1, colors[p.k].low)
   }
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
-    fill_circle_2(context, p, gravithrust.diameter * 0.5, "#ff4")
+    fill_circle_2(context, p, gravithrust.diameter * 0.5, colors[p.k].high)
   }
+
+  // for (let i = 0; i < gravithrust.particles_count(); i++) {
+  //   const p = P(i);
+  //   if (p.k == 3) {
+  //     // console.log(p.dx)
+  //     fill_circle_2(context, {
+  //       x: p.x + p.dx * gravithrust.diameter,
+  //       y: p.y + p.dy * gravithrust.diameter,
+  //     }, gravithrust.diameter * 0.5, "#888")
+  //   }
+   
+  // }
+
   requestAnimationFrame(draw)
 }
 let target_ups = 100

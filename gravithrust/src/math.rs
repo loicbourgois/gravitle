@@ -14,13 +14,13 @@ pub struct Particle {
     pub p: Vector,
     pub v: Vector,
     pub pp: Vector,
+    pub direction: Vector,
     pub m: f32,
     // pub collisions: u32,
     // pub pid: usize, // particle id
     // pub tid: usize, // thread id
     // pub gid: usize,
     // pub activation: f32,
-    // pub direction: Vector,
     pub k: Kind,
     // pub enabled: bool,
 }
@@ -35,7 +35,7 @@ pub struct Delta {
     // pub tid: usize, // thread id
     // pub dtid: usize,
     // pub did: usize,
-    // pub direction: Vector,
+    pub direction: Vector,
 }
 
 #[derive(Clone, Debug)]
