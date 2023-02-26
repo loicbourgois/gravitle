@@ -4,6 +4,9 @@ import {
   fill_circle_2,
   clear,
 } from "./canvas.js"
+import {
+  normalize,
+} from "./math.js"
 let context
 let canvas
 let gravithrust
@@ -23,14 +26,31 @@ const P = (id) => {
     k: particles.getInt32(id*particle_size + 4*9, true),
     dx: particles.getFloat32(id*particle_size + 4*6, true),
     dy: particles.getFloat32(id*particle_size + 4*7, true),
+    a: particles.getInt32(id*particle_size + 4*10, true),
   }
 }
 
 const Ship = (id) => {
   return {
-    center: {
+    p: {
         x: ships.getFloat32(id*ship_size, true),
         y: ships.getFloat32(id*ship_size + 4, true),
+    },
+    v: {
+      x: ships.getFloat32(id*ship_size + 4 * 4, true),
+      y: ships.getFloat32(id*ship_size + 4 * 5, true),
+    },
+    t: {
+      x: ships.getFloat32(id*ship_size + 4 * 6, true),
+      y: ships.getFloat32(id*ship_size + 4 * 7, true),
+    },
+    td: {
+      x: ships.getFloat32(id*ship_size + 4 * 8, true),
+      y: ships.getFloat32(id*ship_size + 4 * 9, true),
+    },
+    orientation: {
+      x: ships.getFloat32(id*ship_size + 4 * 10, true),
+      y: ships.getFloat32(id*ship_size + 4 * 11, true),
     },
   }
 }
@@ -104,7 +124,10 @@ const colors2 = {
   'ship_center': {
     'low': "#f00",
     'high': "#F0F",
-  }
+  },
+  'target': "#8f8",
+  'boost': "#f00",
+  'orientation': "#88f",
 }
 
 const draw = () => {
@@ -112,6 +135,11 @@ const draw = () => {
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
     fill_circle_2(context, p, gravithrust.diameter*1.1, colors[p.k].low)
+    // if (p.k == 3 )
+    // console.log(p.a)
+    if (p.k == 3 && p.a == 1) {
+      fill_circle_2(context, p, gravithrust.diameter*1.1, colors2['boost'])
+    }
   }
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
@@ -132,7 +160,31 @@ const draw = () => {
   for (let i = 0; i < gravithrust.ships_count(); i++) {
     const ship = Ship(i);
     // console.log(ship.center)
-    fill_circle_2(context, ship.center, gravithrust.diameter * 0.5, colors2['ship_center'].low)
+    fill_circle_2(context, ship.p, gravithrust.diameter * 0.5, colors2['ship_center'].low)
+    // console.log(ship.v)
+    
+    const d = normalize(ship.v)
+    fill_circle_2(context, {
+      x:  ship.p.x + d.x*0.05,
+      y:  ship.p.y + d.y*0.05,
+    }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
+
+
+    fill_circle_2(context, ship.t, gravithrust.diameter * 0.5, colors2['target'])
+    const td_n = normalize(ship.td)
+    fill_circle_2(context, {
+      x:  ship.p.x + td_n.x*0.05,
+      y:  ship.p.y + td_n.y*0.05,
+    }, gravithrust.diameter * 0.5, colors2['target'])
+
+
+    // fill_circle_2(context, ship.t, gravithrust.diameter * 0.5, colors2['target'])
+    const orientation_n = normalize(ship.orientation)
+    fill_circle_2(context, {
+      x:  ship.p.x + orientation_n.x*0.05,
+      y:  ship.p.y + orientation_n.y*0.05,
+    }, gravithrust.diameter * 0.5, colors2['orientation'])
+
   }
   requestAnimationFrame(draw)
 }

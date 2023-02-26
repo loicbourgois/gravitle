@@ -17,6 +17,7 @@ pub struct Particle {
     pub direction: Vector,
     pub m: f32,
     pub k: Kind,
+    pub a: u32, // activated,
 }
 
 #[wasm_bindgen]
@@ -109,6 +110,10 @@ pub fn norm_sqrd(v: Vector) -> f32 {
     v.x * v.x + v.y * v.y
 }
 
+pub fn norm(v: Vector) -> f32 {
+    norm_sqrd(v).sqrt()
+}
+
 pub fn dot(a: Vector, b: Vector) -> f32 {
     a.x * b.x + a.y * b.y
 }
@@ -140,3 +145,28 @@ pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
         y: p1.y + dy * cos_ + dx * sin_,
     }
 }
+
+pub fn cross(p1: Vector, p2: Vector) -> f32 {
+    return p1.x * p2.y - p1.y * p2.x;
+}
+
+// pub fn angle(p1: Vector, p2: Vector) -> f32 {
+//     let dot_ = dot(p1, p2);
+//     let l = norm(p1) * norm(p2);
+//     let angle = (dot_ / l).acos();
+//     return angle / (std::f32::consts::PI * 2.0);
+// }
+
+// pub fn angle(a: Vector, b: Vector) -> f32 {
+//     let dot = a.x*b.x + a.y*b.y;
+//     let det = a.x*b.y - a.y*b.x;
+//     let angle = atan2(det, dot);
+// }
+
+// function getAngleBetweenVectors(a, b) {
+//     const aLength = Math.sqrt(a.x * a.x + a.y * a.y);
+//     const bLength = Math.sqrt(b.x * b.x + b.y * b.y);
+//     const dotProduct = a.x * b.x + a.y * b.y;
+//     const angle = Math.acos(dotProduct / (aLength * bLength));
+//     return angle;
+//   }
