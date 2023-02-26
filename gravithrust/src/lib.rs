@@ -4,19 +4,41 @@ use std::thread;
 use std::time;
 use wasm_bindgen::prelude::*;
 mod math;
+mod models;
 use crate::math::collision_response;
+use crate::math::rotate;
 use crate::math::wrap_around;
 use crate::math::Delta;
 use crate::math::Particle;
 use crate::math::Vector;
+use crate::models::MODEL_1;
+use std::ops::Add;
+
 #[wasm_bindgen]
 extern "C" {
     pub fn alert(s: &str);
+
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
 }
 
 #[wasm_bindgen]
 pub fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
+#[repr(u32)]
+pub enum Kind {
+    armor = 1,
+    core = 2,
+    booster = 3,
+}
+
+pub struct ModelParticle {
+    p: Vector,
+    k: Kind,
 }
 
 #[wasm_bindgen]
@@ -27,13 +49,93 @@ pub struct Gravithrust {
 }
 
 #[wasm_bindgen]
+pub struct Ship {
+    particles: Vec<ModelParticle>,
+    links: Vec<usize>,
+}
+
+pub fn kindstr_to_kind(x: &str) -> Kind {
+    match x.trim().to_lowercase().as_str() {
+        "armor" => Kind::armor,
+        "core" => Kind::armor,
+        "booster" => Kind::armor,
+        _ => panic!("invalid kind"),
+    }
+}
+
+pub fn parse_model(model: &str, diameter: f32) -> Ship {
+    let model_: &Vec<&str> = &model
+        .split("\n")
+        .map(|line| line.trim())
+        .filter(|line| !line.starts_with("#") && line.len() > 0)
+        .collect();
+    let start_pair_kinds: &Vec<&str> = &model_
+        .iter()
+        .filter(|line| line.split(",").collect::<Vec<&str>>().len() == 1)
+        .map(|x| *x)
+        .collect();
+    let model_particles: &Vec<&str> = &model_
+        .iter()
+        .filter(|line| line.split(",").collect::<Vec<&str>>().len() == 4)
+        .map(|x| *x)
+        .collect();
+    assert!(start_pair_kinds.len() == 2);
+    // log(start_pair_kinds[0]);
+    // log(start_pair_kinds[1]);
+    let mut particles = vec![];
+    particles.push(ModelParticle {
+        p: Vector { x: 0.0, y: 0.0 },
+        k: kindstr_to_kind(start_pair_kinds[0]),
+    });
+    particles.push(ModelParticle {
+        p: rotate(
+            particles[0].p,
+            Vector {
+                x: diameter,
+                y: 0.0,
+            },
+            4.0 / 6.0,
+        ),
+        k: kindstr_to_kind(start_pair_kinds[1]),
+    });
+    for line in model_particles.iter() {
+        let terms = line.split(",").collect::<Vec<&str>>();
+        let new_particle_id = terms[0].parse::<usize>().expect("invalid particle_id");
+        let p1_id = terms[1].parse::<usize>().expect("invalid p1_id");
+        let p2_id = terms[2].parse::<usize>().expect("invalid p2_id");
+        let kind = kindstr_to_kind(terms[3]);
+        assert!(new_particle_id == particles.len(), "bad length");
+        particles.push(ModelParticle {
+            p: rotate(particles[p1_id].p, particles[p2_id].p, 1.0 / 6.0),
+            k: kind,
+        });
+    }
+    return Ship {
+        particles: particles,
+        links: vec![],
+    };
+}
+
+impl Add<Vector> for Vector {
+    type Output = Vector;
+
+    fn add(self, other: Vector) -> Vector {
+        Vector {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+#[wasm_bindgen]
 impl Gravithrust {
-    pub fn add_particle(&mut self, p: Vector) {
+    pub fn add_particle(&mut self, p: Vector, k: Kind) {
         self.particles.push(Particle {
             p: p,
             pp: Vector { x: p.x, y: p.y },
             v: Vector { x: 0.0, y: 0.0 },
             m: 1.0,
+            k,
         });
         self.deltas.push(Delta {
             p: Vector { x: 0.0, y: 0.0 },
@@ -41,50 +143,51 @@ impl Gravithrust {
         });
     }
 
-    pub fn add_ship(&mut self) {
-        self.add_particle(Vector { x: 0.5, y: 0.5 });
-        self.add_particle(Vector {
-            x: 0.5,
-            y: 0.5 + self.diameter,
-        });
+    pub fn add_ship(&mut self, ship: &Ship, position: Vector) {
+        for p in &ship.particles {
+            self.add_particle(p.p + position, p.k);
+        }
     }
 
     pub fn new() -> Gravithrust {
-        let mut particles = vec![];
-        let mut deltas = vec![];
-        for i in 0..0 {
-            let x = rand::thread_rng().gen::<f32>();
-            let y = rand::thread_rng().gen::<f32>();
-            let dx = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
-            let dy = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
-            particles.push(Particle {
-                p: Vector { x: x, y: y },
-                pp: Vector {
-                    x: x - dx,
-                    y: y - dy,
-                },
-                v: Vector { x: dx, y: dy },
-                m: 1.0,
-            });
-            deltas.push(Delta {
-                p: Vector { x: 0.0, y: 0.0 },
-                v: Vector { x: 0.0, y: 0.0 },
-            });
-        }
-
-        // for p in vec
-
+        // for i in 0..0 {
+        //     let x = rand::thread_rng().gen::<f32>();
+        //     let y = rand::thread_rng().gen::<f32>();
+        //     let dx = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
+        //     let dy = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
+        //     particles.push(Particle {
+        //         p: Vector { x: x, y: y },
+        //         pp: Vector {
+        //             x: x - dx,
+        //             y: y - dy,
+        //         },
+        //         v: Vector { x: dx, y: dy },
+        //         m: 1.0,
+        //     });
+        //     deltas.push(Delta {
+        //         p: Vector { x: 0.0, y: 0.0 },
+        //         v: Vector { x: 0.0, y: 0.0 },
+        //     });
+        // }
         let mut g = Gravithrust {
-            particles,
-            deltas,
+            particles: vec![],
+            deltas: vec![],
             diameter: 0.03,
         };
-        g.add_ship();
+        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
         return g;
     }
 
     pub fn particles_size(&self) -> u32 {
-        (self.particles.len() * 7 * 4) as u32
+        (self.particles.len() * self.particle_size_()) as u32
+    }
+
+    pub fn particle_size(&self) -> u32 {
+        self.particle_size_() as u32
+    }
+
+    pub fn particle_size_(&self) -> usize {
+        8 * 4
     }
 
     pub fn particles_count(&self) -> u32 {
@@ -93,12 +196,12 @@ impl Gravithrust {
 
     pub fn tick(&mut self) {
         let crdp = 0.01; // collision response delta (position)
-        let crdv = 0.9; // collision response delta (velocity)
+        let crdv = 0.90; // collision response delta (velocity)
         let link_strengh = 0.1;
         let linkt_length_ratio = 1.01;
         let diameter = self.diameter;
         let diameter_sqrd = diameter * diameter;
-        let booster_acceleration = diameter * 0.01;
+        // let booster_acceleration = diameter * 0.01;
         for (i1, p1) in self.particles.iter().enumerate() {
             for (i2, p2) in self.particles.iter().enumerate() {
                 if i1 < i2 {

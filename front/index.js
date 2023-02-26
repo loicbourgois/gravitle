@@ -11,10 +11,11 @@ let gravithrust
 let ZOOM = 1.0
 let zen_mode_active = false
 let ups = []
+let particle_size = null
 const P = (id) => {
   return {
-    x: particles.getFloat32(id*4*7, true),
-    y: particles.getFloat32(id*4*7 + 4, true),
+    x: particles.getFloat32(id*particle_size, true),
+    y: particles.getFloat32(id*particle_size + 4, true),
   }
 }
 const go_fullscreen = () => {
@@ -124,6 +125,7 @@ init().then( wasm => {
   context = canvas.getContext('2d')
   resize_square(canvas, ZOOM * 0.9)
   gravithrust = Gravithrust.new();
+  particle_size = gravithrust.particle_size()
   const data_ptr = gravithrust.particles();
   particles = new DataView(wasm.memory.buffer, data_ptr, gravithrust.particles_size());
   requestAnimationFrame(draw)

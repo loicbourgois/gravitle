@@ -1,3 +1,4 @@
+use crate::Kind;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -20,7 +21,7 @@ pub struct Particle {
     // pub gid: usize,
     // pub activation: f32,
     // pub direction: Vector,
-    // pub kind: Pkind,
+    pub k: Kind,
     // pub enabled: bool,
 }
 
