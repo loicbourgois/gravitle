@@ -16,26 +16,16 @@ pub struct Particle {
     pub pp: Vector,
     pub direction: Vector,
     pub m: f32,
-    // pub collisions: u32,
-    // pub pid: usize, // particle id
-    // pub tid: usize, // thread id
-    // pub gid: usize,
-    // pub activation: f32,
     pub k: Kind,
-    // pub enabled: bool,
 }
 
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Delta {
-    // pub collisions: u32,
     pub p: Vector,
     pub v: Vector,
-    // pub pid: usize, // particle id
-    // pub tid: usize, // thread id
-    // pub dtid: usize,
-    // pub did: usize,
     pub direction: Vector,
+    pub sid: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -48,15 +38,16 @@ pub struct WrapAroundResponse {
 pub fn wrap_around(a: Vector, b: Vector) -> WrapAroundResponse {
     let mut dsqrd_min = distance_sqrd(a, b);
     let mut ijwin = [0.0, 0.0];
+    let aa = 1.0;
     let ijs = [
-        [-1.0, -1.0],
-        [-1.0, 0.0],
-        [-1.0, 1.0],
-        [0.0, -1.0],
-        [0.0, 1.0],
-        [1.0, -1.0],
-        [1.0, 0.0],
-        [1.0, 1.0],
+        [-aa, -aa],
+        [-aa, 0.0],
+        [-aa, aa],
+        [0.0, -aa],
+        [0.0, aa],
+        [aa, -aa],
+        [aa, 0.0],
+        [aa, aa],
     ];
     for ij in ijs {
         let dsqrd = distance_sqrd(
@@ -75,13 +66,15 @@ pub fn wrap_around(a: Vector, b: Vector) -> WrapAroundResponse {
         x: b.x + ijwin[0],
         y: b.y + ijwin[1],
     };
+    let aaa = Vector {
+        x: a.x + ijwin[0],
+        y: a.y + ijwin[1],
+    };
+    let mut d = delta(a, bbb);
     WrapAroundResponse {
-        a: Vector {
-            x: a.x + ijwin[0],
-            y: a.y + ijwin[1],
-        },
+        a: aaa,
         b: bbb,
-        d: delta(a, bbb),
+        d,
         d_sqrd: dsqrd_min,
     }
 }

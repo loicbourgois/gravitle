@@ -4,14 +4,18 @@ import {
   fill_circle_2,
   clear,
 } from "./canvas.js"
-let particles
 let context
 let canvas
 let gravithrust
 let ZOOM = 1.0
 let zen_mode_active = false
 let ups = []
+
+let particles
 let particle_size = null
+let ships
+let ship_size = null
+
 const P = (id) => {
   return {
     x: particles.getFloat32(id*particle_size, true),
@@ -21,6 +25,16 @@ const P = (id) => {
     dy: particles.getFloat32(id*particle_size + 4*7, true),
   }
 }
+
+const Ship = (id) => {
+  return {
+    center: {
+        x: ships.getFloat32(id*ship_size, true),
+        y: ships.getFloat32(id*ship_size + 4, true),
+    },
+  }
+}
+
 const go_fullscreen = () => {
   const elem = document.body
   if (elem.requestFullscreen) {
@@ -79,20 +93,19 @@ const colors = [
   {
     'low': "#da0",
     'high': "#dd4",
-  }, 
-  // {
-  //   'low': "#fc0",
-  //   'high': "#ff4",
-  // }, 
-  // {
-  //   'low': "#d80",
-  //   'high': "#da4",
-  // },
+  },
   {
     'low': "#d80",
     'high': "#da4",
   }
 ]
+
+const colors2 = {
+  'ship_center': {
+    'low': "#f00",
+    'high': "#F0F",
+  }
+}
 
 const draw = () => {
   clear(context)
@@ -114,9 +127,13 @@ const draw = () => {
   //       y: p.y + p.dy * gravithrust.diameter,
   //     }, gravithrust.diameter * 0.5, "#888")
   //   }
-   
   // }
 
+  for (let i = 0; i < gravithrust.ships_count(); i++) {
+    const ship = Ship(i);
+    // console.log(ship.center)
+    fill_circle_2(context, ship.center, gravithrust.diameter * 0.5, colors2['ship_center'].low)
+  }
   requestAnimationFrame(draw)
 }
 let target_ups = 100
@@ -170,8 +187,12 @@ init().then( wasm => {
   resize_square(canvas, ZOOM * 0.9)
   gravithrust = Gravithrust.new();
   particle_size = gravithrust.particle_size()
+  ship_size = gravithrust.ship_size()
   const data_ptr = gravithrust.particles();
   particles = new DataView(wasm.memory.buffer, data_ptr, gravithrust.particles_size());
+  const ships_data_ptr = gravithrust.ships();
+  ships = new DataView(wasm.memory.buffer, ships_data_ptr, gravithrust.ships_size());
+  // console.log(ships.getFloat32(4, true),)
   requestAnimationFrame(draw)
   run()
 });

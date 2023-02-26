@@ -14,7 +14,7 @@ use crate::math::Delta;
 use crate::math::Particle;
 use crate::math::Vector;
 use crate::models::MODEL_1;
-use std::ops::Add;
+use std::ops;
 
 #[wasm_bindgen]
 extern "C" {
@@ -36,11 +36,24 @@ pub struct ModelParticle {
     k: Kind,
 }
 
+pub struct Ship {
+    p: Vector,
+    pp: Vector,
+    v: Vector,
+    target: Vector,
+}
+
+pub struct ShipMore {
+    pids: Vec<usize>,
+}
+
 #[wasm_bindgen]
 pub struct Gravithrust {
     particles: Vec<Particle>,
+    ships: Vec<Ship>,
     links: Vec<Link>,
     deltas: Vec<Delta>,
+    ships_more: Vec<ShipMore>,
     pub diameter: f32,
 }
 
@@ -50,7 +63,7 @@ pub struct Link {
 }
 
 #[wasm_bindgen]
-pub struct Ship {
+pub struct ShipModel {
     particles: Vec<ModelParticle>,
     links: Vec<Link>,
 }
@@ -64,7 +77,7 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
     }
 }
 
-pub fn parse_model(model: &str, diameter: f32) -> Ship {
+pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
     let model_: &Vec<&str> = &model
         .split("\n")
         .map(|line| line.trim())
@@ -121,15 +134,14 @@ pub fn parse_model(model: &str, diameter: f32) -> Ship {
         let pid2 = terms[1].parse::<usize>().expect("invalid pid2");
         links.push(Link { a: pid1, b: pid2 });
     }
-    return Ship {
+    return ShipModel {
         particles: particles,
         links: links,
     };
 }
 
-impl Add<Vector> for Vector {
+impl ops::Add<Vector> for Vector {
     type Output = Vector;
-
     fn add(self, other: Vector) -> Vector {
         Vector {
             x: self.x + other.x,
@@ -138,9 +150,19 @@ impl Add<Vector> for Vector {
     }
 }
 
+impl ops::Div<f32> for Vector {
+    type Output = Vector;
+    fn div(self, other: f32) -> Vector {
+        Vector {
+            x: self.x / other,
+            y: self.y / other,
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl Gravithrust {
-    pub fn add_particle(&mut self, p: Vector, k: Kind) {
+    pub fn add_particle(&mut self, p: Vector, k: Kind, sid: Option<usize>) {
         self.particles.push(Particle {
             p: p,
             pp: Vector { x: p.x, y: p.y },
@@ -153,30 +175,54 @@ impl Gravithrust {
             p: Vector { x: 0.0, y: 0.0 },
             v: Vector { x: 0.0, y: 0.0 },
             direction: Vector { x: 0.0, y: 0.0 },
+            sid: sid,
         });
     }
 
-    pub fn add_ship(&mut self, ship: &Ship, position: Vector) {
+    pub fn add_ship(&mut self, ship_model: &ShipModel, position: Vector) {
         let pid_start = self.particles.len();
-        for p in &ship.particles {
-            self.add_particle(p.p + position, p.k);
+        let sid = Some(self.ships.len());
+        let mut ship = Ship {
+            target: Vector { x: 0.0, y: 0.0 },
+            p: Vector { x: 0.0, y: 0.0 },
+            pp: Vector { x: 0.0, y: 0.0 },
+            v: Vector { x: 0.0, y: 0.0 },
+        };
+        let mut ship_more = ShipMore { pids: vec![] };
+        for p in &ship_model.particles {
+            ship_more.pids.push(self.particles.len());
+            self.add_particle(p.p + position, p.k, sid);
         }
-        for l in &ship.links {
+        for l in &ship_model.links {
             self.links.push(Link {
                 a: l.a + pid_start,
                 b: l.b + pid_start,
             })
         }
+        self.ships.push(ship);
+        self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
+        self.ships_more.push(ship_more);
+        self.ships[sid.unwrap()].pp = self.ships[sid.unwrap()].p;
     }
 
     pub fn new() -> Gravithrust {
+        let uu = wrap_around(Vector { x: 0.0, y: 0.0 }, Vector { x: 0.9, y: 0.1 }).d;
+        log(&format!("{},{}", uu.x, uu.y));
+        let uu = wrap_around(Vector { x: 0.0, y: 0.0 }, Vector { x: 0.1, y: 0.1 }).d;
+        log(&format!("{},{}", uu.x, uu.y));
+
+        let uu = wrap_around(Vector { x: 0.0, y: 0.0 }, Vector { x: 0.0, y: 0.5 }).d;
+        log(&format!("{},{}", uu.x, uu.y));
+
         let mut g = Gravithrust {
             particles: vec![],
             links: vec![],
             deltas: vec![],
+            ships: vec![],
+            ships_more: vec![],
             diameter: 0.03,
         };
-        for i in 0..10 {
+        for i in 0..0 {
             let x = rand::thread_rng().gen::<f32>();
             let y = rand::thread_rng().gen::<f32>();
             let dx = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
@@ -196,26 +242,17 @@ impl Gravithrust {
                 p: Vector { x: 0.0, y: 0.0 },
                 v: Vector { x: 0.0, y: 0.0 },
                 direction: Vector { x: 0.0, y: 0.0 },
+                sid: None,
             });
         }
-        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        g.add_ship(
+            &parse_model(MODEL_1, g.diameter),
+            Vector { x: 0.25, y: 0.5 },
+        );
+        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.0 });
+        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.0, y: 0.5 });
         return g;
-    }
-
-    pub fn particles_size(&self) -> u32 {
-        (self.particles.len() * self.particle_size_()) as u32
-    }
-
-    pub fn particle_size(&self) -> u32 {
-        self.particle_size_() as u32
-    }
-
-    pub fn particle_size_(&self) -> usize {
-        10 * 4
-    }
-
-    pub fn particles_count(&self) -> u32 {
-        self.particles.len() as u32
     }
 
     pub fn tick(&mut self) {
@@ -325,9 +362,63 @@ impl Gravithrust {
             p1.pp.x = p1.p.x - p1.v.x;
             p1.pp.y = p1.p.y - p1.v.y;
         }
+
+        for (sid, s) in self.ships_more.iter_mut().enumerate() {
+            self.ships[sid].pp = self.ships[sid].p;
+            self.ships[sid].p = ship_position(&self.particles, &s);
+            self.ships[sid].v = wrap_around(self.ships[sid].pp, self.ships[sid].p).d;
+        }
+    }
+
+    pub fn particles_size(&self) -> u32 {
+        (self.particles.len() * self.particle_size_()) as u32
+    }
+
+    pub fn particle_size(&self) -> u32 {
+        self.particle_size_() as u32
+    }
+
+    pub fn particle_size_(&self) -> usize {
+        10 * 4
+    }
+
+    pub fn particles_count(&self) -> u32 {
+        self.particles.len() as u32
     }
 
     pub fn particles(&self) -> *const Particle {
         self.particles.as_ptr()
     }
+
+    pub fn ships_size(&self) -> u32 {
+        (self.ships.len() * self.ship_size_()) as u32
+    }
+
+    pub fn ship_size(&self) -> u32 {
+        self.ship_size_() as u32
+    }
+
+    pub fn ship_size_(&self) -> usize {
+        8 * 4
+    }
+
+    pub fn ships_count(&self) -> u32 {
+        self.ships.len() as u32
+    }
+
+    pub fn ships(&self) -> *const Ship {
+        self.ships.as_ptr()
+    }
+}
+
+pub fn ship_position(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
+    let p0 = &particles[s.pids[0]];
+    let mut p = p0.pp;
+    for i in 1..s.pids.len() {
+        let pid = s.pids[i];
+        let p1 = &particles[pid];
+        let uu = wrap_around(p0.pp, p1.pp).d;
+        p = p + uu / s.pids.len() as f32;
+    }
+    return p;
 }
