@@ -52,6 +52,10 @@ const Ship = (id) => {
       x: ships.getFloat32(id*ship_size + 4 * 10, true),
       y: ships.getFloat32(id*ship_size + 4 * 11, true),
     },
+    vt: {
+      x: ships.getFloat32(id*ship_size + 4 * 12, true),
+      y: ships.getFloat32(id*ship_size + 4 * 13, true),
+    },
   }
 }
 
@@ -122,12 +126,13 @@ const colors = [
 
 const colors2 = {
   'ship_center': {
-    'low': "#f00",
+    'low': "#8f8",
     'high': "#F0F",
   },
-  'target': "#8f8",
-  'boost': "#f00",
+  'target': "#f00",
   'orientation': "#88f",
+  'boost': "#f00",
+  'vt': "#ff0",
 }
 
 const draw = () => {
@@ -184,6 +189,21 @@ const draw = () => {
       x:  ship.p.x + orientation_n.x*0.05,
       y:  ship.p.y + orientation_n.y*0.05,
     }, gravithrust.diameter * 0.5, colors2['orientation'])
+
+
+    fill_circle_2(context, {
+      x:  ship.p.x + ship.vt.x*0.05,
+      y:  ship.p.y + ship.vt.y*0.05,
+    }, gravithrust.diameter * 0.5, colors2['vt'])
+
+
+    const target_ship_center = {
+      x: (ship.p.x + ship.t.x) * 0.5,
+      y: (ship.p.y + ship.t.y) * 0.5,
+    }
+
+    fill_circle_2(context, target_ship_center, gravithrust.diameter * 1.5, "#f0F")
+
 
   }
   requestAnimationFrame(draw)

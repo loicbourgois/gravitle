@@ -46,6 +46,7 @@ pub struct Ship {
     target: Vector,
     td: Vector, // target direction
     orientation: Vector,
+    vt: Vector,
 }
 
 pub struct ShipMore {
@@ -195,6 +196,7 @@ impl Gravithrust {
             v: Vector { x: 0.0, y: 0.0 },
             td: Vector { x: 0.0, y: 0.0 },
             orientation: Vector { x: 0.0, y: 0.0 },
+            vt: Vector { x: 0.0, y: 0.0 },
         };
         let mut ship_more = ShipMore { pids: vec![] };
         for p in &ship_model.particles {
@@ -228,13 +230,17 @@ impl Gravithrust {
             deltas: vec![],
             ships: vec![],
             ships_more: vec![],
-            diameter: 0.03,
+            diameter: 0.003,
         };
-        for i in 0..0 {
-            let x = rand::thread_rng().gen::<f32>();
-            let y = rand::thread_rng().gen::<f32>();
-            let dx = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
-            let dy = rand::thread_rng().gen::<f32>() * 0.0005 - 0.0005 * 0.5;
+        for i in 0..1 {
+            // let x = rand::thread_rng().gen::<f32>();
+            // let y = rand::thread_rng().gen::<f32>();
+            // let dx = rand::thread_rng().gen::<f32>() * 0.00005 - 0.00005 * 0.5;
+            // let dy = rand::thread_rng().gen::<f32>() * 0.00005 - 0.00005 * 0.5;
+            let x = 0.45;
+            let y = 0.45;
+            let dx = 0.0;
+            let dy = 0.0;
             g.particles.push(Particle {
                 p: Vector { x: x, y: y },
                 pp: Vector {
@@ -256,11 +262,14 @@ impl Gravithrust {
         }
         g.add_ship(
             &parse_model(MODEL_1, g.diameter),
-            Vector { x: 0.15, y: 0.5 },
+            Vector { x: 0.75, y: 0.5 },
         );
-        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.0 });
-        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
-        // g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.0, y: 0.5 });
+        g.add_ship(
+            &parse_model(MODEL_1, g.diameter),
+            Vector { x: 0.25, y: 0.5 },
+        );
+        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.0, y: 0.5 });
         return g;
     }
 
@@ -271,7 +280,8 @@ impl Gravithrust {
         let linkt_length_ratio = 1.01;
         let diameter = self.diameter;
         let diameter_sqrd = diameter * diameter;
-        let booster_acceleration = diameter * 0.00003;
+        let booster_acceleration = 0.00005;
+        // let booster_acceleration = 0.0000;
         for (i1, p1) in self.particles.iter().enumerate() {
             for (i2, p2) in self.particles.iter().enumerate() {
                 if i1 < i2 {
@@ -353,17 +363,44 @@ impl Gravithrust {
         }
 
         for (sid, s) in self.ships_more.iter_mut().enumerate() {
-            self.ships[sid].pp = self.ships[sid].p;
-            self.ships[sid].p = ship_position(&self.particles, &s);
-            self.ships[sid].v = wrap_around(self.ships[sid].pp, self.ships[sid].p).d;
-            self.ships[sid].td = wrap_around(self.ships[sid].p, self.ships[sid].target).d;
-            self.ships[sid].orientation = ship_orientation(&self.particles, &s);
-            let cross__ = cross(self.ships[sid].orientation, self.ships[sid].td);
-            if cross__ < 0.0 {
-                self.particles[10].a = 1
-            } else {
-                self.particles[14].a = 1
+            let pid0 = s.pids[0];
+            let mut ship = &mut self.ships[sid];
+            ship.target = self.particles[0].p;
+            ship.pp = ship.p;
+            ship.p = ship_position(&self.particles, &s);
+            ship.v = wrap_around(ship.pp, ship.p).d;
+            ship.td = wrap_around(ship.p, ship.target).d;
+            let previous_orientation = ship.orientation;
+            ship.orientation = ship_orientation(&self.particles, &s);
+
+            ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
+
+            let cross__ = cross(ship.orientation, ship.vt);
+
+            let cross_2_ = cross(
+                (normalize_2(ship.v) + normalize_2(ship.orientation)) / 2.0,
+                ship.td,
+            );
+
+            let cross_3_ = cross(ship.orientation, previous_orientation);
+
+            let turn_speed = 0.000000001;
+            if cross_2_ < 0.0 && cross_3_ < turn_speed {
+                self.particles[pid0 + 10].a = 1
             }
+            if cross_2_ > 0.0 && cross_3_ > -turn_speed {
+                self.particles[pid0 + 14].a = 1
+            }
+            // else {
+            //     self.particles[14].a = 1
+            // }
+
+            // if cross_2_ > 0.0 {
+            //     self.particles[14].a = 1
+            // }
+            // else {
+            //     self.particles[14].a = 1
+            // }
             // log(&format!("{}", a));
             // let aa = dot(self.ships[sid].v, self.ships[sid].td);
             // log(&format!("{} ", a));
@@ -405,7 +442,7 @@ impl Gravithrust {
     }
 
     pub fn ship_size_(&self) -> usize {
-        12 * 4
+        14 * 4
     }
 
     pub fn ships_count(&self) -> u32 {
