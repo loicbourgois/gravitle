@@ -1,4 +1,5 @@
-use crate::Kind;
+use crate::particle::Particle;
+// use crate::Kind;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -6,18 +7,6 @@ use wasm_bindgen::prelude::*;
 pub struct Vector {
     pub x: f32,
     pub y: f32,
-}
-
-#[wasm_bindgen]
-#[derive(Clone, Debug)]
-pub struct Particle {
-    pub p: Vector,
-    pub v: Vector,
-    pub pp: Vector,
-    pub direction: Vector,
-    pub m: f32,
-    pub k: Kind,
-    pub a: u32, // activated,
 }
 
 #[wasm_bindgen]
@@ -71,7 +60,7 @@ pub fn wrap_around(a: Vector, b: Vector) -> WrapAroundResponse {
         x: a.x + ijwin[0],
         y: a.y + ijwin[1],
     };
-    let mut d = delta(a, bbb);
+    let d = delta(a, bbb);
     WrapAroundResponse {
         a: aaa,
         b: bbb,
@@ -110,9 +99,9 @@ pub fn norm_sqrd(v: Vector) -> f32 {
     v.x * v.x + v.y * v.y
 }
 
-pub fn norm(v: Vector) -> f32 {
-    norm_sqrd(v).sqrt()
-}
+// pub fn norm(v: Vector) -> f32 {
+//     norm_sqrd(v).sqrt()
+// }
 
 pub fn dot(a: Vector, b: Vector) -> f32 {
     a.x * b.x + a.y * b.y
