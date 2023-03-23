@@ -1,17 +1,19 @@
 // use crate::collision_response;
 use crate::cross;
-use rand::Rng;
 // use crate::gravithrust::Gravithrust;
+use crate::gravithrust_tick::add_particle;
+use crate::gravithrust_tick::add_particles;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
 use crate::gravithrust_tick::update_particles;
 use crate::kind::Kind;
-use crate::log;
+// use crate::log;
 use crate::models::MODEL_1;
 // use crate::normalize;
 use crate::normalize_2;
 use crate::parse_model;
 // use crate::particle;
+use crate::grid::Grid;
 use crate::ship_orientation;
 use crate::ship_position;
 use crate::wrap_around;
@@ -32,26 +34,13 @@ pub struct Gravithrust {
     deltas: Vec<Delta>,
     ships_more: Vec<ShipMore>,
     pub diameter: f32,
+    grid: Grid,
 }
 
 #[wasm_bindgen]
 impl Gravithrust {
     pub fn add_particle(&mut self, p: Vector, k: Kind, sid: Option<usize>) {
-        self.particles.push(Particle {
-            p: p,
-            pp: Vector { x: p.x, y: p.y },
-            v: Vector { x: 0.0, y: 0.0 },
-            m: 1.0,
-            k,
-            direction: Vector { x: 0.0, y: 0.0 },
-            a: 0,
-        });
-        self.deltas.push(Delta {
-            p: Vector { x: 0.0, y: 0.0 },
-            v: Vector { x: 0.0, y: 0.0 },
-            direction: Vector { x: 0.0, y: 0.0 },
-            sid: sid,
-        });
+        add_particle(&mut self.particles, &mut self.deltas, p, k, sid);
     }
 
     pub fn add_ship(&mut self, ship_model: &ShipModel, position: Vector) {
@@ -84,13 +73,17 @@ impl Gravithrust {
     }
 
     pub fn new() -> Gravithrust {
+        let particle_diameter = 0.005;
+        let grid_side = 128;
+        assert!((particle_diameter * grid_side as f32) <= 1.0);
         let mut g = Gravithrust {
             particles: vec![],
             links: vec![],
             deltas: vec![],
             ships: vec![],
             ships_more: vec![],
-            diameter: 0.005,
+            diameter: particle_diameter,
+            grid: Grid::new(grid_side),
         };
         g.add_particle(Vector { x: 0.5, y: 0.5 }, Kind::Sun, None);
         if false {
@@ -117,7 +110,7 @@ impl Gravithrust {
     }
 
     pub fn particle_size_(&self) -> usize {
-        11 * 4
+        13 * 4
     }
 
     pub fn particles_count(&self) -> u32 {
@@ -149,36 +142,18 @@ impl Gravithrust {
     }
 }
 
-struct ParticleModel {
-    p: Vector,
-    k: Kind,
-    sid: Option<usize>,
-}
-
 #[wasm_bindgen]
 impl Gravithrust {
     pub fn tick(&mut self) {
-        let mut particles_to_add = vec![];
-        for p1 in &self.particles {
-            if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < 0.01 {
-                particles_to_add.push(ParticleModel {
-                    p: Vector {
-                        x: p1.p.x + rand::thread_rng().gen::<f32>() * self.diameter
-                            - self.diameter * 0.5,
-                        y: p1.p.y + rand::thread_rng().gen::<f32>() * self.diameter
-                            - self.diameter * 0.5,
-                    },
-                    k: Kind::Armor,
-                    sid: None,
-                })
-            }
-        }
-
-        for x in &particles_to_add {
-            self.add_particle(x.p, x.k, x.sid);
-        }
-
-        compute_collision_responses(self.diameter, &mut self.particles, &mut self.deltas);
+        add_particles(self.diameter, &mut self.particles, &mut self.deltas);
+        self.grid.update_01();
+        self.grid.update_02(&mut self.particles);
+        compute_collision_responses(
+            self.diameter,
+            &mut self.particles,
+            &mut self.deltas,
+            &self.grid,
+        );
         compute_link_responses(
             self.diameter,
             &mut self.particles,

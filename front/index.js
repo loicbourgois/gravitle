@@ -226,13 +226,18 @@ let target_ups = 100
 let timeout = 0
 const run = () => {
   ups.push(performance.now())
-  for (let _ = 0; _ < 10; _++) {
+  for (let _ = 0; _ < 5; _++) {
       gravithrust.tick()
   }
   while (ups.length > 100) {
     ups.shift()
   }
   if (ups.length > 2) {
+    const ups_ = 1000 / ( ups[ups.length-1] - ups[0]  ) * ups.length
+    // console.log()
+    // console.log(gravithrust.particles_count(),  ups_)
+    document.querySelector("#particles_count").innerHTML = gravithrust.particles_count()
+    document.querySelector("#ups").innerHTML = parseInt(ups_)
     timeout = 1000 / target_ups - ( ups[ups.length-1] - ups[ups.length-2] )
     timeout = Math.max(0,timeout)
   }
@@ -260,6 +265,14 @@ init().then( wasm_ => {
       <div>
         <label>edge color:   </label>
         <input id="color_2" value="#e80" />
+      </div>
+      <div>
+        <label>particles:    </label>
+        <label id="particles_count">...</label>
+      </div>
+      <div>
+        <label>ups:          </label>
+        <label id="ups">...</label>
       </div>
     </div>
   `

@@ -12,6 +12,8 @@ pub struct Particle {
     pub m: f32,
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
+    pub grid_id: usize,
+    pub idx: usize,
 }
 
 pub fn is_static(p: &Particle) -> bool {

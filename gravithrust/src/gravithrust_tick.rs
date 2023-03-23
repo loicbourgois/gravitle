@@ -7,39 +7,132 @@ use crate::normalize_2;
 use crate::particle;
 // use crate::ship_orientation;
 // use crate::ship_position;
+use crate::grid::grid_id_position;
+use crate::grid::Grid;
 use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
 use crate::Particle;
+use crate::Vector;
+use rand::Rng;
+type Particles = Vec<Particle>;
+
+struct ParticleModel {
+    p: Vector,
+    k: Kind,
+    sid: Option<usize>,
+}
+
+pub fn add_particle(
+    particles: &mut Vec<Particle>,
+    deltas: &mut Vec<Delta>,
+    p: Vector,
+    k: Kind,
+    sid: Option<usize>,
+) {
+    particles.push(Particle {
+        p: p,
+        pp: Vector { x: p.x, y: p.y },
+        v: Vector { x: 0.0, y: 0.0 },
+        m: 1.0,
+        k,
+        direction: Vector { x: 0.0, y: 0.0 },
+        a: 0,
+        idx: particles.len(),
+        grid_id: 0,
+    });
+    deltas.push(Delta {
+        p: Vector { x: 0.0, y: 0.0 },
+        v: Vector { x: 0.0, y: 0.0 },
+        direction: Vector { x: 0.0, y: 0.0 },
+        sid: sid,
+    });
+}
+
+pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {
+    let mut particles_to_add = vec![];
+    for p1 in particles.iter() {
+        if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < 0.1 {
+            particles_to_add.push(ParticleModel {
+                p: Vector {
+                    x: p1.p.x + rand::thread_rng().gen::<f32>() * diameter - diameter * 0.5,
+                    y: p1.p.y + rand::thread_rng().gen::<f32>() * diameter - diameter * 0.5,
+                },
+                k: Kind::Armor,
+                sid: None,
+            })
+        }
+    }
+    for x in &particles_to_add {
+        add_particle(particles, deltas, x.p, x.k, x.sid);
+    }
+}
+
+// for p1 in self.particles.iter_mut() {
+//     for ns in neighbours(&p1.p, &self.grid) {
+//         for idx in ns {
+//             let p2 = &mut (*particles)[*idx];
+//             if (p1.fidx < p2.fidx) {
+//                 let wa = wrap_around(&p1.p, &p2.p);
+//                 if wa.d_sqrd < self.particle_diameter_sqrd {
+//                     p1.collisions += 1;
+//                     p2.collisions += 1;
+//                 }
+//             }
+//         }
+//     }
+// }
+
+pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
+    let gid = grid_id_position(position, grid.side);
+    return [
+        &grid.pidxs[grid.gids[gid][0]],
+        &grid.pidxs[grid.gids[gid][1]],
+        &grid.pidxs[grid.gids[gid][2]],
+        &grid.pidxs[grid.gids[gid][3]],
+        &grid.pidxs[grid.gids[gid][4]],
+        &grid.pidxs[grid.gids[gid][5]],
+        &grid.pidxs[grid.gids[gid][6]],
+        &grid.pidxs[grid.gids[gid][7]],
+        &grid.pidxs[grid.gids[gid][8]],
+    ];
+}
 
 pub fn compute_collision_responses(
     diameter: f32,
     particles: &mut Vec<Particle>,
     deltas: &mut Vec<Delta>,
+    grid: &Grid,
 ) {
     let crdp = 0.01; // collision response delta (position)
     let crdv = 0.90; // collision response delta (velocity)
     let diameter_sqrd = diameter * diameter;
-    for (i1, p1) in particles.iter().enumerate() {
-        for (i2, p2) in particles.iter().enumerate() {
-            if i1 < i2 {
-                let wa = wrap_around(p1.p, p2.p);
-                if wa.d_sqrd < diameter_sqrd {
-                    let cr = collision_response(&wa, p1, p2);
-                    if !cr.x.is_nan() && !cr.y.is_nan() {
-                        {
-                            let d1 = &mut deltas[i1];
-                            d1.v.x += cr.x * crdv;
-                            d1.v.y += cr.y * crdv;
-                            d1.p.x -= wa.d.x * crdp;
-                            d1.p.y -= wa.d.y * crdp;
-                        }
-                        {
-                            let d2 = &mut deltas[i2];
-                            d2.v.x -= cr.x * crdv;
-                            d2.v.y -= cr.y * crdv;
-                            d2.p.x += wa.d.x * crdp;
-                            d2.p.y += wa.d.y * crdp;
+    unsafe {
+        let particles_2 = particles as *mut Particles;
+        for p1 in particles.iter_mut() {
+            for ns in neighbours(&p1.p, &grid) {
+                for idx in ns {
+                    let p2 = &mut (*particles_2)[*idx];
+                    if p1.idx < p2.idx {
+                        let wa = wrap_around(p1.p, p2.p);
+                        if wa.d_sqrd < diameter_sqrd {
+                            let cr = collision_response(&wa, p1, p2);
+                            if !cr.x.is_nan() && !cr.y.is_nan() {
+                                {
+                                    let d1 = &mut deltas[p1.idx];
+                                    d1.v.x += cr.x * crdv;
+                                    d1.v.y += cr.y * crdv;
+                                    d1.p.x -= wa.d.x * crdp;
+                                    d1.p.y -= wa.d.y * crdp;
+                                }
+                                {
+                                    let d2 = &mut deltas[p2.idx];
+                                    d2.v.x -= cr.x * crdv;
+                                    d2.v.y -= cr.y * crdv;
+                                    d2.p.x += wa.d.x * crdp;
+                                    d2.p.y += wa.d.y * crdp;
+                                }
+                            }
                         }
                     }
                 }

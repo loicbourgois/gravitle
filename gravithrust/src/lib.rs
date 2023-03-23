@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 mod gravithrust;
 mod gravithrust_tick;
+mod grid;
 mod kind;
 mod math;
 mod models;
