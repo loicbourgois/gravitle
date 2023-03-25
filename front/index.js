@@ -19,6 +19,7 @@ let particle_size = null
 let ships
 let ship_size = null
 let wasm = null
+let start
 
 const P = (id) => {
   return {
@@ -56,6 +57,10 @@ const Ship = (id) => {
     vt: {
       x: ships.getFloat32(id*ship_size + 4 * 12, true),
       y: ships.getFloat32(id*ship_size + 4 * 13, true),
+    },
+    cross: {
+      x: ships.getFloat32(id*ship_size + 4 * 14, true),
+      y: ships.getFloat32(id*ship_size + 4 * 15, true),
     },
   }
 }
@@ -138,7 +143,7 @@ const colors2 = {
     'low': "#8f8",
     'high': "#F0F",
   },
-  'target': "#f00",
+  'target': "#f44",
   'orientation': "#88f",
   'boost': "#f00",
   'vt': "#ff0",
@@ -190,12 +195,12 @@ const draw = () => {
     }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
 
 
-    fill_circle_2(context, ship.t, gravithrust.diameter * 0.5, colors2['target'])
+    fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff0c')
     const td_n = normalize(ship.td)
     fill_circle_2(context, {
       x:  ship.p.x + td_n.x*0.05,
       y:  ship.p.y + td_n.y*0.05,
-    }, gravithrust.diameter * 0.5, colors2['target'])
+    }, gravithrust.diameter * 1., colors2['target'])
 
 
     // fill_circle_2(context, ship.t, gravithrust.diameter * 0.5, colors2['target'])
@@ -204,22 +209,25 @@ const draw = () => {
       x:  ship.p.x + orientation_n.x*0.05,
       y:  ship.p.y + orientation_n.y*0.05,
     }, gravithrust.diameter * 0.5, colors2['orientation'])
+    
+    // fill_circle_2(context, {
+    //   x:  ship.p.x + ship.vt.x*0.05,
+    //   y:  ship.p.y + ship.vt.y*0.05,
+    // }, gravithrust.diameter * 0.5, colors2['vt'])
 
 
+    const cross_n = normalize(ship.cross)
     fill_circle_2(context, {
-      x:  ship.p.x + ship.vt.x*0.05,
-      y:  ship.p.y + ship.vt.y*0.05,
-    }, gravithrust.diameter * 0.5, colors2['vt'])
-
-
-    // const target_ship_center = {
-    //   x: (ship.p.x + ship.t.x) * 0.5,
-    //   y: (ship.p.y + ship.t.y) * 0.5,
-    // }
-    // fill_circle_2(context, target_ship_center, gravithrust.diameter * 1.5, "#f0F")
-
+      x:  ship.p.x + cross_n.x*0.05,
+      y:  ship.p.y + cross_n.y*0.05,
+    }, gravithrust.diameter * 1., "#f4f")
 
   }
+  document.querySelector("#points").innerHTML = gravithrust.points
+  const duration = (( performance.now() - start) / 1000 )
+  document.querySelector("#mpps").innerHTML = (gravithrust.points * 1000000 / gravithrust.step).toFixed(1)
+  document.querySelector("#duration").innerHTML = parseInt(duration)
+  document.querySelector("#step").innerHTML = gravithrust.step
   requestAnimationFrame(draw)
 }
 let target_ups = 100
@@ -234,8 +242,6 @@ const run = () => {
   }
   if (ups.length > 2) {
     const ups_ = 1000 / ( ups[ups.length-1] - ups[0]  ) * ups.length
-    // console.log()
-    // console.log(gravithrust.particles_count(),  ups_)
     document.querySelector("#particles_count").innerHTML = gravithrust.particles_count()
     document.querySelector("#ups").innerHTML = parseInt(ups_)
     timeout = 1000 / target_ups - ( ups[ups.length-1] - ups[ups.length-2] )
@@ -274,6 +280,22 @@ init().then( wasm_ => {
         <label>ups:          </label>
         <label id="ups">...</label>
       </div>
+      <div>
+        <label>points:       </label>
+        <label id="points">...</label>
+      </div>
+      <div>
+        <label>ppMs:         </label>
+        <label id="mpps">...</label>
+      </div>
+      <div>
+        <label>duration:     </label>
+        <label id="duration">...</label>
+      </div>
+      <div>
+        <label>step:         </label>
+        <label id="step">...</label>
+      </div>
     </div>
   `
   window.go_fullscreen = go_fullscreen
@@ -288,7 +310,7 @@ init().then( wasm_ => {
   gravithrust = Gravithrust.new();
   particle_size = gravithrust.particle_size()
   ship_size = gravithrust.ship_size()
-  // console.log(ships.getFloat32(4, true),)
   requestAnimationFrame(draw)
   run()
+  start = performance.now()
 });

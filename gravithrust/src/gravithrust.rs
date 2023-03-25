@@ -1,19 +1,15 @@
-// use crate::collision_response;
 use crate::cross;
-// use crate::gravithrust::Gravithrust;
 use crate::gravithrust_tick::add_particle;
 use crate::gravithrust_tick::add_particles;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
 use crate::gravithrust_tick::update_particles;
+use crate::grid::Grid;
 use crate::kind::Kind;
-// use crate::log;
+use crate::log;
 use crate::models::MODEL_1;
-// use crate::normalize;
 use crate::normalize_2;
 use crate::parse_model;
-// use crate::particle;
-use crate::grid::Grid;
 use crate::ship_orientation;
 use crate::ship_position;
 use crate::wrap_around;
@@ -24,6 +20,7 @@ use crate::Ship;
 use crate::ShipModel;
 use crate::ShipMore;
 use crate::Vector;
+use rand::Rng;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
@@ -35,6 +32,8 @@ pub struct Gravithrust {
     ships_more: Vec<ShipMore>,
     pub diameter: f32,
     grid: Grid,
+    pub points: u32,
+    pub step: u32,
 }
 
 #[wasm_bindgen]
@@ -47,13 +46,17 @@ impl Gravithrust {
         let pid_start = self.particles.len();
         let sid = Some(self.ships.len());
         let ship = Ship {
-            target: Vector { x: 0.5, y: 0.5 },
+            target: Vector {
+                x: rand::thread_rng().gen::<f32>(),
+                y: rand::thread_rng().gen::<f32>(),
+            },
             p: Vector { x: 0.0, y: 0.0 },
             pp: Vector { x: 0.0, y: 0.0 },
             v: Vector { x: 0.0, y: 0.0 },
             td: Vector { x: 0.0, y: 0.0 },
             orientation: Vector { x: 0.0, y: 0.0 },
             vt: Vector { x: 0.0, y: 0.0 },
+            cross: Vector { x: 0.0, y: 0.0 },
         };
         let mut ship_more = ShipMore { pids: vec![] };
         for p in &ship_model.particles {
@@ -84,19 +87,17 @@ impl Gravithrust {
             ships_more: vec![],
             diameter: particle_diameter,
             grid: Grid::new(grid_side),
+            points: 0,
+            step: 0,
         };
-        g.add_particle(Vector { x: 0.5, y: 0.5 }, Kind::Sun, None);
-        if false {
+        for _ in 0..10 {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
-                Vector { x: 0.75, y: 0.5 },
+                Vector {
+                    x: rand::thread_rng().gen::<f32>(),
+                    y: rand::thread_rng().gen::<f32>(),
+                },
             );
-            g.add_ship(
-                &parse_model(MODEL_1, g.diameter),
-                Vector { x: 0.25, y: 0.5 },
-            );
-            g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
-            g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.0, y: 0.5 });
         }
         return g;
     }
@@ -130,7 +131,7 @@ impl Gravithrust {
     }
 
     pub fn ship_size_(&self) -> usize {
-        14 * 4
+        16 * 4
     }
 
     pub fn ships_count(&self) -> u32 {
@@ -163,46 +164,48 @@ impl Gravithrust {
         update_particles(self.diameter, &mut self.particles, &mut self.deltas);
         for (sid, s) in self.ships_more.iter_mut().enumerate() {
             let pid0 = s.pids[0];
+            let pid_left = pid0 + 10;
+            let pid_right = pid0 + 14;
             let mut ship = &mut self.ships[sid];
-            ship.target = self.particles[0].p;
+            if wrap_around(ship.target, ship.p).d_sqrd < (self.diameter * self.diameter) * 4.0 {
+                self.points += 1;
+                ship.target = Vector {
+                    x: rand::thread_rng().gen::<f32>(),
+                    y: rand::thread_rng().gen::<f32>(),
+                }
+            }
             ship.pp = ship.p;
             ship.p = ship_position(&self.particles, &s);
+            // velocity
             ship.v = wrap_around(ship.pp, ship.p).d;
+            // target delta
             ship.td = wrap_around(ship.p, ship.target).d;
             let previous_orientation = ship.orientation;
+            // orientation is where the ship is facing
             ship.orientation = ship_orientation(&self.particles, &s);
             ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
-            // let cross__ = cross(ship.orientation, ship.vt);
-            let cross_2_ = cross(
-                (normalize_2(ship.v) + normalize_2(ship.orientation)) / 2.0,
-                ship.td,
-            );
+            ship.cross =
+                normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
+            let cross_2_ = cross(ship.cross, ship.td);
             let cross_3_ = cross(ship.orientation, previous_orientation);
-            let turn_speed = 0.000000001;
-            if cross_2_ < 0.0 && cross_3_ < turn_speed {
-                self.particles[pid0 + 10].a = 1
+            let turn_speed_a = 0.00000001;
+            let turn_speed_b = 0.0000001;
+            if cross_2_ < 0.0 && cross_3_ < turn_speed_a {
+                self.particles[pid_left].a = 1
             }
-            if cross_2_ > 0.0 && cross_3_ > -turn_speed {
-                self.particles[pid0 + 14].a = 1
+            if cross_2_ > 0.0 && cross_3_ > -turn_speed_a {
+                self.particles[pid_right].a = 1
             }
-            // else {
-            //     self.particles[14].a = 1
-            // }
-            // if cross_2_ > 0.0 {
-            //     self.particles[14].a = 1
-            // }
-            // else {
-            //     self.particles[14].a = 1
-            // }
-            // log(&format!("{}", a));
-            // let aa = dot(self.ships[sid].v, self.ships[sid].td);
-            // log(&format!("{} ", a));
-            // for pid in &s.pids {
-            //     let mut p1 = &mut self.particles[*pid];
-            //     if p1.k == Kind::booster {
-            //         // p1.a = 1;
-            //     }
-            // }
+            if cross_3_ > turn_speed_b {
+                self.particles[pid_right].a = 1;
+                self.particles[pid_left].a = 0;
+                // log("aa");
+            } else if cross_3_ < -turn_speed_b {
+                self.particles[pid_left].a = 1;
+                self.particles[pid_right].a = 0;
+                // log("bb");
+            }
         }
+        self.step += 1;
     }
 }

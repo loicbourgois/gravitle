@@ -37,6 +37,7 @@ pub struct Ship {
     td: Vector, // target direction
     orientation: Vector,
     vt: Vector,
+    cross: Vector,
 }
 
 pub struct ShipMore {
@@ -144,6 +145,26 @@ impl ops::Div<f32> for Vector {
         Vector {
             x: self.x / other,
             y: self.y / other,
+        }
+    }
+}
+
+impl ops::Mul<f32> for Vector {
+    type Output = Vector;
+    fn mul(self, other: f32) -> Vector {
+        Vector {
+            x: self.x * other,
+            y: self.y * other,
+        }
+    }
+}
+
+impl ops::Sub<Vector> for Vector {
+    type Output = Vector;
+    fn sub(self, other: Vector) -> Vector {
+        Vector {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }

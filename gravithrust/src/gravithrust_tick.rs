@@ -1,14 +1,10 @@
 use crate::collision_response;
-// use crate::cross;
-// use crate::gravithrust::Gravithrust;
+use crate::grid::grid_id_position;
+use crate::grid::Grid;
 use crate::kind::Kind;
 use crate::normalize;
 use crate::normalize_2;
 use crate::particle;
-// use crate::ship_orientation;
-// use crate::ship_position;
-use crate::grid::grid_id_position;
-use crate::grid::Grid;
 use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
@@ -67,21 +63,6 @@ pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut 
         add_particle(particles, deltas, x.p, x.k, x.sid);
     }
 }
-
-// for p1 in self.particles.iter_mut() {
-//     for ns in neighbours(&p1.p, &self.grid) {
-//         for idx in ns {
-//             let p2 = &mut (*particles)[*idx];
-//             if (p1.fidx < p2.fidx) {
-//                 let wa = wrap_around(&p1.p, &p2.p);
-//                 if wa.d_sqrd < self.particle_diameter_sqrd {
-//                     p1.collisions += 1;
-//                     p2.collisions += 1;
-//                 }
-//             }
-//         }
-//     }
-// }
 
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(position, grid.side);
@@ -147,7 +128,7 @@ pub fn compute_link_responses(
     deltas: &mut Vec<Delta>,
     links: &mut Vec<Link>,
 ) {
-    let link_strengh = 0.001;
+    let link_strengh = 0.01;
     let linkt_length_ratio = 1.01;
     for (_i, l) in links.iter().enumerate() {
         let p1 = &particles[l.a];
