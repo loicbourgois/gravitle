@@ -34,6 +34,7 @@ pub struct Gravithrust {
     grid: Grid,
     pub points: u32,
     pub step: u32,
+    pub sub_steps: usize,
 }
 
 #[wasm_bindgen]
@@ -57,6 +58,8 @@ impl Gravithrust {
             orientation: Vector { x: 0.0, y: 0.0 },
             vt: Vector { x: 0.0, y: 0.0 },
             cross: Vector { x: 0.0, y: 0.0 },
+            on_target: 0,
+            target_pid: 0,
         };
         let mut ship_more = ShipMore { pids: vec![] };
         for p in &ship_model.particles {
@@ -75,22 +78,26 @@ impl Gravithrust {
         self.ships[sid.unwrap()].pp = self.ships[sid.unwrap()].p;
     }
 
-    pub fn new() -> Gravithrust {
-        let particle_diameter = 0.005;
+    pub fn new(diameter: f32, sub_steps: usize) -> Gravithrust {
         let grid_side = 128;
-        assert!((particle_diameter * grid_side as f32) <= 1.0);
+        assert!((diameter * grid_side as f32) <= 1.0);
         let mut g = Gravithrust {
             particles: vec![],
             links: vec![],
             deltas: vec![],
             ships: vec![],
             ships_more: vec![],
-            diameter: particle_diameter,
+            diameter: diameter,
             grid: Grid::new(grid_side),
             points: 0,
             step: 0,
+            sub_steps: sub_steps,
         };
-        for _ in 0..10 {
+        for _ in 0..1 {
+            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Metal, None);
+            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Depot, None);
+        }
+        for _ in 0..2 {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
                 Vector {
@@ -131,7 +138,7 @@ impl Gravithrust {
     }
 
     pub fn ship_size_(&self) -> usize {
-        16 * 4
+        18 * 4
     }
 
     pub fn ships_count(&self) -> u32 {
@@ -145,7 +152,13 @@ impl Gravithrust {
 
 #[wasm_bindgen]
 impl Gravithrust {
-    pub fn tick(&mut self) {
+    pub fn ticks(&mut self) {
+        for _ in 0..self.sub_steps {
+            self.tick()
+        }
+    }
+
+    fn tick(&mut self) {
         add_particles(self.diameter, &mut self.particles, &mut self.deltas);
         self.grid.update_01();
         self.grid.update_02(&mut self.particles);
@@ -154,6 +167,7 @@ impl Gravithrust {
             &mut self.particles,
             &mut self.deltas,
             &self.grid,
+            &mut self.ships,
         );
         compute_link_responses(
             self.diameter,
@@ -167,13 +181,24 @@ impl Gravithrust {
             let pid_left = pid0 + 10;
             let pid_right = pid0 + 14;
             let mut ship = &mut self.ships[sid];
-            if wrap_around(ship.target, ship.p).d_sqrd < (self.diameter * self.diameter) * 4.0 {
+            if ship.on_target >= 1 {
                 self.points += 1;
-                ship.target = Vector {
-                    x: rand::thread_rng().gen::<f32>(),
-                    y: rand::thread_rng().gen::<f32>(),
+                log("on target");
+                if ship.target_pid == 0 {
+                    ship.target_pid = 1
+                } else {
+                    ship.target_pid = 0
                 }
             }
+            ship.target = self.particles[ship.target_pid].p;
+            ship.on_target = 0;
+            // if wrap_around(ship.target, ship.p).d_sqrd < (self.diameter * self.diameter) * 4.0 {
+            //     self.points += 1;
+            //     ship.target = Vector {
+            //         x: rand::thread_rng().gen::<f32>(),
+            //         y: rand::thread_rng().gen::<f32>(),
+            //     }
+            // }
             ship.pp = ship.p;
             ship.p = ship_position(&self.particles, &s);
             // velocity

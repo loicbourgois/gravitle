@@ -19,6 +19,8 @@ pub struct Particle {
 pub fn is_static(p: &Particle) -> bool {
     match p.k {
         Kind::Sun => true,
+        Kind::Metal => true,
+        Kind::Depot => true,
         _ => false,
     }
 }

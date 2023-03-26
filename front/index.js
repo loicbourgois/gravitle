@@ -135,6 +135,20 @@ const colors = [
   {
     'low': "#d80",
     'high': "#da4",
+  },
+  {
+    'low': "#d80",
+    'high': "#da4",
+  },
+  // 7 - Metal
+  {
+    'low': "#999",
+    'high': "#da4",
+  },
+  // 8 - Depot
+  {
+    'low': "#99d",
+    'high': "#da4",
   }
 ]
 
@@ -195,7 +209,7 @@ const draw = () => {
     }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
 
 
-    fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff0c')
+    fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff02')
     const td_n = normalize(ship.td)
     fill_circle_2(context, {
       x:  ship.p.x + td_n.x*0.05,
@@ -234,9 +248,7 @@ let target_ups = 100
 let timeout = 0
 const run = () => {
   ups.push(performance.now())
-  for (let _ = 0; _ < 5; _++) {
-      gravithrust.tick()
-  }
+  gravithrust.ticks()
   while (ups.length > 100) {
     ups.shift()
   }
@@ -307,7 +319,10 @@ init().then( wasm_ => {
   canvas = document.querySelector("#canvas");
   context = canvas.getContext('2d')
   resize_square(canvas, ZOOM * 0.9)
-  gravithrust = Gravithrust.new();
+  gravithrust = Gravithrust.new(
+    0.005, // diameter
+    5, // substep per tick
+  );
   particle_size = gravithrust.particle_size()
   ship_size = gravithrust.ship_size()
   requestAnimationFrame(draw)

@@ -9,6 +9,7 @@ use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
 use crate::Particle;
+use crate::Ship;
 use crate::Vector;
 use rand::Rng;
 type Particles = Vec<Particle>;
@@ -84,6 +85,7 @@ pub fn compute_collision_responses(
     particles: &mut Vec<Particle>,
     deltas: &mut Vec<Delta>,
     grid: &Grid,
+    ships: &mut Vec<Ship>,
 ) {
     let crdp = 0.01; // collision response delta (position)
     let crdv = 0.90; // collision response delta (velocity)
@@ -97,6 +99,29 @@ pub fn compute_collision_responses(
                     if p1.idx < p2.idx {
                         let wa = wrap_around(p1.p, p2.p);
                         if wa.d_sqrd < diameter_sqrd {
+                            {
+                                let d1 = &deltas[p1.idx];
+                                match d1.sid {
+                                    Some(sid) => {
+                                        if ships[sid].target_pid == p2.idx {
+                                            ships[sid].on_target += 1;
+                                        }
+                                    }
+                                    None => {}
+                                }
+                            }
+                            {
+                                let d2 = &deltas[p2.idx];
+                                match d2.sid {
+                                    Some(sid) => {
+                                        if ships[sid].target_pid == p1.idx {
+                                            ships[sid].on_target += 1;
+                                        }
+                                    }
+                                    None => {}
+                                }
+                            }
+
                             let cr = collision_response(&wa, p1, p2);
                             if !cr.x.is_nan() && !cr.y.is_nan() {
                                 {

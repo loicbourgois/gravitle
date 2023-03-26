@@ -10,4 +10,6 @@ pub enum Kind {
     Sun = 4,
     Light = 5,
     Plant = 6,
+    Metal = 7,
+    Depot = 8,
 }

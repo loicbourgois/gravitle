@@ -86,6 +86,8 @@ const fill_circle_2 = (context, p, diameter, color) => {
 
 const clear = (context) => {
   context.clearRect(0,0,context.canvas.width, context.canvas.height)
+  // context.fillStyle = '#00000020';
+  // context.fillRect(0,0,context.canvas.width, context.canvas.height);
 }
 
 

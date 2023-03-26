@@ -38,6 +38,8 @@ pub struct Ship {
     orientation: Vector,
     vt: Vector,
     cross: Vector,
+    target_pid: usize,
+    on_target: u32,
 }
 
 pub struct ShipMore {
