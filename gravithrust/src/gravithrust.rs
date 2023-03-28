@@ -35,10 +35,50 @@ pub struct Gravithrust {
     pub points: u32,
     pub step: u32,
     pub sub_steps: usize,
+    pub turn_speed_a: f32,
+    pub turn_speed_b: f32,
 }
 
 #[wasm_bindgen]
 impl Gravithrust {
+    pub fn new(
+        diameter: f32,
+        sub_steps: usize,
+        turn_speed_a: f32,
+        turn_speed_b: f32,
+    ) -> Gravithrust {
+        let grid_side = 128;
+        assert!((diameter * grid_side as f32) <= 1.0);
+        let mut g = Gravithrust {
+            particles: vec![],
+            links: vec![],
+            deltas: vec![],
+            ships: vec![],
+            ships_more: vec![],
+            diameter: diameter,
+            grid: Grid::new(grid_side),
+            points: 0,
+            step: 0,
+            sub_steps: sub_steps,
+            turn_speed_a: turn_speed_a,
+            turn_speed_b: turn_speed_b,
+        };
+        for _ in 0..1 {
+            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Metal, None);
+            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Depot, None);
+        }
+        for _ in 0..10 {
+            g.add_ship(
+                &parse_model(MODEL_1, g.diameter),
+                Vector {
+                    x: rand::thread_rng().gen::<f32>(),
+                    y: rand::thread_rng().gen::<f32>(),
+                },
+            );
+        }
+        return g;
+    }
+
     pub fn add_particle(&mut self, p: Vector, k: Kind, sid: Option<usize>) {
         add_particle(&mut self.particles, &mut self.deltas, p, k, sid);
     }
@@ -76,37 +116,6 @@ impl Gravithrust {
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
         self.ships_more.push(ship_more);
         self.ships[sid.unwrap()].pp = self.ships[sid.unwrap()].p;
-    }
-
-    pub fn new(diameter: f32, sub_steps: usize) -> Gravithrust {
-        let grid_side = 128;
-        assert!((diameter * grid_side as f32) <= 1.0);
-        let mut g = Gravithrust {
-            particles: vec![],
-            links: vec![],
-            deltas: vec![],
-            ships: vec![],
-            ships_more: vec![],
-            diameter: diameter,
-            grid: Grid::new(grid_side),
-            points: 0,
-            step: 0,
-            sub_steps: sub_steps,
-        };
-        for _ in 0..1 {
-            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Metal, None);
-            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Depot, None);
-        }
-        for _ in 0..2 {
-            g.add_ship(
-                &parse_model(MODEL_1, g.diameter),
-                Vector {
-                    x: rand::thread_rng().gen::<f32>(),
-                    y: rand::thread_rng().gen::<f32>(),
-                },
-            );
-        }
-        return g;
     }
 
     pub fn particles_size(&self) -> u32 {
@@ -192,13 +201,6 @@ impl Gravithrust {
             }
             ship.target = self.particles[ship.target_pid].p;
             ship.on_target = 0;
-            // if wrap_around(ship.target, ship.p).d_sqrd < (self.diameter * self.diameter) * 4.0 {
-            //     self.points += 1;
-            //     ship.target = Vector {
-            //         x: rand::thread_rng().gen::<f32>(),
-            //         y: rand::thread_rng().gen::<f32>(),
-            //     }
-            // }
             ship.pp = ship.p;
             ship.p = ship_position(&self.particles, &s);
             // velocity
@@ -213,19 +215,17 @@ impl Gravithrust {
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
             let cross_2_ = cross(ship.cross, ship.td);
             let cross_3_ = cross(ship.orientation, previous_orientation);
-            let turn_speed_a = 0.00000001;
-            let turn_speed_b = 0.0000001;
-            if cross_2_ < 0.0 && cross_3_ < turn_speed_a {
+            if cross_2_ < 0.0 && cross_3_ < self.turn_speed_a {
                 self.particles[pid_left].a = 1
             }
-            if cross_2_ > 0.0 && cross_3_ > -turn_speed_a {
+            if cross_2_ > 0.0 && cross_3_ > -self.turn_speed_a {
                 self.particles[pid_right].a = 1
             }
-            if cross_3_ > turn_speed_b {
+            if cross_3_ > self.turn_speed_b {
                 self.particles[pid_right].a = 1;
                 self.particles[pid_left].a = 0;
                 // log("aa");
-            } else if cross_3_ < -turn_speed_b {
+            } else if cross_3_ < -self.turn_speed_b {
                 self.particles[pid_left].a = 1;
                 self.particles[pid_right].a = 0;
                 // log("bb");

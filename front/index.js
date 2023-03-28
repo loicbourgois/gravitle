@@ -7,19 +7,22 @@ import {
 import {
   normalize,
 } from "./math.js"
+import {body} from "./body.js"
+
+
 let context
 let canvas
 let gravithrust
-let ZOOM = 1.0
+let ZOOM = 2.0
 let zen_mode_active = false
 let ups = []
-
 let particles
 let particle_size = null
 let ships
 let ship_size = null
 let wasm = null
 let start
+
 
 const P = (id) => {
   return {
@@ -152,6 +155,7 @@ const colors = [
   }
 ]
 
+
 const colors2 = {
   'ship_center': {
     'low': "#8f8",
@@ -162,6 +166,7 @@ const colors2 = {
   'boost': "#f00",
   'vt': "#ff0",
 }
+
 
 const draw = () => {
   clear(context)
@@ -174,8 +179,6 @@ const draw = () => {
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
     fill_circle_2(context, p, gravithrust.diameter*1.1, colors[p.k].low)
-    // if (p.k == 3 )
-    // console.log(p.a)
     if (p.k == 3 && p.a == 1) {
       fill_circle_2(context, p, gravithrust.diameter*1.1, colors2['boost'])
     }
@@ -185,23 +188,11 @@ const draw = () => {
     fill_circle_2(context, p, gravithrust.diameter * 0.5, colors[p.k].high)
   }
 
-  // for (let i = 0; i < gravithrust.particles_count(); i++) {
-  //   const p = P(i);
-  //   if (p.k == 3) {
-  //     // console.log(p.dx)
-  //     fill_circle_2(context, {
-  //       x: p.x + p.dx * gravithrust.diameter,
-  //       y: p.y + p.dy * gravithrust.diameter,
-  //     }, gravithrust.diameter * 0.5, "#888")
-  //   }
-  // }
-
   for (let i = 0; i < gravithrust.ships_count(); i++) {
     const ship = Ship(i);
-    // console.log(ship.center)
     fill_circle_2(context, ship.p, gravithrust.diameter * 0.5, colors2['ship_center'].low)
-    // console.log(ship.v)
     
+
     const d = normalize(ship.v)
     fill_circle_2(context, {
       x:  ship.p.x + d.x*0.05,
@@ -217,17 +208,11 @@ const draw = () => {
     }, gravithrust.diameter * 1., colors2['target'])
 
 
-    // fill_circle_2(context, ship.t, gravithrust.diameter * 0.5, colors2['target'])
     const orientation_n = normalize(ship.orientation)
     fill_circle_2(context, {
       x:  ship.p.x + orientation_n.x*0.05,
       y:  ship.p.y + orientation_n.y*0.05,
     }, gravithrust.diameter * 0.5, colors2['orientation'])
-    
-    // fill_circle_2(context, {
-    //   x:  ship.p.x + ship.vt.x*0.05,
-    //   y:  ship.p.y + ship.vt.y*0.05,
-    // }, gravithrust.diameter * 0.5, colors2['vt'])
 
 
     const cross_n = normalize(ship.cross)
@@ -244,6 +229,7 @@ const draw = () => {
   document.querySelector("#step").innerHTML = gravithrust.step
   requestAnimationFrame(draw)
 }
+
 let target_ups = 100
 let timeout = 0
 const run = () => {
@@ -261,55 +247,11 @@ const run = () => {
   }
   setTimeout( run, timeout )
 }
+
+
 init().then( wasm_ => {
   wasm = wasm_
-  document.body.innerHTML = `
-    <div id="left">
-      <canvas id="canvas"></canvas>
-    </div>
-    <div id="right">
-      <button id="go_fullscreen" onclick="go_fullscreen()">Fullscreen</button>
-      <button id="exit_fullscreen" onclick="exit_fullscreen()" style="display:none">Exit Fullscreen</button>
-      <button id="zen_mode" onclick="zen_mode()">Zen</button>
-      <div id="texts"></div>
-      <div>
-        <label>collide color:</label>
-        <input id="color_0" value="#ff4" />
-      </div>
-      <div>
-        <label>base color:   </label>
-        <input id="color_1" value="#fc0" />
-      </div>
-      <div>
-        <label>edge color:   </label>
-        <input id="color_2" value="#e80" />
-      </div>
-      <div>
-        <label>particles:    </label>
-        <label id="particles_count">...</label>
-      </div>
-      <div>
-        <label>ups:          </label>
-        <label id="ups">...</label>
-      </div>
-      <div>
-        <label>points:       </label>
-        <label id="points">...</label>
-      </div>
-      <div>
-        <label>ppMs:         </label>
-        <label id="mpps">...</label>
-      </div>
-      <div>
-        <label>duration:     </label>
-        <label id="duration">...</label>
-      </div>
-      <div>
-        <label>step:         </label>
-        <label id="step">...</label>
-      </div>
-    </div>
-  `
+  document.body.innerHTML = body
   window.go_fullscreen = go_fullscreen
   window.exit_fullscreen = exit_fullscreen
   window.zen_mode = zen_mode
@@ -320,8 +262,10 @@ init().then( wasm_ => {
   context = canvas.getContext('2d')
   resize_square(canvas, ZOOM * 0.9)
   gravithrust = Gravithrust.new(
-    0.005, // diameter
+    0.0025, // diameter
     5, // substep per tick
+    0.000000005, // turn_speed_a
+    0.0000001, // turn_speed_b
   );
   particle_size = gravithrust.particle_size()
   ship_size = gravithrust.ship_size()
