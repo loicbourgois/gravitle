@@ -152,7 +152,12 @@ const colors = [
   {
     'low': "#99d",
     'high': "#da4",
-  }
+  },
+  // 9 - Target
+  {
+    'low': "#99d",
+    'high': "#da4",
+  },
 ]
 
 
@@ -266,7 +271,15 @@ init().then( wasm_ => {
     5, // substep per tick
     0.000000005, // turn_speed_a
     0.0000001, // turn_speed_b
+    128, // grid_side
   );
+  // gravithrust = Gravithrust.new(
+  //   0.0125, // diameter
+  //   5, // substep per tick
+  //   0.00000005, // turn_speed_a
+  //   0.000001, // turn_speed_b
+  //   32, // grid_side
+  // );
   particle_size = gravithrust.particle_size()
   ship_size = gravithrust.ship_size()
   requestAnimationFrame(draw)

@@ -9,10 +9,10 @@ pub const MODEL_1: &str = r#"
 core
 armor
 2,0,1,armor
-3,0,2,armor
+3,0,2,booster
 4,0,3,armor
 5,0,4,armor
-6,0,5,armor
+6,0,5,booster
 7,1,6,armor
 8,7,6,armor
 9,7,8,armor

@@ -46,8 +46,8 @@ impl Gravithrust {
         sub_steps: usize,
         turn_speed_a: f32,
         turn_speed_b: f32,
+        grid_side: u32,
     ) -> Gravithrust {
-        let grid_side = 128;
         assert!((diameter * grid_side as f32) <= 1.0);
         let mut g = Gravithrust {
             particles: vec![],
@@ -56,7 +56,7 @@ impl Gravithrust {
             ships: vec![],
             ships_more: vec![],
             diameter: diameter,
-            grid: Grid::new(grid_side),
+            grid: Grid::new(grid_side as usize),
             points: 0,
             step: 0,
             sub_steps: sub_steps,
@@ -64,15 +64,17 @@ impl Gravithrust {
             turn_speed_b: turn_speed_b,
         };
         for _ in 0..1 {
-            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Metal, None);
-            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Depot, None);
+            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Target, None);
+            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Target, None);
         }
-        for _ in 0..10 {
+        for _ in 0..20 {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
                 Vector {
                     x: rand::thread_rng().gen::<f32>(),
                     y: rand::thread_rng().gen::<f32>(),
+                    // x: 0.5,
+                    // y: 0.2,
                 },
             );
         }
@@ -189,8 +191,17 @@ impl Gravithrust {
             let pid0 = s.pids[0];
             let pid_left = pid0 + 10;
             let pid_right = pid0 + 14;
+            let pid_up_right = pid0 + 3;
+            let pid_up_left = pid0 + 6;
             let mut ship = &mut self.ships[sid];
-            if ship.on_target >= 1 {
+            ship.pp = ship.p;
+            ship.p = ship_position(&self.particles, &s);
+            // velocity
+            let wa = wrap_around(ship.pp, ship.p);
+            let speed = wa.d_sqrd.sqrt();
+
+            let max_speed_at_target = 0.00001;
+            if ship.on_target >= 1 && speed.abs() < max_speed_at_target {
                 self.points += 1;
                 log("on target");
                 if ship.target_pid == 0 {
@@ -201,35 +212,65 @@ impl Gravithrust {
             }
             ship.target = self.particles[ship.target_pid].p;
             ship.on_target = 0;
-            ship.pp = ship.p;
-            ship.p = ship_position(&self.particles, &s);
-            // velocity
-            ship.v = wrap_around(ship.pp, ship.p).d;
+
+            ship.v = wa.d;
+            let target_delta_wa = wrap_around(ship.p, ship.target);
             // target delta
-            ship.td = wrap_around(ship.p, ship.target).d;
+            ship.td = target_delta_wa.d;
+            let old_target_delta = wrap_around(ship.pp, ship.target);
+            let distance_to_target = target_delta_wa.d_sqrd.sqrt();
+            let speed_toward_target = old_target_delta.d_sqrd.sqrt() - distance_to_target;
             let previous_orientation = ship.orientation;
             // orientation is where the ship is facing
             ship.orientation = ship_orientation(&self.particles, &s);
             ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
             ship.cross =
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
-            let cross_2_ = cross(ship.cross, ship.td);
-            let cross_3_ = cross(ship.orientation, previous_orientation);
-            if cross_2_ < 0.0 && cross_3_ < self.turn_speed_a {
-                self.particles[pid_left].a = 1
-            }
-            if cross_2_ > 0.0 && cross_3_ > -self.turn_speed_a {
-                self.particles[pid_right].a = 1
-            }
-            if cross_3_ > self.turn_speed_b {
+            let orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
+            let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
+            let rotation_speed = cross(ship.orientation, previous_orientation);
+            let velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
+            let mut action = "-";
+            self.particles[pid_left].a = 0;
+            self.particles[pid_right].a = 0;
+            self.particles[pid_up_right].a = 0;
+            self.particles[pid_up_left].a = 0;
+            if speed < 0.0001 && orientation_angle_corrected.abs() < 0.25 {
+                action = "forward";
+                self.particles[pid_left].a = 1;
                 self.particles[pid_right].a = 1;
+                self.particles[pid_up_right].a = 0;
+                self.particles[pid_up_left].a = 0;
+            }
+            if orientation_angle_corrected > 0.0 && rotation_speed > -self.turn_speed_a {
+                action = "turn left";
                 self.particles[pid_left].a = 0;
-                // log("aa");
-            } else if cross_3_ < -self.turn_speed_b {
+                self.particles[pid_right].a = 1;
+                self.particles[pid_up_right].a = 0;
+                self.particles[pid_up_left].a = 1;
+            } else if orientation_angle_corrected < 0.0 && rotation_speed < self.turn_speed_a {
+                action = "turn right";
                 self.particles[pid_left].a = 1;
                 self.particles[pid_right].a = 0;
-                // log("bb");
+                self.particles[pid_up_right].a = 1;
+                self.particles[pid_up_left].a = 0;
             }
+            if orientation_angle_corrected.abs() < 0.5
+                && speed_toward_target
+                    > (max_speed_at_target * 0.75).max(distance_to_target * 0.0002)
+            {
+                action = "slow down";
+                self.particles[pid_left].a = 0;
+                self.particles[pid_right].a = 0;
+                self.particles[pid_up_right].a = 1;
+                self.particles[pid_up_left].a = 1;
+            }
+            // log(&format!(
+            //     "distance_to_target: {}\norientation_angle: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",
+            //     distance_to_target, orientation_angle,
+            //     orientation_angle_corrected, rotation_speed, speed,
+            //     velocity_vs_target_angle, speed_toward_target, action
+            // ));
         }
         self.step += 1;
     }

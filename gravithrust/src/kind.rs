@@ -12,4 +12,5 @@ pub enum Kind {
     Plant = 6,
     Metal = 7,
     Depot = 8,
+    Target = 9,
 }

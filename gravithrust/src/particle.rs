@@ -24,3 +24,10 @@ pub fn is_static(p: &Particle) -> bool {
         _ => false,
     }
 }
+
+pub fn no_collision(p: &Particle) -> bool {
+    match p.k {
+        Kind::Target => true,
+        _ => false,
+    }
+}

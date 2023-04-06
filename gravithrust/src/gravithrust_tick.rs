@@ -121,22 +121,25 @@ pub fn compute_collision_responses(
                                     None => {}
                                 }
                             }
-
-                            let cr = collision_response(&wa, p1, p2);
-                            if !cr.x.is_nan() && !cr.y.is_nan() {
-                                {
-                                    let d1 = &mut deltas[p1.idx];
-                                    d1.v.x += cr.x * crdv;
-                                    d1.v.y += cr.y * crdv;
-                                    d1.p.x -= wa.d.x * crdp;
-                                    d1.p.y -= wa.d.y * crdp;
-                                }
-                                {
-                                    let d2 = &mut deltas[p2.idx];
-                                    d2.v.x -= cr.x * crdv;
-                                    d2.v.y -= cr.y * crdv;
-                                    d2.p.x += wa.d.x * crdp;
-                                    d2.p.y += wa.d.y * crdp;
+                            if particle::no_collision(p1) || particle::no_collision(p2) {
+                                // pass
+                            } else {
+                                let cr = collision_response(&wa, p1, p2);
+                                if !cr.x.is_nan() && !cr.y.is_nan() {
+                                    {
+                                        let d1 = &mut deltas[p1.idx];
+                                        d1.v.x += cr.x * crdv;
+                                        d1.v.y += cr.y * crdv;
+                                        d1.p.x -= wa.d.x * crdp;
+                                        d1.p.y -= wa.d.y * crdp;
+                                    }
+                                    {
+                                        let d2 = &mut deltas[p2.idx];
+                                        d2.v.x -= cr.x * crdv;
+                                        d2.v.y -= cr.y * crdv;
+                                        d2.p.x += wa.d.x * crdp;
+                                        d2.p.y += wa.d.y * crdp;
+                                    }
                                 }
                             }
                         }
