@@ -35,8 +35,12 @@ pub struct Gravithrust {
     pub points: u32,
     pub step: u32,
     pub sub_steps: usize,
-    pub turn_speed_a: f32,
-    pub turn_speed_b: f32,
+    pub max_rotation_speed: f32,
+    pub max_speed_at_target: f32,
+    pub forward_max_speed: f32,
+    pub forward_max_angle: f32,
+    pub slow_down_max_angle: f32,
+    pub slow_down_max_speed_to_target_ratio: f32,
 }
 
 #[wasm_bindgen]
@@ -44,9 +48,13 @@ impl Gravithrust {
     pub fn new(
         diameter: f32,
         sub_steps: usize,
-        turn_speed_a: f32,
-        turn_speed_b: f32,
+        max_rotation_speed: f32,
         grid_side: u32,
+        max_speed_at_target: f32,
+        forward_max_speed: f32,
+        forward_max_angle: f32,
+        slow_down_max_angle: f32,
+        slow_down_max_speed_to_target_ratio: f32,
     ) -> Gravithrust {
         assert!((diameter * grid_side as f32) <= 1.0);
         let mut g = Gravithrust {
@@ -60,12 +68,18 @@ impl Gravithrust {
             points: 0,
             step: 0,
             sub_steps: sub_steps,
-            turn_speed_a: turn_speed_a,
-            turn_speed_b: turn_speed_b,
+            max_rotation_speed: max_rotation_speed,
+            max_speed_at_target: max_speed_at_target,
+            forward_max_speed: forward_max_speed,
+            forward_max_angle: forward_max_angle,
+            slow_down_max_angle: slow_down_max_angle,
+            slow_down_max_speed_to_target_ratio: slow_down_max_speed_to_target_ratio,
         };
         for _ in 0..1 {
-            g.add_particle(Vector { x: 0.35, y: 0.5 }, Kind::Target, None);
-            g.add_particle(Vector { x: 0.65, y: 0.5 }, Kind::Target, None);
+            g.add_particle(Vector { x: 0.35, y: 0.35 }, Kind::Target, None);
+            g.add_particle(Vector { x: 0.35, y: 0.65 }, Kind::Target, None);
+            g.add_particle(Vector { x: 0.65, y: 0.65 }, Kind::Target, None);
+            g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
         }
         for _ in 0..20 {
             g.add_ship(
@@ -199,20 +213,21 @@ impl Gravithrust {
             // velocity
             let wa = wrap_around(ship.pp, ship.p);
             let speed = wa.d_sqrd.sqrt();
-
-            let max_speed_at_target = 0.00001;
-            if ship.on_target >= 1 && speed.abs() < max_speed_at_target {
+            if ship.on_target >= 1 && speed.abs() < self.max_speed_at_target {
                 self.points += 1;
                 log("on target");
                 if ship.target_pid == 0 {
                     ship.target_pid = 1
+                } else if ship.target_pid == 1 {
+                    ship.target_pid = 2
+                } else if ship.target_pid == 2 {
+                    ship.target_pid = 3
                 } else {
                     ship.target_pid = 0
                 }
             }
             ship.target = self.particles[ship.target_pid].p;
             ship.on_target = 0;
-
             ship.v = wa.d;
             let target_delta_wa = wrap_around(ship.p, ship.target);
             // target delta
@@ -235,29 +250,33 @@ impl Gravithrust {
             self.particles[pid_right].a = 0;
             self.particles[pid_up_right].a = 0;
             self.particles[pid_up_left].a = 0;
-            if speed < 0.0001 && orientation_angle_corrected.abs() < 0.25 {
+            if speed < self.forward_max_speed
+                && orientation_angle_corrected.abs() < self.forward_max_angle
+            {
                 action = "forward";
                 self.particles[pid_left].a = 1;
                 self.particles[pid_right].a = 1;
                 self.particles[pid_up_right].a = 0;
                 self.particles[pid_up_left].a = 0;
             }
-            if orientation_angle_corrected > 0.0 && rotation_speed > -self.turn_speed_a {
+            if orientation_angle_corrected > 0.0 && rotation_speed > -self.max_rotation_speed {
                 action = "turn left";
                 self.particles[pid_left].a = 0;
                 self.particles[pid_right].a = 1;
                 self.particles[pid_up_right].a = 0;
                 self.particles[pid_up_left].a = 1;
-            } else if orientation_angle_corrected < 0.0 && rotation_speed < self.turn_speed_a {
+            } else if orientation_angle_corrected < 0.0 && rotation_speed < self.max_rotation_speed
+            {
                 action = "turn right";
                 self.particles[pid_left].a = 1;
                 self.particles[pid_right].a = 0;
                 self.particles[pid_up_right].a = 1;
                 self.particles[pid_up_left].a = 0;
             }
-            if orientation_angle_corrected.abs() < 0.5
+            if orientation_angle_corrected.abs() < self.slow_down_max_angle
                 && speed_toward_target
-                    > (max_speed_at_target * 0.75).max(distance_to_target * 0.0002)
+                    > (self.max_speed_at_target * 0.75)
+                        .max(distance_to_target * self.slow_down_max_speed_to_target_ratio)
             {
                 action = "slow down";
                 self.particles[pid_left].a = 0;

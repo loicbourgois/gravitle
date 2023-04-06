@@ -108,7 +108,7 @@ const unzen_mode = () => {
   }
 }
 const resize = () => {
-  resize_square(canvas,ZOOM*0.9)
+  resize_square(canvas, ZOOM*0.9)
   const dimension = Math.min(window.innerWidth, window.innerHeight)
   canvas.style.width = `${dimension*0.9}px`
   canvas.style.height = `${dimension*0.9}px`
@@ -269,9 +269,13 @@ init().then( wasm_ => {
   gravithrust = Gravithrust.new(
     0.0025, // diameter
     5, // substep per tick
-    0.000000005, // turn_speed_a
-    0.0000001, // turn_speed_b
+    0.000000005, // max_rotation_speed
     128, // grid_side
+    0.00001, // max_speed_at_target
+    0.0001, // forward_max_speed
+    0.25, // forward_max_angle
+    0.5,  // slow_down_max_angle
+    0.0002, // slow_down_max_speed_to_target_ratio
   );
   // gravithrust = Gravithrust.new(
   //   0.0125, // diameter

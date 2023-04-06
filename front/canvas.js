@@ -3,10 +3,14 @@ import {
 } from "./math.js"
 
 
+const draw_zoom = 2.5
+const draw_center = [0.5, 0.5]
+
+
 const context_coordinates = (context, p) => {
   return {
-    x: min_dim(context) * p.x,
-    y: context.canvas.height -  min_dim(context) * p.y,
+    x: min_dim(context) * ((p.x - draw_center[0]) * draw_zoom + 0.5),
+    y: context.canvas.height - min_dim(context) * ((p.y - draw_center[1]) * draw_zoom + 0.5),
   }
 }
 
@@ -39,7 +43,7 @@ const fill_circle = (context, p, diameter, color) => {
   //   return
   // }
   const cc = context_coordinates(context, p)
-  const radius = diameter * min_dim(context) * 0.5;
+  const radius = diameter * min_dim(context) * 0.5 * draw_zoom;
   context.beginPath();
   context.arc(cc.x, cc.y, radius, 0, 2 * Math.PI, false);
   context.fillStyle = color;
