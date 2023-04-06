@@ -87,8 +87,6 @@ impl Gravithrust {
                 Vector {
                     x: rand::thread_rng().gen::<f32>(),
                     y: rand::thread_rng().gen::<f32>(),
-                    // x: 0.5,
-                    // y: 0.2,
                 },
             );
         }
@@ -115,7 +113,7 @@ impl Gravithrust {
             vt: Vector { x: 0.0, y: 0.0 },
             cross: Vector { x: 0.0, y: 0.0 },
             on_target: 0,
-            target_pid: 0,
+            target_pid: self.ships.len() % 4,
         };
         let mut ship_more = ShipMore { pids: vec![] };
         for p in &ship_model.particles {

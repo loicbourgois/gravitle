@@ -8,10 +8,16 @@ import {
   normalize,
 } from "./math.js"
 import {body} from "./body.js"
+import {
+  colors,
+  colors2,
+} from "./colors.js"
 
 
 let context
 let canvas
+let context_2
+let canvas_2
 let gravithrust
 let ZOOM = 2.0
 let zen_mode_active = false
@@ -22,6 +28,10 @@ let ships
 let ship_size = null
 let wasm = null
 let start
+let ppms = [] 
+let ppms_count = 400
+let target_ups = 100
+let timeout = 0
 
 
 const P = (id) => {
@@ -114,73 +124,13 @@ const resize = () => {
   canvas.style.height = `${dimension*0.9}px`
 }
 
-const colors = [
-  {
-    'low': "#d0d",
-    'high': "#F0F",
-  },
-  {
-    'low': "#da0",
-    'high': "#dd4",
-  }, 
-  {
-    'low': "#da0",
-    'high': "#dd4",
-  },
-  {
-    'low': "#d80",
-    'high': "#da4",
-  },
-  {
-    'low': "#d80",
-    'high': "#da4",
-  },
-  {
-    'low': "#d80",
-    'high': "#da4",
-  },
-  {
-    'low': "#d80",
-    'high': "#da4",
-  },
-  // 7 - Metal
-  {
-    'low': "#999",
-    'high': "#da4",
-  },
-  // 8 - Depot
-  {
-    'low': "#99d",
-    'high': "#da4",
-  },
-  // 9 - Target
-  {
-    'low': "#99d",
-    'high': "#da4",
-  },
-]
-
-
-const colors2 = {
-  'ship_center': {
-    'low': "#8f8",
-    'high': "#F0F",
-  },
-  'target': "#f44",
-  'orientation': "#88f",
-  'boost': "#f00",
-  'vt': "#ff0",
-}
-
 
 const draw = () => {
   clear(context)
-
   const data_ptr = gravithrust.particles();
   particles = new DataView(wasm.memory.buffer, data_ptr, gravithrust.particles_size());
   const ships_data_ptr = gravithrust.ships();
   ships = new DataView(wasm.memory.buffer, ships_data_ptr, gravithrust.ships_size());
-
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
     fill_circle_2(context, p, gravithrust.diameter*1.1, colors[p.k].low)
@@ -192,54 +142,79 @@ const draw = () => {
     const p = P(i);
     fill_circle_2(context, p, gravithrust.diameter * 0.5, colors[p.k].high)
   }
-
   for (let i = 0; i < gravithrust.ships_count(); i++) {
     const ship = Ship(i);
-    fill_circle_2(context, ship.p, gravithrust.diameter * 0.5, colors2['ship_center'].low)
-    
-
-    const d = normalize(ship.v)
-    fill_circle_2(context, {
-      x:  ship.p.x + d.x*0.05,
-      y:  ship.p.y + d.y*0.05,
-    }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
-
-
+  //   fill_circle_2(context, ship.p, gravithrust.diameter * 0.5, colors2['ship_center'].low)
+  //   const d = normalize(ship.v)
+  //   fill_circle_2(context, {
+  //     x:  ship.p.x + d.x*0.05,
+  //     y:  ship.p.y + d.y*0.05,
+  //   }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
     fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff02')
-    const td_n = normalize(ship.td)
-    fill_circle_2(context, {
-      x:  ship.p.x + td_n.x*0.05,
-      y:  ship.p.y + td_n.y*0.05,
-    }, gravithrust.diameter * 1., colors2['target'])
-
-
-    const orientation_n = normalize(ship.orientation)
-    fill_circle_2(context, {
-      x:  ship.p.x + orientation_n.x*0.05,
-      y:  ship.p.y + orientation_n.y*0.05,
-    }, gravithrust.diameter * 0.5, colors2['orientation'])
-
-
-    const cross_n = normalize(ship.cross)
-    fill_circle_2(context, {
-      x:  ship.p.x + cross_n.x*0.05,
-      y:  ship.p.y + cross_n.y*0.05,
-    }, gravithrust.diameter * 1., "#f4f")
-
+  //   const td_n = normalize(ship.td)
+  //   fill_circle_2(context, {
+  //     x:  ship.p.x + td_n.x*0.05,
+  //     y:  ship.p.y + td_n.y*0.05,
+  //   }, gravithrust.diameter * 1., colors2['target'])
+  //   const orientation_n = normalize(ship.orientation)
+  //   fill_circle_2(context, {
+  //     x:  ship.p.x + orientation_n.x*0.05,
+  //     y:  ship.p.y + orientation_n.y*0.05,
+  //   }, gravithrust.diameter * 0.5, colors2['orientation'])
+  //   const cross_n = normalize(ship.cross)
+  //   fill_circle_2(context, {
+  //     x:  ship.p.x + cross_n.x*0.05,
+  //     y:  ship.p.y + cross_n.y*0.05,
+  //   }, gravithrust.diameter * 1., "#f4f")
   }
   document.querySelector("#points").innerHTML = gravithrust.points
   const duration = (( performance.now() - start) / 1000 )
   document.querySelector("#mpps").innerHTML = (gravithrust.points * 1000000 / gravithrust.step).toFixed(1)
   document.querySelector("#duration").innerHTML = parseInt(duration)
   document.querySelector("#step").innerHTML = gravithrust.step
+  if (ppms.length) {
+    canvas_2.width = 400
+    clear(context_2)
+    let ppms_max = ppms[0].high
+    for (const x of ppms) {
+      ppms_max = Math.max(x.high, ppms_max)
+    }
+    for (let i = 0; i < ppms.length; i++) { 
+      const x = (i+1) / ppms.length * canvas_2.width
+      const y_low = ppms[i].low   / ppms_max * canvas_2.height
+      const y_high = ppms[i].high / ppms_max * canvas_2.height
+      context_2.beginPath();
+      context_2.fillStyle = "#ff0d";
+      context_2.strokeStyle = "#ff0d";
+      context_2.rect(x, canvas_2.height-y_high, 1, Math.max(y_high-y_low, 1));
+      context_2.fill();
+      context_2.stroke();
+    }
+  }
   requestAnimationFrame(draw)
 }
 
-let target_ups = 100
-let timeout = 0
+
 const run = () => {
   ups.push(performance.now())
   gravithrust.ticks()
+  ppms.push({
+    high: gravithrust.points * 1000000 / gravithrust.step,
+    low: gravithrust.points * 1000000 / gravithrust.step,
+    step_high: gravithrust.step,
+    step_low: gravithrust.step,
+  })
+  if (ppms.length >= ppms_count) {
+    for (let i = 0; i < ppms_count/2; i++) {
+      ppms[i] = {
+        high: Math.max(ppms[i*2].high, ppms[i*2+1].high),
+        low: Math.min(ppms[i*2].low, ppms[i*2+1].low),
+        step_high: Math.max(ppms[i*2].step_high, ppms[i*2+1].step_high),
+        step_low: Math.min(ppms[i*2].step_low, ppms[i*2+1].step_low),
+      }
+    }
+    ppms.length = ppms_count/2;
+  }
   while (ups.length > 100) {
     ups.shift()
   }
@@ -249,6 +224,7 @@ const run = () => {
     document.querySelector("#ups").innerHTML = parseInt(ups_)
     timeout = 1000 / target_ups - ( ups[ups.length-1] - ups[ups.length-2] )
     timeout = Math.max(0,timeout)
+    timeout = 0
   }
   setTimeout( run, timeout )
 }
@@ -263,30 +239,76 @@ init().then( wasm_ => {
   window.addEventListener("resize", resize)
   window.addEventListener("click", unzen_mode)
   window.addEventListener("keydown", unzen_mode)
-  canvas = document.querySelector("#canvas");
-  context = canvas.getContext('2d')
-  resize_square(canvas, ZOOM * 0.9)
   gravithrust = Gravithrust.new(
     0.0025, // diameter
     5, // substep per tick
-    0.000000005, // max_rotation_speed
+    0.000000004, // max_rotation_speed
     128, // grid_side
     0.00001, // max_speed_at_target
     0.0001, // forward_max_speed
     0.25, // forward_max_angle
-    0.5,  // slow_down_max_angle
-    0.0002, // slow_down_max_speed_to_target_ratio
+    0.3,  // slow_down_max_angle
+    0.0003, // slow_down_max_speed_to_target_ratio
   );
-  // gravithrust = Gravithrust.new(
-  //   0.0125, // diameter
-  //   5, // substep per tick
-  //   0.00000005, // turn_speed_a
-  //   0.000001, // turn_speed_b
-  //   32, // grid_side
-  // );
+  const keys = [
+    // 'max_speed_at_target',
+    'forward_max_speed',
+    'forward_max_angle',
+    'slow_down_max_angle',
+    'slow_down_max_speed_to_target_ratio',
+    'max_rotation_speed',
+  ]
+  for (const k of keys) {
+    const l = "slow_down_max_speed_to_target_ratio".length - k.length
+    document.getElementById("right").innerHTML += `
+      <div>
+        <label>${k}: ${" ".repeat(l)}</label>
+        <input id="input_${k}" value="${gravithrust[k].toFixed(9)}"></input>
+      </div>
+    `
+  }
+  for (const k of keys) {
+    document.getElementById(`input_${k}`).addEventListener("change", (v) => {
+      gravithrust[k] = parseFloat(v.target.value)
+    });
+  }
+  canvas = document.querySelector("#canvas");
+  context = canvas.getContext('2d')
+  canvas_2 = document.querySelector("#canvas_2");
+  context_2 = canvas_2.getContext('2d')
+  resize_square(canvas, ZOOM * 0.9)
   particle_size = gravithrust.particle_size()
   ship_size = gravithrust.ship_size()
   requestAnimationFrame(draw)
   run()
   start = performance.now()
+
+  document.body.addEventListener("click", (v) => {
+  //   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // // create Oscillator node
+  // const oscillator = audioCtx.createOscillator();
+
+  // const gain = audioCtx.createGain();
+  // gain.gain.setValueAtTime(0.1, audioCtx.currentTime); // value in hertz
+
+  // const osc2 = audioCtx.createOscillator();
+  // const gain2 = audioCtx.createGain();
+  // gain2.gain.setValueAtTime(200, audioCtx.currentTime); // value in hertz
+  // osc2.frequency.setValueAtTime(4, audioCtx.currentTime); // value in hertz
+  // osc2.connect(gain2)
+  // gain2.connect(oscillator.detune)
+  // // gain
+  // osc2.start();
+
+  // // oscillator.type = "square";
+  // oscillator.frequency.setValueAtTime(44*2, audioCtx.currentTime); // value in hertz
+  // oscillator.connect(gain);
+  // gain.connect(audioCtx.destination);
+  // oscillator.start();
+  // console.log(oscillator)
+  });
+
+  
+
 });

@@ -3,7 +3,7 @@ import {
 } from "./math.js"
 
 
-const draw_zoom = 2.5
+const draw_zoom = 2.25
 const draw_center = [0.5, 0.5]
 
 
