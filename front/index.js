@@ -201,23 +201,21 @@ const draw = () => {
       const ss = ship_sounds[sid]
       const ship = Ship(sid);
       const speed = Math.sqrt(ship.v.x * ship.v.x + ship.v.y * ship.v.y)
-      ss.osc_2.frequency.setValueAtTime(
+      ss.osc_2.frequency.linearRampToValueAtTime(
         ss.osc_2_base_frequency * (0.9 + speed * 10),
-        audioCtx.currentTime
+        audioCtx.currentTime + 0.01
       )
-      ss.gain_2.gain.setValueAtTime(
+      ss.gain_2.gain.linearRampToValueAtTime(
         ss.gain_2_base_gain * (0.9 + speed * 150000),
-        audioCtx.currentTime
+        audioCtx.currentTime + 0.01
       )
-      ss.gain_1.gain.setValueAtTime(
-        ss.gain_1_base_gain * (0.1 + speed * 10000),
-        audioCtx.currentTime
+      ss.gain_1.gain.linearRampToValueAtTime(
+        ss.gain_1_base_gain * (0.0 + speed * 10000),
+        audioCtx.currentTime + 0.01
       )
-      
-      ss.stereo_1.pan.setValueAtTime(
-        // ss.stereo_1_base_pan * (0.1 + speed * 10000),
+      ss.stereo_1.pan.linearRampToValueAtTime(
         (ship.p.x - 0.5) * 3,
-        audioCtx.currentTime
+        audioCtx.currentTime + 0.01
       )
 
     }
@@ -298,11 +296,24 @@ init().then( wasm_ => {
       </div>
     `
   }
+  document.getElementById("right").innerHTML += `
+    <div class="slidecontainer">
+      <label>sound: </label>
+      <input type="range" min="0" max="100" value="0" class="slider" id="sound_slider">
+    </div>
+  `
   for (const k of keys) {
     document.getElementById(`input_${k}`).addEventListener("change", (v) => {
       gravithrust[k] = parseFloat(v.target.value)
     });
   }
+  document.getElementById("sound_slider").addEventListener("input", (v) => {
+    if (!started_sound){
+      started_sound = true
+      start_sound(gravithrust.ships_count())
+    }
+    master.gain.linearRampToValueAtTime(parseFloat(v.target.value) / 100, audioCtx.currentTime + 0.1)
+  });
   canvas = document.querySelector("#canvas");
   context = canvas.getContext('2d')
   canvas_2 = document.querySelector("#canvas_2");
@@ -318,49 +329,45 @@ init().then( wasm_ => {
 
 let started_sound = false
 let audioCtx
+let master
 const ship_sounds = []
 const start_sound = (ship_count) => {
   console.log("start sound")
   audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-for (let sid = 0; sid < ship_count; sid++) {
-  ship_sounds.push({})
-  const ss = ship_sounds[sid]
-  ss.stereo_1 = audioCtx.createStereoPanner()
-  ss.stereo_1.pan.setValueAtTime(0, audioCtx.currentTime)
-  ss.stereo_1.pan.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5)
-  ss.stereo_1_base_pan = 0
-  ss.stereo_1.connect(audioCtx.destination)
-  ss.gain_1 = audioCtx.createGain()
-  ss.gain_1.gain.setValueAtTime(0, audioCtx.currentTime)
-  ss.gain_1.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5)
-  ss.gain_1_base_gain = 0.3
-  ss.gain_1.connect(ss.stereo_1)
-  ss.osc_1 = audioCtx.createOscillator()
-  ss.osc_1.frequency.setValueAtTime(90, audioCtx.currentTime)
-  ss.osc_1_base_frequency = 90
-  ss.osc_1.detune.setValueAtTime(0, audioCtx.currentTime)
-  ss.osc_1_base_detune = 0
-  ss.osc_1.start()
-  ss.osc_1.connect(ss.gain_1)
-  ss.gain_2 = audioCtx.createGain()
-  ss.gain_2.gain.setValueAtTime(0, audioCtx.currentTime)
-  ss.gain_2.gain.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5)
-  ss.gain_2_base_gain = 100
-  ss.gain_2.connect(ss.osc_1.frequency)
-  ss.osc_2 = audioCtx.createOscillator()
-  ss.osc_2.frequency.setValueAtTime(30.02, audioCtx.currentTime)
-  ss.osc_2_base_frequency = 30.02
-  ss.osc_2.detune.setValueAtTime(0, audioCtx.currentTime)
-  ss.osc_2_base_detune = 0
-  ss.osc_2.start()
-  ss.osc_2.connect(ss.gain_2)
-}
-}
-
-
-document.addEventListener("click", (v) => {
-  if (!started_sound){
-    started_sound = true
-    // start_sound(gravithrust.ships_count())
+  master = audioCtx.createGain()
+  master.connect(audioCtx.destination)
+  master.gain.setValueAtTime(0, audioCtx.currentTime)
+  for (let sid = 0; sid < ship_count; sid++) {
+    ship_sounds.push({})
+    const ss = ship_sounds[sid]
+    ss.stereo_1 = audioCtx.createStereoPanner()
+    ss.stereo_1.pan.setValueAtTime(0, audioCtx.currentTime)
+    ss.stereo_1.pan.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5)
+    ss.stereo_1_base_pan = 0
+    ss.stereo_1.connect(master)
+    ss.gain_1 = audioCtx.createGain()
+    ss.gain_1.gain.setValueAtTime(0, audioCtx.currentTime)
+    ss.gain_1.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5)
+    ss.gain_1_base_gain = 0.7
+    ss.gain_1.connect(ss.stereo_1)
+    ss.osc_1 = audioCtx.createOscillator()
+    ss.osc_1.frequency.setValueAtTime(90, audioCtx.currentTime)
+    ss.osc_1_base_frequency = 90
+    ss.osc_1.detune.setValueAtTime(0, audioCtx.currentTime)
+    ss.osc_1_base_detune = 0
+    ss.osc_1.start()
+    ss.osc_1.connect(ss.gain_1)
+    ss.gain_2 = audioCtx.createGain()
+    ss.gain_2.gain.setValueAtTime(0, audioCtx.currentTime)
+    ss.gain_2.gain.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5)
+    ss.gain_2_base_gain = 100
+    ss.gain_2.connect(ss.osc_1.frequency)
+    ss.osc_2 = audioCtx.createOscillator()
+    ss.osc_2.frequency.setValueAtTime(30.02, audioCtx.currentTime)
+    ss.osc_2_base_frequency = 30.02
+    ss.osc_2.detune.setValueAtTime(0, audioCtx.currentTime)
+    ss.osc_2_base_detune = 0
+    ss.osc_2.start()
+    ss.osc_2.connect(ss.gain_2)
   }
-});
+}

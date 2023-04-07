@@ -46,3 +46,6 @@ button {
 button:hover {
   color: #eeaf;
 }
+.slidecontainer {
+  display: flex;
+}
