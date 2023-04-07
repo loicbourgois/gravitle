@@ -136,11 +136,11 @@ pub fn dot(a: Vector, b: Vector) -> f32 {
 }
 
 pub fn cross(p1: Vector, p2: Vector) -> f32 {
-    return p1.x * p2.y - p1.y * p2.x;
+    p1.x * p2.y - p1.y * p2.x
 }
 
 pub fn ncross(p1: Vector, p2: Vector) -> f32 {
-    return cross(normalize_2(p1), normalize_2(p2));
+    cross(normalize_2(p1), normalize_2(p2))
 }
 
 // pub fn angle_between_vectors(a: Vector, b: Vector) {
@@ -159,17 +159,17 @@ pub fn ncross(p1: Vector, p2: Vector) -> f32 {
 // }
 
 pub fn radians(x: f32) -> f32 {
-    return x / 180.0 * std::f32::consts::PI;
+    x / 180.0 * std::f32::consts::PI
 }
 pub fn degrees(x: f32) -> f32 {
-    return x * (180.0 / std::f32::consts::PI);
+    x * (180.0 / std::f32::consts::PI)
 }
 
 pub fn angle(p1: Vector, p2: Vector) -> f32 {
     let cross_ = cross(p1, p2);
     let l = norm(p1) * norm(p2);
     let angle = (cross_ / l).asin();
-    return degrees(angle);
+    degrees(angle)
 }
 
 // pub fn angle(a: Vector, b: Vector) -> f32 {

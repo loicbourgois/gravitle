@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Kind {
     Armor = 1,

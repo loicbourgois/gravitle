@@ -28,7 +28,7 @@ pub fn add_particle(
     sid: Option<usize>,
 ) {
     particles.push(Particle {
-        p: p,
+        p,
         pp: Vector { x: p.x, y: p.y },
         v: Vector { x: 0.0, y: 0.0 },
         m: 1.0,
@@ -42,7 +42,7 @@ pub fn add_particle(
         p: Vector { x: 0.0, y: 0.0 },
         v: Vector { x: 0.0, y: 0.0 },
         direction: Vector { x: 0.0, y: 0.0 },
-        sid: sid,
+        sid,
     });
 }
 
@@ -67,7 +67,7 @@ pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut 
 
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(position, grid.side);
-    return [
+    [
         &grid.pidxs[grid.gids[gid][0]],
         &grid.pidxs[grid.gids[gid][1]],
         &grid.pidxs[grid.gids[gid][2]],
@@ -77,7 +77,7 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
         &grid.pidxs[grid.gids[gid][6]],
         &grid.pidxs[grid.gids[gid][7]],
         &grid.pidxs[grid.gids[gid][8]],
-    ];
+    ]
 }
 
 pub fn compute_collision_responses(
@@ -93,7 +93,7 @@ pub fn compute_collision_responses(
     unsafe {
         let particles_2 = particles as *mut Particles;
         for p1 in particles.iter_mut() {
-            for ns in neighbours(&p1.p, &grid) {
+            for ns in neighbours(&p1.p, grid) {
                 for idx in ns {
                     let p2 = &mut (*particles_2)[*idx];
                     if p1.idx < p2.idx {

@@ -66,17 +66,17 @@ impl Gravithrust {
             deltas: vec![],
             ships: vec![],
             ships_more: vec![],
-            diameter: diameter,
+            diameter,
             grid: Grid::new(grid_side as usize),
             points: 0,
             step: 0,
-            sub_steps: sub_steps,
-            max_rotation_speed: max_rotation_speed,
-            max_speed_at_target: max_speed_at_target,
-            forward_max_speed: forward_max_speed,
-            forward_max_angle: forward_max_angle,
-            slow_down_max_angle: slow_down_max_angle,
-            slow_down_max_speed_to_target_ratio: slow_down_max_speed_to_target_ratio,
+            sub_steps,
+            max_rotation_speed,
+            max_speed_at_target,
+            forward_max_speed,
+            forward_max_angle,
+            slow_down_max_angle,
+            slow_down_max_speed_to_target_ratio,
         };
         for _ in 0..1 {
             g.add_particle(Vector { x: 0.35, y: 0.35 }, Kind::Target, None);
@@ -97,7 +97,7 @@ impl Gravithrust {
                 },
             );
         }
-        return g;
+        g
     }
 
     pub fn add_particle(&mut self, p: Vector, k: Kind, sid: Option<usize>) {
@@ -214,7 +214,7 @@ impl Gravithrust {
             let pid_up_left = pid0 + 6;
             let mut ship = &mut self.ships[sid];
             ship.pp = ship.p;
-            ship.p = ship_position(&self.particles, &s);
+            ship.p = ship_position(&self.particles, s);
             // velocity
             let wa = wrap_around(ship.pp, ship.p);
             let speed = wa.d_sqrd.sqrt();
@@ -242,16 +242,16 @@ impl Gravithrust {
             let speed_toward_target = old_target_delta.d_sqrd.sqrt() - distance_to_target;
             let previous_orientation = ship.orientation;
             // orientation is where the ship is facing
-            ship.orientation = ship_orientation(&self.particles, &s);
+            ship.orientation = ship_orientation(&self.particles, s);
             ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
             ship.cross =
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
-            let orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
-            let orientation_angle_2 = angle(normalize_2(ship.orientation), normalize_2(ship.td));
+            let _orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
+            let _orientation_angle_2 = angle(normalize_2(ship.orientation), normalize_2(ship.td));
             let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
             let rotation_speed = cross(ship.orientation, previous_orientation);
-            let rotation_speed_2 = angle(ship.orientation, previous_orientation);
-            let velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
+            let _rotation_speed_2 = angle(ship.orientation, previous_orientation);
+            let _velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
             let mut action = "-";
             self.particles[pid_left].a = 0;
             self.particles[pid_right].a = 0;

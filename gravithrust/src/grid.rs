@@ -10,7 +10,7 @@ pub struct Grid {
 impl Grid {
     pub fn new(side: usize) -> Grid {
         let mut grid = Grid {
-            side: side,
+            side,
             pidxs: Vec::new(),
             gids: Vec::new(),
         };
@@ -41,7 +41,7 @@ impl Grid {
                 grid.pidxs.push(Vec::new())
             }
         }
-        return grid;
+        grid
     }
 
     pub fn update_01(&mut self) {
@@ -60,19 +60,19 @@ impl Grid {
 }
 
 pub fn grid_id(x: usize, y: usize, side: usize) -> usize {
-    return (y % side) * side + x % side;
+    (y % side) * side + x % side
 }
 
 pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (particle.p.x * side_f32) as usize;
     let y: usize = (particle.p.y * side_f32) as usize;
-    return grid_id(x, y, side);
+    grid_id(x, y, side)
 }
 
 pub fn grid_id_position(position: &Vector, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;
-    return grid_id(x, y, side);
+    grid_id(x, y, side)
 }

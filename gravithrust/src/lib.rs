@@ -70,24 +70,21 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
 
 pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
     let model_: &Vec<&str> = &model
-        .split("\n")
+        .split('\n')
         .map(|line| line.trim())
-        .filter(|line| !line.starts_with("#") && line.len() > 0)
+        .filter(|line| !line.starts_with('#') && !line.is_empty())
         .collect();
     let start_pair_kinds: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(",").collect::<Vec<&str>>().len() == 1)
-        .map(|x| *x)
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 1).copied()
         .collect();
     let model_particles: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(",").collect::<Vec<&str>>().len() == 4)
-        .map(|x| *x)
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 4).copied()
         .collect();
     let model_links: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(",").collect::<Vec<&str>>().len() == 2)
-        .map(|x| *x)
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 2).copied()
         .collect();
     assert!(start_pair_kinds.len() == 2);
     let mut particles = vec![];
@@ -108,7 +105,7 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         k: kindstr_to_kind(start_pair_kinds[1]),
     });
     for line in model_particles.iter() {
-        let terms = line.split(",").collect::<Vec<&str>>();
+        let terms = line.split(',').collect::<Vec<&str>>();
         let new_particle_id = terms[0].parse::<usize>().expect("invalid particle_id");
         let p1_id = terms[1].parse::<usize>().expect("invalid p1_id");
         let p2_id = terms[2].parse::<usize>().expect("invalid p2_id");
@@ -120,15 +117,15 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         });
     }
     for line in model_links.iter() {
-        let terms = line.split(",").collect::<Vec<&str>>();
+        let terms = line.split(',').collect::<Vec<&str>>();
         let pid1 = terms[0].parse::<usize>().expect("invalid pid1");
         let pid2 = terms[1].parse::<usize>().expect("invalid pid2");
         links.push(Link { a: pid1, b: pid2 });
     }
-    return ShipModel {
-        particles: particles,
-        links: links,
-    };
+    ShipModel {
+        particles,
+        links,
+    }
 }
 
 impl ops::Add<Vector> for Vector {
@@ -180,7 +177,7 @@ pub fn ship_position(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
         let uu = wrap_around(p0.pp, p1.pp).d;
         p = p + uu / s.pids.len() as f32;
     }
-    return p;
+    p
 }
 
 pub fn ship_orientation(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
@@ -188,5 +185,5 @@ pub fn ship_orientation(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
     let p1 = &particles[s.pids[1]];
     let p2 = &particles[s.pids[2]];
     let p12 = p1.p + wrap_around(p1.p, p2.p).d / 2.0;
-    return wrap_around(p12, p0.p).d;
+    wrap_around(p12, p0.p).d
 }
