@@ -38,15 +38,15 @@ impl Grid {
                     grid_id(grid_xs[2], grid_ys[1], grid.side),
                     grid_id(grid_xs[2], grid_ys[2], grid.side),
                 ]);
-                grid.pidxs.push(Vec::new())
+                grid.pidxs.push(Vec::new());
             }
         }
         grid
     }
 
     pub fn update_01(&mut self) {
-        for x in self.pidxs.iter_mut() {
-            x.clear()
+        for x in &mut self.pidxs {
+            x.clear();
         }
     }
 
@@ -54,7 +54,7 @@ impl Grid {
         for p in particles {
             let grid_id_ = grid_id_particle(p, self.side);
             self.pidxs[grid_id_].push(p.idx);
-            p.grid_id = grid_id_
+            p.grid_id = grid_id_;
         }
     }
 }
@@ -70,7 +70,7 @@ pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
     grid_id(x, y, side)
 }
 
-pub fn grid_id_position(position: &Vector, side: usize) -> usize {
+pub fn grid_id_position(position: Vector, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
     let y: usize = (position.y * side_f32) as usize;

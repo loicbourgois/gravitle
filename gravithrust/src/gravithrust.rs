@@ -246,12 +246,12 @@ impl Gravithrust {
             ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
             ship.cross =
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
-            let _orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
-            let _orientation_angle_2 = angle(normalize_2(ship.orientation), normalize_2(ship.td));
+            let orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
+            let orientation_angle_2 = angle(normalize_2(ship.orientation), normalize_2(ship.td));
             let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
             let rotation_speed = cross(ship.orientation, previous_orientation);
-            let _rotation_speed_2 = angle(ship.orientation, previous_orientation);
-            let _velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
+            let rotation_speed_2 = angle(ship.orientation, previous_orientation);
+            let velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
             let mut action = "-";
             self.particles[pid_left].a = 0;
             self.particles[pid_right].a = 0;
@@ -299,20 +299,20 @@ impl Gravithrust {
             // self.particles[pid_right].a = 0;
             // self.particles[pid_up_right].a = 0;
             // self.particles[pid_up_left].a = 0;
-            // if sid == 0 {
-            //     log(&format!(
-            //         "forward_max_angle_better: {}\ndistance_to_target: {}\norientation_angle: {}\norientation_angle_2: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nrotation_speed_2: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",
-            //         forward_max_angle_better,
-            //         distance_to_target,
-            //         orientation_angle,
-            //         orientation_angle_2,
-            //         orientation_angle_corrected,
-            //         rotation_speed,
-            //         rotation_speed_2,
-            //         speed,
-            //         velocity_vs_target_angle, speed_toward_target, action
-            //     ));
-            // }
+            if sid == usize::MAX {
+                log(&format!(
+                    "forward_max_angle_better: {}\ndistance_to_target: {}\norientation_angle: {}\norientation_angle_2: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nrotation_speed_2: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",
+                    forward_max_angle_better,
+                    distance_to_target,
+                    orientation_angle,
+                    orientation_angle_2,
+                    orientation_angle_corrected,
+                    rotation_speed,
+                    rotation_speed_2,
+                    speed,
+                    velocity_vs_target_angle, speed_toward_target, action
+                ));
+            }
         }
         self.step += 1;
     }

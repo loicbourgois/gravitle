@@ -71,22 +71,22 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
 pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
     let model_: &Vec<&str> = &model
         .split('\n')
-        .map(|line| line.trim())
+        .map(str::trim)
         .filter(|line| !line.starts_with('#') && !line.is_empty())
         .collect();
     let start_pair_kinds: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 1)
+        .filter(|line| line.split(',').count() == 1)
         .copied()
         .collect();
     let model_particles: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 4)
+        .filter(|line| line.split(',').count() == 4)
         .copied()
         .collect();
     let model_links: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 2)
+        .filter(|line| line.split(',').count() == 2)
         .copied()
         .collect();
     assert!(start_pair_kinds.len() == 2);
@@ -168,7 +168,7 @@ impl ops::Sub<Vector> for Vector {
     }
 }
 
-pub fn ship_position(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
+pub fn ship_position(particles: &[Particle], s: &ShipMore) -> Vector {
     let p0 = &particles[s.pids[0]];
     let mut p = p0.pp;
     for i in 1..s.pids.len() {
@@ -180,7 +180,7 @@ pub fn ship_position(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
     p
 }
 
-pub fn ship_orientation(particles: &Vec<Particle>, s: &ShipMore) -> Vector {
+pub fn ship_orientation(particles: &[Particle], s: &ShipMore) -> Vector {
     let p0 = &particles[s.pids[0]];
     let p1 = &particles[s.pids[1]];
     let p2 = &particles[s.pids[2]];

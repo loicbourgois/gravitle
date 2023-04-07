@@ -17,17 +17,9 @@ pub struct Particle {
 }
 
 pub fn is_static(p: &Particle) -> bool {
-    match p.k {
-        Kind::Sun => true,
-        Kind::Metal => true,
-        Kind::Depot => true,
-        _ => false,
-    }
+    matches!(p.k, Kind::Sun | Kind::Metal | Kind::Depot)
 }
 
 pub fn no_collision(p: &Particle) -> bool {
-    match p.k {
-        Kind::Target => true,
-        _ => false,
-    }
+    matches!(p.k, Kind::Target)
 }

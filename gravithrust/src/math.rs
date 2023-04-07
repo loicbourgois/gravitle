@@ -139,23 +139,8 @@ pub fn cross(p1: Vector, p2: Vector) -> f32 {
     p1.x * p2.y - p1.y * p2.x
 }
 
-pub fn ncross(p1: Vector, p2: Vector) -> f32 {
-    cross(normalize_2(p1), normalize_2(p2))
-}
-
-// pub fn angle_between_vectors(a: Vector, b: Vector) {
-//     const dotProduct = dot(a,b);
-//     const magnitudeA = (a.x * a.x + a.y * a.y).sqrt();
-//     const magnitudeB = (b.x * b.x + b.y * b.y).sqrt();
-//     const angle = (dotProduct / (magnitudeA * magnitudeB)).acos();
-//     return angle * ;
-//   }
-
-// pub fn angle(p1: Vector, p2: Vector) -> f32 {
-//     let dot_ = dot(p1, p2);
-//     let l = norm(p1) * norm(p2);
-//     let angle = (dot_ / l).acos();
-//     return angle * (std::f32::consts::PI * 2.0);
+// pub fn ncross(p1: Vector, p2: Vector) -> f32 {
+//     cross(normalize_2(p1), normalize_2(p2))
 // }
 
 pub fn radians(x: f32) -> f32 {
@@ -171,17 +156,3 @@ pub fn angle(p1: Vector, p2: Vector) -> f32 {
     let angle = (cross_ / l).asin();
     degrees(angle)
 }
-
-// pub fn angle(a: Vector, b: Vector) -> f32 {
-//     let dot = a.x*b.x + a.y*b.y;
-//     let det = a.x*b.y - a.y*b.x;
-//     let angle = atan2(det, dot);
-// }
-
-// function getAngleBetweenVectors(a, b) {
-//     const aLength = Math.sqrt(a.x * a.x + a.y * a.y);
-//     const bLength = Math.sqrt(b.x * b.x + b.y * b.y);
-//     const dotProduct = a.x * b.x + a.y * b.y;
-//     const angle = Math.acos(dotProduct / (aLength * bLength));
-//     return angle;
-//   }

@@ -66,7 +66,7 @@ pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut 
 }
 
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
-    let gid = grid_id_position(position, grid.side);
+    let gid = grid_id_position(*position, grid.side);
     [
         &grid.pidxs[grid.gids[gid][0]],
         &grid.pidxs[grid.gids[gid][1]],
@@ -83,9 +83,9 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
 pub fn compute_collision_responses(
     diameter: f32,
     particles: &mut Vec<Particle>,
-    deltas: &mut Vec<Delta>,
+    deltas: &mut [Delta],
     grid: &Grid,
-    ships: &mut Vec<Ship>,
+    ships: &mut [Ship],
 ) {
     let crdp = 0.01; // collision response delta (position)
     let crdv = 0.90; // collision response delta (velocity)
@@ -152,9 +152,9 @@ pub fn compute_collision_responses(
 
 pub fn compute_link_responses(
     diameter: f32,
-    particles: &mut Vec<Particle>,
-    deltas: &mut Vec<Delta>,
-    links: &mut Vec<Link>,
+    particles: &mut [Particle],
+    deltas: &mut [Delta],
+    links: &mut [Link],
 ) {
     let link_strengh = 0.01;
     let linkt_length_ratio = 1.01;
@@ -184,7 +184,7 @@ pub fn compute_link_responses(
     }
 }
 
-pub fn update_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {
+pub fn update_particles(diameter: f32, particles: &mut [Particle], deltas: &mut [Delta]) {
     let booster_acceleration = 0.00005;
     for (i1, p1) in particles.iter_mut().enumerate() {
         let mut d1 = &mut deltas[i1];
