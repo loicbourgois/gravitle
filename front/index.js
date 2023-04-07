@@ -4,14 +4,14 @@ import {
   fill_circle_2,
   clear,
 } from "./canvas.js"
-import {
-  normalize,
-} from "./math.js"
 import {body} from "./body.js"
 import {
   colors,
   colors2,
 } from "./colors.js"
+import {
+  setup_audio,
+} from "./sound.js"
 
 
 let context
@@ -209,6 +209,16 @@ const draw = () => {
         ss.gain_2_base_gain * (0.9 + speed * 150000),
         audioCtx.currentTime + 0.01
       )
+
+      ss.osc_3.frequency.linearRampToValueAtTime(
+        ss.osc_3_base_frequency * (0.9 + speed * 10),
+        audioCtx.currentTime + 0.01
+      )
+      ss.gain_3.gain.linearRampToValueAtTime(
+        ss.gain_3_base_gain * (0.9 + speed * 150000),
+        audioCtx.currentTime + 0.01
+      )
+
       ss.gain_1.gain.linearRampToValueAtTime(
         ss.gain_1_base_gain * (0.0 + speed * 10000),
         audioCtx.currentTime + 0.01
@@ -217,6 +227,9 @@ const draw = () => {
         (ship.p.x - 0.5) * 3,
         audioCtx.currentTime + 0.01
       )
+
+      // ss.osc_4.stop()
+      // ss.osc_3.stop()
 
     }
   }
@@ -275,10 +288,10 @@ init().then( wasm_ => {
     128, // grid_side
     0.00001, // max_speed_at_target
     0.0001, // forward_max_speed
-    0.25, // forward_max_angle
-    0.3,  // slow_down_max_angle
-    0.0003, // slow_down_max_speed_to_target_ratio
-    30, // ship_count
+    30, // forward_max_angle
+    35,  // slow_down_max_angle
+    0.00025, // slow_down_max_speed_to_target_ratio
+    20, // ship_count
   );
   const keys = [
     'forward_max_speed',
@@ -330,44 +343,10 @@ init().then( wasm_ => {
 let started_sound = false
 let audioCtx
 let master
-const ship_sounds = []
+let ship_sounds = []
 const start_sound = (ship_count) => {
-  console.log("start sound")
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-  master = audioCtx.createGain()
-  master.connect(audioCtx.destination)
-  master.gain.setValueAtTime(0, audioCtx.currentTime)
-  for (let sid = 0; sid < ship_count; sid++) {
-    ship_sounds.push({})
-    const ss = ship_sounds[sid]
-    ss.stereo_1 = audioCtx.createStereoPanner()
-    ss.stereo_1.pan.setValueAtTime(0, audioCtx.currentTime)
-    ss.stereo_1.pan.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5)
-    ss.stereo_1_base_pan = 0
-    ss.stereo_1.connect(master)
-    ss.gain_1 = audioCtx.createGain()
-    ss.gain_1.gain.setValueAtTime(0, audioCtx.currentTime)
-    ss.gain_1.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5)
-    ss.gain_1_base_gain = 0.7
-    ss.gain_1.connect(ss.stereo_1)
-    ss.osc_1 = audioCtx.createOscillator()
-    ss.osc_1.frequency.setValueAtTime(90, audioCtx.currentTime)
-    ss.osc_1_base_frequency = 90
-    ss.osc_1.detune.setValueAtTime(0, audioCtx.currentTime)
-    ss.osc_1_base_detune = 0
-    ss.osc_1.start()
-    ss.osc_1.connect(ss.gain_1)
-    ss.gain_2 = audioCtx.createGain()
-    ss.gain_2.gain.setValueAtTime(0, audioCtx.currentTime)
-    ss.gain_2.gain.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5)
-    ss.gain_2_base_gain = 100
-    ss.gain_2.connect(ss.osc_1.frequency)
-    ss.osc_2 = audioCtx.createOscillator()
-    ss.osc_2.frequency.setValueAtTime(30.02, audioCtx.currentTime)
-    ss.osc_2_base_frequency = 30.02
-    ss.osc_2.detune.setValueAtTime(0, audioCtx.currentTime)
-    ss.osc_2_base_detune = 0
-    ss.osc_2.start()
-    ss.osc_2.connect(ss.gain_2)
-  }
+  const r = setup_audio(ship_count)
+  audioCtx = r.audioCtx
+  master = r.master
+  ship_sounds = r.ship_sounds
 }

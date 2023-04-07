@@ -99,12 +99,8 @@ pub fn norm_sqrd(v: Vector) -> f32 {
     v.x * v.x + v.y * v.y
 }
 
-// pub fn norm(v: Vector) -> f32 {
-//     norm_sqrd(v).sqrt()
-// }
-
-pub fn dot(a: Vector, b: Vector) -> f32 {
-    a.x * b.x + a.y * b.y
+pub fn norm(v: Vector) -> f32 {
+    norm_sqrd(v).sqrt()
 }
 
 pub fn normalize(p: Vector, d: f32) -> Vector {
@@ -135,16 +131,46 @@ pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
     }
 }
 
+pub fn dot(a: Vector, b: Vector) -> f32 {
+    a.x * b.x + a.y * b.y
+}
+
 pub fn cross(p1: Vector, p2: Vector) -> f32 {
     return p1.x * p2.y - p1.y * p2.x;
 }
+
+pub fn ncross(p1: Vector, p2: Vector) -> f32 {
+    return cross(normalize_2(p1), normalize_2(p2));
+}
+
+// pub fn angle_between_vectors(a: Vector, b: Vector) {
+//     const dotProduct = dot(a,b);
+//     const magnitudeA = (a.x * a.x + a.y * a.y).sqrt();
+//     const magnitudeB = (b.x * b.x + b.y * b.y).sqrt();
+//     const angle = (dotProduct / (magnitudeA * magnitudeB)).acos();
+//     return angle * ;
+//   }
 
 // pub fn angle(p1: Vector, p2: Vector) -> f32 {
 //     let dot_ = dot(p1, p2);
 //     let l = norm(p1) * norm(p2);
 //     let angle = (dot_ / l).acos();
-//     return angle / (std::f32::consts::PI * 2.0);
+//     return angle * (std::f32::consts::PI * 2.0);
 // }
+
+pub fn radians(x: f32) -> f32 {
+    return x / 180.0 * std::f32::consts::PI;
+}
+pub fn degrees(x: f32) -> f32 {
+    return x * (180.0 / std::f32::consts::PI);
+}
+
+pub fn angle(p1: Vector, p2: Vector) -> f32 {
+    let cross_ = cross(p1, p2);
+    let l = norm(p1) * norm(p2);
+    let angle = (cross_ / l).asin();
+    return degrees(angle);
+}
 
 // pub fn angle(a: Vector, b: Vector) -> f32 {
 //     let dot = a.x*b.x + a.y*b.y;

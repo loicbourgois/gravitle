@@ -7,6 +7,8 @@ use crate::gravithrust_tick::update_particles;
 use crate::grid::Grid;
 use crate::kind::Kind;
 use crate::log;
+use crate::math::angle;
+use crate::math::radians;
 use crate::models::MODEL_1;
 use crate::normalize_2;
 use crate::parse_model;
@@ -82,7 +84,10 @@ impl Gravithrust {
             g.add_particle(Vector { x: 0.65, y: 0.65 }, Kind::Target, None);
             g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
         }
-        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        g.add_ship(
+            &parse_model(MODEL_1, g.diameter),
+            Vector { x: 0.35, y: 0.15 },
+        );
         for _ in 0..ship_count {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
@@ -242,16 +247,22 @@ impl Gravithrust {
             ship.cross =
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
             let orientation_angle = cross(normalize_2(ship.orientation), normalize_2(ship.td));
+            let orientation_angle_2 = angle(normalize_2(ship.orientation), normalize_2(ship.td));
             let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
             let rotation_speed = cross(ship.orientation, previous_orientation);
+            let rotation_speed_2 = angle(ship.orientation, previous_orientation);
             let velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
             let mut action = "-";
             self.particles[pid_left].a = 0;
             self.particles[pid_right].a = 0;
             self.particles[pid_up_right].a = 0;
             self.particles[pid_up_left].a = 0;
+
+            let forward_max_angle_better = radians(self.forward_max_angle / 2.0).sin();
+            let slow_down_max_angle_better = radians(self.slow_down_max_angle / 2.0).sin();
+
             if speed < self.forward_max_speed
-                && orientation_angle_corrected.abs() < self.forward_max_angle
+                && orientation_angle_corrected.abs() < forward_max_angle_better
             {
                 action = "forward";
                 self.particles[pid_left].a = 1;
@@ -273,7 +284,7 @@ impl Gravithrust {
                 self.particles[pid_up_right].a = 1;
                 self.particles[pid_up_left].a = 0;
             }
-            if orientation_angle_corrected.abs() < self.slow_down_max_angle
+            if orientation_angle_corrected.abs() < slow_down_max_angle_better
                 && speed_toward_target
                     > (self.max_speed_at_target * 0.75)
                         .max(distance_to_target * self.slow_down_max_speed_to_target_ratio)
@@ -284,12 +295,24 @@ impl Gravithrust {
                 self.particles[pid_up_right].a = 1;
                 self.particles[pid_up_left].a = 1;
             }
-            // log(&format!(
-            //     "distance_to_target: {}\norientation_angle: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",
-            //     distance_to_target, orientation_angle,
-            //     orientation_angle_corrected, rotation_speed, speed,
-            //     velocity_vs_target_angle, speed_toward_target, action
-            // ));
+            // self.particles[pid_left].a = 0;
+            // self.particles[pid_right].a = 0;
+            // self.particles[pid_up_right].a = 0;
+            // self.particles[pid_up_left].a = 0;
+            // if sid == 0 {
+            //     log(&format!(
+            //         "forward_max_angle_better: {}\ndistance_to_target: {}\norientation_angle: {}\norientation_angle_2: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nrotation_speed_2: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",
+            //         forward_max_angle_better,
+            //         distance_to_target,
+            //         orientation_angle,
+            //         orientation_angle_2,
+            //         orientation_angle_corrected,
+            //         rotation_speed,
+            //         rotation_speed_2,
+            //         speed,
+            //         velocity_vs_target_angle, speed_toward_target, action
+            //     ));
+            // }
         }
         self.step += 1;
     }

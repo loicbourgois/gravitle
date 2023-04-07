@@ -34,10 +34,71 @@ const config = {
   osc_2: {
     kind: 'osc',
     destinations: ['gain_2'],
-    frequency: 30.02,
+    frequency: 30.0,
     detune: 0,
     top: 0,
     right: 4,
+  },
+  gain_3: {
+    kind: 'gain',
+    gain: 0,
+    destinations: [['osc_1','detune']],
+    top: 1,
+    right: 3,
+  },
+  osc_3: {
+    kind: 'osc',
+    destinations: ['gain_3'],
+    frequency: 30.0,
+    detune: 0,
+    top: 1,
+    right: 4,
+  },
+  gain_4: {
+    kind: 'gain',
+    gain: 1000,
+    destinations: [['osc_2','frequency']],
+    top: 1,
+    right: 5,
+  },
+  osc_4: {
+    kind: 'osc',
+    destinations: ['gain_4'],
+    frequency: 90,
+    detune: 0,
+    top: 1,
+    right: 6,
+  },
+  gain_5: {
+    kind: 'gain',
+    gain: 1200,
+    destinations: [['osc_4','detune']],
+    top: 2,
+    right: 5,
+  },
+  osc_5: {
+    kind: 'osc',
+    destinations: ['gain_5'],
+    frequency: 300,
+    detune: 0,
+    top: 2,
+    right: 6,
+  },
+
+  gain_6: {
+    kind: 'gain',
+    gain: 20,
+    destinations: ['gain_5'],
+    top: 3,
+    right: 5,
+  },
+  osc_6: {
+    kind: 'osc',
+    destinations: ['gain_6'],
+    frequency: 4.9,
+    detune: 0,
+    top: 3,
+    right: 6,
   },
 }
 
@@ -75,7 +136,7 @@ const show_config = () => {
           throw "Missing case in show_config"
       }
       document.body.innerHTML += `
-        <div style="right:${v.right*14}rem;" >
+        <div style="right:${v.right*14}rem; top:${v.top*7}rem;" >
           <label id="${k}" >${k}</label></br>
           ${fields}
         </div>
@@ -104,12 +165,17 @@ const show_config = () => {
     }
   }
 
-
+  
   const lines = [
-    "audioCtx = new (window.AudioContext || window.webkitAudioContext)()",
-    "for (let sid = 0; sid < ship_count; sid++) {",
-    "  ship_sounds.push({})",
-    "  const ss = ship_sounds[sid]",
+    "const setup_audio = (ship_count) => {",
+    "  let ship_sounds = []",
+    "  let audioCtx = new (window.AudioContext || window.webkitAudioContext)()",
+    "  let master = audioCtx.createGain()",
+    "  master.connect(audioCtx.destination)",
+    "  master.gain.setValueAtTime(0, audioCtx.currentTime)",
+    "  for (let sid = 0; sid < ship_count; sid++) {",
+    "    ship_sounds.push({})",
+    "    const ss = ship_sounds[sid]",
   ]
 
   for (const k in config) {
@@ -117,41 +183,43 @@ const show_config = () => {
       const v = config[k];
       switch (v.kind) {
         case 'stereo':
-          lines.push(`  ss.${k} = audioCtx.createStereoPanner()`)
-          lines.push(`  ss.${k}.pan.setValueAtTime(0, audioCtx.currentTime)`)
-          lines.push(`  ss.${k}.pan.linearRampToValueAtTime(${v.pan}, audioCtx.currentTime + 0.5)`)
-          lines.push(`  ss.${k}_base_pan = ${v.pan}`)
+          lines.push(`    ss.${k} = audioCtx.createStereoPanner()`)
+          lines.push(`    ss.${k}.pan.setValueAtTime(0, audioCtx.currentTime)`)
+          lines.push(`    ss.${k}.pan.linearRampToValueAtTime(${v.pan}, audioCtx.currentTime + 0.5)`)
+          lines.push(`    ss.${k}_base_pan = ${v.pan}`)
           break;
         case 'gain':
-          lines.push(`  ss.${k} = audioCtx.createGain()`)
-          lines.push(`  ss.${k}.gain.setValueAtTime(0, audioCtx.currentTime)`)
-          lines.push(`  ss.${k}.gain.linearRampToValueAtTime(${v.gain}, audioCtx.currentTime + 0.5)`)
-          lines.push(`  ss.${k}_base_gain = ${v.gain}`)
+          lines.push(`    ss.${k} = audioCtx.createGain()`)
+          lines.push(`    ss.${k}.gain.setValueAtTime(0, audioCtx.currentTime)`)
+          lines.push(`    ss.${k}.gain.linearRampToValueAtTime(${v.gain}, audioCtx.currentTime + 0.5)`)
+          lines.push(`    ss.${k}_base_gain = ${v.gain}`)
           break;
         case 'osc':
-          lines.push(`  ss.${k} = audioCtx.createOscillator()`)
-          lines.push(`  ss.${k}.frequency.setValueAtTime(${v.frequency}, audioCtx.currentTime)`)
-          lines.push(`  ss.${k}_base_frequency = ${v.frequency}`)
-          lines.push(`  ss.${k}.detune.setValueAtTime(${v.detune}, audioCtx.currentTime)`)
-          lines.push(`  ss.${k}_base_detune = ${v.detune}`)
-          lines.push(`  ss.${k}.start()`)
+          lines.push(`    ss.${k} = audioCtx.createOscillator()`)
+          lines.push(`    ss.${k}.frequency.setValueAtTime(${v.frequency}, audioCtx.currentTime)`)
+          lines.push(`    ss.${k}_base_frequency = ${v.frequency}`)
+          lines.push(`    ss.${k}.detune.setValueAtTime(${v.detune}, audioCtx.currentTime)`)
+          lines.push(`    ss.${k}_base_detune = ${v.detune}`)
+          lines.push(`    ss.${k}.start()`)
           break;
         default:
           throw "Missing case in show_config_js"
       }
       for (const dest of v.destinations) {
         if (dest == 'audioCtx.destination') {
-          lines.push(`  ss.${k}.connect(audioCtx.destination)`)
+          lines.push(`    ss.${k}.connect(master)`)
         } else if (Array.isArray(dest)) {
-          lines.push(`  ss.${k}.connect(ss.${dest[0]}.${dest[1]})`)
+          lines.push(`    ss.${k}.connect(ss.${dest[0]}.${dest[1]})`)
         } else {
-          lines.push(`  ss.${k}.connect(ss.${dest})`)
+          lines.push(`    ss.${k}.connect(ss.${dest})`)
         }
       }
     }
   }
-
+  lines.push('  }')
+  lines.push('  return {master:master, audioCtx:audioCtx, ship_sounds:ship_sounds}')
   lines.push('}')
+  lines.push('export { setup_audio }')
   console.log(lines.join("\n"))
 
 }
