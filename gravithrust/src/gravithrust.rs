@@ -55,6 +55,7 @@ impl Gravithrust {
         forward_max_angle: f32,
         slow_down_max_angle: f32,
         slow_down_max_speed_to_target_ratio: f32,
+        ship_count: usize,
     ) -> Gravithrust {
         assert!((diameter * grid_side as f32) <= 1.0);
         let mut g = Gravithrust {
@@ -81,7 +82,8 @@ impl Gravithrust {
             g.add_particle(Vector { x: 0.65, y: 0.65 }, Kind::Target, None);
             g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
         }
-        for _ in 0..20 {
+        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        for _ in 0..ship_count {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
                 Vector {

@@ -46,3 +46,21 @@ button {
 button:hover {
   color: #eeaf;
 }
+div {
+  background: #440;
+  width: 11rem;
+  position: fixed;
+}
+svg {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+}
+/* label{
+  display: block;
+} */
+input {
+  width: 4rem;
+  background-color: #0004;
+}

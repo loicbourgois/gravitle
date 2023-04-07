@@ -144,13 +144,16 @@ const draw = () => {
   }
   for (let i = 0; i < gravithrust.ships_count(); i++) {
     const ship = Ship(i);
+    fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff02')
+  }
+  // for (let i = 0; i < gravithrust.ships_count(); i++) {
+  //   const ship = Ship(i);
   //   fill_circle_2(context, ship.p, gravithrust.diameter * 0.5, colors2['ship_center'].low)
   //   const d = normalize(ship.v)
   //   fill_circle_2(context, {
   //     x:  ship.p.x + d.x*0.05,
   //     y:  ship.p.y + d.y*0.05,
   //   }, gravithrust.diameter * 0.5, colors2['ship_center'].low)
-    fill_circle_2(context, ship.t, gravithrust.diameter * 2.0, '#ff02')
   //   const td_n = normalize(ship.td)
   //   fill_circle_2(context, {
   //     x:  ship.p.x + td_n.x*0.05,
@@ -166,7 +169,7 @@ const draw = () => {
   //     x:  ship.p.x + cross_n.x*0.05,
   //     y:  ship.p.y + cross_n.y*0.05,
   //   }, gravithrust.diameter * 1., "#f4f")
-  }
+  // }
   document.querySelector("#points").innerHTML = gravithrust.points
   const duration = (( performance.now() - start) / 1000 )
   document.querySelector("#mpps").innerHTML = (gravithrust.points * 1000000 / gravithrust.step).toFixed(1)
@@ -189,6 +192,34 @@ const draw = () => {
       context_2.rect(x, canvas_2.height-y_high, 1, Math.max(y_high-y_low, 1));
       context_2.fill();
       context_2.stroke();
+    }
+  }
+  
+  // console.log(speed * 100000)
+  if (audioCtx) {
+    for (let sid = 0; sid < gravithrust.ships_count(); sid++) {
+      const ss = ship_sounds[sid]
+      const ship = Ship(sid);
+      const speed = Math.sqrt(ship.v.x * ship.v.x + ship.v.y * ship.v.y)
+      ss.osc_2.frequency.setValueAtTime(
+        ss.osc_2_base_frequency * (0.9 + speed * 10),
+        audioCtx.currentTime
+      )
+      ss.gain_2.gain.setValueAtTime(
+        ss.gain_2_base_gain * (0.9 + speed * 150000),
+        audioCtx.currentTime
+      )
+      ss.gain_1.gain.setValueAtTime(
+        ss.gain_1_base_gain * (0.1 + speed * 10000),
+        audioCtx.currentTime
+      )
+      
+      ss.stereo_1.pan.setValueAtTime(
+        // ss.stereo_1_base_pan * (0.1 + speed * 10000),
+        (ship.p.x - 0.5) * 3,
+        audioCtx.currentTime
+      )
+
     }
   }
   requestAnimationFrame(draw)
@@ -249,9 +280,9 @@ init().then( wasm_ => {
     0.25, // forward_max_angle
     0.3,  // slow_down_max_angle
     0.0003, // slow_down_max_speed_to_target_ratio
+    30, // ship_count
   );
   const keys = [
-    // 'max_speed_at_target',
     'forward_max_speed',
     'forward_max_angle',
     'slow_down_max_angle',
@@ -282,33 +313,54 @@ init().then( wasm_ => {
   requestAnimationFrame(draw)
   run()
   start = performance.now()
+});
 
-  document.body.addEventListener("click", (v) => {
-  //   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // // create Oscillator node
-  // const oscillator = audioCtx.createOscillator();
+let started_sound = false
+let audioCtx
+const ship_sounds = []
+const start_sound = (ship_count) => {
+  console.log("start sound")
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+for (let sid = 0; sid < ship_count; sid++) {
+  ship_sounds.push({})
+  const ss = ship_sounds[sid]
+  ss.stereo_1 = audioCtx.createStereoPanner()
+  ss.stereo_1.pan.setValueAtTime(0, audioCtx.currentTime)
+  ss.stereo_1.pan.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5)
+  ss.stereo_1_base_pan = 0
+  ss.stereo_1.connect(audioCtx.destination)
+  ss.gain_1 = audioCtx.createGain()
+  ss.gain_1.gain.setValueAtTime(0, audioCtx.currentTime)
+  ss.gain_1.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5)
+  ss.gain_1_base_gain = 0.3
+  ss.gain_1.connect(ss.stereo_1)
+  ss.osc_1 = audioCtx.createOscillator()
+  ss.osc_1.frequency.setValueAtTime(90, audioCtx.currentTime)
+  ss.osc_1_base_frequency = 90
+  ss.osc_1.detune.setValueAtTime(0, audioCtx.currentTime)
+  ss.osc_1_base_detune = 0
+  ss.osc_1.start()
+  ss.osc_1.connect(ss.gain_1)
+  ss.gain_2 = audioCtx.createGain()
+  ss.gain_2.gain.setValueAtTime(0, audioCtx.currentTime)
+  ss.gain_2.gain.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5)
+  ss.gain_2_base_gain = 100
+  ss.gain_2.connect(ss.osc_1.frequency)
+  ss.osc_2 = audioCtx.createOscillator()
+  ss.osc_2.frequency.setValueAtTime(30.02, audioCtx.currentTime)
+  ss.osc_2_base_frequency = 30.02
+  ss.osc_2.detune.setValueAtTime(0, audioCtx.currentTime)
+  ss.osc_2_base_detune = 0
+  ss.osc_2.start()
+  ss.osc_2.connect(ss.gain_2)
+}
+}
 
-  // const gain = audioCtx.createGain();
-  // gain.gain.setValueAtTime(0.1, audioCtx.currentTime); // value in hertz
 
-  // const osc2 = audioCtx.createOscillator();
-  // const gain2 = audioCtx.createGain();
-  // gain2.gain.setValueAtTime(200, audioCtx.currentTime); // value in hertz
-  // osc2.frequency.setValueAtTime(4, audioCtx.currentTime); // value in hertz
-  // osc2.connect(gain2)
-  // gain2.connect(oscillator.detune)
-  // // gain
-  // osc2.start();
-
-  // // oscillator.type = "square";
-  // oscillator.frequency.setValueAtTime(44*2, audioCtx.currentTime); // value in hertz
-  // oscillator.connect(gain);
-  // gain.connect(audioCtx.destination);
-  // oscillator.start();
-  // console.log(oscillator)
-  });
-
-  
-
+document.addEventListener("click", (v) => {
+  if (!started_sound){
+    started_sound = true
+    // start_sound(gravithrust.ships_count())
+  }
 });
