@@ -76,15 +76,18 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         .collect();
     let start_pair_kinds: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 1).copied()
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 1)
+        .copied()
         .collect();
     let model_particles: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 4).copied()
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 4)
+        .copied()
         .collect();
     let model_links: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 2).copied()
+        .filter(|line| line.split(',').collect::<Vec<&str>>().len() == 2)
+        .copied()
         .collect();
     assert!(start_pair_kinds.len() == 2);
     let mut particles = vec![];
@@ -122,10 +125,7 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         let pid2 = terms[1].parse::<usize>().expect("invalid pid2");
         links.push(Link { a: pid1, b: pid2 });
     }
-    ShipModel {
-        particles,
-        links,
-    }
+    ShipModel { particles, links }
 }
 
 impl ops::Add<Vector> for Vector {
