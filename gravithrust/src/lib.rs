@@ -54,6 +54,16 @@ pub struct Link {
 }
 
 #[wasm_bindgen]
+#[derive(Copy, Clone)]
+pub struct LinkJS {
+    #[allow(dead_code)]
+    ak: Kind,
+    #[allow(dead_code)]
+    bk: Kind,
+    p: Vector,
+}
+
+#[wasm_bindgen]
 pub struct ShipModel {
     particles: Vec<ModelParticle>,
     links: Vec<Link>,
@@ -100,7 +110,7 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         p: rotate(
             particles[0].p,
             Vector {
-                x: diameter * 1.25,
+                x: diameter * 1.0,
                 y: 0.0,
             },
             4.0 / 6.0,

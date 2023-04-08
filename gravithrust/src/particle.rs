@@ -20,6 +20,6 @@ pub fn is_static(p: &Particle) -> bool {
     matches!(p.k, Kind::Sun | Kind::Metal | Kind::Depot)
 }
 
-pub fn no_collision(p: &Particle) -> bool {
-    matches!(p.k, Kind::Target)
+pub fn do_collision(p: &Particle) -> bool {
+    !matches!(p.k, Kind::Target)
 }

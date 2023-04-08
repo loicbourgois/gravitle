@@ -3,7 +3,6 @@
 set -e
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 cargo fmt
-wasm-pack -vvv build --target web
 cargo clippy -- \
     -A clippy::single_match \
     -A clippy::too_many_arguments \
@@ -18,7 +17,8 @@ cargo clippy -- \
     -A clippy::too_many_lines \
     -A clippy::unused_self \
     -A clippy::similar_names
-
-#--fix --allow-dirty
+wasm-pack build --no-typescript --release --target web
 cp -r $HOME/github.com/loicbourgois/gravitle/gravithrust/pkg/ $HOME/github.com/loicbourgois/gravitle/front/gravithrust/
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/package.json
+rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/LICENSE
+rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/README.md

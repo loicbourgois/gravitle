@@ -17,6 +17,7 @@ use crate::ship_position;
 use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
+use crate::LinkJS;
 use crate::Particle;
 use crate::Ship;
 use crate::ShipModel;
@@ -30,6 +31,7 @@ pub struct Gravithrust {
     particles: Vec<Particle>,
     ships: Vec<Ship>,
     links: Vec<Link>,
+    links_js: Vec<LinkJS>,
     deltas: Vec<Delta>,
     ships_more: Vec<ShipMore>,
     pub diameter: f32,
@@ -66,6 +68,7 @@ impl Gravithrust {
             deltas: vec![],
             ships: vec![],
             ships_more: vec![],
+            links_js: vec![],
             diameter,
             grid: Grid::new(grid_side as usize),
             points: 0,
@@ -84,10 +87,7 @@ impl Gravithrust {
             g.add_particle(Vector { x: 0.65, y: 0.65 }, Kind::Target, None);
             g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
         }
-        g.add_ship(
-            &parse_model(MODEL_1, g.diameter),
-            Vector { x: 0.35, y: 0.15 },
-        );
+        g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
         for _ in 0..ship_count {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
@@ -131,7 +131,14 @@ impl Gravithrust {
             self.links.push(Link {
                 a: l.a + pid_start,
                 b: l.b + pid_start,
-            })
+            });
+            let pa = &self.particles[l.a + pid_start];
+            let pb = &self.particles[l.b + pid_start];
+            self.links_js.push(LinkJS {
+                ak: pa.k,
+                bk: pb.k,
+                p: (pa.p + pb.p) * 0.5,
+            });
         }
         self.ships.push(ship);
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
@@ -178,6 +185,26 @@ impl Gravithrust {
     pub fn ships(&self) -> *const Ship {
         self.ships.as_ptr()
     }
+
+    pub fn link_js_size(&self) -> u32 {
+        4 * 4
+    }
+
+    pub fn link_js_size_(&self) -> usize {
+        4 * 4
+    }
+
+    pub fn links_js(&self) -> *const LinkJS {
+        self.links_js.as_ptr()
+    }
+
+    pub fn links_count(&self) -> u32 {
+        self.links.len() as u32
+    }
+
+    pub fn links_js_size(&self) -> u32 {
+        (self.links_js.len() * self.link_js_size_()) as u32
+    }
 }
 
 #[wasm_bindgen]
@@ -204,6 +231,7 @@ impl Gravithrust {
             &mut self.particles,
             &mut self.deltas,
             &mut self.links,
+            &mut self.links_js,
         );
         update_particles(self.diameter, &mut self.particles, &mut self.deltas);
         for (sid, s) in self.ships_more.iter_mut().enumerate() {

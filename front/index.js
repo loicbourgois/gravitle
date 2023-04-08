@@ -12,6 +12,9 @@ import {
 import {
   setup_audio,
 } from "./sound.js"
+import {
+  link_js,
+} from "./link.js"
 
 
 let context
@@ -124,13 +127,36 @@ const resize = () => {
   canvas.style.height = `${dimension*0.9}px`
 }
 
-
+let links_js_view
 const draw = () => {
   clear(context)
   const data_ptr = gravithrust.particles();
   particles = new DataView(wasm.memory.buffer, data_ptr, gravithrust.particles_size());
   const ships_data_ptr = gravithrust.ships();
   ships = new DataView(wasm.memory.buffer, ships_data_ptr, gravithrust.ships_size());
+  
+  
+  // const link_js_size = gravithrust.link_js_size()
+  //   links_js_view = new DataView(
+  //       wasm.memory.buffer, 
+  //       gravithrust.links_js(), 
+  //       gravithrust.links_js_size(),
+  //   );
+  //   for (let lid = 0; lid < gravithrust.links_count(); lid++) {
+  //     const view_pid = lid*link_js_size
+  //       const l = {
+  //         x:  links_js_view.getFloat32(view_pid + 4*2, true),
+  //         y:  links_js_view.getFloat32(view_pid + 4*3, true),
+  //         // dx: view.getFloat32(view_pid + 4*6, true),
+  //         // dy: view.getFloat32(view_pid + 4*7, true),
+  //         // k:  view.getInt32(  view_pid + 4*9, true),
+  //         // a:  view.getInt32(  view_pid + 4*10, true),
+  //     }
+  //     // link_js(links_js_view, lid*link_js_size);
+  //       fill_circle_2(context, l, gravithrust.diameter * 0.95, "#da4")
+  //   }
+  
+  
   for (let i = 0; i < gravithrust.particles_count(); i++) {
     const p = P(i);
     fill_circle_2(context, p, gravithrust.diameter*1.1, colors[p.k].low)
@@ -195,7 +221,7 @@ const draw = () => {
     }
   }
   
-  // console.log(speed * 100000)
+  
   if (audioCtx) {
     for (let sid = 0; sid < gravithrust.ships_count(); sid++) {
       const ss = ship_sounds[sid]

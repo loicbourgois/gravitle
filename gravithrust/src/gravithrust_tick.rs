@@ -8,6 +8,7 @@ use crate::particle;
 use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
+use crate::LinkJS;
 use crate::Particle;
 use crate::Ship;
 use crate::Vector;
@@ -121,9 +122,7 @@ pub fn compute_collision_responses(
                                     None => {}
                                 }
                             }
-                            if particle::no_collision(p1) || particle::no_collision(p2) {
-                                // pass
-                            } else {
+                            if particle::do_collision(p1) && particle::do_collision(p2) {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
                                     {
@@ -155,15 +154,17 @@ pub fn compute_link_responses(
     particles: &mut [Particle],
     deltas: &mut [Delta],
     links: &mut [Link],
+    links_js: &mut [LinkJS],
 ) {
     let link_strengh = 0.01;
-    let linkt_length_ratio = 1.01;
-    for (_i, l) in links.iter().enumerate() {
+    let link_length_ratio = 1.01;
+    for (i, l) in links.iter().enumerate() {
         let p1 = &particles[l.a];
         let p2 = &particles[l.b];
         let wa = wrap_around(p1.p, p2.p);
+        links_js[i].p = p1.p + wa.d / 2.0;
         let d = wa.d_sqrd.sqrt();
-        let factor = (diameter * linkt_length_ratio - d) * link_strengh;
+        let factor = (diameter * link_length_ratio - d) * link_strengh;
         let n = normalize(wa.d, d);
         if wa.d_sqrd > diameter * diameter && !n.x.is_nan() && !n.y.is_nan() {
             {

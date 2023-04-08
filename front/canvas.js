@@ -3,8 +3,13 @@ import {
 } from "./math.js"
 
 
-const draw_zoom = 2.25
-const draw_center = [0.5, 0.5]
+let draw_zoom = 2.25
+let draw_center = [0.5, 0.5]
+
+
+const set_draw_zoom = (x) => {
+  draw_zoom = x
+}
 
 
 const context_coordinates = (context, p) => {
@@ -130,4 +135,5 @@ export {
   resize,
   resize_square,
   line,
+  set_draw_zoom,
 }
