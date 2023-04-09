@@ -1,8 +1,3 @@
-import {
-  distance_sqrd,
-} from "./math.js"
-
-
 let draw_zoom = 2.25
 let draw_center = [0.5, 0.5]
 
@@ -100,6 +95,13 @@ const clear = (context) => {
 }
 
 
+const clear_trans = (context) => {
+  context.fillStyle = '#00000020';
+  // context.fillStyle = '#07070720';
+  context.fillRect(0,0,context.canvas.width, context.canvas.height);
+}
+
+
 const resize = (canvas) => {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
@@ -136,4 +138,5 @@ export {
   resize_square,
   line,
   set_draw_zoom,
+  clear_trans,
 }

@@ -9,7 +9,8 @@ use crate::kind::Kind;
 use crate::log;
 use crate::math::angle;
 use crate::math::radians;
-use crate::models::MODEL_1;
+use crate::models::model_1::MODEL_1;
+use crate::models::model_2::MODEL_2;
 use crate::normalize_2;
 use crate::parse_model;
 use crate::ship_orientation;
@@ -88,9 +89,20 @@ impl Gravithrust {
             g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
         }
         g.add_ship(&parse_model(MODEL_1, g.diameter), Vector { x: 0.5, y: 0.5 });
+        g.add_ship(
+            &parse_model(MODEL_2, g.diameter),
+            Vector { x: 0.52, y: 0.5 },
+        );
         for _ in 0..ship_count {
             g.add_ship(
                 &parse_model(MODEL_1, g.diameter),
+                Vector {
+                    x: rand::thread_rng().gen::<f32>(),
+                    y: rand::thread_rng().gen::<f32>(),
+                },
+            );
+            g.add_ship(
+                &parse_model(MODEL_2, g.diameter),
                 Vector {
                     x: rand::thread_rng().gen::<f32>(),
                     y: rand::thread_rng().gen::<f32>(),
@@ -122,7 +134,10 @@ impl Gravithrust {
             on_target: 0,
             target_pid: self.ships.len() % 4,
         };
-        let mut ship_more = ShipMore { pids: vec![] };
+        let mut ship_more = ShipMore {
+            pids: vec![],
+            model_id: ship_model.model_id,
+        };
         for p in &ship_model.particles {
             ship_more.pids.push(self.particles.len());
             self.add_particle(p.p + position, p.k, sid);
@@ -234,12 +249,29 @@ impl Gravithrust {
             &mut self.links_js,
         );
         update_particles(self.diameter, &mut self.particles, &mut self.deltas);
+        struct ShipControl {
+            forward: Vec<usize>,
+            slow: Vec<usize>,
+            left: Vec<usize>,
+            right: Vec<usize>,
+        }
         for (sid, s) in self.ships_more.iter_mut().enumerate() {
             let pid0 = s.pids[0];
-            let pid_left = pid0 + 10;
-            let pid_right = pid0 + 14;
-            let pid_up_right = pid0 + 3;
-            let pid_up_left = pid0 + 6;
+            let ship_control = match s.model_id {
+                1 => ShipControl {
+                    forward: vec![10, 14],
+                    slow: vec![3, 6],
+                    left: vec![14, 6],
+                    right: vec![10, 3],
+                },
+                2 => ShipControl {
+                    forward: vec![8, 9],
+                    slow: vec![4, 3],
+                    left: vec![4, 9],
+                    right: vec![3, 8],
+                },
+                _ => panic!("invalid ship model_id"),
+            };
             let mut ship = &mut self.ships[sid];
             ship.pp = ship.p;
             ship.p = ship_position(&self.particles, s);
@@ -248,7 +280,6 @@ impl Gravithrust {
             let speed = wa.d_sqrd.sqrt();
             if ship.on_target >= 1 && speed.abs() < self.max_speed_at_target {
                 self.points += 1;
-                log("on target");
                 if ship.target_pid == 0 {
                     ship.target_pid = 1
                 } else if ship.target_pid == 1 {
@@ -281,36 +312,10 @@ impl Gravithrust {
             let rotation_speed_2 = angle(ship.orientation, previous_orientation);
             let velocity_vs_target_angle = cross(normalize_2(ship.v), normalize_2(ship.td));
             let mut action = "-";
-            self.particles[pid_left].a = 0;
-            self.particles[pid_right].a = 0;
-            self.particles[pid_up_right].a = 0;
-            self.particles[pid_up_left].a = 0;
-
             let forward_max_angle_better = radians(self.forward_max_angle / 2.0).sin();
             let slow_down_max_angle_better = radians(self.slow_down_max_angle / 2.0).sin();
-
-            if speed < self.forward_max_speed
-                && orientation_angle_corrected.abs() < forward_max_angle_better
-            {
-                action = "forward";
-                self.particles[pid_left].a = 1;
-                self.particles[pid_right].a = 1;
-                self.particles[pid_up_right].a = 0;
-                self.particles[pid_up_left].a = 0;
-            }
-            if orientation_angle_corrected > 0.0 && rotation_speed > -self.max_rotation_speed {
-                action = "turn left";
-                self.particles[pid_left].a = 0;
-                self.particles[pid_right].a = 1;
-                self.particles[pid_up_right].a = 0;
-                self.particles[pid_up_left].a = 1;
-            } else if orientation_angle_corrected < 0.0 && rotation_speed < self.max_rotation_speed
-            {
-                action = "turn right";
-                self.particles[pid_left].a = 1;
-                self.particles[pid_right].a = 0;
-                self.particles[pid_up_right].a = 1;
-                self.particles[pid_up_left].a = 0;
+            for pid in &s.pids {
+                self.particles[*pid].a = 0;
             }
             if orientation_angle_corrected.abs() < slow_down_max_angle_better
                 && speed_toward_target
@@ -318,15 +323,29 @@ impl Gravithrust {
                         .max(distance_to_target * self.slow_down_max_speed_to_target_ratio)
             {
                 action = "slow down";
-                self.particles[pid_left].a = 0;
-                self.particles[pid_right].a = 0;
-                self.particles[pid_up_right].a = 1;
-                self.particles[pid_up_left].a = 1;
+                for x in ship_control.slow {
+                    self.particles[pid0 + x].a = 1;
+                }
+            } else if orientation_angle_corrected > 0.0 && rotation_speed > -self.max_rotation_speed
+            {
+                action = "turn left";
+                for x in ship_control.left {
+                    self.particles[pid0 + x].a = 1;
+                }
+            } else if orientation_angle_corrected < 0.0 && rotation_speed < self.max_rotation_speed
+            {
+                action = "turn right";
+                for x in ship_control.right {
+                    self.particles[pid0 + x].a = 1;
+                }
+            } else if speed < self.forward_max_speed
+                && orientation_angle_corrected.abs() < forward_max_angle_better
+            {
+                action = "forward";
+                for x in ship_control.forward {
+                    self.particles[pid0 + x].a = 1;
+                }
             }
-            // self.particles[pid_left].a = 0;
-            // self.particles[pid_right].a = 0;
-            // self.particles[pid_up_right].a = 0;
-            // self.particles[pid_up_left].a = 0;
             if sid == usize::MAX {
                 log(&format!(
                     "forward_max_angle_better: {}\ndistance_to_target: {}\norientation_angle: {}\norientation_angle_2: {}\norientation_angle_corrected: {}\nrotation_speed: {}\nrotation_speed_2: {}\nspeed: {}\nvelocity_vs_target_angle: {}\nspeed_toward_target: {}\naction:{}",

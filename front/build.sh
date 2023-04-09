@@ -2,6 +2,7 @@
 # $HOME/github.com/loicbourgois/gravitle/front/build.sh
 set -e
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
+cargo test
 cargo fmt
 cargo clippy -- \
     -A clippy::single_match \

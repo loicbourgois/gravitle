@@ -13,4 +13,6 @@ pub enum Kind {
     Metal = 7,
     Depot = 8,
     Target = 9,
+    Ray = 10,
+    Cargo = 11,
 }

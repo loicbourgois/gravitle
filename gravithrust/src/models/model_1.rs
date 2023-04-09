@@ -6,6 +6,8 @@ pub const MODEL_1: &str = r#"
 #  09----07----01----02----11----13
 #    \  /                    \  /
 #     10                      14 
+model=1
+
 core
 armor
 2,0,1,armor

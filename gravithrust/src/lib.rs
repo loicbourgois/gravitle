@@ -6,6 +6,7 @@ mod kind;
 mod math;
 mod models;
 mod particle;
+mod test;
 use crate::kind::Kind;
 use crate::math::collision_response;
 use crate::math::cross;
@@ -44,6 +45,7 @@ pub struct Ship {
 
 pub struct ShipMore {
     pids: Vec<usize>,
+    model_id: usize,
 }
 
 #[wasm_bindgen]
@@ -67,6 +69,7 @@ pub struct LinkJS {
 pub struct ShipModel {
     particles: Vec<ModelParticle>,
     links: Vec<Link>,
+    model_id: usize,
 }
 
 pub fn kindstr_to_kind(x: &str) -> Kind {
@@ -74,6 +77,8 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
         "armor" => Kind::Armor,
         "core" => Kind::Core,
         "booster" => Kind::Booster,
+        "ray" => Kind::Ray,
+        "cargo" => Kind::Cargo,
         _ => panic!("invalid kind"),
     }
 }
@@ -86,7 +91,7 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         .collect();
     let start_pair_kinds: &Vec<&str> = &model_
         .iter()
-        .filter(|line| line.split(',').count() == 1)
+        .filter(|line| line.split(',').count() == 1 && line.split('=').count() == 1)
         .copied()
         .collect();
     let model_particles: &Vec<&str> = &model_
@@ -99,6 +104,17 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         .filter(|line| line.split(',').count() == 2)
         .copied()
         .collect();
+
+    let model_id: usize = model_
+        .iter()
+        .filter(|line| line.split('=').count() == 2)
+        .copied()
+        .collect::<Vec<&str>>()[0]
+        .split('=')
+        .collect::<Vec<&str>>()[1]
+        .parse::<usize>()
+        .unwrap();
+
     assert!(start_pair_kinds.len() == 2);
     let mut particles = vec![];
     let mut links = vec![];
@@ -135,7 +151,11 @@ pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
         let pid2 = terms[1].parse::<usize>().expect("invalid pid2");
         links.push(Link { a: pid1, b: pid2 });
     }
-    ShipModel { particles, links }
+    ShipModel {
+        particles,
+        links,
+        model_id,
+    }
 }
 
 impl ops::Add<Vector> for Vector {
