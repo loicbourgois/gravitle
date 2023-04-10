@@ -18,3 +18,33 @@ fn test_parse_blueprint() {
     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
 }
+
+#[test]
+fn test_parse_blueprint_2() {
+    let envs = env::vars().collect::<HashMap<String, String>>();
+    let path = format!(
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_02.yml",
+        envs["HOME"]
+    );
+    let yaml = match fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(_error) => panic!("Could not read file"),
+    };
+    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+    let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+}
+
+#[test]
+fn test_parse_blueprint_3() {
+    let envs = env::vars().collect::<HashMap<String, String>>();
+    let path = format!(
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_03.yml",
+        envs["HOME"]
+    );
+    let yaml = match fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(_error) => panic!("Could not read file"),
+    };
+    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+    let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+}

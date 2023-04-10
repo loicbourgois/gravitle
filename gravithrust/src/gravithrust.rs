@@ -330,7 +330,7 @@ impl Gravithrust {
                         cross(normalize_2(anchor_direction), normalize_2(target_direction));
                     let action = if distance_to_target < target_to_anchor_distance
                         && orientation_angle.abs() < slow_down_max_angle_better
-                        && speed_toward_target > -0.0000005
+                        && speed_toward_target > -0.000_000_5
                     {
                         "slow down"
                     } else if orientation_angle > 0.0 && rotation_speed > -self.max_rotation_speed {
@@ -339,12 +339,12 @@ impl Gravithrust {
                         "turn right"
                     } else if angle_aaa > 0.0
                         && distance_to_target < target_to_anchor_distance * 1.2
-                        && speed_toward_anchor < 0.000001
+                        && speed_toward_anchor < 0.000_001
                     {
                         "translate right"
                     } else if angle_aaa < 0.0
                         && distance_to_target < target_to_anchor_distance * 1.2
-                        && speed_toward_anchor < 0.000001
+                        && speed_toward_anchor < 0.000_001
                     {
                         "translate left"
                     } else {

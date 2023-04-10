@@ -51,6 +51,7 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
         "booster" => Kind::Booster,
         "ray" => Kind::Ray,
         "cargo" => Kind::Cargo,
+        "sun" => Kind::Sun,
         _ => panic!("invalid kind"),
     }
 }

@@ -88,7 +88,8 @@ init().then( async (wasm) => {
   try {
     const responses = await Promise.all([
         fetch('./blueprint/blueprint_01.yml'),
-        fetch('./blueprint/blueprint_02.yml')
+        fetch('./blueprint/blueprint_02.yml'),
+        fetch('./blueprint/blueprint_03.yml'),
     ]);
     const yml_blueprints = await Promise.all(responses.map(r => r.text()))
     setup(wasm, yml_blueprints)
@@ -124,6 +125,9 @@ const setup = (wasm, yml_blueprints) => {
   for (let index = 0; index < 20; index++) {
     gravithrust.add_ship(yml_blueprints[Math.floor(Math.random()*2)], Math.random(), Math.random())
   }
+
+  gravithrust.add_ship(yml_blueprints[2], 0.45, 0.45)
+
   const keys = [
     'forward_max_speed',
     'forward_max_angle',
