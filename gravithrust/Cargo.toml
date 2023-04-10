@@ -15,3 +15,5 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen = "*"
 rand = "*"
 getrandom = { version = "*", features = ["js"] }
+serde = { version = "*", features = ["derive"] }
+serde_yaml = "*"

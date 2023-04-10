@@ -5,12 +5,12 @@ use crate::kind::Kind;
 use crate::normalize;
 use crate::normalize_2;
 use crate::particle;
+use crate::ship::Ship;
 use crate::wrap_around;
 use crate::Delta;
 use crate::Link;
 use crate::LinkJS;
 use crate::Particle;
-use crate::Ship;
 use crate::Vector;
 use rand::Rng;
 type Particles = Vec<Particle>;
@@ -50,7 +50,7 @@ pub fn add_particle(
 pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {
     let mut particles_to_add = vec![];
     for p1 in particles.iter() {
-        if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < 0.1 {
+        if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < -1.0 {
             particles_to_add.push(ParticleModel {
                 p: Vector {
                     x: p1.p.x + rand::thread_rng().gen::<f32>() * diameter - diameter * 0.5,
@@ -185,8 +185,12 @@ pub fn compute_link_responses(
     }
 }
 
-pub fn update_particles(diameter: f32, particles: &mut [Particle], deltas: &mut [Delta]) {
-    let booster_acceleration = 0.00005;
+pub fn update_particles(
+    diameter: f32,
+    particles: &mut [Particle],
+    deltas: &mut [Delta],
+    booster_acceleration: f32,
+) {
     for (i1, p1) in particles.iter_mut().enumerate() {
         let mut d1 = &mut deltas[i1];
         p1.direction = normalize_2(d1.direction);

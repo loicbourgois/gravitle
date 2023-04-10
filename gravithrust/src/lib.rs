@@ -1,11 +1,12 @@
 use wasm_bindgen::prelude::wasm_bindgen;
+mod blueprint;
 mod gravithrust;
 mod gravithrust_tick;
 mod grid;
 mod kind;
 mod math;
-mod models;
 mod particle;
+mod ship;
 mod test;
 use crate::kind::Kind;
 use crate::math::collision_response;
@@ -17,35 +18,13 @@ use crate::math::wrap_around;
 use crate::math::Delta;
 use crate::math::Vector;
 use crate::particle::Particle;
+use crate::ship::ShipMore;
 use std::ops;
 
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
-}
-
-pub struct ModelParticle {
-    p: Vector,
-    k: Kind,
-}
-
-pub struct Ship {
-    p: Vector,
-    pp: Vector,
-    v: Vector, // velocity
-    target: Vector,
-    td: Vector, // target direction
-    orientation: Vector,
-    vt: Vector,
-    cross: Vector,
-    target_pid: usize,
-    on_target: u32,
-}
-
-pub struct ShipMore {
-    pids: Vec<usize>,
-    model_id: usize,
 }
 
 #[wasm_bindgen]
@@ -65,13 +44,6 @@ pub struct LinkJS {
     p: Vector,
 }
 
-#[wasm_bindgen]
-pub struct ShipModel {
-    particles: Vec<ModelParticle>,
-    links: Vec<Link>,
-    model_id: usize,
-}
-
 pub fn kindstr_to_kind(x: &str) -> Kind {
     match x.trim().to_lowercase().as_str() {
         "armor" => Kind::Armor,
@@ -80,81 +52,6 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
         "ray" => Kind::Ray,
         "cargo" => Kind::Cargo,
         _ => panic!("invalid kind"),
-    }
-}
-
-pub fn parse_model(model: &str, diameter: f32) -> ShipModel {
-    let model_: &Vec<&str> = &model
-        .split('\n')
-        .map(str::trim)
-        .filter(|line| !line.starts_with('#') && !line.is_empty())
-        .collect();
-    let start_pair_kinds: &Vec<&str> = &model_
-        .iter()
-        .filter(|line| line.split(',').count() == 1 && line.split('=').count() == 1)
-        .copied()
-        .collect();
-    let model_particles: &Vec<&str> = &model_
-        .iter()
-        .filter(|line| line.split(',').count() == 4)
-        .copied()
-        .collect();
-    let model_links: &Vec<&str> = &model_
-        .iter()
-        .filter(|line| line.split(',').count() == 2)
-        .copied()
-        .collect();
-
-    let model_id: usize = model_
-        .iter()
-        .filter(|line| line.split('=').count() == 2)
-        .copied()
-        .collect::<Vec<&str>>()[0]
-        .split('=')
-        .collect::<Vec<&str>>()[1]
-        .parse::<usize>()
-        .unwrap();
-
-    assert!(start_pair_kinds.len() == 2);
-    let mut particles = vec![];
-    let mut links = vec![];
-    particles.push(ModelParticle {
-        p: Vector { x: 0.0, y: 0.0 },
-        k: kindstr_to_kind(start_pair_kinds[0]),
-    });
-    particles.push(ModelParticle {
-        p: rotate(
-            particles[0].p,
-            Vector {
-                x: diameter * 1.0,
-                y: 0.0,
-            },
-            4.0 / 6.0,
-        ),
-        k: kindstr_to_kind(start_pair_kinds[1]),
-    });
-    for line in model_particles.iter() {
-        let terms = line.split(',').collect::<Vec<&str>>();
-        let new_particle_id = terms[0].parse::<usize>().expect("invalid particle_id");
-        let p1_id = terms[1].parse::<usize>().expect("invalid p1_id");
-        let p2_id = terms[2].parse::<usize>().expect("invalid p2_id");
-        let kind = kindstr_to_kind(terms[3]);
-        assert!(new_particle_id == particles.len(), "bad length");
-        particles.push(ModelParticle {
-            p: rotate(particles[p1_id].p, particles[p2_id].p, 1.0 / 6.0),
-            k: kind,
-        });
-    }
-    for line in model_links.iter() {
-        let terms = line.split(',').collect::<Vec<&str>>();
-        let pid1 = terms[0].parse::<usize>().expect("invalid pid1");
-        let pid2 = terms[1].parse::<usize>().expect("invalid pid2");
-        links.push(Link { a: pid1, b: pid2 });
-    }
-    ShipModel {
-        particles,
-        links,
-        model_id,
     }
 }
 

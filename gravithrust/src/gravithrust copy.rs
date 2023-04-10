@@ -324,27 +324,41 @@ impl Gravithrust {
                     let anchor_delta_old = wrap_around(ship.pp, anchor);
                     let speed_toward_anchor = anchor_delta_old.d_sqrd.sqrt() - distance_to_anchor;
                     let anchor_direction = anchor_delta.d;
+                    let ship_orientation_corrected = normalize_2(
+                        normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5,
+                    );
                     let orientation_angle =
                         cross(normalize_2(ship.orientation), normalize_2(target_direction));
+                    let orientation_angle_corrected = cross(
+                        normalize_2(ship_orientation_corrected),
+                        normalize_2(target_direction),
+                    );
                     let angle_aaa =
                         cross(normalize_2(anchor_direction), normalize_2(target_direction));
-                    let action = if distance_to_target < target_to_anchor_distance
-                        && orientation_angle.abs() < slow_down_max_angle_better
-                        && speed_toward_target > -0.0000005
-                    {
+                    let action = if orientation_angle.abs() < slow_down_max_angle_better
+                        && (
+                            (distance_to_target < target_to_anchor_distance
+                                && speed_toward_target > 0.0)
+                            // || (speed_toward_target
+                            //     > distance_to_target * self.slow_down_max_speed_to_target_ratio)
+                        ) {
                         "slow down"
-                    } else if orientation_angle > 0.0 && rotation_speed > -self.max_rotation_speed {
+                    } else if orientation_angle > 0.0 && rotation_speed > -self.max_rotation_speed
+                    // && distance_to_target > target_to_anchor_distance
+                    {
                         "turn left"
-                    } else if orientation_angle < 0.0 && rotation_speed < self.max_rotation_speed {
+                    } else if orientation_angle < 0.0 && rotation_speed < self.max_rotation_speed
+                    // && distance_to_target > target_to_anchor_distance
+                    {
                         "turn right"
                     } else if angle_aaa > 0.0
                         && distance_to_target < target_to_anchor_distance * 1.2
-                        && speed_toward_anchor < 0.000001
+                        && speed_toward_anchor < 0.1
                     {
                         "translate right"
                     } else if angle_aaa < 0.0
                         && distance_to_target < target_to_anchor_distance * 1.2
-                        && speed_toward_anchor < 0.000001
+                        && speed_toward_anchor < 0.1
                     {
                         "translate left"
                     } else {
@@ -352,7 +366,7 @@ impl Gravithrust {
                     };
 
                     // log(action);
-                    // log(action);
+                    log(action);
                     // log(&format!("{}", angle_aaa));
 
                     match action {

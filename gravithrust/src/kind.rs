@@ -15,4 +15,7 @@ pub enum Kind {
     Target = 9,
     Ray = 10,
     Cargo = 11,
+    Plasma = 12,
+    Field = 13,
+    Anchor = 14,
 }

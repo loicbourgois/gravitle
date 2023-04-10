@@ -36,6 +36,7 @@ const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
         do_physics: true,
         stop_physics: () => {self.do_physics = false},
         context_trace: context_trace,
+        iter_durations: [],
     }
     return self
 }
@@ -94,6 +95,7 @@ const update_audio = (self) => {
 
 
 const iter = (self) => {
+    const iter_start = performance.now()
     if (self.do_physics) {
         self.update()
     }
@@ -104,6 +106,10 @@ const iter = (self) => {
     requestAnimationFrame(()=>{
         requestAnimationFrame(self.iter)
     })
+    self.iter_durations.push(performance.now() - iter_start)
+    while (self.iter_durations.length > 20) {
+        self.iter_durations.shift()
+    }
 }
 
 
@@ -229,6 +235,9 @@ const draw = (self) => {
     document.querySelector("#frame").innerHTML = average(self.frame_durations).toFixed(1)
     if (self.audio_durations.length) {
         document.querySelector("#audio_duration").innerHTML = average(self.audio_durations).toFixed(1)
+    }
+    if (self.iter_durations.length) {
+        document.querySelector("#iter_duration").innerHTML = average(self.iter_durations).toFixed(1)
     }
 }
 

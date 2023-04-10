@@ -37,12 +37,14 @@ input {
   width: 90vh;
   margin: 5vh;
   z-index: 2;
+  image-rendering: pixelated;
   /* position: fixed;
   left: 0;
   top: 0; */
 }
 #canvas_trace {
   position: fixed;
+  image-rendering: pixelated;
   left: 0;
   top: 0;
   z-index: 1;

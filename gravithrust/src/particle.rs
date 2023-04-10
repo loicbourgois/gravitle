@@ -17,9 +17,9 @@ pub struct Particle {
 }
 
 pub fn is_static(p: &Particle) -> bool {
-    matches!(p.k, Kind::Sun | Kind::Metal | Kind::Depot)
+    matches!(p.k, Kind::Sun | Kind::Metal | Kind::Depot | Kind::Anchor)
 }
 
 pub fn do_collision(p: &Particle) -> bool {
-    !matches!(p.k, Kind::Target)
+    !matches!(p.k, Kind::Target | Kind::Anchor)
 }

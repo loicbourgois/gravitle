@@ -1,3 +1,26 @@
+# Core
+...
+
+# Harmony
+Influence ships positive behaviour.
+
+# Light
+Make plants grow
+
+# Electrofield
+Used to harvest plasma
+
+# Plasma
+Can be harvested from a star using an electrofield.
+
+# Anchor
+Point where a ship wants to stay.
+
+# Target
+Point at which a ship points.
+
+
+
 A Proportional-Integral-Derivative (PID) controller can be used to improve the ship's steering behavior by adjusting the thrust of the left and right boosters based on the error (angle difference), the accumulated error (integral of angle difference), and the rate of change of the error (derivative of angle difference). Here's how to implement a PID controller for the ship's rotation:
 
 1. Define the PID controller's coefficients: 

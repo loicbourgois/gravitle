@@ -19,6 +19,9 @@ cargo clippy -- \
     -A clippy::unused_self \
     -A clippy::similar_names
 wasm-pack build --no-typescript --release --target web
+rm $HOME/github.com/loicbourgois/gravitle/front/blueprint/* || true
+rmdir $HOME/github.com/loicbourgois/gravitle/front/blueprint
+cp -r $HOME/github.com/loicbourgois/gravitle/gravithrust/src/blueprint $HOME/github.com/loicbourgois/gravitle/front/blueprint
 cp -r $HOME/github.com/loicbourgois/gravitle/gravithrust/pkg/ $HOME/github.com/loicbourgois/gravitle/front/gravithrust/
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/package.json
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/LICENSE

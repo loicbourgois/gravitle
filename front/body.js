@@ -30,6 +30,11 @@ const body = `
     <label >ms</label>
   </div>
   <div>
+    <label>full duration:       </label>
+    <label id="iter_duration">...</label>
+    <label >ms</label>
+  </div>
+  <div>
     <label>ups:                 </label>
     <label id="ups">...</label>
   </div>
