@@ -1,19 +1,19 @@
-use crate::collision_response;
 use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::kind::Kind;
-use crate::normalize;
-use crate::normalize_2;
+use crate::link::Link;
+use crate::link::LinkJS;
+use crate::math::collision_response;
+use crate::math::normalize;
+use crate::math::normalize_2;
+use crate::math::wrap_around;
+use crate::math::Delta;
+use crate::math::Vector;
 use crate::particle;
+use crate::particle::Particle;
+use crate::particle::Particles;
 use crate::ship::Ship;
-use crate::wrap_around;
-use crate::Delta;
-use crate::Link;
-use crate::LinkJS;
-use crate::Particle;
-use crate::Vector;
 use rand::Rng;
-type Particles = Vec<Particle>;
 
 struct ParticleModel {
     p: Vector,
@@ -27,7 +27,8 @@ pub fn add_particle(
     p: Vector,
     k: Kind,
     sid: Option<usize>,
-) {
+) -> usize {
+    let pid = particles.len();
     particles.push(Particle {
         p,
         pp: Vector { x: p.x, y: p.y },
@@ -36,7 +37,7 @@ pub fn add_particle(
         k,
         direction: Vector { x: 0.0, y: 0.0 },
         a: 0,
-        idx: particles.len(),
+        idx: pid,
         grid_id: 0,
     });
     deltas.push(Delta {
@@ -45,6 +46,7 @@ pub fn add_particle(
         direction: Vector { x: 0.0, y: 0.0 },
         sid,
     });
+    pid
 }
 
 pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {

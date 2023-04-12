@@ -1,8 +1,8 @@
-use crate::kindstr_to_kind;
-use crate::rotate;
-use crate::Kind;
-use crate::Link;
-use crate::Vector;
+use crate::kind::kindstr_to_kind;
+use crate::kind::Kind;
+use crate::link::Link;
+use crate::math::rotate;
+use crate::math::Vector;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -20,7 +20,6 @@ pub struct RawBlueprint {
     translate_right: Vec<usize>,
     translate_left: Vec<usize>,
 }
-
 #[wasm_bindgen]
 pub struct Blueprint {
     #[wasm_bindgen(skip)]

@@ -1,5 +1,5 @@
 use crate::particle::Particle;
-// use crate::Kind;
+use std::ops;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -7,6 +7,46 @@ use wasm_bindgen::prelude::*;
 pub struct Vector {
     pub x: f32,
     pub y: f32,
+}
+
+impl ops::Add<Vector> for Vector {
+    type Output = Vector;
+    fn add(self, other: Vector) -> Vector {
+        Vector {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl ops::Div<f32> for Vector {
+    type Output = Vector;
+    fn div(self, other: f32) -> Vector {
+        Vector {
+            x: self.x / other,
+            y: self.y / other,
+        }
+    }
+}
+
+impl ops::Mul<f32> for Vector {
+    type Output = Vector;
+    fn mul(self, other: f32) -> Vector {
+        Vector {
+            x: self.x * other,
+            y: self.y * other,
+        }
+    }
+}
+
+impl ops::Sub<Vector> for Vector {
+    type Output = Vector;
+    fn sub(self, other: Vector) -> Vector {
+        Vector {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
 }
 
 #[wasm_bindgen]

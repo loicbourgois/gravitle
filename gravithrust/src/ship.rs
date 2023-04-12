@@ -1,4 +1,6 @@
-use crate::Vector;
+use crate::math::wrap_around;
+use crate::math::Vector;
+use crate::particle::Particle;
 
 pub struct Ship {
     pub p: Vector,
@@ -11,12 +13,12 @@ pub struct Ship {
     pub cross: Vector,
     pub target_pid: usize,
     pub on_target: u32,
-    pub anchor_pid: Option<usize>,
 }
 
 pub struct ShipMore {
     pub pids: Vec<usize>,
     pub ship_control: ShipControl,
+    pub anchor_pid: Option<usize>,
 }
 
 pub struct ShipControl {
@@ -26,4 +28,24 @@ pub struct ShipControl {
     pub right: Vec<usize>,
     pub translate_right: Vec<usize>,
     pub translate_left: Vec<usize>,
+}
+
+pub fn ship_position(particles: &[Particle], s: &ShipMore) -> Vector {
+    let p0 = &particles[s.pids[0]];
+    let mut p = p0.pp;
+    for i in 1..s.pids.len() {
+        let pid = s.pids[i];
+        let p1 = &particles[pid];
+        let uu = wrap_around(p0.pp, p1.pp).d;
+        p = p + uu / s.pids.len() as f32;
+    }
+    p
+}
+
+pub fn ship_orientation(particles: &[Particle], s: &ShipMore) -> Vector {
+    let p0 = &particles[s.pids[0]];
+    let p1 = &particles[s.pids[1]];
+    let p2 = &particles[s.pids[2]];
+    let p12 = p1.p + wrap_around(p1.p, p2.p).d / 2.0;
+    wrap_around(p12, p0.p).d
 }

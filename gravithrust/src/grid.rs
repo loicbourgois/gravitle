@@ -1,5 +1,5 @@
-use crate::Particle;
-use crate::Vector;
+use crate::math::Vector;
+use crate::particle::Particle;
 type Particles = Vec<Particle>;
 pub struct Grid {
     pub pidxs: Vec<Vec<usize>>, // particle indexes

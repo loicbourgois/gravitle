@@ -1,29 +1,30 @@
 use crate::blueprint::load_raw_blueprint;
 use crate::blueprint::Blueprint;
 use crate::blueprint::RawBlueprint;
-use crate::cross;
 use crate::gravithrust_tick::add_particle;
 use crate::gravithrust_tick::add_particles;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
 use crate::gravithrust_tick::update_particles;
 use crate::grid::Grid;
+use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
+use crate::link::Link;
+use crate::link::LinkJS;
 use crate::log;
 use crate::math::angle;
+use crate::math::cross;
+use crate::math::normalize_2;
 use crate::math::radians;
-use crate::normalize_2;
+use crate::math::wrap_around;
+use crate::math::Delta;
+use crate::math::Vector;
+use crate::particle::Particle;
+use crate::ship::ship_orientation;
+use crate::ship::ship_position;
 use crate::ship::Ship;
 use crate::ship::ShipControl;
 use crate::ship::ShipMore;
-use crate::ship_orientation;
-use crate::ship_position;
-use crate::wrap_around;
-use crate::Delta;
-use crate::Link;
-use crate::LinkJS;
-use crate::Particle;
-use crate::Vector;
 use rand::Rng;
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -64,7 +65,7 @@ impl Gravithrust {
         booster_acceleration: f32,
     ) -> Gravithrust {
         assert!((diameter * grid_side as f32) <= 1.0);
-        let mut g = Gravithrust {
+        Gravithrust {
             particles: vec![],
             links: vec![],
             deltas: vec![],
@@ -83,28 +84,62 @@ impl Gravithrust {
             slow_down_max_angle,
             slow_down_max_speed_to_target_ratio,
             booster_acceleration,
-        };
-        g.add_particle(Vector { x: 0.35, y: 0.35 }, Kind::Target, None);
-        g.add_particle(Vector { x: 0.35, y: 0.65 }, Kind::Target, None);
-        g.add_particle(Vector { x: 0.65, y: 0.65 }, Kind::Target, None);
-        g.add_particle(Vector { x: 0.65, y: 0.35 }, Kind::Target, None);
-        g.add_particle(Vector { x: 0.5, y: 0.5 }, Kind::Sun, None);
-        g.add_particle(Vector { x: 0.55, y: 0.5 }, Kind::Anchor, None);
-        g
+        }
     }
 
     pub fn add_ship(&mut self, yml_blueprint: &str, x: f32, y: f32) {
         let raw_blueprint: RawBlueprint = serde_yaml::from_str(yml_blueprint).unwrap();
         let blueprint = load_raw_blueprint(&raw_blueprint, self.diameter);
-        self.add_ship_2(&blueprint, Vector { x, y });
+        self.add_ship_internal(&blueprint, Vector { x, y });
     }
 
-    pub fn add_particle(&mut self, p: Vector, k: Kind, sid: Option<usize>) {
-        add_particle(&mut self.particles, &mut self.deltas, p, k, sid);
+    pub fn add_structure(&mut self, yml_blueprint: &str, x: f32, y: f32) {
+        let raw_blueprint: RawBlueprint = serde_yaml::from_str(yml_blueprint).unwrap();
+        let blueprint = load_raw_blueprint(&raw_blueprint, self.diameter);
+        self.add_structure_internal(&blueprint, Vector { x, y }, None);
     }
 
-    pub fn add_ship_2(&mut self, ship_model: &Blueprint, position: Vector) {
+    pub fn add_particle(&mut self, x: f32, y: f32, kind: &str) -> usize {
+        self.add_particle_inner(Vector { x, y }, kindstr_to_kind(kind), None)
+    }
+
+    pub fn add_particle_inner(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
+        add_particle(&mut self.particles, &mut self.deltas, p, k, sid)
+    }
+
+    pub fn set_anchor(&mut self, sid: usize, pid: usize) {
+        self.ships_more[sid].anchor_pid = Some(pid)
+    }
+
+    pub fn add_structure_internal(
+        &mut self,
+        blueprint: &Blueprint,
+        position: Vector,
+        sid: Option<usize>,
+    ) -> Vec<usize> {
         let pid_start = self.particles.len();
+        let mut pids = vec![];
+        for p in &blueprint.particles {
+            pids.push(self.particles.len());
+            self.add_particle_inner(p.p + position, p.k, sid);
+        }
+        for l in &blueprint.links {
+            self.links.push(Link {
+                a: l.a + pid_start,
+                b: l.b + pid_start,
+            });
+            let pa = &self.particles[l.a + pid_start];
+            let pb = &self.particles[l.b + pid_start];
+            self.links_js.push(LinkJS {
+                ak: pa.k,
+                bk: pb.k,
+                p: (pa.p + pb.p) * 0.5,
+            });
+        }
+        pids
+    }
+
+    pub fn add_ship_internal(&mut self, blueprint: &Blueprint, position: Vector) {
         let sid = Some(self.ships.len());
         let ship = Ship {
             target: Vector {
@@ -120,39 +155,20 @@ impl Gravithrust {
             cross: Vector { x: 0.0, y: 0.0 },
             on_target: 0,
             target_pid: self.ships.len() % 4,
-            anchor_pid: match self.ships.len() {
-                0 => Some(5),
-                _ => None,
-            },
         };
-        let mut ship_more = ShipMore {
-            pids: vec![],
+        let pids = self.add_structure_internal(blueprint, position, sid);
+        let ship_more = ShipMore {
+            pids,
             ship_control: ShipControl {
-                left: ship_model.left.clone(),
-                right: ship_model.right.clone(),
-                slow: ship_model.slow.clone(),
-                forward: ship_model.forward.clone(),
-                translate_left: ship_model.translate_left.clone(),
-                translate_right: ship_model.translate_right.clone(),
+                left: blueprint.left.clone(),
+                right: blueprint.right.clone(),
+                slow: blueprint.slow.clone(),
+                forward: blueprint.forward.clone(),
+                translate_left: blueprint.translate_left.clone(),
+                translate_right: blueprint.translate_right.clone(),
             },
+            anchor_pid: None,
         };
-        for p in &ship_model.particles {
-            ship_more.pids.push(self.particles.len());
-            self.add_particle(p.p + position, p.k, sid);
-        }
-        for l in &ship_model.links {
-            self.links.push(Link {
-                a: l.a + pid_start,
-                b: l.b + pid_start,
-            });
-            let pa = &self.particles[l.a + pid_start];
-            let pb = &self.particles[l.b + pid_start];
-            self.links_js.push(LinkJS {
-                ak: pa.k,
-                bk: pb.k,
-                p: (pa.p + pb.p) * 0.5,
-            });
-        }
         self.ships.push(ship);
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
         self.ships_more.push(ship_more);
@@ -274,7 +290,7 @@ impl Gravithrust {
                 }
             }
 
-            match ship.anchor_pid {
+            match s.anchor_pid {
                 Some(x) => ship.target_pid = x,
                 _ => {}
             };
@@ -307,7 +323,7 @@ impl Gravithrust {
                 self.particles[*pid].a = 0;
             }
 
-            match ship.anchor_pid {
+            match s.anchor_pid {
                 Some(anchor_pid) => {
                     let target_pid = 4;
                     let anchor = self.particles[anchor_pid].p;

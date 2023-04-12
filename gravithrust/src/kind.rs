@@ -1,3 +1,4 @@
+use crate::log;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
@@ -18,4 +19,21 @@ pub enum Kind {
     Plasma = 12,
     Field = 13,
     Anchor = 14,
+}
+
+pub fn kindstr_to_kind(x: &str) -> Kind {
+    match x.trim().to_lowercase().as_str() {
+        "armor" => Kind::Armor,
+        "core" => Kind::Core,
+        "booster" => Kind::Booster,
+        "ray" => Kind::Ray,
+        "cargo" => Kind::Cargo,
+        "sun" => Kind::Sun,
+        "target" => Kind::Target,
+        "anchor" => Kind::Anchor,
+        _ => {
+            log(&format!("invalid kind: {}", x));
+            panic!("invalid kind")
+        }
+    }
 }

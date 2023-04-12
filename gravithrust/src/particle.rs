@@ -1,7 +1,7 @@
-use crate::Kind;
-use crate::Vector;
+use crate::kind::Kind;
+use crate::math::Vector;
 use wasm_bindgen::prelude::wasm_bindgen;
-
+pub type Particles = Vec<Particle>;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Particle {
