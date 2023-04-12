@@ -13,14 +13,13 @@ use crate::particle;
 use crate::particle::Particle;
 use crate::particle::Particles;
 use crate::ship::Ship;
+use crate::ship::ShipMore;
 use rand::Rng;
-
 struct ParticleModel {
     p: Vector,
     k: Kind,
     sid: Option<usize>,
 }
-
 pub fn add_particle(
     particles: &mut Vec<Particle>,
     deltas: &mut Vec<Delta>,
@@ -28,27 +27,37 @@ pub fn add_particle(
     k: Kind,
     sid: Option<usize>,
 ) -> usize {
+    add_particle_2(particles, deltas, p, Vector::default(), k, sid)
+}
+pub fn add_particle_2(
+    particles: &mut Vec<Particle>,
+    deltas: &mut Vec<Delta>,
+    position: Vector,
+    velocity: Vector,
+    k: Kind,
+    sid: Option<usize>,
+) -> usize {
     let pid = particles.len();
     particles.push(Particle {
-        p,
-        pp: Vector { x: p.x, y: p.y },
-        v: Vector { x: 0.0, y: 0.0 },
+        p: position,
+        pp: position - velocity,
+        v: velocity,
         m: 1.0,
         k,
-        direction: Vector { x: 0.0, y: 0.0 },
+        direction: Vector::default(),
         a: 0,
         idx: pid,
         grid_id: 0,
+        e: 0,
     });
     deltas.push(Delta {
-        p: Vector { x: 0.0, y: 0.0 },
-        v: Vector { x: 0.0, y: 0.0 },
-        direction: Vector { x: 0.0, y: 0.0 },
+        p: Vector::default(),
+        v: Vector::default(),
+        direction: Vector::default(),
         sid,
     });
     pid
 }
-
 pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {
     let mut particles_to_add = vec![];
     for p1 in particles.iter() {
@@ -60,14 +69,13 @@ pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut 
                 },
                 k: Kind::Armor,
                 sid: None,
-            })
+            });
         }
     }
     for x in &particles_to_add {
         add_particle(particles, deltas, x.p, x.k, x.sid);
     }
 }
-
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(*position, grid.side);
     [
@@ -82,13 +90,13 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
         &grid.pidxs[grid.gids[gid][8]],
     ]
 }
-
 pub fn compute_collision_responses(
     diameter: f32,
     particles: &mut Vec<Particle>,
     deltas: &mut [Delta],
     grid: &Grid,
     ships: &mut [Ship],
+    ships_more: &[ShipMore],
 ) {
     let crdp = 0.01; // collision response delta (position)
     let crdv = 0.90; // collision response delta (velocity)
@@ -106,7 +114,7 @@ pub fn compute_collision_responses(
                                 let d1 = &deltas[p1.idx];
                                 match d1.sid {
                                     Some(sid) => {
-                                        if ships[sid].target_pid == p2.idx {
+                                        if ships_more[sid].target_pid == p2.idx {
                                             ships[sid].on_target += 1;
                                         }
                                     }
@@ -117,7 +125,7 @@ pub fn compute_collision_responses(
                                 let d2 = &deltas[p2.idx];
                                 match d2.sid {
                                     Some(sid) => {
-                                        if ships[sid].target_pid == p1.idx {
+                                        if ships_more[sid].target_pid == p1.idx {
                                             ships[sid].on_target += 1;
                                         }
                                     }
@@ -150,7 +158,6 @@ pub fn compute_collision_responses(
         }
     }
 }
-
 pub fn compute_link_responses(
     diameter: f32,
     particles: &mut [Particle],
@@ -186,15 +193,14 @@ pub fn compute_link_responses(
         }
     }
 }
-
 pub fn update_particles(
     diameter: f32,
     particles: &mut [Particle],
     deltas: &mut [Delta],
     booster_acceleration: f32,
 ) {
-    for (i1, p1) in particles.iter_mut().enumerate() {
-        let mut d1 = &mut deltas[i1];
+    for (pid, p1) in particles.iter_mut().enumerate() {
+        let mut d1 = &mut deltas[pid];
         p1.direction = normalize_2(d1.direction);
         if !particle::is_static(p1) {
             p1.v.x += d1.v.x;
@@ -206,13 +212,17 @@ pub fn update_particles(
             p1.v.x -= d1.direction.x * booster_acceleration;
             p1.v.y -= d1.direction.y * booster_acceleration;
         }
-        p1.a = 0;
+        if p1.k == Kind::Ray {
+            p1.e += 1;
+            p1.e = p1.e.min(5_000);
+        }
         d1.p.x = 0.0;
         d1.p.y = 0.0;
         d1.v.x = 0.0;
         d1.v.y = 0.0;
         d1.direction.x = 0.0;
         d1.direction.y = 0.0;
+        p1.a = 0;
         p1.v.x = p1.v.x.max(-diameter * 0.5);
         p1.v.x = p1.v.x.min(diameter * 0.5);
         p1.v.y = p1.v.y.max(-diameter * 0.5);

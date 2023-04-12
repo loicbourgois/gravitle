@@ -8,7 +8,7 @@
   \  /                    \  /
    10                      14
     ",
-    name: shippy,
+    name: __,
     forward: [10, 14],
     slow: [3, 6],
     left: [14, 6],

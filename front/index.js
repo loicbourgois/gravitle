@@ -1,7 +1,6 @@
 import init, {Gravithrust} from "./gravithrust/gravithrust.js";
 import {
   resize_square,
-  fill_circle_2,
 } from "./canvas.js"
 import {body} from "./body.js"
 import {
@@ -90,6 +89,7 @@ init().then( async (wasm) => {
         fetch('./blueprint/blueprint_01.yml'),
         fetch('./blueprint/blueprint_02.yml'),
         fetch('./blueprint/blueprint_03.yml'),
+        fetch('./blueprint/blueprint_04.yml'),
     ]);
     const yml_blueprints = await Promise.all(responses.map(r => r.text()))
     setup(wasm, yml_blueprints)
@@ -120,14 +120,20 @@ const setup = (wasm, yml_blueprints) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-  gravithrust.add_ship(yml_blueprints[1], 0.55, 0.45)
-  gravithrust.add_ship(yml_blueprints[1], 0.52, 0.52)
+  gravithrust.add_particle(0.35, 0.35, "target");
+  gravithrust.add_particle(0.35, 0.65, "target");
+  gravithrust.add_particle(0.65, 0.65, "target");
+  gravithrust.add_particle(0.65, 0.35, "target");
+  // const target_pid = gravithrust.add_particle(0.5,  0.5, "target")
+  gravithrust.add_structure(yml_blueprints[2], 0.5, 0.5)
+  const anchor_pid = gravithrust.add_particle(0.55,  0.5, "anchor")
+  const sid = gravithrust.add_ship(yml_blueprints[3], 0.55, 0.5)
+  gravithrust.set_anchor(sid, anchor_pid)
+  gravithrust.set_target(sid, 4)
+  gravithrust.add_ship(yml_blueprints[3], 0.52, 0.52)
   for (let index = 0; index < 20; index++) {
     gravithrust.add_ship(yml_blueprints[Math.floor(Math.random()*2)], Math.random(), Math.random())
   }
-
-  gravithrust.add_ship(yml_blueprints[2], 0.45, 0.45)
-
   const keys = [
     'forward_max_speed',
     'forward_max_angle',

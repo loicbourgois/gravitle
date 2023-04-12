@@ -12,6 +12,9 @@ import {
 import {
     Ship,
 } from "./ship.js"
+import {
+    Kind,
+} from "./kind.js"
 
 
 const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
@@ -168,7 +171,7 @@ const draw = (self) => {
     );
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (p.k == 3 ) {
+        if (p.k == Kind.Booster ) {
             if (p.a == 1) {
                 fill_circle_2(self.context, p.pout2, self.gravithrust.diameter*0.7, "#c22")
                 fill_circle_2(self.context, p.pout, self.gravithrust.diameter*0.9, "#c00")
@@ -178,20 +181,50 @@ const draw = (self) => {
                 fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#b40")
             }
         }
+        if (p.k == Kind.Ray ) {
+            // if (p.a == 1) {
+                // fill_circle_2(self.context, p.pout2, self.gravithrust.diameter*0.7, "#c22")
+                // fill_circle_2(self.context, p.pout, self.gravithrust.diameter*0.9, "#c00")
+                const r = 255*0.0
+                const g = 255*0.0
+                const b = 255*( 0.5 + p.e/5000 )
+                fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, `rgb(${r},${g},${b})`)
+                
+                // fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, "#d20")
+            // } else {
+            //     fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#b40")
+            // }
+        }
+        if (p.k == Kind.Sun) {
+            fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, `#ca28`)
+            fill_circle_2(self.context_trace, p.pout2, self.gravithrust.diameter*0.7, "#ca28")
+            fill_circle_2(self.context_trace, p.pout, self.gravithrust.diameter*0.9, "#ca28")
+        }
     }
     for (let lid = 0; lid < self.gravithrust.links_count(); lid++) {
         const l = link_js(links_js_view, lid*link_js_size);
-        fill_circle_2(self.context, l, self.gravithrust.diameter , "#da4")
+        if (l.ak != Kind.Sun && l.bk != Kind.Sun) {
+            fill_circle_2(self.context, l, self.gravithrust.diameter , "#da4")
+        } else {
+            fill_circle_2(self.context_trace, l, self.gravithrust.diameter , "#ca28")
+        }
+        // 
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (p.k != 3 && p.k != 2) {
+        if (
+            p.k != Kind.Booster
+            && p.k != Kind.Ray
+            && p.k != Kind.Core
+            && p.k != Kind.Sun
+            && p.k != Kind.SunCore
+        ) {
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#da4")
         }
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (p.k == 2 ) {
+        if (p.k == Kind.Core ) {
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#c83")
         }
     }
@@ -220,6 +253,7 @@ const draw = (self) => {
     document.querySelector("#duration").innerHTML = parseInt(duration)
     document.querySelector("#step").innerHTML = self.gravithrust.step
     document.querySelector("#particles_count").innerHTML = self.gravithrust.particles_count()
+    document.querySelector("#ships_count").innerHTML = self.gravithrust.ships_count()
     document.querySelector("#update_duration").innerHTML = average(self.update_durations).toFixed(1)
     self.frame_durations.push(performance.now() - frame_start)
     while (self.frame_durations.length > 20) {

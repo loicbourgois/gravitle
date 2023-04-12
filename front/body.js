@@ -11,6 +11,10 @@ const body = `
   </div>
   <canvas id="canvas_2"></canvas>
   <div>
+    <label>ships:               </label>
+    <label id="ships_count">...</label>
+  </div>
+  <div>
     <label>particles:           </label>
     <label id="particles_count">...</label>
   </div>

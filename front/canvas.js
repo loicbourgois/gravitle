@@ -1,4 +1,4 @@
-let draw_zoom = 2.25
+let draw_zoom = 3.25
 let draw_center = [0.5, 0.5]
 
 

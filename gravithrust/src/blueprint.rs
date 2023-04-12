@@ -3,9 +3,9 @@ use crate::kind::Kind;
 use crate::link::Link;
 use crate::math::rotate;
 use crate::math::Vector;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RawBlueprint {
     name: String,
@@ -41,7 +41,6 @@ pub struct Blueprint {
     #[wasm_bindgen(skip)]
     pub translate_right: Vec<usize>,
 }
-
 #[wasm_bindgen]
 pub struct ParticleBlueprint {
     #[wasm_bindgen(skip)]
@@ -49,12 +48,14 @@ pub struct ParticleBlueprint {
     #[wasm_bindgen(skip)]
     pub k: Kind,
 }
-
 pub fn load_raw_blueprint(r_blueprint: &RawBlueprint, diameter: f32) -> Blueprint {
     let mut particles = vec![];
     let mut links = vec![];
     particles.push(ParticleBlueprint {
-        p: Vector { x: 0.0, y: 0.0 },
+        p: Vector {
+            x: 0.0,
+            y: 0.0,
+        },
         k: kindstr_to_kind(&r_blueprint.base_particles[0]),
     });
     particles.push(ParticleBlueprint {

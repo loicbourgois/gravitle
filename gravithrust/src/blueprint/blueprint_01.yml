@@ -6,7 +6,7 @@
   \  /  \  /  \  /
    08----07----09
     ",
-    name: plouf,
+    name: __,
     forward: [8, 9],
     slow: [4, 3],
     left: [4, 9],

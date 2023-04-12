@@ -12,14 +12,16 @@ pub struct Particle {
     pub m: f32,
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
+    pub e: i32, // energy
     pub grid_id: usize,
     pub idx: usize,
 }
-
 pub fn is_static(p: &Particle) -> bool {
-    matches!(p.k, Kind::Sun | Kind::Metal | Kind::Depot | Kind::Anchor)
+    matches!(
+        p.k,
+        Kind::SunCore | Kind::Metal | Kind::Depot | Kind::Anchor
+    )
 }
-
 pub fn do_collision(p: &Particle) -> bool {
     !matches!(p.k, Kind::Target | Kind::Anchor)
 }

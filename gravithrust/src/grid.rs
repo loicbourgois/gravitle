@@ -6,7 +6,6 @@ pub struct Grid {
     pub gids: Vec<Vec<usize>>,  // grid ids
     pub side: usize,
 }
-
 impl Grid {
     pub fn new(side: usize) -> Grid {
         let mut grid = Grid {
@@ -58,18 +57,15 @@ impl Grid {
         }
     }
 }
-
 pub fn grid_id(x: usize, y: usize, side: usize) -> usize {
     (y % side) * side + x % side
 }
-
 pub fn grid_id_particle(particle: &Particle, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (particle.p.x * side_f32) as usize;
     let y: usize = (particle.p.y * side_f32) as usize;
     grid_id(x, y, side)
 }
-
 pub fn grid_id_position(position: Vector, side: usize) -> usize {
     let side_f32: f32 = side as f32;
     let x: usize = (position.x * side_f32) as usize;
