@@ -216,7 +216,7 @@ impl Gravithrust {
     }
 
     pub fn particle_size_internal() -> usize {
-        14 * 4
+        15 * 4
     }
 
     pub fn particles_count(&self) -> u32 {
@@ -323,7 +323,23 @@ impl Gravithrust {
                     let mut ok = true;
                     for condition in &task.conditions {
                         match condition {
-                            Condition::StorageNotFull => {}
+                            Condition::StorageNotFull => {
+                                let mut storage_max = 0;
+                                let mut content = 0;
+                                for pid in &ship_more.pids {
+                                    let p = &self.particles[*pid];
+                                    if p.k == Kind::PlasmaCargo || p.k == Kind::PlasmaCollector {
+                                        content += p.content;
+                                        storage_max += 1;
+                                    }
+                                }
+                                // log(&format!("{} - {}", content, storage_max));
+                                if content >= storage_max {
+                                    // log("full!!");
+                                    ship_more.target_pid = None;
+                                    ok = false
+                                }
+                            }
                             Condition::StorageFull => {}
                         }
                         if !ok {
@@ -362,7 +378,7 @@ impl Gravithrust {
         let l = self.ships_more.len();
         for sid in 0..l {
             self.check_job(sid);
-            let mut s = &mut self.ships_more[sid];
+            let s = &mut self.ships_more[sid];
             let mut ship = &mut self.ships[sid];
             match s.target_pid {
                 Some(pid) => {

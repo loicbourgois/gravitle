@@ -109,7 +109,7 @@ const start_sound = (ship_count, simulation) => {
 
 const setup = (wasm, yml_blueprints) => {
   const gravithrust = Gravithrust.new(
-    0.005, // diameter
+    0.0025, // diameter
     32, // substep per tick
     0.000000004, // max_rotation_speed
     128, // grid_side
@@ -120,25 +120,20 @@ const setup = (wasm, yml_blueprints) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-  // gravithrust.add_particle(0.35, 0.35, "target");
-  // gravithrust.add_particle(0.35, 0.65, "target");
-  // gravithrust.add_particle(0.65, 0.65, "target");
-  // gravithrust.add_particle(0.65, 0.35, "target");
   const structure_pid = gravithrust.add_structure(yml_blueprints[2], 0.5, 0.5)
   console.log(structure_pid)
   const anchor_pid = gravithrust.add_particle(0.55,  0.5, "anchor")
   const sid = gravithrust.add_ship(yml_blueprints[3], 0.55, 0.5)
   gravithrust.set_anchor(sid, anchor_pid)
   gravithrust.set_target(sid, structure_pid)
-  for (let index = 0; index < 5; index++) {
-    // gravithrust.add_ship(yml_blueprints[Math.floor(Math.random()*2)], Math.random(), Math.random())
+  for (let index = 0; index < 1; index++) {
     let sid_2 = gravithrust.add_ship(yml_blueprints[1], Math.random(), Math.random())
     gravithrust.set_job(
       sid_2, 
       JSON.stringify({
         tasks: [
           {
-                conditions: [],
+                conditions: ["StorageNotFull"],
                 action: "CollectElectroFieldPlasma"
             }
         ]

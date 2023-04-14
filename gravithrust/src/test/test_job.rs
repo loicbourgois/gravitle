@@ -41,7 +41,7 @@ fn test_job() {
     let job_json = r#"{
         "tasks": [
             {
-                "conditions": [],
+                "conditions": ["StorageNotFull"],
                 "action": "CollectElectroFieldPlasma"
             }
         ]

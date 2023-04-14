@@ -70,5 +70,5 @@ fn size() {
     assert!(mem::size_of::<Ship>() == Gravithrust::ship_size_internal());
     println!("{}", mem::size_of::<Particle>());
     println!("{}", Gravithrust::particle_size_internal());
-    assert!(mem::size_of::<Particle>() == Gravithrust::particle_size_internal() + 8);
+    assert!(mem::size_of::<Particle>() == Gravithrust::particle_size_internal() + 12);
 }

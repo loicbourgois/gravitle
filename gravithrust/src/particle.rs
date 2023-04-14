@@ -13,6 +13,7 @@ pub struct Particle {
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
     pub e: i32, // energy
+    pub content: i32,
     pub grid_id: usize,
     pub idx: usize,
 }
@@ -22,6 +23,7 @@ pub struct ParticleInternal {
     pub direction: Vector,
     pub sid: Option<usize>,
     pub new_kind: Vec<Kind>,
+    pub new_content: Vec<i32>,
 }
 pub fn is_static(p: &Particle) -> bool {
     matches!(

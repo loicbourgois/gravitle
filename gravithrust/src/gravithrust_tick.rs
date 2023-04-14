@@ -50,6 +50,7 @@ pub fn add_particle_2(
         idx: pid,
         grid_id: 0,
         e: 0,
+        content: 0,
     });
     particles_internal.push(ParticleInternal {
         dp: Vector::default(),
@@ -57,6 +58,7 @@ pub fn add_particle_2(
         direction: Vector::default(),
         sid,
         new_kind: vec![],
+        new_content: vec![],
     });
     pid
 }
@@ -117,17 +119,31 @@ pub fn compute_collision_responses(
                         let wa = wrap_around(p1.p, p2.p);
                         if wa.d_sqrd < diameter_sqrd {
                             match (p1.k, p2.k) {
-                                (Kind::Sun, Kind::ElectroField) => particles_internal[p2.idx]
-                                    .new_kind
-                                    .push(Kind::ElectroFieldPlasma),
-                                (Kind::ElectroField, Kind::Sun) => particles_internal[p1.idx]
-                                    .new_kind
-                                    .push(Kind::ElectroFieldPlasma),
+                                (Kind::Sun, Kind::ElectroField) => {
+                                    let p = &mut particles_internal[p2.idx];
+                                    p.new_kind.push(Kind::ElectroFieldPlasma);
+                                    p.new_content.push(1);
+                                }
+                                (Kind::ElectroField, Kind::Sun) => {
+                                    let p = &mut particles_internal[p1.idx];
+                                    p.new_kind.push(Kind::ElectroFieldPlasma);
+                                    p.new_content.push(1);
+                                }
                                 (Kind::ElectroFieldPlasma, Kind::PlasmaCollector) => {
-                                    particles_internal[p1.idx].new_kind.push(Kind::ElectroField)
+                                    let p1 = &mut particles_internal[p1.idx];
+                                    p1.new_kind.push(Kind::ElectroField);
+                                    p1.new_content.push(-1);
+                                    let p2 = &mut particles_internal[p2.idx];
+                                    p2.new_kind.push(Kind::PlasmaCollector);
+                                    p2.new_content.push(1);
                                 }
                                 (Kind::PlasmaCollector, Kind::ElectroFieldPlasma) => {
-                                    particles_internal[p2.idx].new_kind.push(Kind::ElectroField)
+                                    let p1 = &mut particles_internal[p1.idx];
+                                    p1.new_kind.push(Kind::PlasmaCollector);
+                                    p1.new_content.push(1);
+                                    let p2 = &mut particles_internal[p2.idx];
+                                    p2.new_kind.push(Kind::ElectroField);
+                                    p2.new_content.push(-1);
                                 }
                                 _ => {}
                             }
@@ -235,6 +251,7 @@ pub fn update_particles(
             0 => {}
             1 => {
                 p1.k = d1.new_kind[0];
+                p1.content += d1.new_content[0];
             }
             _ => log(&format!(
                 "too many new kinds {:?} -> {:?}",
@@ -248,6 +265,7 @@ pub fn update_particles(
         d1.direction.x = 0.0;
         d1.direction.y = 0.0;
         d1.new_kind.clear();
+        d1.new_content.clear();
         p1.a = 0;
         p1.v.x = p1.v.x.max(-diameter * 0.5);
         p1.v.x = p1.v.x.min(diameter * 0.5);
