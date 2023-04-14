@@ -55,14 +55,6 @@ impl ops::Sub<Vector> for Vector {
         }
     }
 }
-#[wasm_bindgen]
-#[derive(Debug)]
-pub struct Delta {
-    pub p: Vector,
-    pub v: Vector,
-    pub direction: Vector,
-    pub sid: Option<usize>,
-}
 #[derive(Clone, Debug)]
 pub struct WrapAroundResponse {
     pub a: Vector,

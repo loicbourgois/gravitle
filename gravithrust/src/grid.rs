@@ -16,12 +16,12 @@ impl Grid {
         for y in 0..side {
             for x in 0..side {
                 let grid_xs = [
-                    (x - 1 + side) % side,
+                    (x + side - 1) % side,
                     (x + side) % side,
                     (x + 1 + side) % side,
                 ];
                 let grid_ys = [
-                    (y - 1 + side) % side,
+                    (y + side - 1) % side,
                     (y + side) % side,
                     (y + 1 + side) % side,
                 ];

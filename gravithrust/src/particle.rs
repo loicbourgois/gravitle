@@ -16,6 +16,13 @@ pub struct Particle {
     pub grid_id: usize,
     pub idx: usize,
 }
+pub struct ParticleInternal {
+    pub dp: Vector, // delta position
+    pub dv: Vector, // delta velocity
+    pub direction: Vector,
+    pub sid: Option<usize>,
+    pub new_kind: Vec<Kind>,
+}
 pub fn is_static(p: &Particle) -> bool {
     matches!(
         p.k,

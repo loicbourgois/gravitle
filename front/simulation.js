@@ -182,18 +182,10 @@ const draw = (self) => {
             }
         }
         if (p.k == Kind.Ray ) {
-            // if (p.a == 1) {
-                // fill_circle_2(self.context, p.pout2, self.gravithrust.diameter*0.7, "#c22")
-                // fill_circle_2(self.context, p.pout, self.gravithrust.diameter*0.9, "#c00")
-                const r = 255*0.0
-                const g = 255*0.0
-                const b = 255*( 0.5 + p.e/5000 )
-                fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, `rgb(${r},${g},${b})`)
-                
-                // fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, "#d20")
-            // } else {
-            //     fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#b40")
-            // }
+            const r = 255*0.0
+            const g = 255*( p.e/2500 )
+            const b = 255*( 0.5 + p.e/2500 )
+            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, `rgb(${r},${g},${b})`)
         }
         if (p.k == Kind.Sun) {
             fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, `#ca28`)
@@ -208,16 +200,25 @@ const draw = (self) => {
         } else {
             fill_circle_2(self.context_trace, l, self.gravithrust.diameter , "#ca28")
         }
-        // 
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (
+        if (p.k == Kind.ElectroField) {
+            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#88f")
+        }
+        else if (p.k == Kind.ElectroFieldPlasma) {
+            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#88f")
+            fill_circle_2(self.context, p.p, self.gravithrust.diameter*0.5, "#da4")
+            fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1.5, "#ca28")
+        }
+        else if (
             p.k != Kind.Booster
             && p.k != Kind.Ray
             && p.k != Kind.Core
             && p.k != Kind.Sun
             && p.k != Kind.SunCore
+            && p.k != Kind.ElectroField
+            && p.k != Kind.ElectroFieldPlasma
         ) {
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#da4")
         }

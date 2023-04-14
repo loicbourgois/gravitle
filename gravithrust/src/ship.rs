@@ -1,3 +1,4 @@
+use crate::job::Job;
 use crate::math::wrap_around;
 use crate::math::Vector;
 use crate::particle::Particle;
@@ -16,7 +17,8 @@ pub struct ShipMore {
     pub pids: Vec<usize>,
     pub ship_control: ShipControl,
     pub anchor_pid: Option<usize>,
-    pub target_pid: usize,
+    pub target_pid: Option<usize>,
+    pub job: Option<Job>,
 }
 pub struct ShipControl {
     pub forward: Vec<usize>,

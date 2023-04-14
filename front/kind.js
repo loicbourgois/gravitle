@@ -14,6 +14,8 @@ const Kind = {
     // Field   = 13,
     // Anchor  = 14
     SunCore: 15,
+    ElectroField: 16,
+    ElectroFieldPlasma: 17,
 }
 export {
     Kind,

@@ -8,6 +8,10 @@ use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
 use crate::gravithrust_tick::update_particles;
 use crate::grid::Grid;
+use crate::job::Action;
+use crate::job::Condition;
+use crate::job::Job;
+use crate::job::Task;
 use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
 use crate::link::Link;
@@ -19,10 +23,10 @@ use crate::math::cross;
 use crate::math::normalize_2;
 use crate::math::radians;
 use crate::math::wrap_around;
-use crate::math::Delta;
 use crate::math::Vector;
 use crate::math::WrapAroundResponse;
 use crate::particle::Particle;
+use crate::particle::ParticleInternal;
 use crate::particle::Particles;
 use crate::ship::ship_orientation;
 use crate::ship::ship_position;
@@ -37,7 +41,7 @@ pub struct Gravithrust {
     ships: Vec<Ship>,
     links: Vec<Link>,
     links_js: Vec<LinkJS>,
-    deltas: Vec<Delta>,
+    particles_internal: Vec<ParticleInternal>,
     ships_more: Vec<ShipMore>,
     pub diameter: f32,
     grid: Grid,
@@ -70,7 +74,7 @@ impl Gravithrust {
         Gravithrust {
             particles: vec![],
             links: vec![],
-            deltas: vec![],
+            particles_internal: vec![],
             ships: vec![],
             ships_more: vec![],
             links_js: vec![],
@@ -101,7 +105,7 @@ impl Gravithrust {
         )
     }
 
-    pub fn add_structure(&mut self, yml_blueprint: &str, x: f32, y: f32) {
+    pub fn add_structure(&mut self, yml_blueprint: &str, x: f32, y: f32) -> usize {
         let raw_blueprint: RawBlueprint = serde_yaml::from_str(yml_blueprint).unwrap();
         let blueprint = load_raw_blueprint(&raw_blueprint, self.diameter);
         self.add_structure_internal(
@@ -111,7 +115,7 @@ impl Gravithrust {
                 y,
             },
             None,
-        );
+        )[0]
     }
 
     pub fn add_particle(&mut self, x: f32, y: f32, kind: &str) -> usize {
@@ -126,7 +130,7 @@ impl Gravithrust {
     }
 
     pub fn add_particle_inner(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
-        add_particle(&mut self.particles, &mut self.deltas, p, k, sid)
+        add_particle(&mut self.particles, &mut self.particles_internal, p, k, sid)
     }
 
     pub fn set_anchor(&mut self, sid: usize, pid: usize) {
@@ -134,7 +138,7 @@ impl Gravithrust {
     }
 
     pub fn set_target(&mut self, sid: usize, pid: usize) {
-        self.ships_more[sid].target_pid = pid;
+        self.ships_more[sid].target_pid = Some(pid);
     }
 
     pub fn add_structure_internal(
@@ -193,7 +197,8 @@ impl Gravithrust {
                 translate_right: blueprint.translate_right.clone(),
             },
             anchor_pid: None,
-            target_pid: self.ships.len() % 4,
+            target_pid: None,
+            job: None,
         };
         self.ships.push(ship);
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
@@ -261,23 +266,34 @@ impl Gravithrust {
     pub fn links_js_size(&self) -> u32 {
         (self.links_js.len() * self.link_js_size_()) as u32
     }
-}
-#[wasm_bindgen]
-impl Gravithrust {
+
     pub fn ticks(&mut self) {
         for _ in 0..self.sub_steps {
             self.tick();
         }
     }
 
+    pub fn set_job(&mut self, sid: usize, job_json: &str) {
+        self.set_job_internal(sid, serde_json::from_str(&job_json).unwrap());
+    }
+}
+impl Gravithrust {
+    pub fn set_job_internal(&mut self, sid: usize, job: Job) {
+        self.ships_more[sid].job = Some(job);
+    }
+
     fn tick(&mut self) {
-        add_particles(self.diameter, &mut self.particles, &mut self.deltas);
+        add_particles(
+            self.diameter,
+            &mut self.particles,
+            &mut self.particles_internal,
+        );
         self.grid.update_01();
         self.grid.update_02(&mut self.particles);
         compute_collision_responses(
             self.diameter,
             &mut self.particles,
-            &mut self.deltas,
+            &mut self.particles_internal,
             &self.grid,
             &mut self.ships,
             &self.ships_more,
@@ -285,18 +301,75 @@ impl Gravithrust {
         compute_link_responses(
             self.diameter,
             &mut self.particles,
-            &mut self.deltas,
+            &mut self.particles_internal,
             &mut self.links,
             &mut self.links_js,
         );
         update_particles(
             self.diameter,
             &mut self.particles,
-            &mut self.deltas,
+            &mut self.particles_internal,
             self.booster_acceleration,
         );
-        for (sid, s) in self.ships_more.iter_mut().enumerate() {
+        self.update_ships();
+        self.step += 1;
+    }
+
+    fn check_job(&mut self, sid: usize) {
+        let mut ship_more = &mut self.ships_more[sid];
+        match &ship_more.job {
+            Some(job) => {
+                for task in &job.tasks {
+                    let mut ok = true;
+                    for condition in &task.conditions {
+                        match condition {
+                            Condition::StorageNotFull => {}
+                            Condition::StorageFull => {}
+                        }
+                        if !ok {
+                            continue;
+                        }
+                    }
+                    if ok {
+                        match task.action {
+                            Action::CollectElectroFieldPlasma => match ship_more.target_pid {
+                                None => {
+                                    for p in &self.particles {
+                                        if p.k == Kind::ElectroFieldPlasma {
+                                            ship_more.target_pid = Some(p.idx);
+                                            log(&format!("plouf {}", p.idx));
+                                            break;
+                                        }
+                                    }
+                                }
+                                Some(target_pid) => {
+                                    if self.particles[target_pid].k != Kind::ElectroFieldPlasma {
+                                        ship_more.target_pid = None;
+                                    }
+                                }
+                            },
+                            Action::DeliverPlasma => {}
+                        }
+                        break;
+                    }
+                }
+            }
+            None => {}
+        }
+    }
+
+    fn update_ships(&mut self) {
+        let l = self.ships_more.len();
+        for sid in 0..l {
+            self.check_job(sid);
+            let mut s = &mut self.ships_more[sid];
             let mut ship = &mut self.ships[sid];
+            match s.target_pid {
+                Some(pid) => {
+                    ship.target = self.particles[pid].p;
+                }
+                None => {}
+            };
             ship.pp = ship.p;
             ship.p = ship_position(&self.particles, s);
             let position_wa = wrap_around(ship.pp, ship.p);
@@ -311,8 +384,8 @@ impl Gravithrust {
                 normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
             let slow_down_max_angle_better = radians(self.slow_down_max_angle / 2.0).sin();
             let rotation_speed = cross(ship.orientation, previous_orientation);
-            let movement_action = match s.anchor_pid {
-                Some(anchor_pid) => anchor_target_movement_action(
+            let movement_action = match (s.anchor_pid, s.target_pid) {
+                (Some(anchor_pid), Some(target_pid)) => anchor_target_movement_action(
                     rotation_speed,
                     self.max_rotation_speed,
                     slow_down_max_angle_better,
@@ -320,8 +393,9 @@ impl Gravithrust {
                     s,
                     &self.particles,
                     anchor_pid,
+                    target_pid,
                 ),
-                _ => target_only_movement_action(
+                (None, Some(target_pid)) => target_only_movement_action(
                     self.forward_max_speed,
                     &mut self.points,
                     self.max_speed_at_target,
@@ -335,16 +409,18 @@ impl Gravithrust {
                     ship,
                     s,
                     &target_delta_wa,
+                    target_pid,
                 ),
+                _ => "-",
             };
             for pid in &s.pids {
                 self.particles[*pid].a = 0;
             }
             apply_movement_action(&mut self.particles, movement_action, s);
-            match s.anchor_pid {
-                Some(anchor_pid) => {
+            match (s.anchor_pid, s.target_pid) {
+                (Some(anchor_pid), Some(target_pid)) => {
                     let anchor = self.particles[anchor_pid].p;
-                    let target = self.particles[s.target_pid].p;
+                    let target = self.particles[target_pid].p;
                     let anchor_delta = wrap_around(ship.p, anchor);
                     let ray_particle = &mut self.particles[s.pids[0]];
                     let uu = normalize_2(wrap_around(ship.p, target).d);
@@ -356,19 +432,17 @@ impl Gravithrust {
                         let aa = ray_particle.p + ray_particle.direction * self.diameter * 1.75;
                         add_particle_2(
                             &mut self.particles,
-                            &mut self.deltas,
+                            &mut self.particles_internal,
                             aa,
                             uu * self.diameter * 0.01,
-                            Kind::Light,
+                            Kind::ElectroField,
                             None,
                         );
                     }
                 }
-                None => {}
+                _ => {}
             }
-            //
         }
-        self.step += 1;
     }
 }
 fn apply_movement_action(particles: &mut Particles, movement_action: &str, ship_more: &ShipMore) {
@@ -415,9 +489,10 @@ fn anchor_target_movement_action<'a>(
     ship_more: &ShipMore,
     particles: &Particles,
     anchor_pid: usize,
+    target_pid: usize,
 ) -> &'a str {
     let anchor = particles[anchor_pid].p;
-    let target = particles[ship_more.target_pid].p;
+    let target = particles[target_pid].p;
     let target_delta = wrap_around(ship.p, target);
     let target_delta_old = wrap_around(ship.pp, target);
     let target_to_anchor = wrap_around(anchor, target);
@@ -459,7 +534,7 @@ fn anchor_target_movement_action<'a>(
 fn target_only_movement_action<'a>(
     forward_max_speed: f32,
     points: &mut u32,
-    max_speed_at_target: f32,
+    max_speed_to_target: f32,
     slow_down_max_speed_to_target_ratio: f32,
     forward_max_angle: f32,
     max_rotation_speed: f32,
@@ -470,29 +545,19 @@ fn target_only_movement_action<'a>(
     ship: &mut Ship,
     ship_more: &mut ShipMore,
     target_delta_wa: &WrapAroundResponse,
+    target_id: usize,
 ) -> &'a str {
+    let pt = &particles[target_id];
+    let wa1 = wrap_around(ship.pp, pt.pp);
+    let wa2 = wrap_around(ship.p, pt.p);
+    let target_vs_ship_delta_v = wa1.d_sqrd.sqrt() - wa2.d_sqrd.sqrt();
     let old_target_delta = wrap_around(ship.pp, ship.target);
     let distance_to_target = target_delta_wa.d_sqrd.sqrt();
-    let speed_toward_target = old_target_delta.d_sqrd.sqrt() - distance_to_target;
-    if ship.on_target >= 1 && speed.abs() < max_speed_at_target {
-        *points += 1;
-        if ship_more.target_pid == 0 {
-            ship_more.target_pid = 1;
-        } else if ship_more.target_pid == 1 {
-            ship_more.target_pid = 2;
-        } else if ship_more.target_pid == 2 {
-            ship_more.target_pid = 3;
-        } else {
-            ship_more.target_pid = 0;
-        }
-    }
-    ship.target = particles[ship_more.target_pid].p;
-    ship.on_target = 0;
     let orientation_angle_corrected_2 = angle(normalize_2(ship.cross), normalize_2(ship.td));
     let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
     if orientation_angle_corrected_2.abs() < slow_down_max_angle / 2.0
-        && speed_toward_target
-            > (max_speed_at_target * 0.75)
+        && target_vs_ship_delta_v
+            > (max_speed_to_target * 0.75)
                 .max(distance_to_target * slow_down_max_speed_to_target_ratio)
     {
         "slow down"

@@ -3,6 +3,7 @@ mod blueprint;
 mod gravithrust;
 mod gravithrust_tick;
 mod grid;
+mod job;
 mod kind;
 mod link;
 mod math;

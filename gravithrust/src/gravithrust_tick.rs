@@ -3,14 +3,15 @@ use crate::grid::Grid;
 use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
+use crate::log;
 use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
 use crate::math::wrap_around;
-use crate::math::Delta;
 use crate::math::Vector;
 use crate::particle;
 use crate::particle::Particle;
+use crate::particle::ParticleInternal;
 use crate::particle::Particles;
 use crate::ship::Ship;
 use crate::ship::ShipMore;
@@ -22,16 +23,16 @@ struct ParticleModel {
 }
 pub fn add_particle(
     particles: &mut Vec<Particle>,
-    deltas: &mut Vec<Delta>,
+    particles_internal: &mut Vec<ParticleInternal>,
     p: Vector,
     k: Kind,
     sid: Option<usize>,
 ) -> usize {
-    add_particle_2(particles, deltas, p, Vector::default(), k, sid)
+    add_particle_2(particles, particles_internal, p, Vector::default(), k, sid)
 }
 pub fn add_particle_2(
     particles: &mut Vec<Particle>,
-    deltas: &mut Vec<Delta>,
+    particles_internal: &mut Vec<ParticleInternal>,
     position: Vector,
     velocity: Vector,
     k: Kind,
@@ -50,15 +51,20 @@ pub fn add_particle_2(
         grid_id: 0,
         e: 0,
     });
-    deltas.push(Delta {
-        p: Vector::default(),
-        v: Vector::default(),
+    particles_internal.push(ParticleInternal {
+        dp: Vector::default(),
+        dv: Vector::default(),
         direction: Vector::default(),
         sid,
+        new_kind: vec![],
     });
     pid
 }
-pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut Vec<Delta>) {
+pub fn add_particles(
+    diameter: f32,
+    particles: &mut Vec<Particle>,
+    particles_internal: &mut Vec<ParticleInternal>,
+) {
     let mut particles_to_add = vec![];
     for p1 in particles.iter() {
         if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < -1.0 {
@@ -73,7 +79,7 @@ pub fn add_particles(diameter: f32, particles: &mut Vec<Particle>, deltas: &mut 
         }
     }
     for x in &particles_to_add {
-        add_particle(particles, deltas, x.p, x.k, x.sid);
+        add_particle(particles, particles_internal, x.p, x.k, x.sid);
     }
 }
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
@@ -93,7 +99,7 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
 pub fn compute_collision_responses(
     diameter: f32,
     particles: &mut Vec<Particle>,
-    deltas: &mut [Delta],
+    particles_internal: &mut [ParticleInternal],
     grid: &Grid,
     ships: &mut [Ship],
     ships_more: &[ShipMore],
@@ -110,44 +116,53 @@ pub fn compute_collision_responses(
                     if p1.idx < p2.idx {
                         let wa = wrap_around(p1.p, p2.p);
                         if wa.d_sqrd < diameter_sqrd {
-                            {
-                                let d1 = &deltas[p1.idx];
-                                match d1.sid {
-                                    Some(sid) => {
-                                        if ships_more[sid].target_pid == p2.idx {
-                                            ships[sid].on_target += 1;
-                                        }
-                                    }
-                                    None => {}
+                            match (p1.k, p2.k) {
+                                (Kind::Sun, Kind::ElectroField) => particles_internal[p2.idx]
+                                    .new_kind
+                                    .push(Kind::ElectroFieldPlasma),
+                                (Kind::ElectroField, Kind::Sun) => particles_internal[p1.idx]
+                                    .new_kind
+                                    .push(Kind::ElectroFieldPlasma),
+                                (Kind::ElectroFieldPlasma, Kind::PlasmaCollector) => {
+                                    particles_internal[p1.idx].new_kind.push(Kind::ElectroField)
                                 }
+                                (Kind::PlasmaCollector, Kind::ElectroFieldPlasma) => {
+                                    particles_internal[p2.idx].new_kind.push(Kind::ElectroField)
+                                }
+                                _ => {}
                             }
-                            {
-                                let d2 = &deltas[p2.idx];
-                                match d2.sid {
-                                    Some(sid) => {
-                                        if ships_more[sid].target_pid == p1.idx {
-                                            ships[sid].on_target += 1;
-                                        }
+                            match particles_internal[p1.idx].sid {
+                                Some(sid) => {
+                                    if ships_more[sid].target_pid == Some(p2.idx) {
+                                        ships[sid].on_target += 1;
                                     }
-                                    None => {}
                                 }
+                                None => {}
+                            }
+                            match particles_internal[p2.idx].sid {
+                                Some(sid) => {
+                                    if ships_more[sid].target_pid == Some(p1.idx) {
+                                        ships[sid].on_target += 1;
+                                    }
+                                }
+                                None => {}
                             }
                             if particle::do_collision(p1) && particle::do_collision(p2) {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
                                     {
-                                        let d1 = &mut deltas[p1.idx];
-                                        d1.v.x += cr.x * crdv;
-                                        d1.v.y += cr.y * crdv;
-                                        d1.p.x -= wa.d.x * crdp;
-                                        d1.p.y -= wa.d.y * crdp;
+                                        let d1 = &mut particles_internal[p1.idx];
+                                        d1.dv.x += cr.x * crdv;
+                                        d1.dv.y += cr.y * crdv;
+                                        d1.dp.x -= wa.d.x * crdp;
+                                        d1.dp.y -= wa.d.y * crdp;
                                     }
                                     {
-                                        let d2 = &mut deltas[p2.idx];
-                                        d2.v.x -= cr.x * crdv;
-                                        d2.v.y -= cr.y * crdv;
-                                        d2.p.x += wa.d.x * crdp;
-                                        d2.p.y += wa.d.y * crdp;
+                                        let d2 = &mut particles_internal[p2.idx];
+                                        d2.dv.x -= cr.x * crdv;
+                                        d2.dv.y -= cr.y * crdv;
+                                        d2.dp.x += wa.d.x * crdp;
+                                        d2.dp.y += wa.d.y * crdp;
                                     }
                                 }
                             }
@@ -161,7 +176,7 @@ pub fn compute_collision_responses(
 pub fn compute_link_responses(
     diameter: f32,
     particles: &mut [Particle],
-    deltas: &mut [Delta],
+    particles_internal: &mut [ParticleInternal],
     links: &mut [Link],
     links_js: &mut [LinkJS],
 ) {
@@ -177,16 +192,16 @@ pub fn compute_link_responses(
         let n = normalize(wa.d, d);
         if wa.d_sqrd > diameter * diameter && !n.x.is_nan() && !n.y.is_nan() {
             {
-                let d1 = &mut deltas[l.a];
-                d1.v.x -= n.x * factor;
-                d1.v.y -= n.y * factor;
+                let d1 = &mut particles_internal[l.a];
+                d1.dv.x -= n.x * factor;
+                d1.dv.y -= n.y * factor;
                 d1.direction.x -= wa.d.x;
                 d1.direction.y -= wa.d.y;
             }
             {
-                let d2 = &mut deltas[l.b];
-                d2.v.x += n.x * factor;
-                d2.v.y += n.y * factor;
+                let d2 = &mut particles_internal[l.b];
+                d2.dv.x += n.x * factor;
+                d2.dv.y += n.y * factor;
                 d2.direction.x += wa.d.x;
                 d2.direction.y += wa.d.y;
             }
@@ -196,17 +211,17 @@ pub fn compute_link_responses(
 pub fn update_particles(
     diameter: f32,
     particles: &mut [Particle],
-    deltas: &mut [Delta],
+    particles_internal: &mut [ParticleInternal],
     booster_acceleration: f32,
 ) {
     for (pid, p1) in particles.iter_mut().enumerate() {
-        let mut d1 = &mut deltas[pid];
+        let mut d1 = &mut particles_internal[pid];
         p1.direction = normalize_2(d1.direction);
         if !particle::is_static(p1) {
-            p1.v.x += d1.v.x;
-            p1.v.y += d1.v.y;
-            p1.p.x += d1.p.x;
-            p1.p.y += d1.p.y;
+            p1.v.x += d1.dv.x;
+            p1.v.y += d1.dv.y;
+            p1.p.x += d1.dp.x;
+            p1.p.y += d1.dp.y;
         }
         if p1.k == Kind::Booster && p1.a == 1 {
             p1.v.x -= d1.direction.x * booster_acceleration;
@@ -216,12 +231,23 @@ pub fn update_particles(
             p1.e += 1;
             p1.e = p1.e.min(5_000);
         }
-        d1.p.x = 0.0;
-        d1.p.y = 0.0;
-        d1.v.x = 0.0;
-        d1.v.y = 0.0;
+        match d1.new_kind.len() {
+            0 => {}
+            1 => {
+                p1.k = d1.new_kind[0];
+            }
+            _ => log(&format!(
+                "too many new kinds {:?} -> {:?}",
+                p1.k, d1.new_kind
+            )),
+        }
+        d1.dp.x = 0.0;
+        d1.dp.y = 0.0;
+        d1.dv.x = 0.0;
+        d1.dv.y = 0.0;
         d1.direction.x = 0.0;
         d1.direction.y = 0.0;
+        d1.new_kind.clear();
         p1.a = 0;
         p1.v.x = p1.v.x.max(-diameter * 0.5);
         p1.v.x = p1.v.x.min(diameter * 0.5);
