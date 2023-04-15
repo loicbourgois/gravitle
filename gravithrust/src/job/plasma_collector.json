@@ -1,0 +1,20 @@
+{
+    "tasks": [
+        {
+            "conditions": [
+                "StorageNotFull"
+            ],
+            "action": "CollectElectroFieldPlasma"
+        },
+        {
+            "conditions": [
+                "StorageFull"
+            ],
+            "action": "DeliverPlasma"
+        },
+        {
+            "conditions": [],
+            "action": "ResetTarget"
+        }
+    ]
+}

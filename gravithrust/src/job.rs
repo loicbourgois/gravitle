@@ -23,4 +23,5 @@ pub enum Condition {
 pub enum Action {
     CollectElectroFieldPlasma = 1,
     DeliverPlasma = 2,
+    ResetTarget   = 3,
 }

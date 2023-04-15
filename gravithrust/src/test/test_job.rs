@@ -1,14 +1,9 @@
-use crate::blueprint::load_raw_blueprint;
-use crate::blueprint::RawBlueprint;
 use crate::gravithrust::Gravithrust;
-use crate::job::Action;
-use crate::job::Job;
-use crate::job::Task;
+use anyhow::Result;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-#[test]
-fn test_job() {
+fn setup_simulation() -> Gravithrust {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let path = format!(
         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_02.yml",
@@ -30,21 +25,23 @@ fn test_job() {
         0.00025,     // slow_down_max_speed_to_target_ratio
         0.00005,     // booster_acceleration
     );
-    let sid = gravithrust.add_ship(&yaml, 0.55, 0.5);
-    let job = Job {
-        tasks: vec![Task {
-            conditions: vec![],
-            action: Action::CollectElectroFieldPlasma,
-        }],
-    };
-    gravithrust.set_job_internal(sid, job);
-    let job_json = r#"{
-        "tasks": [
-            {
-                "conditions": ["StorageNotFull"],
-                "action": "CollectElectroFieldPlasma"
-            }
-        ]
-    }"#;
-    gravithrust.set_job(sid, job_json);
+    let _ = gravithrust.add_ship(&yaml, 0.55, 0.5);
+    gravithrust
+}
+fn set_job_by_name(g: &mut Gravithrust, name: &str) -> Result<()> {
+    let envs = env::vars().collect::<HashMap<String, String>>();
+    let path = format!(
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/job/{}.json",
+        envs["HOME"], name,
+    );
+    let job_json = fs::read_to_string(path)?;
+    g.set_job(0, &job_json);
+    Ok(())
+}
+#[test]
+fn test_job() {
+    let mut g = setup_simulation();
+    for name in ["plasma_collector"] {
+        set_job_by_name(&mut g, name).unwrap();
+    }
 }

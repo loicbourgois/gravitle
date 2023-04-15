@@ -3,66 +3,83 @@ use crate::blueprint::RawBlueprint;
 use crate::gravithrust::Gravithrust;
 use crate::particle::Particle;
 use crate::ship::Ship;
+use anyhow::Result;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::mem;
 #[test]
 fn test_parse_blueprint() {
+    for name in vec![
+        "blueprint_01",
+        "blueprint_02",
+        "blueprint_03",
+        "blueprint_04",
+        "blueprint_05",
+    ] {
+        println!("testing {}", name);
+        match test_parse_blueprint_by_name(name) {
+            Ok(_) => {}
+            Err(err) => {
+                println!("error with {}", name);
+                panic!("{}", err);
+            }
+        }
+    }
+}
+fn test_parse_blueprint_by_name(name: &str) -> Result<()> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_01.yml",
-        envs["HOME"]
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/{}.yml",
+        envs["HOME"], name,
     );
-    let yaml = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_error) => panic!("Could not read file"),
-    };
-    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+    let yaml = fs::read_to_string(path)?;
+    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml)?;
     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+    Ok(())
 }
-#[test]
-fn test_parse_blueprint_2() {
-    let envs = env::vars().collect::<HashMap<String, String>>();
-    let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_02.yml",
-        envs["HOME"]
-    );
-    let yaml = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_error) => panic!("Could not read file"),
-    };
-    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
-    let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
-}
-#[test]
-fn test_parse_blueprint_3() {
-    let envs = env::vars().collect::<HashMap<String, String>>();
-    let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_03.yml",
-        envs["HOME"]
-    );
-    let yaml = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_error) => panic!("Could not read file"),
-    };
-    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
-    let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
-}
-#[test]
-fn test_parse_blueprint_4() {
-    let envs = env::vars().collect::<HashMap<String, String>>();
-    let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_04.yml",
-        envs["HOME"]
-    );
-    let yaml = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_error) => panic!("Could not read file"),
-    };
-    let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
-    let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
-}
+// #[test]
+// fn test_parse_blueprint_2() {
+//     let envs = env::vars().collect::<HashMap<String, String>>();
+//     let path = format!(
+//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_02.yml",
+//         envs["HOME"]
+//     );
+//     let yaml = match fs::read_to_string(path) {
+//         Ok(content) => content,
+//         Err(_error) => panic!("Could not read file"),
+//     };
+//     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+//     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+// }
+// #[test]
+// fn test_parse_blueprint_3() {
+//     let envs = env::vars().collect::<HashMap<String, String>>();
+//     let path = format!(
+//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_03.yml",
+//         envs["HOME"]
+//     );
+//     let yaml = match fs::read_to_string(path) {
+//         Ok(content) => content,
+//         Err(_error) => panic!("Could not read file"),
+//     };
+//     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+//     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+// }
+// #[test]
+// fn test_parse_blueprint_4() {
+//     let envs = env::vars().collect::<HashMap<String, String>>();
+//     let path = format!(
+//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_04.yml",
+//         envs["HOME"]
+//     );
+//     let yaml = match fs::read_to_string(path) {
+//         Ok(content) => content,
+//         Err(_error) => panic!("Could not read file"),
+//     };
+//     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml).unwrap();
+//     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
+// }
 #[test]
 fn size() {
     println!("{}", mem::size_of::<Ship>());

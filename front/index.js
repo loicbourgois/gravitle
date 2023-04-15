@@ -85,14 +85,19 @@ init().then( async (wasm) => {
   window.addEventListener("click", unzen_mode)
   window.addEventListener("keydown", unzen_mode)
   try {
-    const responses = await Promise.all([
+    const blueprint_responses = await Promise.all([
         fetch('./blueprint/blueprint_01.yml'),
         fetch('./blueprint/blueprint_02.yml'),
         fetch('./blueprint/blueprint_03.yml'),
         fetch('./blueprint/blueprint_04.yml'),
+        fetch('./blueprint/blueprint_05.yml'),
     ]);
-    const yml_blueprints = await Promise.all(responses.map(r => r.text()))
-    setup(wasm, yml_blueprints)
+    const job_responses = await Promise.all([
+        fetch('./job/plasma_collector.json'),
+    ]);
+    const yml_blueprints = await Promise.all(blueprint_responses.map(r => r.text()))
+    const json_jobs = await Promise.all(job_responses.map(r => r.text()))
+    setup(wasm, yml_blueprints, json_jobs)
   } catch (err) {
     throw err;
   }
@@ -107,7 +112,7 @@ const start_sound = (ship_count, simulation) => {
 }
 
 
-const setup = (wasm, yml_blueprints) => {
+const setup = (wasm, yml_blueprints, json_jobs) => {
   const gravithrust = Gravithrust.new(
     0.0025, // diameter
     32, // substep per tick
@@ -124,22 +129,16 @@ const setup = (wasm, yml_blueprints) => {
   console.log(structure_pid)
   const anchor_pid = gravithrust.add_particle(0.55,  0.5, "anchor")
   const sid = gravithrust.add_ship(yml_blueprints[3], 0.55, 0.5)
+  gravithrust.add_structure(yml_blueprints[4], 0.6, 0.6)
   gravithrust.set_anchor(sid, anchor_pid)
   gravithrust.set_target(sid, structure_pid)
-  for (let index = 0; index < 1; index++) {
-    let sid_2 = gravithrust.add_ship(yml_blueprints[1], Math.random(), Math.random())
-    gravithrust.set_job(
-      sid_2, 
-      JSON.stringify({
-        tasks: [
-          {
-                conditions: ["StorageNotFull"],
-                action: "CollectElectroFieldPlasma"
-            }
-        ]
-      })
-    )
-  }
+  let sid_2 = gravithrust.add_ship(yml_blueprints[1], 0.6, 0.4)
+  gravithrust.set_job(sid_2, json_jobs[0])
+  let sid_3 = gravithrust.add_ship(yml_blueprints[1], 0.4, 0.4)
+  gravithrust.set_job(sid_3, json_jobs[0])
+  // for (let index = 0; index < 1; index++) {
+    
+  // }
   const keys = [
     'forward_max_speed',
     'forward_max_angle',

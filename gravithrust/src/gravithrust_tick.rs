@@ -1,9 +1,10 @@
+use crate::alchemy::alchemy;
+use crate::error;
 use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
-use crate::log;
 use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::normalize_2;
@@ -12,9 +13,8 @@ use crate::math::Vector;
 use crate::particle;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
-use crate::particle::Particles;
-use crate::ship::Ship;
-use crate::ship::ShipMore;
+// use crate::ship::Ship;
+// use crate::ship::ShipMore;
 use rand::Rng;
 struct ParticleModel {
     p: Vector,
@@ -50,15 +50,14 @@ pub fn add_particle_2(
         idx: pid,
         grid_id: 0,
         e: 0,
-        content: 0,
+        volume: 0,
     });
     particles_internal.push(ParticleInternal {
         dp: Vector::default(),
         dv: Vector::default(),
         direction: Vector::default(),
         sid,
-        new_kind: vec![],
-        new_content: vec![],
+        new_state: None,
     });
     pid
 }
@@ -100,86 +99,38 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
 }
 pub fn compute_collision_responses(
     diameter: f32,
-    particles: &mut Vec<Particle>,
+    particles: &mut [Particle],
     particles_internal: &mut [ParticleInternal],
     grid: &Grid,
-    ships: &mut [Ship],
-    ships_more: &[ShipMore],
 ) {
     let crdp = 0.01; // collision response delta (position)
     let crdv = 0.90; // collision response delta (velocity)
     let diameter_sqrd = diameter * diameter;
     unsafe {
-        let particles_2 = particles as *mut Particles;
+        let particles_2 = particles as *mut [Particle];
+        let particles_internal_2 = particles_internal as *mut [ParticleInternal];
         for p1 in particles.iter_mut() {
             for ns in neighbours(&p1.p, grid) {
-                for idx in ns {
-                    let p2 = &mut (*particles_2)[*idx];
+                for pid2 in ns {
+                    let p2 = &mut (*particles_2)[*pid2];
                     if p1.idx < p2.idx {
                         let wa = wrap_around(p1.p, p2.p);
                         if wa.d_sqrd < diameter_sqrd {
-                            match (p1.k, p2.k) {
-                                (Kind::Sun, Kind::ElectroField) => {
-                                    let p = &mut particles_internal[p2.idx];
-                                    p.new_kind.push(Kind::ElectroFieldPlasma);
-                                    p.new_content.push(1);
-                                }
-                                (Kind::ElectroField, Kind::Sun) => {
-                                    let p = &mut particles_internal[p1.idx];
-                                    p.new_kind.push(Kind::ElectroFieldPlasma);
-                                    p.new_content.push(1);
-                                }
-                                (Kind::ElectroFieldPlasma, Kind::PlasmaCollector) => {
-                                    let p1 = &mut particles_internal[p1.idx];
-                                    p1.new_kind.push(Kind::ElectroField);
-                                    p1.new_content.push(-1);
-                                    let p2 = &mut particles_internal[p2.idx];
-                                    p2.new_kind.push(Kind::PlasmaCollector);
-                                    p2.new_content.push(1);
-                                }
-                                (Kind::PlasmaCollector, Kind::ElectroFieldPlasma) => {
-                                    let p1 = &mut particles_internal[p1.idx];
-                                    p1.new_kind.push(Kind::PlasmaCollector);
-                                    p1.new_content.push(1);
-                                    let p2 = &mut particles_internal[p2.idx];
-                                    p2.new_kind.push(Kind::ElectroField);
-                                    p2.new_content.push(-1);
-                                }
-                                _ => {}
-                            }
-                            match particles_internal[p1.idx].sid {
-                                Some(sid) => {
-                                    if ships_more[sid].target_pid == Some(p2.idx) {
-                                        ships[sid].on_target += 1;
-                                    }
-                                }
-                                None => {}
-                            }
-                            match particles_internal[p2.idx].sid {
-                                Some(sid) => {
-                                    if ships_more[sid].target_pid == Some(p1.idx) {
-                                        ships[sid].on_target += 1;
-                                    }
-                                }
-                                None => {}
-                            }
+                            let pi1 = &mut particles_internal[p1.idx];
+                            let pi2 = &mut (*particles_internal_2)[p2.idx];
+                            alchemy(p1, p2, pi1, pi2);
+                            alchemy(p2, p1, pi2, pi1);
                             if particle::do_collision(p1) && particle::do_collision(p2) {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
-                                    {
-                                        let d1 = &mut particles_internal[p1.idx];
-                                        d1.dv.x += cr.x * crdv;
-                                        d1.dv.y += cr.y * crdv;
-                                        d1.dp.x -= wa.d.x * crdp;
-                                        d1.dp.y -= wa.d.y * crdp;
-                                    }
-                                    {
-                                        let d2 = &mut particles_internal[p2.idx];
-                                        d2.dv.x -= cr.x * crdv;
-                                        d2.dv.y -= cr.y * crdv;
-                                        d2.dp.x += wa.d.x * crdp;
-                                        d2.dp.y += wa.d.y * crdp;
-                                    }
+                                    pi1.dv.x += cr.x * crdv;
+                                    pi1.dv.y += cr.y * crdv;
+                                    pi2.dv.x -= cr.x * crdv;
+                                    pi2.dv.y -= cr.y * crdv;
+                                    pi1.dp.x -= wa.d.x * crdp;
+                                    pi1.dp.y -= wa.d.y * crdp;
+                                    pi2.dp.x += wa.d.x * crdp;
+                                    pi2.dp.y += wa.d.y * crdp;
                                 }
                             }
                         }
@@ -233,7 +184,7 @@ pub fn update_particles(
     for (pid, p1) in particles.iter_mut().enumerate() {
         let mut d1 = &mut particles_internal[pid];
         p1.direction = normalize_2(d1.direction);
-        if !particle::is_static(p1) {
+        if !p1.k.is_static() {
             p1.v.x += d1.dv.x;
             p1.v.y += d1.dv.y;
             p1.p.x += d1.dp.x;
@@ -247,16 +198,12 @@ pub fn update_particles(
             p1.e += 1;
             p1.e = p1.e.min(5_000);
         }
-        match d1.new_kind.len() {
-            0 => {}
-            1 => {
-                p1.k = d1.new_kind[0];
-                p1.content += d1.new_content[0];
+        match &d1.new_state {
+            Some(state) => {
+                p1.k = state.kind;
+                p1.volume = state.volume;
             }
-            _ => log(&format!(
-                "too many new kinds {:?} -> {:?}",
-                p1.k, d1.new_kind
-            )),
+            _ => {}
         }
         d1.dp.x = 0.0;
         d1.dp.y = 0.0;
@@ -264,8 +211,7 @@ pub fn update_particles(
         d1.dv.y = 0.0;
         d1.direction.x = 0.0;
         d1.direction.y = 0.0;
-        d1.new_kind.clear();
-        d1.new_content.clear();
+        d1.new_state = None;
         p1.a = 0;
         p1.v.x = p1.v.x.max(-diameter * 0.5);
         p1.v.x = p1.v.x.min(diameter * 0.5);
@@ -275,5 +221,13 @@ pub fn update_particles(
         p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
         p1.pp.x = p1.p.x - p1.v.x;
         p1.pp.y = p1.p.y - p1.v.y;
+        if p1.volume > p1.k.capacity() {
+            error(&format!(
+                "over capacity | {:?} : {} > {}",
+                p1.k,
+                p1.volume,
+                p1.k.capacity()
+            ));
+        }
     }
 }

@@ -14,17 +14,11 @@ impl Grid {
             gids: Vec::new(),
         };
         for y in 0..side {
+            let y_side = y + side;
             for x in 0..side {
-                let grid_xs = [
-                    (x + side - 1) % side,
-                    (x + side) % side,
-                    (x + 1 + side) % side,
-                ];
-                let grid_ys = [
-                    (y + side - 1) % side,
-                    (y + side) % side,
-                    (y + 1 + side) % side,
-                ];
+                let x_side = x + side;
+                let grid_xs = [(x_side - 1) % side, x_side % side, (x_side + 1) % side];
+                let grid_ys = [(y_side - 1) % side, y_side % side, (y_side + 1) % side];
                 assert!(grid_id(x, y, grid.side) == grid.gids.len());
                 grid.gids.push(vec![
                     grid_id(grid_xs[0], grid_ys[0], grid.side),

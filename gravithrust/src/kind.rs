@@ -23,6 +23,33 @@ pub enum Kind {
     ElectroFieldPlasma = 17,
     PlasmaCargo     = 18,
     PlasmaCollector = 19,
+    PlasmaDepot     = 20,
+    Static          = 21,
+}
+impl Kind {
+    pub fn capacity(self) -> u32 {
+        match self {
+            Kind::PlasmaCollector | Kind::PlasmaCargo => 2,
+            Kind::PlasmaDepot => 20,
+            Kind::ElectroField | Kind::ElectroFieldPlasma => 1,
+            _ => 0,
+        }
+    }
+
+    pub fn soft_capacity(self) -> u32 {
+        match self {
+            Kind::PlasmaCargo => 2,
+            Kind::PlasmaDepot => 20,
+            _ => 0,
+        }
+    }
+
+    pub fn is_static(self) -> bool {
+        matches!(
+            self,
+            Kind::SunCore | Kind::Metal | Kind::Depot | Kind::Anchor | Kind::Static
+        )
+    }
 }
 pub fn kindstr_to_kind(x: &str) -> Kind {
     match x.trim().to_lowercase().as_str() {
@@ -37,6 +64,8 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
         "sun_core" => Kind::SunCore,
         "plasma_cargo" => Kind::PlasmaCargo,
         "plasma_collector" => Kind::PlasmaCollector,
+        "plasma_depot" => Kind::PlasmaDepot,
+        "static" => Kind::Static,
         _ => {
             log(&format!("invalid kind: {}", x));
             panic!("invalid kind")

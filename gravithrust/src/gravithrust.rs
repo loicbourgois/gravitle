@@ -11,7 +11,7 @@ use crate::grid::Grid;
 use crate::job::Action;
 use crate::job::Condition;
 use crate::job::Job;
-use crate::job::Task;
+// use crate::job::Task;
 use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
 use crate::link::Link;
@@ -274,7 +274,7 @@ impl Gravithrust {
     }
 
     pub fn set_job(&mut self, sid: usize, job_json: &str) {
-        self.set_job_internal(sid, serde_json::from_str(&job_json).unwrap());
+        self.set_job_internal(sid, serde_json::from_str(job_json).unwrap());
     }
 }
 impl Gravithrust {
@@ -295,8 +295,6 @@ impl Gravithrust {
             &mut self.particles,
             &mut self.particles_internal,
             &self.grid,
-            &mut self.ships,
-            &self.ships_more,
         );
         compute_link_responses(
             self.diameter,
@@ -317,6 +315,7 @@ impl Gravithrust {
 
     fn check_job(&mut self, sid: usize) {
         let mut ship_more = &mut self.ships_more[sid];
+        let ship = &self.ships[sid];
         match &ship_more.job {
             Some(job) => {
                 for task in &job.tasks {
@@ -324,23 +323,29 @@ impl Gravithrust {
                     for condition in &task.conditions {
                         match condition {
                             Condition::StorageNotFull => {
-                                let mut storage_max = 0;
-                                let mut content = 0;
+                                let mut capacity = 0;
+                                let mut volume = 0;
                                 for pid in &ship_more.pids {
                                     let p = &self.particles[*pid];
-                                    if p.k == Kind::PlasmaCargo || p.k == Kind::PlasmaCollector {
-                                        content += p.content;
-                                        storage_max += 1;
-                                    }
+                                    volume += p.volume;
+                                    capacity += p.k.soft_capacity();
                                 }
-                                // log(&format!("{} - {}", content, storage_max));
-                                if content >= storage_max {
-                                    // log("full!!");
-                                    ship_more.target_pid = None;
-                                    ok = false
+                                if volume >= capacity {
+                                    ok = false;
                                 }
                             }
-                            Condition::StorageFull => {}
+                            Condition::StorageFull => {
+                                let mut capacity = 0;
+                                let mut volume = 0;
+                                for pid in &ship_more.pids {
+                                    let p = &self.particles[*pid];
+                                    volume += p.volume;
+                                    capacity += p.k.soft_capacity();
+                                }
+                                if volume < capacity {
+                                    ok = false;
+                                }
+                            }
                         }
                         if !ok {
                             continue;
@@ -350,12 +355,24 @@ impl Gravithrust {
                         match task.action {
                             Action::CollectElectroFieldPlasma => match ship_more.target_pid {
                                 None => {
+                                    let mut dmin = 100.0;
+                                    let mut target_pid = None;
                                     for p in &self.particles {
                                         if p.k == Kind::ElectroFieldPlasma {
-                                            ship_more.target_pid = Some(p.idx);
-                                            log(&format!("plouf {}", p.idx));
-                                            break;
+                                            let wa = wrap_around(p.p, ship.p);
+                                            if wa.d_sqrd < dmin {
+                                                dmin = wa.d_sqrd;
+                                                target_pid = Some(p.idx);
+                                            }
                                         }
+                                    }
+                                    ship_more.target_pid = target_pid;
+                                    match target_pid {
+                                        Some(pid) => {
+                                            let p = &self.particles[pid];
+                                            log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
+                                        }
+                                        None => {}
                                     }
                                 }
                                 Some(target_pid) => {
@@ -364,7 +381,25 @@ impl Gravithrust {
                                     }
                                 }
                             },
-                            Action::DeliverPlasma => {}
+                            Action::DeliverPlasma => match ship_more.target_pid {
+                                None => {
+                                    for p in &self.particles {
+                                        if p.k == Kind::PlasmaDepot {
+                                            ship_more.target_pid = Some(p.idx);
+                                            log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
+                                            break;
+                                        }
+                                    }
+                                }
+                                Some(target_pid) => {
+                                    if self.particles[target_pid].k != Kind::PlasmaDepot {
+                                        ship_more.target_pid = None;
+                                    }
+                                }
+                            },
+                            Action::ResetTarget => {
+                                ship_more.target_pid = None;
+                            }
                         }
                         break;
                     }
@@ -406,14 +441,12 @@ impl Gravithrust {
                     self.max_rotation_speed,
                     slow_down_max_angle_better,
                     ship,
-                    s,
                     &self.particles,
                     anchor_pid,
                     target_pid,
                 ),
                 (None, Some(target_pid)) => target_only_movement_action(
                     self.forward_max_speed,
-                    &mut self.points,
                     self.max_speed_at_target,
                     self.slow_down_max_speed_to_target_ratio,
                     self.forward_max_angle,
@@ -423,7 +456,6 @@ impl Gravithrust {
                     self.slow_down_max_angle,
                     &self.particles,
                     ship,
-                    s,
                     &target_delta_wa,
                     target_pid,
                 ),
@@ -502,7 +534,6 @@ fn anchor_target_movement_action<'a>(
     max_rotation_speed: f32,
     slow_down_max_angle_better: f32,
     ship: &Ship,
-    ship_more: &ShipMore,
     particles: &Particles,
     anchor_pid: usize,
     target_pid: usize,
@@ -549,7 +580,6 @@ fn anchor_target_movement_action<'a>(
 }
 fn target_only_movement_action<'a>(
     forward_max_speed: f32,
-    points: &mut u32,
     max_speed_to_target: f32,
     slow_down_max_speed_to_target_ratio: f32,
     forward_max_angle: f32,
@@ -559,7 +589,6 @@ fn target_only_movement_action<'a>(
     slow_down_max_angle: f32,
     particles: &Particles,
     ship: &mut Ship,
-    ship_more: &mut ShipMore,
     target_delta_wa: &WrapAroundResponse,
     target_id: usize,
 ) -> &'a str {
@@ -567,7 +596,6 @@ fn target_only_movement_action<'a>(
     let wa1 = wrap_around(ship.pp, pt.pp);
     let wa2 = wrap_around(ship.p, pt.p);
     let target_vs_ship_delta_v = wa1.d_sqrd.sqrt() - wa2.d_sqrd.sqrt();
-    let old_target_delta = wrap_around(ship.pp, ship.target);
     let distance_to_target = target_delta_wa.d_sqrd.sqrt();
     let orientation_angle_corrected_2 = angle(normalize_2(ship.cross), normalize_2(ship.td));
     let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
