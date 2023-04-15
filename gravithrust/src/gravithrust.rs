@@ -4,10 +4,7 @@ use crate::blueprint::RawBlueprint;
 use crate::error;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
-// use crate::gravithrust_tick::update_particles;
 use crate::grid::Grid;
-use crate::job::Action;
-use crate::job::Condition;
 use crate::job::Job;
 use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
@@ -46,12 +43,15 @@ pub struct GravithrustState {
 pub struct Gravithrust {
     live_particles: HashSet<usize>,
     dead_particles: HashSet<usize>,
-    particles: Vec<Particle>,
-    ships: Vec<Ship>,
+    #[wasm_bindgen(skip)]
+    pub particles: Vec<Particle>,
+    #[wasm_bindgen(skip)]
+    pub ships: Vec<Ship>,
     links: Vec<Link>,
     links_js: Vec<LinkJS>,
     particles_internal: Vec<ParticleInternal>,
-    ships_more: Vec<ShipMore>,
+    #[wasm_bindgen(skip)]
+    pub ships_more: Vec<ShipMore>,
     pub diameter: f32,
     grid: Grid,
     pub points: u32,
@@ -293,10 +293,9 @@ impl Gravithrust {
     }
 }
 impl Gravithrust {
-    pub fn add_particle_internal(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
-        self.add_particle_internal_2(p, Vector::default(), k, sid)
-    }
-
+    // pub fn add_particle_internal(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
+    //     self.add_particle_internal_2(p, Vector::default(), k, sid)
+    // }
     pub fn add_particle_internal_2(
         &mut self,
         position: Vector,
@@ -437,116 +436,6 @@ impl Gravithrust {
                     p1.k.capacity()
                 ));
             }
-        }
-    }
-
-    fn check_job(&mut self, sid: usize) {
-        let mut ship_more = &mut self.ships_more[sid];
-        let ship = &self.ships[sid];
-        match &ship_more.job {
-            Some(job) => {
-                for task in &job.tasks {
-                    let mut ok = true;
-                    for condition in &task.conditions {
-                        match condition {
-                            Condition::PlasmaStorageNotFull => {
-                                let mut capacity = 0;
-                                let mut volume = 0;
-                                for pid in &ship_more.pids {
-                                    let p = &self.particles[*pid];
-                                    match p.k {
-                                        Kind::PlasmaCargo
-                                        | Kind::PlasmaCollector
-                                        | Kind::PlasmaDepot => {
-                                            volume += p.volume;
-                                            capacity += p.k.soft_capacity();
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                if volume >= capacity {
-                                    ok = false;
-                                }
-                            }
-                            Condition::PlasmaStorageFull => {
-                                let mut capacity = 0;
-                                let mut volume = 0;
-                                for pid in &ship_more.pids {
-                                    let p = &self.particles[*pid];
-                                    match p.k {
-                                        Kind::PlasmaCargo
-                                        | Kind::PlasmaCollector
-                                        | Kind::PlasmaDepot => {
-                                            volume += p.volume;
-                                            capacity += p.k.soft_capacity();
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                if volume < capacity {
-                                    ok = false;
-                                }
-                            }
-                        }
-                        if !ok {
-                            continue;
-                        }
-                    }
-                    if ok {
-                        match task.action {
-                            Action::CollectElectroFieldPlasma => match ship_more.target_pid {
-                                None => {
-                                    let mut dmin = 100.0;
-                                    let mut target_pid = None;
-                                    for p in &self.particles {
-                                        if p.k == Kind::ElectroFieldPlasma {
-                                            let wa = wrap_around(p.p, ship.p);
-                                            if wa.d_sqrd < dmin {
-                                                dmin = wa.d_sqrd;
-                                                target_pid = Some(p.idx);
-                                            }
-                                        }
-                                    }
-                                    ship_more.target_pid = target_pid;
-                                    match target_pid {
-                                        Some(pid) => {
-                                            let p = &self.particles[pid];
-                                            log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
-                                        }
-                                        None => {}
-                                    }
-                                }
-                                Some(target_pid) => {
-                                    if self.particles[target_pid].k != Kind::ElectroFieldPlasma {
-                                        ship_more.target_pid = None;
-                                    }
-                                }
-                            },
-                            Action::DeliverPlasma => match ship_more.target_pid {
-                                None => {
-                                    for p in &self.particles {
-                                        if p.k == Kind::PlasmaDepot {
-                                            ship_more.target_pid = Some(p.idx);
-                                            log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
-                                            break;
-                                        }
-                                    }
-                                }
-                                Some(target_pid) => {
-                                    if self.particles[target_pid].k != Kind::PlasmaDepot {
-                                        ship_more.target_pid = None;
-                                    }
-                                }
-                            },
-                            Action::ResetTarget => {
-                                ship_more.target_pid = None;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-            None => {}
         }
     }
 

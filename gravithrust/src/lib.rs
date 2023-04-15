@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 mod alchemy;
 mod blueprint;
 mod gravithrust;
+mod gravithrust_check_job;
 mod gravithrust_tick;
 mod grid;
 mod job;

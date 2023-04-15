@@ -1,19 +1,19 @@
 use crate::alchemy::alchemy;
 use crate::error;
+use crate::gravithrust::Gravithrust;
 use crate::grid::grid_id_position;
 use crate::grid::Grid;
 use crate::kind::Kind;
+// use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
 use crate::math::collision_response;
 use crate::math::normalize;
-use crate::math::normalize_2;
 use crate::math::wrap_around;
 use crate::math::Vector;
 use crate::particle;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
-use rand::Rng;
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(*position, grid.side);
     [
@@ -117,5 +117,10 @@ pub fn compute_link_responses(
                 pi2.direction.y += wa.d.y;
             }
         }
+    }
+}
+impl Gravithrust {
+    pub fn add_particle_internal(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
+        self.add_particle_internal_2(p, Vector::default(), k, sid)
     }
 }

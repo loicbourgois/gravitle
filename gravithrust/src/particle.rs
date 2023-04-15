@@ -35,23 +35,13 @@ impl Default for Particle {
         }
     }
 }
+#[derive(Default)]
 pub struct ParticleInternal {
     pub dp: Vector, // delta position
     pub dv: Vector, // delta velocity
     pub direction: Vector,
     pub sid: Option<usize>,
     pub new_state: Option<State>,
-}
-impl Default for ParticleInternal {
-    fn default() -> Self {
-        ParticleInternal {
-            dp: Vector::default(),
-            dv: Vector::default(),
-            direction: Vector::default(),
-            sid: None,
-            new_state: None,
-        }
-    }
 }
 pub struct State {
     pub volume: u32,
