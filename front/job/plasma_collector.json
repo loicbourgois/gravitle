@@ -2,13 +2,13 @@
     "tasks": [
         {
             "conditions": [
-                "StorageNotFull"
+                "PlasmaStorageNotFull"
             ],
             "action": "CollectElectroFieldPlasma"
         },
         {
             "conditions": [
-                "StorageFull"
+                "PlasmaStorageFull"
             ],
             "action": "DeliverPlasma"
         },

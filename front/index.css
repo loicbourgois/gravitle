@@ -69,3 +69,13 @@ button:hover {
 .slidecontainer {
   display: flex;
 }
+#state {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  background: #0000;
+  color: #cc8;
+  border: none;
+  z-index: 3;
+  pointer-events: none;
+}

@@ -1,17 +1,14 @@
 use crate::blueprint::load_raw_blueprint;
 use crate::blueprint::Blueprint;
 use crate::blueprint::RawBlueprint;
-use crate::gravithrust_tick::add_particle;
-use crate::gravithrust_tick::add_particle_2;
-use crate::gravithrust_tick::add_particles;
+use crate::error;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
-use crate::gravithrust_tick::update_particles;
+// use crate::gravithrust_tick::update_particles;
 use crate::grid::Grid;
 use crate::job::Action;
 use crate::job::Condition;
 use crate::job::Job;
-// use crate::job::Task;
 use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
 use crate::link::Link;
@@ -34,9 +31,21 @@ use crate::ship::Ship;
 use crate::ship::ShipControl;
 use crate::ship::ShipMore;
 use rand::Rng;
+use serde::Deserialize;
+use serde::Serialize;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use wasm_bindgen::prelude::wasm_bindgen;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GravithrustState {
+    pub capacity: HashMap<Kind, u32>,
+    pub volume: HashMap<Kind, u32>,
+    pub count: HashMap<Kind, u32>,
+}
 #[wasm_bindgen]
 pub struct Gravithrust {
+    live_particles: HashSet<usize>,
+    dead_particles: HashSet<usize>,
     particles: Vec<Particle>,
     ships: Vec<Ship>,
     links: Vec<Link>,
@@ -55,6 +64,7 @@ pub struct Gravithrust {
     pub slow_down_max_angle: f32,
     pub slow_down_max_speed_to_target_ratio: f32,
     pub booster_acceleration: f32,
+    state: GravithrustState,
 }
 #[wasm_bindgen]
 impl Gravithrust {
@@ -90,6 +100,13 @@ impl Gravithrust {
             slow_down_max_angle,
             slow_down_max_speed_to_target_ratio,
             booster_acceleration,
+            state: GravithrustState {
+                capacity: HashMap::new(),
+                count: HashMap::new(),
+                volume: HashMap::new(),
+            },
+            live_particles: HashSet::new(),
+            dead_particles: HashSet::new(),
         }
     }
 
@@ -119,7 +136,7 @@ impl Gravithrust {
     }
 
     pub fn add_particle(&mut self, x: f32, y: f32, kind: &str) -> usize {
-        self.add_particle_inner(
+        self.add_particle_internal(
             Vector {
                 x,
                 y,
@@ -127,10 +144,6 @@ impl Gravithrust {
             kindstr_to_kind(kind),
             None,
         )
-    }
-
-    pub fn add_particle_inner(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
-        add_particle(&mut self.particles, &mut self.particles_internal, p, k, sid)
     }
 
     pub fn set_anchor(&mut self, sid: usize, pid: usize) {
@@ -151,7 +164,7 @@ impl Gravithrust {
         let mut pids = vec![];
         for p in &blueprint.particles {
             pids.push(self.particles.len());
-            self.add_particle_inner(p.p + position, p.k, sid);
+            self.add_particle_internal(p.p + position, p.k, sid);
         }
         for l in &blueprint.links {
             self.links.push(Link {
@@ -267,10 +280,12 @@ impl Gravithrust {
         (self.links_js.len() * self.link_js_size_()) as u32
     }
 
-    pub fn ticks(&mut self) {
+    pub fn ticks(&mut self) -> String {
         for _ in 0..self.sub_steps {
             self.tick();
         }
+        self.update_state();
+        self.get_state()
     }
 
     pub fn set_job(&mut self, sid: usize, job_json: &str) {
@@ -278,16 +293,71 @@ impl Gravithrust {
     }
 }
 impl Gravithrust {
+    pub fn add_particle_internal(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
+        self.add_particle_internal_2(p, Vector::default(), k, sid)
+    }
+
+    pub fn add_particle_internal_2(
+        &mut self,
+        position: Vector,
+        velocity: Vector,
+        k: Kind,
+        sid: Option<usize>,
+    ) -> usize {
+        let pid = if self.dead_particles.is_empty() {
+            let pid = self.particles.len();
+            self.particles.push(Particle::default());
+            self.particles_internal.push(ParticleInternal::default());
+            pid
+        } else {
+            let pid: usize = *self.dead_particles.iter().next().unwrap();
+            assert!(self.dead_particles.remove(&pid));
+            pid
+        };
+        self.particles[pid] = Particle {
+            p: position,
+            pp: position - velocity,
+            v: velocity,
+            m: 1.0,
+            k,
+            direction: Vector::default(),
+            a: 0,
+            idx: pid,
+            grid_id: 0,
+            volume: 0,
+            live: 1,
+        };
+        self.particles_internal[pid] = ParticleInternal {
+            dp: Vector::default(),
+            dv: Vector::default(),
+            direction: Vector::default(),
+            sid,
+            new_state: None,
+        };
+        self.live_particles.insert(pid);
+        pid
+    }
+
+    pub fn update_state(&mut self) {
+        self.state.count.clear();
+        self.state.capacity.clear();
+        self.state.volume.clear();
+        for p in &self.particles {
+            *self.state.count.entry(p.k).or_insert(0) += 1;
+            *self.state.capacity.entry(p.k).or_insert(0) += p.k.capacity();
+            *self.state.volume.entry(p.k).or_insert(0) += p.volume;
+        }
+    }
+
+    pub fn get_state(&mut self) -> String {
+        serde_json::to_string(&self.state).unwrap()
+    }
+
     pub fn set_job_internal(&mut self, sid: usize, job: Job) {
         self.ships_more[sid].job = Some(job);
     }
 
     fn tick(&mut self) {
-        add_particles(
-            self.diameter,
-            &mut self.particles,
-            &mut self.particles_internal,
-        );
         self.grid.update_01();
         self.grid.update_02(&mut self.particles);
         compute_collision_responses(
@@ -303,14 +373,71 @@ impl Gravithrust {
             &mut self.links,
             &mut self.links_js,
         );
-        update_particles(
-            self.diameter,
-            &mut self.particles,
-            &mut self.particles_internal,
-            self.booster_acceleration,
-        );
+        self.update_particles();
         self.update_ships();
         self.step += 1;
+    }
+
+    pub fn update_particles(&mut self) {
+        for (pid, p1) in self.particles.iter_mut().enumerate() {
+            let mut d1 = &mut self.particles_internal[pid];
+            p1.direction = normalize_2(d1.direction);
+            if !p1.k.is_static() {
+                p1.v.x += d1.dv.x;
+                p1.v.y += d1.dv.y;
+                p1.p.x += d1.dp.x;
+                p1.p.y += d1.dp.y;
+            }
+            if p1.k == Kind::Booster && p1.a == 1 && p1.volume >= 10 {
+                p1.v.x -= d1.direction.x * self.booster_acceleration;
+                p1.v.y -= d1.direction.y * self.booster_acceleration;
+                p1.volume -= 10;
+            }
+            match &d1.new_state {
+                Some(state) => {
+                    p1.k = state.kind;
+                    p1.volume = state.volume;
+                    if p1.live != state.live {
+                        if state.live == 0 {
+                            self.dead_particles.insert(p1.idx);
+                            self.live_particles.remove(&p1.idx);
+                        } else {
+                            self.dead_particles.remove(&p1.idx);
+                            self.live_particles.insert(p1.idx);
+                        }
+                    }
+                    p1.live = state.live;
+                }
+                _ => {}
+            }
+            if p1.k == Kind::Core {
+                p1.volume = 1;
+            }
+            d1.dp.x = 0.0;
+            d1.dp.y = 0.0;
+            d1.dv.x = 0.0;
+            d1.dv.y = 0.0;
+            d1.direction.x = 0.0;
+            d1.direction.y = 0.0;
+            d1.new_state = None;
+            p1.a = 0;
+            p1.v.x = p1.v.x.max(-self.diameter * 0.5);
+            p1.v.x = p1.v.x.min(self.diameter * 0.5);
+            p1.v.y = p1.v.y.max(-self.diameter * 0.5);
+            p1.v.y = p1.v.y.min(self.diameter * 0.5);
+            p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
+            p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
+            p1.pp.x = p1.p.x - p1.v.x;
+            p1.pp.y = p1.p.y - p1.v.y;
+            if p1.volume > p1.k.capacity() {
+                error(&format!(
+                    "over capacity | {:?} : {} > {}",
+                    p1.k,
+                    p1.volume,
+                    p1.k.capacity()
+                ));
+            }
+        }
     }
 
     fn check_job(&mut self, sid: usize) {
@@ -322,25 +449,39 @@ impl Gravithrust {
                     let mut ok = true;
                     for condition in &task.conditions {
                         match condition {
-                            Condition::StorageNotFull => {
+                            Condition::PlasmaStorageNotFull => {
                                 let mut capacity = 0;
                                 let mut volume = 0;
                                 for pid in &ship_more.pids {
                                     let p = &self.particles[*pid];
-                                    volume += p.volume;
-                                    capacity += p.k.soft_capacity();
+                                    match p.k {
+                                        Kind::PlasmaCargo
+                                        | Kind::PlasmaCollector
+                                        | Kind::PlasmaDepot => {
+                                            volume += p.volume;
+                                            capacity += p.k.soft_capacity();
+                                        }
+                                        _ => {}
+                                    }
                                 }
                                 if volume >= capacity {
                                     ok = false;
                                 }
                             }
-                            Condition::StorageFull => {
+                            Condition::PlasmaStorageFull => {
                                 let mut capacity = 0;
                                 let mut volume = 0;
                                 for pid in &ship_more.pids {
                                     let p = &self.particles[*pid];
-                                    volume += p.volume;
-                                    capacity += p.k.soft_capacity();
+                                    match p.k {
+                                        Kind::PlasmaCargo
+                                        | Kind::PlasmaCollector
+                                        | Kind::PlasmaDepot => {
+                                            volume += p.volume;
+                                            capacity += p.k.soft_capacity();
+                                        }
+                                        _ => {}
+                                    }
                                 }
                                 if volume < capacity {
                                     ok = false;
@@ -473,14 +614,12 @@ impl Gravithrust {
                     let ray_particle = &mut self.particles[s.pids[0]];
                     let uu = normalize_2(wrap_around(ship.p, target).d);
                     if anchor_delta.d_sqrd < 0.001
-                        && ray_particle.e >= 2500
+                        && ray_particle.volume >= ray_particle.k.capacity()
                         && angle(uu, normalize_2(ray_particle.direction)).abs() < 0.01
                     {
-                        ray_particle.e = 0;
+                        ray_particle.volume = 0;
                         let aa = ray_particle.p + ray_particle.direction * self.diameter * 1.75;
-                        add_particle_2(
-                            &mut self.particles,
-                            &mut self.particles_internal,
+                        self.add_particle_internal_2(
                             aa,
                             uu * self.diameter * 0.01,
                             Kind::ElectroField,

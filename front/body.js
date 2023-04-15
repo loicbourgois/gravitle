@@ -1,8 +1,9 @@
 const body = `
+<textarea id="state"></textarea>
 <div id="left">
-<canvas id="canvas_trace"></canvas>
-  <canvas id="canvas"></canvas>
-</div>
+    <canvas id="canvas_trace"></canvas>
+    <canvas id="canvas"></canvas>
+  </div>
 <div id="right">
   <div>
     <button id="go_fullscreen" onclick="go_fullscreen()">Fullscreen</button>
@@ -63,7 +64,5 @@ const body = `
     <label id="step">...</label>
   </div>
 </div>
-`
-export {
-    body
-}
+`;
+export { body };

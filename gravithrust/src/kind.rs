@@ -1,7 +1,9 @@
 use crate::log;
+use serde::Deserialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Kind {
     Armor           = 1,
@@ -25,13 +27,20 @@ pub enum Kind {
     PlasmaCollector = 19,
     PlasmaDepot     = 20,
     Static          = 21,
+    Default         = 22,
 }
 impl Kind {
     pub fn capacity(self) -> u32 {
+        #[allow(clippy::match_same_arms)]
         match self {
-            Kind::PlasmaCollector | Kind::PlasmaCargo => 2,
+            Kind::Core => 1,
+            Kind::Booster => 100,
+            Kind::PlasmaCollector => 2,
+            Kind::PlasmaCargo => 2,
             Kind::PlasmaDepot => 20,
-            Kind::ElectroField | Kind::ElectroFieldPlasma => 1,
+            Kind::ElectroField => 1,
+            Kind::ElectroFieldPlasma => 1,
+            Kind::Ray => 2500,
             _ => 0,
         }
     }

@@ -45,9 +45,11 @@ impl Grid {
 
     pub fn update_02(&mut self, particles: &mut Particles) {
         for p in particles {
-            let grid_id_ = grid_id_particle(p, self.side);
-            self.pidxs[grid_id_].push(p.idx);
-            p.grid_id = grid_id_;
+            if p.live != 0 {
+                let grid_id_ = grid_id_particle(p, self.side);
+                self.pidxs[grid_id_].push(p.idx);
+                p.grid_id = grid_id_;
+            }
         }
     }
 }

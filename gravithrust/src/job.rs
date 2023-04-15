@@ -14,8 +14,8 @@ pub struct Task {
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Condition {
-    StorageNotFull = 1,
-    StorageFull    = 2,
+    PlasmaStorageNotFull = 1,
+    PlasmaStorageFull = 2,
 }
 #[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]

@@ -120,7 +120,8 @@ const ppms_count = 400
 const update = (self) => {
     const update_start = performance.now()
     self.update_starts.push(update_start)
-    self.gravithrust.ticks()
+    const state = JSON.stringify(JSON.parse(self.gravithrust.ticks()), null, 4)
+    document.getElementById("state").innerHTML = state
     self.ppms.push({
       high: self.gravithrust.points * 1000000 / self.gravithrust.step,
       low: self.gravithrust.points * 1000000 / self.gravithrust.step,
@@ -171,6 +172,9 @@ const draw = (self) => {
     );
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
+        if (p.live == 0) {
+            continue
+        }
         if (p.k == Kind.Booster ) {
             if (p.a == 1) {
                 fill_circle_2(self.context, p.pout2, self.gravithrust.diameter*0.7, "#c22")
@@ -183,8 +187,8 @@ const draw = (self) => {
         }
         if (p.k == Kind.Ray ) {
             const r = 255*0.0
-            const g = 255*( p.e/2500 )
-            const b = 255*( 0.5 + p.e/2500 )
+            const g = 255*( p.volume/2500 )
+            const b = 255*( 0.5 + p.volume/2500 )
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, `rgb(${r},${g},${b})`)
         }
         if (p.k == Kind.Sun) {
@@ -203,6 +207,9 @@ const draw = (self) => {
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
+        if (p.live == 0) {
+            continue
+        }
         if (p.k == Kind.ElectroField) {
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#88f")
         }
@@ -225,6 +232,9 @@ const draw = (self) => {
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
+        if (p.live == 0) {
+            continue
+        }
         if (p.k == Kind.Core ) {
             fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#c83")
         }

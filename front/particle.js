@@ -28,13 +28,13 @@ const particle = (view, view_pid) => {
         dy: direction.y,
         k:  view.getInt32(  view_pid + 4*9, true),
         a:  view.getInt32(  view_pid + 4*10, true),
-        e:  view.getInt32(  view_pid + 4*11, true),
+        volume:  view.getUint32(  view_pid + 4*11, true),
+        live:  view.getUint32(  view_pid + 4*12, true),
         direction: direction,
         pout: pout,
         pout2: pout2,
     }
 }
-
 
 export {
     particle,

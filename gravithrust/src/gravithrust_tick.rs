@@ -13,76 +13,7 @@ use crate::math::Vector;
 use crate::particle;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
-// use crate::ship::Ship;
-// use crate::ship::ShipMore;
 use rand::Rng;
-struct ParticleModel {
-    p: Vector,
-    k: Kind,
-    sid: Option<usize>,
-}
-pub fn add_particle(
-    particles: &mut Vec<Particle>,
-    particles_internal: &mut Vec<ParticleInternal>,
-    p: Vector,
-    k: Kind,
-    sid: Option<usize>,
-) -> usize {
-    add_particle_2(particles, particles_internal, p, Vector::default(), k, sid)
-}
-pub fn add_particle_2(
-    particles: &mut Vec<Particle>,
-    particles_internal: &mut Vec<ParticleInternal>,
-    position: Vector,
-    velocity: Vector,
-    k: Kind,
-    sid: Option<usize>,
-) -> usize {
-    let pid = particles.len();
-    particles.push(Particle {
-        p: position,
-        pp: position - velocity,
-        v: velocity,
-        m: 1.0,
-        k,
-        direction: Vector::default(),
-        a: 0,
-        idx: pid,
-        grid_id: 0,
-        e: 0,
-        volume: 0,
-    });
-    particles_internal.push(ParticleInternal {
-        dp: Vector::default(),
-        dv: Vector::default(),
-        direction: Vector::default(),
-        sid,
-        new_state: None,
-    });
-    pid
-}
-pub fn add_particles(
-    diameter: f32,
-    particles: &mut Vec<Particle>,
-    particles_internal: &mut Vec<ParticleInternal>,
-) {
-    let mut particles_to_add = vec![];
-    for p1 in particles.iter() {
-        if p1.k == Kind::Sun && rand::thread_rng().gen::<f32>() < -1.0 {
-            particles_to_add.push(ParticleModel {
-                p: Vector {
-                    x: p1.p.x + rand::thread_rng().gen::<f32>() * diameter - diameter * 0.5,
-                    y: p1.p.y + rand::thread_rng().gen::<f32>() * diameter - diameter * 0.5,
-                },
-                k: Kind::Armor,
-                sid: None,
-            });
-        }
-    }
-    for x in &particles_to_add {
-        add_particle(particles, particles_internal, x.p, x.k, x.sid);
-    }
-}
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(*position, grid.side);
     [
@@ -110,9 +41,16 @@ pub fn compute_collision_responses(
         let particles_2 = particles as *mut [Particle];
         let particles_internal_2 = particles_internal as *mut [ParticleInternal];
         for p1 in particles.iter_mut() {
+            if p1.live == 0 {
+                continue;
+            }
             for ns in neighbours(&p1.p, grid) {
                 for pid2 in ns {
                     let p2 = &mut (*particles_2)[*pid2];
+                    if p2.live == 0 {
+                        error("dead neighbour particle in compute_collision_responses");
+                        continue;
+                    }
                     if p1.idx < p2.idx {
                         let wa = wrap_around(p1.p, p2.p);
                         if wa.d_sqrd < diameter_sqrd {
@@ -149,85 +87,35 @@ pub fn compute_link_responses(
 ) {
     let link_strengh = 0.01;
     let link_length_ratio = 1.01;
-    for (i, l) in links.iter().enumerate() {
-        let p1 = &particles[l.a];
-        let p2 = &particles[l.b];
-        let wa = wrap_around(p1.p, p2.p);
-        links_js[i].p = p1.p + wa.d / 2.0;
-        let d = wa.d_sqrd.sqrt();
-        let factor = (diameter * link_length_ratio - d) * link_strengh;
-        let n = normalize(wa.d, d);
-        if wa.d_sqrd > diameter * diameter && !n.x.is_nan() && !n.y.is_nan() {
-            {
-                let d1 = &mut particles_internal[l.a];
-                d1.dv.x -= n.x * factor;
-                d1.dv.y -= n.y * factor;
-                d1.direction.x -= wa.d.x;
-                d1.direction.y -= wa.d.y;
+    let diam_sqrd = diameter * diameter;
+    unsafe {
+        let particles_internal_2 = particles_internal as *mut [ParticleInternal];
+        for (i, l) in links.iter().enumerate() {
+            let p1 = &particles[l.a];
+            let p2 = &particles[l.b];
+            if p1.live == 0 || p2.live == 0 {
+                error("live link with dead particle");
+                continue;
             }
-            {
-                let d2 = &mut particles_internal[l.b];
-                d2.dv.x += n.x * factor;
-                d2.dv.y += n.y * factor;
-                d2.direction.x += wa.d.x;
-                d2.direction.y += wa.d.y;
+            let pi1 = &mut particles_internal[p1.idx];
+            let pi2 = &mut (*particles_internal_2)[p2.idx];
+            alchemy(p1, p2, pi1, pi2);
+            alchemy(p2, p1, pi2, pi1);
+            let wa = wrap_around(p1.p, p2.p);
+            links_js[i].p = p1.p + wa.d / 2.0;
+            let d = wa.d_sqrd.sqrt();
+            let factor = (diameter * link_length_ratio - d) * link_strengh;
+            let n = normalize(wa.d, d);
+            if wa.d_sqrd > diam_sqrd && !n.x.is_nan() && !n.y.is_nan() {
+                pi1.dv.x -= n.x * factor;
+                pi1.dv.y -= n.y * factor;
+                pi2.dv.x += n.x * factor;
+                pi2.dv.y += n.y * factor;
+                pi1.direction.x -= wa.d.x;
+                pi1.direction.y -= wa.d.y;
+                pi2.direction.x += wa.d.x;
+                pi2.direction.y += wa.d.y;
             }
-        }
-    }
-}
-pub fn update_particles(
-    diameter: f32,
-    particles: &mut [Particle],
-    particles_internal: &mut [ParticleInternal],
-    booster_acceleration: f32,
-) {
-    for (pid, p1) in particles.iter_mut().enumerate() {
-        let mut d1 = &mut particles_internal[pid];
-        p1.direction = normalize_2(d1.direction);
-        if !p1.k.is_static() {
-            p1.v.x += d1.dv.x;
-            p1.v.y += d1.dv.y;
-            p1.p.x += d1.dp.x;
-            p1.p.y += d1.dp.y;
-        }
-        if p1.k == Kind::Booster && p1.a == 1 {
-            p1.v.x -= d1.direction.x * booster_acceleration;
-            p1.v.y -= d1.direction.y * booster_acceleration;
-        }
-        if p1.k == Kind::Ray {
-            p1.e += 1;
-            p1.e = p1.e.min(5_000);
-        }
-        match &d1.new_state {
-            Some(state) => {
-                p1.k = state.kind;
-                p1.volume = state.volume;
-            }
-            _ => {}
-        }
-        d1.dp.x = 0.0;
-        d1.dp.y = 0.0;
-        d1.dv.x = 0.0;
-        d1.dv.y = 0.0;
-        d1.direction.x = 0.0;
-        d1.direction.y = 0.0;
-        d1.new_state = None;
-        p1.a = 0;
-        p1.v.x = p1.v.x.max(-diameter * 0.5);
-        p1.v.x = p1.v.x.min(diameter * 0.5);
-        p1.v.y = p1.v.y.max(-diameter * 0.5);
-        p1.v.y = p1.v.y.min(diameter * 0.5);
-        p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
-        p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
-        p1.pp.x = p1.p.x - p1.v.x;
-        p1.pp.y = p1.p.y - p1.v.y;
-        if p1.volume > p1.k.capacity() {
-            error(&format!(
-                "over capacity | {:?} : {} > {}",
-                p1.k,
-                p1.volume,
-                p1.k.capacity()
-            ));
         }
     }
 }
