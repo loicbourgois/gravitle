@@ -165,9 +165,6 @@ pub fn dot(a: Vector, b: Vector) -> f32 {
 pub fn cross(p1: Vector, p2: Vector) -> f32 {
     p1.x * p2.y - p1.y * p2.x
 }
-// pub fn ncross(p1: Vector, p2: Vector) -> f32 {
-//     cross(normalize_2(p1), normalize_2(p2))
-// }
 pub fn radians(x: f32) -> f32 {
     x / 180.0 * std::f32::consts::PI
 }

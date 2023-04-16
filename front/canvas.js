@@ -1,4 +1,4 @@
-let draw_zoom = 2.0
+let draw_zoom = 4.0
 let draw_center = [0.5, 0.5]
 
 
@@ -33,6 +33,7 @@ const fill_text = (context, p, text, size=14, color="#fff") => {
 
 
 const fill_circle = (context, p, diameter, color) => {
+  // for gravitle disappear effect at edge, version 2021
   // const aa = 0.005
   // if (
   //   p.x < aa
@@ -84,6 +85,7 @@ const fill_circle_2 = (context, p, diameter, color) => {
       }
       fill_circle(context, pp, diameter, color)
     }
+    // fill_circle(context, p, diameter, color)
   // }
 }
 

@@ -21,7 +21,7 @@ pub enum Condition {
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Action {
-    CollectElectroFieldPlasma = 1,
+    CollectPlasmaElectroField = 1,
     DeliverPlasma = 2,
     ResetTarget   = 3,
 }

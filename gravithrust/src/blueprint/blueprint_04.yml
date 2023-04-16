@@ -9,7 +9,7 @@
    07                11
     ",
     name: __,
-    forward: [7, 11],
+    forward: [7, 11, 3],
     slow: [5, 9],
     left: [11],
     right: [7],
@@ -18,7 +18,7 @@
     base_particles: [ray, core],
     particles: [
         [2,0,1,core],
-        [3,2,1,core],
+        [3,2,1,booster],
         [4,3,1,core],
         [5,4,1,booster],
         [6,4,5,booster],

@@ -7,6 +7,7 @@ mod gravithrust_tick;
 mod grid;
 mod job;
 mod kind;
+mod kind_generated;
 mod link;
 mod math;
 mod particle;

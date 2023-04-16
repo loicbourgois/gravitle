@@ -14,7 +14,10 @@ import {
 } from "./ship.js"
 import {
     Kind,
-} from "./kind.js"
+} from "./kind_generated"
+import {
+    draw_particle,
+} from "./particle_draw.js"
 
 
 const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
@@ -153,7 +156,7 @@ const average = array => array.reduce((a, b) => a + b) / array.length;
 
 
 const draw = (self) => {
-    self.context_trace.globalCompositeOperation = "hard-light"
+    // self.context_trace.globalCompositeOperation = "hard-light"
     const frame_start = performance.now()
     self.frame_starts.push(frame_start)
     clear(self.context)
@@ -170,32 +173,17 @@ const draw = (self) => {
         self.gravithrust.links_js(), 
         self.gravithrust.links_js_size(),
     );
+    const pre_link_particles = {
+        [Kind.Booster]: true,
+        [Kind.Ray]: true,
+        [Kind.Sun]: true,
+    }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (p.live == 0) {
+        if (p.live == 0 || !pre_link_particles[p.k]) {
             continue
         }
-        if (p.k == Kind.Booster ) {
-            if (p.a == 1) {
-                fill_circle_2(self.context, p.pout2, self.gravithrust.diameter*0.7, "#c22")
-                fill_circle_2(self.context, p.pout, self.gravithrust.diameter*0.9, "#c00")
-                fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#d20")
-                fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, "#d20")
-            } else {
-                fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#b40")
-            }
-        }
-        if (p.k == Kind.Ray ) {
-            const r = 255*0.0
-            const g = 255*( p.volume/2500 )
-            const b = 255*( 0.5 + p.volume/2500 )
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, `rgb(${r},${g},${b})`)
-        }
-        if (p.k == Kind.Sun) {
-            fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1, `#ca28`)
-            fill_circle_2(self.context_trace, p.pout2, self.gravithrust.diameter*0.7, "#ca28")
-            fill_circle_2(self.context_trace, p.pout, self.gravithrust.diameter*0.9, "#ca28")
-        }
+        draw_particle(self.context, self.context_trace, self.gravithrust.diameter, p)
     }
     for (let lid = 0; lid < self.gravithrust.links_count(); lid++) {
         const l = link_js(links_js_view, lid*link_js_size);
@@ -207,37 +195,10 @@ const draw = (self) => {
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
         const p = particle(particles_view, pid*particle_size);
-        if (p.live == 0) {
+        if (p.live == 0 || pre_link_particles[p.k] ) {
             continue
         }
-        if (p.k == Kind.ElectroField) {
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#88f")
-        }
-        else if (p.k == Kind.ElectroFieldPlasma) {
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#88f")
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*0.5, "#da4")
-            fill_circle_2(self.context_trace, p.p, self.gravithrust.diameter*1.5, "#ca28")
-        }
-        else if (
-            p.k != Kind.Booster
-            && p.k != Kind.Ray
-            && p.k != Kind.Core
-            && p.k != Kind.Sun
-            && p.k != Kind.SunCore
-            && p.k != Kind.ElectroField
-            && p.k != Kind.ElectroFieldPlasma
-        ) {
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#da4")
-        }
-    }
-    for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
-        const p = particle(particles_view, pid*particle_size);
-        if (p.live == 0) {
-            continue
-        }
-        if (p.k == Kind.Core ) {
-            fill_circle_2(self.context, p.p, self.gravithrust.diameter*1, "#c83")
-        }
+        draw_particle(self.context, self.context_trace, self.gravithrust.diameter, p)
     }
     if (self.ppms.length) {
         self.context_2.canvas.width = 400

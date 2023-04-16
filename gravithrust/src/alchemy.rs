@@ -44,12 +44,12 @@ pub fn alchemy(
             if p2.volume < p2.k.capacity() {
                 pi2.new_state = Some(State {
                     volume: p2.volume + 1,
-                    kind: Kind::ElectroFieldPlasma,
+                    kind: Kind::PlasmaElectroField,
                     live: 1,
                 });
             }
         }
-        (Kind::ElectroFieldPlasma, Kind::PlasmaCollector, None, None) => {
+        (Kind::PlasmaElectroField, Kind::PlasmaCollector, None, None) => {
             if p1.volume > 0 && p2.volume < p2.k.capacity() {
                 pi1.new_state = Some(State {
                     volume: 0,

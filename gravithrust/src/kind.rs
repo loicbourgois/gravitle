@@ -1,34 +1,5 @@
+pub use crate::kind_generated::Kind;
 use crate::log;
-use serde::Deserialize;
-use serde::Serialize;
-use wasm_bindgen::prelude::wasm_bindgen;
-#[wasm_bindgen]
-#[derive(Serialize, Deserialize, Hash, Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(u32)]
-pub enum Kind {
-    Armor           = 1,
-    Core            = 2,
-    Booster         = 3,
-    Sun             = 4,
-    Light           = 5,
-    Plant           = 6,
-    Metal           = 7,
-    Depot           = 8,
-    Target          = 9,
-    Ray             = 10,
-    Cargo           = 11,
-    Plasma          = 12,
-    Field           = 13,
-    Anchor          = 14,
-    SunCore         = 15,
-    ElectroField    = 16,
-    ElectroFieldPlasma = 17,
-    PlasmaCargo     = 18,
-    PlasmaCollector = 19,
-    PlasmaDepot     = 20,
-    Static          = 21,
-    Default         = 22,
-}
 impl Kind {
     pub fn capacity(self) -> u32 {
         #[allow(clippy::match_same_arms)]
@@ -39,7 +10,7 @@ impl Kind {
             Kind::PlasmaCargo => 2,
             Kind::PlasmaDepot => 20,
             Kind::ElectroField => 1,
-            Kind::ElectroFieldPlasma => 1,
+            Kind::PlasmaElectroField => 1,
             Kind::Ray => 2500,
             _ => 0,
         }

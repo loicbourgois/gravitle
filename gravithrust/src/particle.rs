@@ -12,7 +12,6 @@ pub struct Particle {
     pub m: f32,
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
-    // pub e: u32, // energy
     pub volume: u32,
     pub live: u32,
     pub grid_id: usize,

@@ -4,7 +4,7 @@
             "conditions": [
                 "PlasmaStorageNotFull"
             ],
-            "action": "CollectElectroFieldPlasma"
+            "action": "CollectPlasmaElectroField"
         },
         {
             "conditions": [
