@@ -4,13 +4,13 @@
             "conditions": [
                 "PlasmaStorageNotFull"
             ],
-            "action": "CollectPlasmaElectroField"
+            "action": "CollectPlasmaDepot"
         },
         {
             "conditions": [
                 "PlasmaStorageFull"
             ],
-            "action": "DeliverPlasmaDepot"
+            "action": "DeliverPlasmaRefinery"
         },
         {
             "conditions": [],

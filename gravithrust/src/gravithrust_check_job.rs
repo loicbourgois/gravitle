@@ -57,7 +57,7 @@ impl Gravithrust {
                     match task.action {
                         Action::CollectPlasmaElectroField => match ship_more.target_pid {
                             None => {
-                                let mut dmin = 100.0;
+                                let mut dmin = std::f32::INFINITY;
                                 let mut target_pid = None;
                                 for p in &self.particles {
                                     if p.k == Kind::PlasmaElectroField {
@@ -83,7 +83,7 @@ impl Gravithrust {
                                 }
                             }
                         },
-                        Action::DeliverPlasma => match ship_more.target_pid {
+                        Action::DeliverPlasmaDepot => match ship_more.target_pid {
                             None => {
                                 for p in &self.particles {
                                     if p.k == Kind::PlasmaDepot {
@@ -99,6 +99,8 @@ impl Gravithrust {
                                 }
                             }
                         },
+                        Action::CollectPlasmaDepot => {}
+                        Action::DeliverPlasmaRefinery => {}
                         Action::ResetTarget => {
                             ship_more.target_pid = None;
                         }

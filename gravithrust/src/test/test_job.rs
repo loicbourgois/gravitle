@@ -41,7 +41,7 @@ fn set_job_by_name(g: &mut Gravithrust, name: &str) -> Result<()> {
 #[test]
 fn test_job() {
     let mut g = setup_simulation();
-    for name in ["plasma_collector"] {
+    for name in ["plasma_collector", "plasma_transporter"] {
         set_job_by_name(&mut g, name).unwrap();
     }
 }

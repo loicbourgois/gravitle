@@ -1,6 +1,8 @@
 #!/bin/sh
 # $HOME/github.com/loicbourgois/gravitle/front/build.sh
 set -e
+echo "# Start"
+START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 cargo +nightly fmt
 cargo test
@@ -26,4 +28,5 @@ rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/package.json
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/LICENSE
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/README.md
 cargo +nightly fmt
-echo "all done"
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
+echo "# Duration: $ELAPSED_TIME s"

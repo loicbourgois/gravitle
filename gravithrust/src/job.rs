@@ -22,6 +22,8 @@ pub enum Condition {
 #[repr(u32)]
 pub enum Action {
     CollectPlasmaElectroField = 1,
-    DeliverPlasma = 2,
-    ResetTarget   = 3,
+    DeliverPlasmaDepot = 2,
+    ResetTarget = 3,
+    CollectPlasmaDepot = 4,
+    DeliverPlasmaRefinery = 5,
 }

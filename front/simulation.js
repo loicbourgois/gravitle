@@ -14,7 +14,7 @@ import {
 } from "./ship.js"
 import {
     Kind,
-} from "./kind_generated"
+} from "./kind_generated.js"
 import {
     draw_particle,
 } from "./particle_draw.js"

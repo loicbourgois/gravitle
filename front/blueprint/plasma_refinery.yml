@@ -15,11 +15,11 @@
     translate_left: [],
     base_particles: [static, plasma_refinery],
     particles: [
-        [2,0,1,plasma_refinery],
-        [3,0,2,plasma_refinery],
-        [4,0,3,plasma_refinery],
-        [5,0,4,plasma_refinery],
-        [6,1,0,plasma_refinery],
+        [2,0,1, plasma_refinery],
+        [3,0,2, plasma_refinery],
+        [4,0,3, plasma_refinery],
+        [5,0,4, plasma_refinery],
+        [6,1,0, plasma_refinery],
     ],
     links: [
       [0,1],
