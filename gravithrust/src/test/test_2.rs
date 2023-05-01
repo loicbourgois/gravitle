@@ -11,11 +11,12 @@ use std::mem;
 #[test]
 fn test_parse_blueprint() {
     for name in vec![
-        "blueprint_01",
-        "blueprint_02",
-        "blueprint_03",
-        "blueprint_04",
-        "blueprint_05",
+        "small_ship",
+        "plasma_collector",
+        "sun",
+        "plasma_depot",
+        "harvester",
+        "plasma_refinery",
     ] {
         println!("testing {}", name);
         match test_parse_blueprint_by_name(name) {
@@ -42,7 +43,7 @@ fn test_parse_blueprint_by_name(name: &str) -> Result<()> {
 // fn test_parse_blueprint_2() {
 //     let envs = env::vars().collect::<HashMap<String, String>>();
 //     let path = format!(
-//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_02.yml",
+//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/plasma_collector.yml",
 //         envs["HOME"]
 //     );
 //     let yaml = match fs::read_to_string(path) {
@@ -70,7 +71,7 @@ fn test_parse_blueprint_by_name(name: &str) -> Result<()> {
 // fn test_parse_blueprint_4() {
 //     let envs = env::vars().collect::<HashMap<String, String>>();
 //     let path = format!(
-//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/blueprint_04.yml",
+//         "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/plasma_depot.yml",
 //         envs["HOME"]
 //     );
 //     let yaml = match fs::read_to_string(path) {

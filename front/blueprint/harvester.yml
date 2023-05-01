@@ -8,7 +8,7 @@
   \  /              \  /
    07                11
     ",
-    name: __,
+    name: harvester,
     forward: [7, 11, 3],
     slow: [5, 9],
     left: [11],

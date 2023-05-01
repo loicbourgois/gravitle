@@ -106,9 +106,9 @@ const iter = (self) => {
         self.update()
     }
     self.draw()
-    if (self.audioCtx) {
-        self.update_audio()
-    }
+    // if (self.audioCtx) {
+    //     self.update_audio()
+    // }
     requestAnimationFrame(()=>{
         requestAnimationFrame(self.iter)
     })
@@ -179,12 +179,14 @@ const draw = (self) => {
         [Kind.Sun]: true,
     }
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
-        const p = particle(particles_view, pid*particle_size);
+        const p = particle(particles_view, pid*particle_size, self.gravithrust.get_particle_kind(pid));
         if (p.live == 0 || !pre_link_particles[p.k]) {
             continue
         }
         draw_particle(self.context, self.context_trace, self.gravithrust.diameter, p)
     }
+    // console.log("ee")
+
     for (let lid = 0; lid < self.gravithrust.links_count(); lid++) {
         const l = link_js(links_js_view, lid*link_js_size);
         if (l.ak != Kind.Sun && l.bk != Kind.Sun) {
@@ -193,13 +195,21 @@ const draw = (self) => {
             fill_circle_2(self.context_trace, l, self.gravithrust.diameter , "#ca28")
         }
     }
+    // console.log("ee - 1")
+
+    // self.gravithrust.print_particle()
+
     for (let pid = 0; pid < self.gravithrust.particles_count(); pid++) {
-        const p = particle(particles_view, pid*particle_size);
+        // console.log("hey",pid)
+        // self.gravithrust.print_particle(pid)
+        // console.log()
+        const p = particle(particles_view, pid*particle_size, self.gravithrust.get_particle_kind(pid));
         if (p.live == 0 || pre_link_particles[p.k] ) {
             continue
         }
         draw_particle(self.context, self.context_trace, self.gravithrust.diameter, p)
     }
+    // console.log("ee - 2")
     if (self.ppms.length) {
         self.context_2.canvas.width = 400
         clear(self.context_2)

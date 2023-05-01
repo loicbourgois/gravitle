@@ -1,5 +1,5 @@
 #!/bin/sh
-# $HOME/github.com/loicbourgois/gravitle/front/go.sh
+# $HOME/github.com/loicbourgois/gravitle/go.sh
 docker-compose \
   --file $HOME/github.com/loicbourgois/gravitle/front/docker-compose.yml \
   up \

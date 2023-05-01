@@ -30,7 +30,7 @@ const go_fullscreen = () => {
 }
 
 
-const exit_fullscreen = () => {
+const exit_fullscreen = () => {
   const docElm = document
   if (docElm.exitFullscreen) {
 			docElm.exitFullscreen();
@@ -84,23 +84,18 @@ init().then( async (wasm) => {
   window.addEventListener("resize", resize)
   window.addEventListener("click", unzen_mode)
   window.addEventListener("keydown", unzen_mode)
-  try {
-    const blueprint_responses = await Promise.all([
-        fetch('./blueprint/blueprint_01.yml'),
-        fetch('./blueprint/blueprint_02.yml'),
-        fetch('./blueprint/blueprint_03.yml'),
-        fetch('./blueprint/blueprint_04.yml'),
-        fetch('./blueprint/blueprint_05.yml'),
-    ]);
-    const job_responses = await Promise.all([
-        fetch('./job/plasma_collector.json'),
-    ]);
-    const yml_blueprints = await Promise.all(blueprint_responses.map(r => r.text()))
-    const json_jobs = await Promise.all(job_responses.map(r => r.text()))
-    setup(wasm, yml_blueprints, json_jobs)
-  } catch (err) {
-    throw err;
+  const yml_blueprints = {}
+  const json_jobs = {}
+  for (const x of ['small_ship', 'plasma_collector', 'sun', 'plasma_depot', 
+    'harvester', 'plasma_refinery', 'plasma_transporter']
+  ) {
+    yml_blueprints[x] = await (await fetch(`./blueprint/${x}.yml`)).text();
   }
+  for (const x of ['plasma_collector', 'plasma_transporter']
+  ) {
+    json_jobs[x] = await (await fetch(`./job/${x}.json`)).text();
+  }
+  setup(wasm, yml_blueprints, json_jobs)
 });
 
 
@@ -125,20 +120,77 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-  const structure_pid = gravithrust.add_structure(yml_blueprints[2], 0.5, 0.5)
-  console.log(structure_pid)
-  const anchor_pid = gravithrust.add_particle(0.55,  0.5, "anchor")
-  const sid = gravithrust.add_ship(yml_blueprints[3], 0.55, 0.5)
-  gravithrust.add_structure(yml_blueprints[4], 0.6, 0.6)
-  gravithrust.set_anchor(sid, anchor_pid)
-  gravithrust.set_target(sid, structure_pid)
-  let sid_2 = gravithrust.add_ship(yml_blueprints[1], 0.6, 0.4)
-  gravithrust.set_job(sid_2, json_jobs[0])
-  let sid_3 = gravithrust.add_ship(yml_blueprints[1], 0.4, 0.4)
-  gravithrust.set_job(sid_3, json_jobs[0])
-  // for (let index = 0; index < 1; index++) {
-    
-  // }
+
+
+  const world_blueprint = {
+    structures: [
+      {
+        blueprint: "sun",
+        x: 0.5,
+        y: 0.5,
+      },{
+        blueprint: "plasma_depot",
+        x: 0.6,
+        y: 0.6,
+      },{
+        blueprint: "plasma_refinery",
+        x: 0.5,
+        y: 0.6,
+      }
+    ],
+    particles: [
+      {
+        kind: "anchor",
+        x: 0.525,
+        y: 0.5,
+      }
+    ],
+    ships: [
+      {
+        blueprint: "harvester",
+        x: 0.525,
+        y: 0.5,
+        anchor: {k:'particles', id:0},
+        target: {k:'structures', id:0},
+      }, 
+      {
+        blueprint: "plasma_collector",
+        x: 0.6,
+        y: 0.4,
+        job: 'plasma_collector',
+      }, {
+        blueprint: "plasma_collector",
+        x: 0.4,
+        y: 0.4,
+        job: 'plasma_collector',
+      }, {
+        blueprint: "plasma_transporter",
+        x: 0.55,
+        y: 0.6,
+        job: 'plasma_transporter',
+      }
+    ]
+  }
+
+  for (const structure of world_blueprint.structures) {
+    structure.pid = gravithrust.add_structure(yml_blueprints[structure.blueprint], structure.x, structure.y)
+  }
+  for (const p of world_blueprint.particles) {
+    p.pid = gravithrust.add_particle(p.x,  p.y, p.kind)
+  }
+  console.log(world_blueprint)
+  for (const s of world_blueprint.ships) {
+    s.sid = gravithrust.add_ship(yml_blueprints[s.blueprint], s.x, s.y)
+    if (s.job) {
+      gravithrust.set_job(s.sid, json_jobs[s.job])
+    }
+    if (s.anchor) {
+      gravithrust.set_anchor(s.sid, world_blueprint[s.anchor.k][s.anchor.id].pid  )
+    }
+    if (s.target) {
+      gravithrust.set_target(s.sid, world_blueprint[s.target.k][s.target.id].pid  )
+    }
+  }
   const keys = [
     'forward_max_speed',
     'forward_max_angle',
@@ -175,11 +227,11 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
   resize()
   const simulation = Simulation(gravithrust, wasm, context, context_2, context_trace)
   simulation.start()
-  document.getElementById("sound_slider").addEventListener("input", (v) => {
-    if (!started_sound){
-      started_sound = true
-      start_sound(gravithrust.ships_count(), simulation)
-    }
-    simulation.master.gain.linearRampToValueAtTime(parseFloat(v.target.value) / 100, simulation.audioCtx.currentTime + 0.1)
-  });
+  // document.getElementById("sound_slider").addEventListener("input", (v) => {
+  //   if (!started_sound){
+  //     started_sound = true
+  //     start_sound(gravithrust.ships_count(), simulation)
+  //   }
+  //   simulation.master.gain.linearRampToValueAtTime(parseFloat(v.target.value) / 100, simulation.audioCtx.currentTime + 0.1)
+  // });
 }

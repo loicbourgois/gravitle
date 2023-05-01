@@ -10,7 +10,7 @@
             "conditions": [
                 "PlasmaStorageFull"
             ],
-            "action": "DeliverPlasmaRefinery"
+            "action": "DeliverPlasmaRefineryIn"
         },
         {
             "conditions": [],

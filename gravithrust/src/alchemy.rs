@@ -1,4 +1,5 @@
 use crate::kind::Kind;
+use crate::log;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
 use crate::particle::State;
@@ -11,68 +12,76 @@ pub fn alchemy(
     if p1.live == 0 || p2.live == 0 {
         return;
     }
-    match (p1.k, p2.k, &pi1.new_state, &pi2.new_state) {
-        (Kind::Core, Kind::Booster, None, None) => {
-            if p1.volume > 0 && p2.volume < p2.k.capacity() {
+    if pi1.new_state.is_some() || pi2.new_state.is_some() {
+        return;
+    }
+    match (p1.k, p1.a, p2.k) {
+        // Energy transfer from core to booster|ray
+        (Kind::Booster | Kind::Ray, _, Kind::Core) => {
+            if p1.quantity < p1.k.capacity() && p2.quantity > 0 {
                 pi1.new_state = Some(State {
-                    volume: p1.volume - 1,
-                    kind: Kind::Core,
-                    live: 1,
+                    quantity: p1.quantity + 1,
+                    kind: p1.k,
+                    live: p1.live,
                 });
                 pi2.new_state = Some(State {
-                    volume: p2.volume + 1,
-                    kind: Kind::Booster,
-                    live: 1,
+                    quantity: p2.quantity - 1,
+                    kind: p2.k,
+                    live: p2.live,
                 });
             }
         }
-        (Kind::Core, Kind::Ray, None, None) => {
-            if p1.volume > 0 && p2.volume < p2.k.capacity() {
-                pi1.new_state = Some(State {
-                    volume: p1.volume - 1,
-                    kind: Kind::Core,
-                    live: 1,
-                });
+        // Harvest sun
+        (Kind::Sun, _, Kind::ElectroField) => {
+            if p2.quantity < p2.k.capacity() {
                 pi2.new_state = Some(State {
-                    volume: p2.volume + 1,
-                    kind: Kind::Ray,
-                    live: 1,
-                });
-            }
-        }
-        (Kind::Sun, Kind::ElectroField, None, None) => {
-            if p2.volume < p2.k.capacity() {
-                pi2.new_state = Some(State {
-                    volume: p2.volume + 1,
+                    quantity: p2.quantity + 1,
                     kind: Kind::PlasmaElectroField,
-                    live: 1,
+                    live: p2.live,
                 });
             }
         }
-        (Kind::PlasmaElectroField, Kind::PlasmaCollector, None, None) => {
-            if p1.volume > 0 && p2.volume < p2.k.capacity() {
+        // Collect plasma
+        (Kind::PlasmaCollector, 1, Kind::PlasmaElectroField) => {
+            if p1.quantity < p1.k.capacity() && p2.quantity > 0 {
                 pi1.new_state = Some(State {
-                    volume: 0,
+                    quantity: p1.quantity + 1,
+                    kind: Kind::PlasmaCollector,
+                    live: 1,
+                });
+                pi2.new_state = Some(State {
+                    quantity: 0,
                     kind: Kind::Default,
                     live: 0,
                 });
+            }
+        }
+        (Kind::PlasmaCollector, 1, Kind::PlasmaDepot) => {
+            if p1.quantity < p1.k.capacity() && p2.quantity > 0 {
+                log("aa");
+                pi1.new_state = Some(State {
+                    quantity: p1.quantity + 1,
+                    kind: p1.k,
+                    live: p1.live,
+                });
                 pi2.new_state = Some(State {
-                    volume: p2.volume + 1,
-                    kind: Kind::PlasmaCollector,
-                    live: 1,
+                    quantity: p2.quantity - 1,
+                    kind: p2.k,
+                    live: p2.live,
                 });
             }
         }
-        (Kind::PlasmaCollector, Kind::PlasmaDepot, None, None) => {
-            if p1.volume > 0 && p2.volume < p2.k.capacity() {
+        // Drop plasma
+        (Kind::PlasmaCollector, 0, Kind::PlasmaDepot | Kind::PlasmaRefineryInput) => {
+            if p1.quantity > 0 && p2.quantity < p2.k.capacity() {
                 pi1.new_state = Some(State {
-                    volume: p1.volume - 1,
+                    quantity: p1.quantity - 1,
                     kind: Kind::PlasmaCollector,
                     live: 1,
                 });
                 pi2.new_state = Some(State {
-                    volume: p2.volume + 1,
-                    kind: Kind::PlasmaDepot,
+                    quantity: p2.quantity + 1,
+                    kind: p2.k,
                     live: 1,
                 });
             }

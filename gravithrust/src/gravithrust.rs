@@ -10,7 +10,6 @@ use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
-#[allow(unused_imports)]
 use crate::log;
 use crate::math::angle;
 use crate::math::cross;
@@ -36,7 +35,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GravithrustState {
     pub capacity: HashMap<Kind, u32>,
-    pub volume: HashMap<Kind, u32>,
+    pub quantity: HashMap<Kind, u32>,
     pub count: HashMap<Kind, u32>,
 }
 #[wasm_bindgen]
@@ -80,6 +79,7 @@ impl Gravithrust {
         slow_down_max_speed_to_target_ratio: f32,
         booster_acceleration: f32,
     ) -> Gravithrust {
+        log("new Gravithrust");
         assert!((diameter * grid_side as f32) <= 1.0);
         Gravithrust {
             particles: vec![],
@@ -103,11 +103,19 @@ impl Gravithrust {
             state: GravithrustState {
                 capacity: HashMap::new(),
                 count: HashMap::new(),
-                volume: HashMap::new(),
+                quantity: HashMap::new(),
             },
             live_particles: HashSet::new(),
             dead_particles: HashSet::new(),
         }
+    }
+
+    pub fn print_particle(&self, pid: usize) {
+        log(&format!("{:?}", self.particles[pid]));
+    }
+
+    pub fn get_particle_kind(&self, pid: usize) -> u32 {
+        self.particles[pid].k as u32
     }
 
     pub fn add_ship(&mut self, yml_blueprint: &str, x: f32, y: f32) -> usize {
@@ -212,6 +220,7 @@ impl Gravithrust {
             anchor_pid: None,
             target_pid: None,
             job: None,
+            sid: sid.unwrap(),
         };
         self.ships.push(ship);
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
@@ -313,6 +322,7 @@ impl Gravithrust {
             assert!(self.dead_particles.remove(&pid));
             pid
         };
+        // log(&format!("{k:?}"));
         self.particles[pid] = Particle {
             p: position,
             pp: position - velocity,
@@ -323,7 +333,7 @@ impl Gravithrust {
             a: 0,
             idx: pid,
             grid_id: 0,
-            volume: 0,
+            quantity: 0,
             live: 1,
         };
         self.particles_internal[pid] = ParticleInternal {
@@ -340,11 +350,11 @@ impl Gravithrust {
     pub fn update_state(&mut self) {
         self.state.count.clear();
         self.state.capacity.clear();
-        self.state.volume.clear();
+        self.state.quantity.clear();
         for p in &self.particles {
             *self.state.count.entry(p.k).or_insert(0) += 1;
             *self.state.capacity.entry(p.k).or_insert(0) += p.k.capacity();
-            *self.state.volume.entry(p.k).or_insert(0) += p.volume;
+            *self.state.quantity.entry(p.k).or_insert(0) += p.quantity;
         }
     }
 
@@ -387,15 +397,19 @@ impl Gravithrust {
                 p1.p.x += d1.dp.x;
                 p1.p.y += d1.dp.y;
             }
-            if p1.k == Kind::Booster && p1.a == 1 && p1.volume >= 10 {
+            if p1.k == Kind::Booster && p1.a == 1 && p1.quantity >= 10 {
                 p1.v.x -= d1.direction.x * self.booster_acceleration;
                 p1.v.y -= d1.direction.y * self.booster_acceleration;
-                p1.volume -= 10;
+                p1.quantity -= 10;
+                // log("fire");
+            }
+            if p1.k == Kind::Booster {
+                // log("fire");
             }
             match &d1.new_state {
                 Some(state) => {
                     p1.k = state.kind;
-                    p1.volume = state.volume;
+                    p1.quantity = state.quantity;
                     if p1.live != state.live {
                         if state.live == 0 {
                             self.dead_particles.insert(p1.idx);
@@ -410,7 +424,7 @@ impl Gravithrust {
                 _ => {}
             }
             if p1.k == Kind::Core {
-                p1.volume = 1;
+                p1.quantity = 1;
             }
             d1.dp.x = 0.0;
             d1.dp.y = 0.0;
@@ -419,7 +433,7 @@ impl Gravithrust {
             d1.direction.x = 0.0;
             d1.direction.y = 0.0;
             d1.new_state = None;
-            p1.a = 0;
+            // p1.a = 0;
             p1.v.x = p1.v.x.max(-self.diameter * 0.5);
             p1.v.x = p1.v.x.min(self.diameter * 0.5);
             p1.v.y = p1.v.y.max(-self.diameter * 0.5);
@@ -428,11 +442,11 @@ impl Gravithrust {
             p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
             p1.pp.x = p1.p.x - p1.v.x;
             p1.pp.y = p1.p.y - p1.v.y;
-            if p1.volume > p1.k.capacity() {
+            if p1.quantity > p1.k.capacity() {
                 error(&format!(
                     "over capacity | {:?} : {} > {}",
                     p1.k,
-                    p1.volume,
+                    p1.quantity,
                     p1.k.capacity()
                 ));
             }
@@ -492,7 +506,9 @@ impl Gravithrust {
                 _ => "-",
             };
             for pid in &s.pids {
-                self.particles[*pid].a = 0;
+                if self.particles[*pid].k == Kind::Booster {
+                    self.particles[*pid].a = 0;
+                }
             }
             apply_movement_action(&mut self.particles, movement_action, s);
             match (s.anchor_pid, s.target_pid) {
@@ -503,10 +519,10 @@ impl Gravithrust {
                     let ray_particle = &mut self.particles[s.pids[0]];
                     let uu = normalize_2(wrap_around(ship.p, target).d);
                     if anchor_delta.d_sqrd < 0.001
-                        && ray_particle.volume >= ray_particle.k.capacity()
+                        && ray_particle.quantity >= ray_particle.k.capacity()
                         && angle(uu, normalize_2(ray_particle.direction)).abs() < 0.01
                     {
-                        ray_particle.volume = 0;
+                        ray_particle.quantity = 0;
                         let aa = ray_particle.p + ray_particle.direction * self.diameter * 1.75;
                         self.add_particle_internal_2(
                             aa,

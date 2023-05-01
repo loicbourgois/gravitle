@@ -19,8 +19,8 @@ const drawers = {
     },
     [Kind.Ray]: (context, context_trace, diameter, p) => {
         const r = 255*0.0
-        const g = 255*( p.volume/2500 )
-        const b = 255*( 0.5 + p.volume/2500 )
+        const g = 255*( p.quantity/2500 )
+        const b = 255*( 0.5 + p.quantity/2500 )
         fill_circle_2(context, p.p, diameter*1, `rgb(${r},${g},${b})`)
     },
     [Kind.Sun]: (context, context_trace, diameter, p) => {
@@ -55,12 +55,26 @@ const drawers = {
         fill_circle_2(context, p.p, diameter*1, "#df4")
     },
     [Kind.PlasmaCollector]: (context, context_trace, diameter, p) => {
-        fill_circle_2(context, p.p, diameter*1, "#da4")
+        if (p.a == 1) {
+            fill_circle_2(context, p.p, diameter*1, "#f64")
+        } else {
+            fill_circle_2(context, p.p, diameter*1, "#da4")
+            const r = 0
+            const g = 255
+            const b = 200
+            fill_circle_2(context, p.p, diameter*1, `rgb(${r},${g},${b})`)
+        }
     },
     [Kind.PlasmaCargo]: (context, context_trace, diameter, p) => {
         fill_circle_2(context, p.p, diameter*1, "#da4")
     },
     [Kind.Default]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#f0f")
+    },
+    [Kind.PlasmaRefineryInput]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#f0f")
+    },
+    [Kind.PlasmaRefineryOutput]: (context, context_trace, diameter, p) => {
         fill_circle_2(context, p.p, diameter*1, "#f0f")
     },
 }
@@ -72,8 +86,11 @@ const draw_particle = (context, context_trace, diameter, p) => {
         drawer(context, context_trace, diameter, p)
     } else {
         fill_circle_2(context, p.p, diameter*30, "#f0f")
-        throw(p.k)
+        throw(`cannot draw: invalid kind: ${p.k}`)
     }
+    // if (p.a) {
+    //     fill_circle_2(context, p.p, diameter*3, "#f0f")
+    // }
 }
 
 

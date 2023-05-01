@@ -9,6 +9,7 @@ pub struct Link {
 }
 #[wasm_bindgen]
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct LinkJS {
     #[allow(dead_code)]
     pub ak: Kind,

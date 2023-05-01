@@ -1,0 +1,70 @@
+{
+    "kinds": [
+        "invalid",
+        "default",
+        "armor",
+        "core",
+        "booster",
+        "sun",
+        "light",
+        "plant",
+        "metal",
+        "depot",
+        "target",
+        "ray",
+        "cargo",
+        "plasma",
+        "field",
+        "anchor",
+        "sun_core",
+        "electro_field",
+        "plasma_electro_field",
+        "plasma_cargo",
+        "plasma_collector",
+        "plasma_depot",
+        "plasma_refinery_input",
+        "plasma_refinery_output",
+        "static"
+    ],
+    "static_kinds": [
+        "sun_core", "depot", "anchor", "static"
+    ],
+    "capacities": {
+        "core": {
+            "soft": 0,
+            "hard": 1
+        },
+        "booster": {
+            "soft": 0,
+            "hard": 100
+        },
+        "plasma_collector": {
+            "soft": 0,
+            "hard": 2
+        },
+        "plasma_cargo": {
+            "soft": 2,
+            "hard": 2
+        },
+        "plasma_refinery_input": {
+            "soft": 20,
+            "hard": 20
+        },
+        "plasma_depot": {
+            "soft": 20,
+            "hard": 20
+        },
+        "electro_field": {
+            "soft": 0,
+            "hard": 1
+        },
+        "ray": {
+            "soft": 0,
+            "hard": 2500
+        },
+        "plasma_electro_field": {
+            "soft": 0,
+            "hard": 1
+        }
+    }
+}

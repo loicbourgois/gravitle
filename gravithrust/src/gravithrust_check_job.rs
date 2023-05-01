@@ -1,25 +1,25 @@
+use crate::action::collect;
+use crate::action::deliver;
 use crate::gravithrust::Gravithrust;
 use crate::job::Action;
 use crate::job::Condition;
 use crate::kind::Kind;
-use crate::log;
-use crate::math::wrap_around;
 use crate::particle::Particle;
 use crate::ship::ShipMore;
-pub fn plasma_volume_soft_capa(particles: &[Particle], ship_more: &ShipMore) -> (u32, u32) {
-    let mut volume = 0;
+pub fn plasma_quantity_soft_capa(particles: &[Particle], ship_more: &ShipMore) -> (u32, u32) {
+    let mut quantity = 0;
     let mut capacity = 0;
     for pid in &ship_more.pids {
         let p = &particles[*pid];
         match p.k {
             Kind::PlasmaCargo | Kind::PlasmaCollector | Kind::PlasmaDepot => {
-                volume += p.volume;
+                quantity += p.quantity;
                 capacity += p.k.soft_capacity();
             }
             _ => {}
         }
     }
-    (volume, capacity)
+    (quantity, capacity)
 }
 fn all_conditions_ok(
     particles: &[Particle],
@@ -29,14 +29,14 @@ fn all_conditions_ok(
     for condition in conditions {
         match condition {
             Condition::PlasmaStorageNotFull => {
-                let (volume, capacity) = plasma_volume_soft_capa(particles, ship_more);
-                if volume >= capacity {
+                let (quantity, capacity) = plasma_quantity_soft_capa(particles, ship_more);
+                if quantity >= capacity {
                     return false;
                 }
             }
             Condition::PlasmaStorageFull => {
-                let (volume, capacity) = plasma_volume_soft_capa(particles, ship_more);
-                if volume < capacity {
+                let (quantity, capacity) = plasma_quantity_soft_capa(particles, ship_more);
+                if quantity < capacity {
                     return false;
                 }
             }
@@ -55,52 +55,23 @@ impl Gravithrust {
                         continue;
                     }
                     match task.action {
-                        Action::CollectPlasmaElectroField => match ship_more.target_pid {
-                            None => {
-                                let mut dmin = std::f32::INFINITY;
-                                let mut target_pid = None;
-                                for p in &self.particles {
-                                    if p.k == Kind::PlasmaElectroField {
-                                        let wa = wrap_around(p.p, ship.p);
-                                        if wa.d_sqrd < dmin {
-                                            dmin = wa.d_sqrd;
-                                            target_pid = Some(p.idx);
-                                        }
-                                    }
-                                }
-                                ship_more.target_pid = target_pid;
-                                match target_pid {
-                                    Some(pid) => {
-                                        let p = &self.particles[pid];
-                                        log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
-                                    }
-                                    None => {}
-                                }
-                            }
-                            Some(target_pid) => {
-                                if self.particles[target_pid].k != Kind::PlasmaElectroField {
-                                    ship_more.target_pid = None;
-                                }
-                            }
-                        },
-                        Action::DeliverPlasmaDepot => match ship_more.target_pid {
-                            None => {
-                                for p in &self.particles {
-                                    if p.k == Kind::PlasmaDepot {
-                                        ship_more.target_pid = Some(p.idx);
-                                        log(&format!("s#{} -> p#{}:{:?}", sid, p.idx, p.k));
-                                        break;
-                                    }
-                                }
-                            }
-                            Some(target_pid) => {
-                                if self.particles[target_pid].k != Kind::PlasmaDepot {
-                                    ship_more.target_pid = None;
-                                }
-                            }
-                        },
-                        Action::CollectPlasmaDepot => {}
-                        Action::DeliverPlasmaRefinery => {}
+                        Action::CollectPlasmaElectroField => {
+                            collect(
+                                ship,
+                                ship_more,
+                                &mut self.particles,
+                                Kind::PlasmaElectroField,
+                            );
+                        }
+                        Action::DeliverPlasmaDepot => {
+                            deliver(ship_more, &mut self.particles, Kind::PlasmaDepot);
+                        }
+                        Action::CollectPlasmaDepot => {
+                            collect(ship, ship_more, &mut self.particles, Kind::PlasmaDepot);
+                        }
+                        Action::DeliverPlasmaRefineryIn => {
+                            deliver(ship_more, &mut self.particles, Kind::PlasmaRefineryInput);
+                        }
                         Action::ResetTarget => {
                             ship_more.target_pid = None;
                         }

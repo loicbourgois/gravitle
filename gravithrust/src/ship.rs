@@ -19,6 +19,7 @@ pub struct ShipMore {
     pub anchor_pid: Option<usize>,
     pub target_pid: Option<usize>,
     pub job: Option<Job>,
+    pub sid: usize,
 }
 pub struct ShipControl {
     pub forward: Vec<usize>,

@@ -22,3 +22,6 @@ anyhow = "*"
 
 [build-dependencies]
 anyhow = "*"
+convert_case = "*"
+serde_json = "*"
+serde = { version = "*", features = ["derive"] }

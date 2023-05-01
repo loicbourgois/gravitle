@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub type Particles = Vec<Particle>;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
+#[repr(C)]
 pub struct Particle {
     pub p: Vector,
     pub v: Vector,
@@ -12,7 +13,7 @@ pub struct Particle {
     pub m: f32,
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
-    pub volume: u32,
+    pub quantity: u32,
     pub live: u32,
     pub grid_id: usize,
     pub idx: usize,
@@ -23,13 +24,13 @@ impl Default for Particle {
             p: Vector::default(),
             pp: Vector::default(),
             v: Vector::default(),
-            m: 0.0,
-            k: Kind::Default,
+            m: 1.0,
+            k: Kind::Sun,
             direction: Vector::default(),
             a: 0,
             idx: 0,
             grid_id: 0,
-            volume: 0,
+            quantity: 0,
             live: 0,
         }
     }
@@ -43,7 +44,7 @@ pub struct ParticleInternal {
     pub new_state: Option<State>,
 }
 pub struct State {
-    pub volume: u32,
+    pub quantity: u32,
     pub kind: Kind,
     pub live: u32,
 }

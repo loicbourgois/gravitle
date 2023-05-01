@@ -25,5 +25,5 @@ pub enum Action {
     DeliverPlasmaDepot = 2,
     ResetTarget = 3,
     CollectPlasmaDepot = 4,
-    DeliverPlasmaRefinery = 5,
+    DeliverPlasmaRefineryIn = 5,
 }

@@ -1,11 +1,13 @@
 #!/bin/sh
-# $HOME/github.com/loicbourgois/gravitle/front/build.sh
+# $HOME/github.com/loicbourgois/gravitle/build.sh
 set -e
 echo "# Start"
 START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
+rustup override set stable
+echo "" > $HOME/github.com/loicbourgois/gravitle/gravithrust/src/kind_generated.rs
 cargo +nightly fmt
-cargo test
+RUST_BACKTRACE=1 cargo test
 cargo clippy -- \
     -A clippy::single_match \
     -A clippy::too_many_arguments \
@@ -15,6 +17,7 @@ cargo clippy -- \
     -A clippy::cast_possible_truncation \
     -A clippy::module_name_repetitions \
     -A clippy::unused_self \
+    -A clippy::match_same_arms \
     -A clippy::similar_names
 wasm-pack build --no-typescript --release --target web
 rm $HOME/github.com/loicbourgois/gravitle/front/blueprint/* || true
