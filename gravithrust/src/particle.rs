@@ -17,6 +17,7 @@ pub struct Particle {
     pub live: u32,
     pub grid_id: usize,
     pub idx: usize,
+    pub packer: f32,
 }
 impl Default for Particle {
     fn default() -> Self {
@@ -32,6 +33,7 @@ impl Default for Particle {
             grid_id: 0,
             quantity: 0,
             live: 0,
+            packer: -0.12,
         }
     }
 }

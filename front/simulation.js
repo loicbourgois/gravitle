@@ -2,6 +2,8 @@ import {
     fill_circle_2,
     clear,
     clear_trans,
+    resize_square,
+    // resize,
 } from "../canvas.js"
 import {
     particle,
@@ -20,7 +22,83 @@ import {
 } from "./particle_draw.js"
 
 
-const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
+const RESOLUTION = 2
+
+
+const Simulation = async (
+    gravithrust,
+    wasm,
+    canvas,
+    canvas_2,
+    canvas_trace,
+) => {
+    let context = undefined
+    let webgpu = undefined
+    const adapter = await navigator.gpu?.requestAdapter();
+    const device = await adapter?.requestDevice();
+    if (device) {
+        webgpu = {
+            device: device,
+        }
+        webgpu.context = canvas.getContext('webgpu');
+        const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        webgpu.context.configure({
+            device,
+            format: presentationFormat,
+            alphaMode: "premultiplied",
+        });
+        const code_disk = await (await fetch(`./webgpu/disk_generated.wgsl`)).text()
+        const module = device.createShaderModule({
+            label: 'shaders',
+            code: (await (await fetch(`./webgpu/code.wgsl`)).text()).replace("//__DISK_GENERATED__//", code_disk),
+        });
+        webgpu.particle_max_count = 1000;
+        webgpu.particle_size = gravithrust.particle_size()
+        webgpu.buffer_size = webgpu.particle_max_count * webgpu.particle_size;  
+        webgpu.buffer = device.createBuffer({
+            size: webgpu.buffer_size,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+        webgpu.pipeline = device.createRenderPipeline({
+            label: 'pipeline',
+            layout: 'auto',
+            vertex: {
+                module,
+                entryPoint: 'vs',
+            },
+            fragment: {
+                module,
+                entryPoint: 'fs',
+                targets: [{ format: presentationFormat }],
+            },
+        });
+        webgpu.bindGroup = device.createBindGroup({
+            layout: webgpu.pipeline.getBindGroupLayout(0),
+            entries: [
+            { binding: 0, resource: { buffer: webgpu.buffer }},
+            ],
+        });
+        webgpu.renderPassDescriptor = {
+            label: 'renderPass',
+            colorAttachments: [
+            {
+                clearValue: { r: 0.0, g: 0.5, b: 1.0, a: 0.0 },
+                loadOp: 'clear',
+                storeOp: 'store',
+            },
+            ],
+        };
+    } else {
+        console.error('need a browser that supports WebGPU');
+        context = canvas.getContext('2d')
+    }
+    const context_trace = canvas_trace.getContext('2d')
+    const context_2 = canvas_2.getContext('2d')
+    resize_square(canvas, RESOLUTION * 0.9)
+    resize_square(canvas_trace, RESOLUTION * 0.9 )
+    const dimension = Math.min(window.innerWidth, window.innerHeight)
+    canvas.style.width = `${dimension*0.9}px`
+    canvas.style.height = `${dimension*0.9}px`
     const self = {
         start: () => { start(self) },
         gravithrust: gravithrust,
@@ -36,6 +114,8 @@ const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
         ppms: [],
         update_starts: [],
         update_durations: [],
+        draw_gpu: () => {draw_gpu(self)},
+        draw_not_gpu: () => {draw_not_gpu(self)},
         update_audio: () => {update_audio(self)},
         audio_starts: [],
         audio_durations: [],
@@ -43,12 +123,13 @@ const Simulation = (gravithrust, wasm, context, context_2, context_trace) => {
         stop_physics: () => {self.do_physics = false},
         context_trace: context_trace,
         iter_durations: [],
+        webgpu: webgpu,
     }
     return self
 }
 
 
-const start = (self) => {
+const start = async (self) => {
     self.start_time = performance.now()
     self.iter()
 }
@@ -100,6 +181,26 @@ const update_audio = (self) => {
 }
 
 
+const draw_gpu = (self) => {
+    self.webgpu.renderPassDescriptor.colorAttachments[0].view =
+        self.webgpu.context.getCurrentTexture().createView();
+    const encoder = self.webgpu.device.createCommandEncoder({ label: 'our encoder' });
+    const pass = encoder.beginRenderPass(self.webgpu.renderPassDescriptor);
+    pass.setPipeline(self.webgpu.pipeline);
+    pass.setBindGroup(0, self.webgpu.bindGroup);
+    pass.draw(16*3, self.webgpu.particle_max_count);
+    pass.end();
+    self.webgpu.device.queue.writeBuffer(
+        self.webgpu.buffer,
+        0, 
+        self.wasm.memory.buffer,
+        self.gravithrust.particles(),
+        self.gravithrust.particles_size(),
+    );
+    self.webgpu.device.queue.submit([encoder.finish()]);
+}
+
+
 const iter = (self) => {
     const iter_start = performance.now()
     if (self.do_physics) {
@@ -109,9 +210,9 @@ const iter = (self) => {
     // if (self.audioCtx) {
     //     self.update_audio()
     // }
-    requestAnimationFrame(()=>{
+    // requestAnimationFrame(()=>{
         requestAnimationFrame(self.iter)
-    })
+    // })
     self.iter_durations.push(performance.now() - iter_start)
     while (self.iter_durations.length > 20) {
         self.iter_durations.shift()
@@ -155,10 +256,7 @@ const update = (self) => {
 const average = array => array.reduce((a, b) => a + b) / array.length;
 
 
-const draw = (self) => {
-    // self.context_trace.globalCompositeOperation = "hard-light"
-    const frame_start = performance.now()
-    self.frame_starts.push(frame_start)
+const draw_not_gpu = (self) => {
     clear(self.context)
     clear_trans(self.context_trace)
     const particle_size = self.gravithrust.particle_size()
@@ -228,6 +326,18 @@ const draw = (self) => {
             self.context_2.fill();
             self.context_2.stroke();
         }
+    }
+}
+
+
+const draw = (self) => {
+    // self.context_trace.globalCompositeOperation = "hard-light"
+    const frame_start = performance.now()
+    self.frame_starts.push(frame_start)
+    if (self.webgpu) {
+        self.draw_gpu()
+    } else {
+        self.draw_not_gpu()
     }
     document.querySelector("#points").innerHTML = self.gravithrust.points
     const duration = (( performance.now() - self.start_time) / 1000 )

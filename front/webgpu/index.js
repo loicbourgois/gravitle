@@ -6,16 +6,17 @@ const main = async () => {
     document.body.innerHTML = `
         <canvas id="canvas"></canvas>
     `
+    const canvas = document.querySelector('#canvas');
+    resize_square(canvas, RESOLUTION*0.9)
+    canvas.style.width = `${canvas.width/RESOLUTION}px`
+    canvas.style.height = `${canvas.height/RESOLUTION}px`
+
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
         fail('need a browser that supports WebGPU');
         return;
     }
-    const canvas = document.querySelector('#canvas');
-    resize_square(canvas, RESOLUTION*0.9)
-    canvas.style.width = `${canvas.width/RESOLUTION}px`
-    canvas.style.height = `${canvas.height/RESOLUTION}px`
     const context = canvas.getContext('webgpu');
     const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
     context.configure({
@@ -27,16 +28,13 @@ const main = async () => {
         label: 'our hardcoded red triangle shaders',
         code: (await (await fetch(`./code.wgsl`)).text()).replace("//__DISK_GENERATED__//", code_disk),
     });
-
     const particle_count = 10000;
     const particle_size = 4 * 4;
-
     const uniformBufferSize = particle_count * particle_size;  
     const uniformBuffer = device.createBuffer({
         size: uniformBufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
-    
     const js_buffer = new ArrayBuffer(uniformBufferSize)
     const view = new DataView(js_buffer);
     for (let pid = 0; pid < particle_count; pid++) {
@@ -101,7 +99,6 @@ function render(
     js_buffer,
 ) {
     const start = performance.now()
-    // console.log( `${(start - last_start).toFixed(2)} ms` )
     last_start = start
     const s = performance.now()
     for (let pid = 0; pid < particle_count; pid++) {

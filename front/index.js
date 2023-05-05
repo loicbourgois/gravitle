@@ -107,7 +107,7 @@ const start_sound = (ship_count, simulation) => {
 }
 
 
-const setup = (wasm, yml_blueprints, json_jobs) => {
+const setup = async (wasm, yml_blueprints, json_jobs) => {
   const gravithrust = Gravithrust.new(
     0.0025, // diameter
     32, // substep per tick
@@ -120,8 +120,6 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-
-
   const world_blueprint = {
     structures: [
       {
@@ -158,12 +156,26 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
         x: 0.6,
         y: 0.4,
         job: 'plasma_collector',
-      }, {
+      }, 
+      {
         blueprint: "plasma_collector",
         x: 0.4,
         y: 0.4,
         job: 'plasma_collector',
-      }, {
+      },
+      // {
+      //   blueprint: "plasma_collector",
+      //   x: 0.3,
+      //   y: 0.4,
+      //   job: 'plasma_collector',
+      // },
+      // {
+      //   blueprint: "plasma_collector",
+      //   x: 0.3,
+      //   y: 0.32,
+      //   job: 'plasma_collector',
+      // },
+      {
         blueprint: "plasma_transporter",
         x: 0.55,
         y: 0.6,
@@ -171,14 +183,12 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
       }
     ]
   }
-
   for (const structure of world_blueprint.structures) {
     structure.pid = gravithrust.add_structure(yml_blueprints[structure.blueprint], structure.x, structure.y)
   }
   for (const p of world_blueprint.particles) {
     p.pid = gravithrust.add_particle(p.x,  p.y, p.kind)
   }
-  console.log(world_blueprint)
   for (const s of world_blueprint.ships) {
     s.sid = gravithrust.add_ship(yml_blueprints[s.blueprint], s.x, s.y)
     if (s.job) {
@@ -219,13 +229,13 @@ const setup = (wasm, yml_blueprints, json_jobs) => {
       gravithrust[k] = parseFloat(v.target.value)
     });
   }
-  const context_trace = document.querySelector("#canvas_trace").getContext('2d')
-  const context = document.querySelector("#canvas").getContext('2d')
-  const context_2 = document.querySelector("#canvas_2").getContext('2d')
-  resize_square(context.canvas, RESOLUTION * 0.9)
-  resize_square(context_trace.canvas, RESOLUTION * 0.9 )
-  resize()
-  const simulation = Simulation(gravithrust, wasm, context, context_2, context_trace)
+  const simulation = await Simulation(
+    gravithrust, 
+    wasm, 
+    document.querySelector("#canvas"), 
+    document.querySelector("#canvas_2"), 
+    document.querySelector("#canvas_trace"),
+  )
   simulation.start()
   // document.getElementById("sound_slider").addEventListener("input", (v) => {
   //   if (!started_sound){

@@ -238,7 +238,7 @@ impl Gravithrust {
     }
 
     pub fn particle_size_internal() -> usize {
-        15 * 4
+        16 * 4
     }
 
     pub fn particles_count(&self) -> u32 {
@@ -335,6 +335,7 @@ impl Gravithrust {
             grid_id: 0,
             quantity: 0,
             live: 1,
+            packer: -0.12,
         };
         self.particles_internal[pid] = ParticleInternal {
             dp: Vector::default(),
