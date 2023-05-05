@@ -149,6 +149,7 @@ pub fn normalize_2(p: Vector) -> Vector {
 }
 pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
     // Rotates p2 around p1
+    // angle should be in [0 ; 1.0]
     let angle = std::f32::consts::PI * 2.0 * angle;
     let dx = p2.x - p1.x;
     let dy = p2.y - p1.y;
