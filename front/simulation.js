@@ -20,6 +20,10 @@ import {
 import {
     draw_particle,
 } from "./particle_draw.js"
+import {
+    setup_webgpu,
+    draw_gpu,
+} from "./simulation_gpu.js"
 
 
 const RESOLUTION = 2
@@ -37,57 +41,10 @@ const Simulation = async (
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (device) {
-        webgpu = {
-            device: device,
-        }
-        webgpu.context = canvas.getContext('webgpu');
-        const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-        webgpu.context.configure({
+        webgpu = await setup_webgpu(
             device,
-            format: presentationFormat,
-            alphaMode: "premultiplied",
-        });
-        const code_disk = await (await fetch(`./webgpu/disk_generated.wgsl`)).text()
-        const module = device.createShaderModule({
-            label: 'shaders',
-            code: (await (await fetch(`./webgpu/code.wgsl`)).text()).replace("//__DISK_GENERATED__//", code_disk),
-        });
-        webgpu.particle_max_count = 1000;
-        webgpu.particle_size = gravithrust.particle_size()
-        webgpu.buffer_size = webgpu.particle_max_count * webgpu.particle_size;  
-        webgpu.buffer = device.createBuffer({
-            size: webgpu.buffer_size,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        });
-        webgpu.pipeline = device.createRenderPipeline({
-            label: 'pipeline',
-            layout: 'auto',
-            vertex: {
-                module,
-                entryPoint: 'vs',
-            },
-            fragment: {
-                module,
-                entryPoint: 'fs',
-                targets: [{ format: presentationFormat }],
-            },
-        });
-        webgpu.bindGroup = device.createBindGroup({
-            layout: webgpu.pipeline.getBindGroupLayout(0),
-            entries: [
-            { binding: 0, resource: { buffer: webgpu.buffer }},
-            ],
-        });
-        webgpu.renderPassDescriptor = {
-            label: 'renderPass',
-            colorAttachments: [
-            {
-                clearValue: { r: 0.0, g: 0.5, b: 1.0, a: 0.0 },
-                loadOp: 'clear',
-                storeOp: 'store',
-            },
-            ],
-        };
+            gravithrust,
+        );
     } else {
         console.error('need a browser that supports WebGPU');
         context = canvas.getContext('2d')
@@ -178,26 +135,6 @@ const update_audio = (self) => {
     while (self.audio_durations.length > 20) {
         self.audio_durations.shift()
     }
-}
-
-
-const draw_gpu = (self) => {
-    self.webgpu.renderPassDescriptor.colorAttachments[0].view =
-        self.webgpu.context.getCurrentTexture().createView();
-    const encoder = self.webgpu.device.createCommandEncoder({ label: 'our encoder' });
-    const pass = encoder.beginRenderPass(self.webgpu.renderPassDescriptor);
-    pass.setPipeline(self.webgpu.pipeline);
-    pass.setBindGroup(0, self.webgpu.bindGroup);
-    pass.draw(16*3, self.webgpu.particle_max_count);
-    pass.end();
-    self.webgpu.device.queue.writeBuffer(
-        self.webgpu.buffer,
-        0, 
-        self.wasm.memory.buffer,
-        self.gravithrust.particles(),
-        self.gravithrust.particles_size(),
-    );
-    self.webgpu.device.queue.submit([encoder.finish()]);
 }
 
 

@@ -56,6 +56,30 @@ fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         )
     )
 }
+fn kind_generated_wgsl(kd: &KindDefinition) -> Result<(), std::io::Error> {
+    let envs = env::vars().collect::<HashMap<String, String>>();
+    writeln!(
+        File::create(format!(
+            "{}/github.com/loicbourgois/gravitle/front/webgpu/kind_generated.wgsl",
+            envs["HOME"]
+        ))?,
+        "{}",
+        fs::read_to_string(format!(
+            "{}/github.com/loicbourgois/gravitle/front/webgpu/kind_generated.wgsl.template",
+            envs["HOME"]
+        ))
+        .expect("Should have been able to read the file")
+        .replace(
+            "__KINDS__",
+            &kd.kinds
+                .iter()
+                .enumerate()
+                .map(|(i, k)| format!("const KIND_{k} = {i};"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+    )
+}
 fn disk_generated() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let triangles = 16;
@@ -94,7 +118,7 @@ fn disk_generated() -> Result<(), std::io::Error> {
                 .iter()
                 .map(|v| format!("vec2f( {},  {}),", v.x, v.y))
                 .collect::<Vec<_>>()
-                .join("\n  "),
+                .join("\n    "),
         )
     )
 }
@@ -190,5 +214,6 @@ fn main() -> Result<(), std::io::Error> {
     )?;
     kind_generated_js(&kd)?;
     disk_generated()?;
+    kind_generated_wgsl(&kd)?;
     Ok(())
 }
