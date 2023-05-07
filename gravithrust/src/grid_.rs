@@ -2,9 +2,13 @@ use crate::math::Vector;
 use crate::particle::Particle;
 type Particles = Vec<Particle>;
 pub struct Grid {
-    pub pidxs: Vec<Vec<usize>>, // particle indexes
+    pub pidxs: Vec<PidxsHolder>, // particle indexes
     pub gids: Vec<Vec<usize>>,  // grid ids
     pub side: usize,
+}
+pub struct PidxsHolder {
+    pub pidxs: Vec<usize>,
+    pub size: usize,
 }
 impl Grid {
     pub fn new(side: usize) -> Grid {
@@ -31,7 +35,10 @@ impl Grid {
                     grid_id(grid_xs[2], grid_ys[1], grid.side),
                     grid_id(grid_xs[2], grid_ys[2], grid.side),
                 ]);
-                grid.pidxs.push(Vec::with_capacity(32));
+                grid.pidxs.push(PidxsHolder {
+                    pidxs: Vec::with_capacity(32),
+                    size: 0,
+                });
             }
         }
         grid
@@ -39,7 +46,7 @@ impl Grid {
 
     pub fn update_01(&mut self) {
         for x in &mut self.pidxs {
-            x.clear();
+            x.size = 0;
         }
     }
 
@@ -47,9 +54,19 @@ impl Grid {
         for p in particles {
             if p.live != 0 {
                 let grid_id_ = grid_id_particle(p, self.side);
-                self.pidxs[grid_id_].push(p.idx);
+                let l = self.pidxs[grid_id_].pidxs.len();
+                let s = self.pidxs[grid_id_].size;
+                if s < l {
+                    self.pidxs[grid_id_].pidxs[s] = p.idx;
+                } else {
+                    self.pidxs[grid_id_].pidxs.push(p.idx);
+                }
+                self.pidxs[grid_id_].size += 1;
                 p.grid_id = grid_id_;
             }
+        }
+        for x in &mut self.pidxs {
+            x.pidxs.truncate(x.size);
         }
     }
 }

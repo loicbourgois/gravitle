@@ -40,19 +40,25 @@ pub struct GravithrustState {
 }
 #[wasm_bindgen]
 pub struct Gravithrust {
-    live_particles: HashSet<usize>,
-    dead_particles: HashSet<usize>,
+    #[wasm_bindgen(skip)]
+    pub live_particles: HashSet<usize>,
+    #[wasm_bindgen(skip)]
+    pub dead_particles: HashSet<usize>,
     #[wasm_bindgen(skip)]
     pub particles: Vec<Particle>,
     #[wasm_bindgen(skip)]
     pub ships: Vec<Ship>,
-    links: Vec<Link>,
-    links_js: Vec<LinkJS>,
-    particles_internal: Vec<ParticleInternal>,
+    #[wasm_bindgen(skip)]
+    pub links: Vec<Link>,
+    #[wasm_bindgen(skip)]
+    pub links_js: Vec<LinkJS>,
+    #[wasm_bindgen(skip)]
+    pub particles_internal: Vec<ParticleInternal>,
     #[wasm_bindgen(skip)]
     pub ships_more: Vec<ShipMore>,
     pub diameter: f32,
-    grid: Grid,
+    #[wasm_bindgen(skip)]
+    pub grid: Grid,
     pub points: u32,
     pub step: u32,
     pub sub_steps: usize,
@@ -63,7 +69,8 @@ pub struct Gravithrust {
     pub slow_down_max_angle: f32,
     pub slow_down_max_speed_to_target_ratio: f32,
     pub booster_acceleration: f32,
-    state: GravithrustState,
+    #[wasm_bindgen(skip)]
+    pub state: GravithrustState,
 }
 #[wasm_bindgen]
 impl Gravithrust {
@@ -367,7 +374,7 @@ impl Gravithrust {
         self.ships_more[sid].job = Some(job);
     }
 
-    fn tick(&mut self) {
+    pub fn tick(&mut self) {
         self.grid.update_01();
         self.grid.update_02(&mut self.particles);
         compute_collision_responses(
@@ -402,11 +409,9 @@ impl Gravithrust {
                 p1.v.x -= d1.direction.x * self.booster_acceleration;
                 p1.v.y -= d1.direction.y * self.booster_acceleration;
                 p1.quantity -= 10;
-                // log("fire");
             }
-            if p1.k == Kind::Booster {
-                // log("fire");
-            }
+            // if p1.k == Kind::Booster {
+            // }
             match &d1.new_state {
                 Some(state) => {
                     p1.k = state.kind;
@@ -454,7 +459,7 @@ impl Gravithrust {
         }
     }
 
-    fn update_ships(&mut self) {
+    pub fn update_ships(&mut self) {
         let l = self.ships_more.len();
         for sid in 0..l {
             self.check_job(sid);

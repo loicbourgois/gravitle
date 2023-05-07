@@ -11,6 +11,10 @@ license = "MIT"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# [profile.release]
+# lto = true
+# codegen-units = 1
+
 [dependencies]
 wasm-bindgen = "*"
 rand = "*"
@@ -25,3 +29,6 @@ anyhow = "*"
 convert_case = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
+
+[features]
+bench = []
