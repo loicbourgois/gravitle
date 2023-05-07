@@ -37,6 +37,7 @@ const Simulation = async (
     canvas_trace,
 ) => {
     let context = undefined
+    let context_2 = undefined
     let webgpu = undefined
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
@@ -44,13 +45,17 @@ const Simulation = async (
         webgpu = await setup_webgpu(
             device,
             gravithrust,
+            canvas,
+            canvas_2,
         );
+        canvas_2.width = 1000;
+        canvas_2.height = 1000;
     } else {
         console.error('need a browser that supports WebGPU');
         context = canvas.getContext('2d')
+        context_2 = canvas_2.getContext('2d')
     }
     const context_trace = canvas_trace.getContext('2d')
-    const context_2 = canvas_2.getContext('2d')
     resize_square(canvas, RESOLUTION * 0.9)
     resize_square(canvas_trace, RESOLUTION * 0.9 )
     const dimension = Math.min(window.innerWidth, window.innerHeight)
@@ -302,6 +307,14 @@ const draw = (self) => {
     if (self.iter_durations.length) {
         document.querySelector("#iter_duration").innerHTML = average(self.iter_durations).toFixed(1)
     }
+
+    document.querySelector("#duration_a").innerHTML = (self.gravithrust.avg_duration.a * 1000).toFixed(5)
+    document.querySelector("#duration_b").innerHTML = (self.gravithrust.avg_duration.b * 1000).toFixed(5)
+    document.querySelector("#duration_c").innerHTML = (self.gravithrust.avg_duration.c * 1000).toFixed(5)
+    document.querySelector("#duration_d").innerHTML = (self.gravithrust.avg_duration.d * 1000).toFixed(5)
+    document.querySelector("#duration_e").innerHTML = (self.gravithrust.avg_duration.e * 1000).toFixed(5)
+    document.querySelector("#duration_f").innerHTML = (self.gravithrust.avg_duration.f * 1000).toFixed(5)
+    // console.log(self.gravithrust.avg_duration.a)
 }
 
 

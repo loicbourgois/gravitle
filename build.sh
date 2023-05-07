@@ -18,7 +18,8 @@ cargo clippy -- \
     -A clippy::module_name_repetitions \
     -A clippy::unused_self \
     -A clippy::match_same_arms \
-    -A clippy::similar_names
+    -A clippy::similar_names \
+    -A clippy::many_single_char_names
 wasm-pack build --no-typescript --release --target web
 rm $HOME/github.com/loicbourgois/gravitle/front/blueprint/* || true
 rmdir $HOME/github.com/loicbourgois/gravitle/front/blueprint || true

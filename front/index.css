@@ -79,3 +79,7 @@ button:hover {
   z-index: 3;
   pointer-events: none;
 }
+#canvas_2 {
+  height: 16rem;
+  width: 100%;
+}

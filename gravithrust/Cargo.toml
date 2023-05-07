@@ -23,6 +23,7 @@ serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 serde_json = "*"
 anyhow = "*"
+js-sys = "*"
 
 [build-dependencies]
 anyhow = "*"

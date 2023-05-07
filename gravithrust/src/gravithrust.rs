@@ -1,6 +1,7 @@
 use crate::blueprint::load_raw_blueprint;
 use crate::blueprint::Blueprint;
 use crate::blueprint::RawBlueprint;
+use crate::elapsed_secs_f32;
 use crate::error;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
@@ -18,6 +19,7 @@ use crate::math::radians;
 use crate::math::wrap_around;
 use crate::math::Vector;
 use crate::math::WrapAroundResponse;
+use crate::now;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
 use crate::particle::Particles;
@@ -31,6 +33,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GravithrustState {
@@ -71,6 +74,23 @@ pub struct Gravithrust {
     pub booster_acceleration: f32,
     #[wasm_bindgen(skip)]
     pub state: GravithrustState,
+    #[wasm_bindgen(skip)]
+    pub durations: VecDeque<Duration>,
+    pub avg_duration: Duration,
+    #[wasm_bindgen(skip)]
+    pub avg_durations: VecDeque<Duration>,
+    #[wasm_bindgen(skip)]
+    pub avg_durations_vec: Vec<Duration>,
+}
+#[wasm_bindgen]
+#[derive(Copy, Clone)]
+pub struct Duration {
+    pub a: f32,
+    pub b: f32,
+    pub c: f32,
+    pub d: f32,
+    pub e: f32,
+    pub f: f32,
 }
 #[wasm_bindgen]
 impl Gravithrust {
@@ -114,6 +134,17 @@ impl Gravithrust {
             },
             live_particles: HashSet::new(),
             dead_particles: HashSet::new(),
+            durations: VecDeque::new(),
+            avg_duration: Duration {
+                a: 0.0,
+                b: 0.0,
+                c: 0.0,
+                d: 0.0,
+                e: 0.0,
+                f: 0.0,
+            },
+            avg_durations: VecDeque::new(),
+            avg_durations_vec: Vec::new(),
         }
     }
 
@@ -296,11 +327,76 @@ impl Gravithrust {
         (self.links_js.len() * self.link_js_size_()) as u32
     }
 
+    pub fn average_durations_pointer(&self) -> *const Duration {
+        self.avg_durations_vec.as_ptr()
+    }
+
+    pub fn average_durations_size_unit(&self) -> u32 {
+        6 * 4
+    }
+
+    pub fn average_durations_size_full(&self) -> u32 {
+        self.average_durations_size_unit() * self.avg_durations_vec.len() as u32
+    }
+
+    pub fn average_durations_count(&self) -> u32 {
+        self.avg_durations_vec.len() as u32
+    }
+
     pub fn ticks(&mut self) -> String {
         for _ in 0..self.sub_steps {
             self.tick();
         }
         self.update_state();
+        while self.durations.len() > 10000 {
+            self.durations.pop_front();
+        }
+        self.avg_duration = Duration {
+            a: 0.0,
+            b: 0.0,
+            c: 0.0,
+            d: 0.0,
+            e: 0.0,
+            f: 0.0,
+        };
+        for duration in &self.durations {
+            self.avg_duration.a += duration.a;
+            self.avg_duration.b += duration.b;
+            self.avg_duration.c += duration.c;
+            self.avg_duration.d += duration.d;
+            self.avg_duration.e += duration.e;
+            self.avg_duration.f += duration.f;
+        }
+        self.avg_duration.a /= self.durations.len() as f32;
+        self.avg_duration.b /= self.durations.len() as f32;
+        self.avg_duration.c /= self.durations.len() as f32;
+        self.avg_duration.d /= self.durations.len() as f32;
+        self.avg_duration.e /= self.durations.len() as f32;
+        self.avg_duration.f /= self.durations.len() as f32;
+        self.avg_durations.push_back(self.avg_duration);
+        while self.avg_durations.len() > 1000 {
+            self.avg_durations.pop_front();
+        }
+        self.avg_durations_vec = self.avg_durations.clone().into();
+        // self.ppms.push({
+        // high: self.gravithrust.points * 1000000 / self.gravithrust.step,
+        // low: self.gravithrust.points * 1000000 / self.gravithrust.step,
+        // step_high: self.gravithrust.step,
+        // step_low: self.gravithrust.step,
+        // })
+        // if (self.ppms.length >= ppms_count) {
+        // for (let i = 0; i < ppms_count/2; i++) {
+        //     self.ppms[i] = {
+        //     high: Math.max(self.ppms[i*2].high, self.ppms[i*2+1].high),
+        //     low: Math.min(self.ppms[i*2].low,self.ppms[i*2+1].low),
+        //     step_high: Math.max(self.ppms[i*2].step_high, self.ppms[i*2+1].step_high),
+        //     step_low: Math.min(self.ppms[i*2].step_low, self.ppms[i*2+1].step_low),
+        //     }
+        // }
+        // self.ppms.length = ppms_count / 2;
+        // }
+        // self.avg_durations[998] = self.avg_durations[999];
+        // self.avg_durations[999] = self.avg_duration;
         self.get_state()
     }
 
@@ -375,14 +471,21 @@ impl Gravithrust {
     }
 
     pub fn tick(&mut self) {
+        let ia = now();
         self.grid.update_01();
+        let a = elapsed_secs_f32(ia);
+        let ib = now();
         self.grid.update_02(&mut self.particles);
+        let b = elapsed_secs_f32(ib);
+        let ic = now();
         compute_collision_responses(
             self.diameter,
             &mut self.particles,
             &mut self.particles_internal,
             &self.grid,
         );
+        let c = elapsed_secs_f32(ic);
+        let id = now();
         compute_link_responses(
             self.diameter,
             &mut self.particles,
@@ -390,8 +493,21 @@ impl Gravithrust {
             &mut self.links,
             &mut self.links_js,
         );
+        let d = elapsed_secs_f32(id);
+        let ie = now();
         self.update_particles();
+        let e = elapsed_secs_f32(ie);
+        let i_f = now();
         self.update_ships();
+        let f = elapsed_secs_f32(i_f);
+        self.durations.push_back(Duration {
+            a,
+            b,
+            c,
+            d,
+            e,
+            f,
+        });
         self.step += 1;
     }
 

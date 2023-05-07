@@ -63,6 +63,31 @@ const body = `
     <label>steps:               </label>
     <label id="step">...</label>
   </div>
+
+  <div>
+    <label>duration_a:          </label>
+    <label id="duration_a">...</label>
+  </div>
+  <div>
+    <label>duration_b:          </label>
+    <label id="duration_b">...</label>
+  </div>
+  <div>
+    <label>duration_c:          </label>
+    <label id="duration_c">...</label>
+  </div>
+  <div>
+    <label>duration_d:          </label>
+    <label id="duration_d">...</label>
+  </div>
+  <div>
+    <label>duration_e:          </label>
+    <label id="duration_e">...</label>
+  </div>
+  <div>
+    <label>duration_f:          </label>
+    <label id="duration_f">...</label>
+  </div>
 </div>
 `;
 export { body };

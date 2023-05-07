@@ -110,7 +110,7 @@ const start_sound = (ship_count, simulation) => {
 const setup = async (wasm, yml_blueprints, json_jobs) => {
   const gravithrust = Gravithrust.new(
     0.0025, // diameter
-    32, // substep per tick
+    16*2, // substep per tick
     0.000000004, // max_rotation_speed
     128, // grid_side
     0.00001, // max_speed_at_target
