@@ -3,6 +3,8 @@ use anyhow::Result;
 use rand::Rng;
 use std::collections::HashMap;
 use std::env;
+use rand::SeedableRng;
+use rand_chacha::ChaCha8Rng;
 use std::fs;
 pub fn setup_simulation() -> Gravithrust {
     let envs = env::vars().collect::<HashMap<String, String>>();
@@ -51,7 +53,8 @@ pub fn setup_simulation_grid_side(grid_side: u32) -> Gravithrust {
         0.00025,     // slow_down_max_speed_to_target_ratio
         0.00005,     // booster_acceleration
     );
-    let mut rng = rand::thread_rng();
+    let mut rng = ChaCha8Rng::seed_from_u64(0);
+    // let mut rng = rand::thread_rng();
     for _ in 0..100 {
         gravithrust.add_ship(&yaml, rng.gen::<f32>(), rng.gen::<f32>());
     }

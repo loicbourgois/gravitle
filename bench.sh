@@ -6,5 +6,6 @@ START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 rustup override set stable
 cargo +nightly bench --features bench 2>&1 | tee $HOME/github.com/loicbourgois/gravitle/gravithrust/bench.txt
+git diff --word-diff $HOME/github.com/loicbourgois/gravitle/gravithrust/bench.txt
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "# Duration: $ELAPSED_TIME s"

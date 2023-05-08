@@ -33,6 +33,7 @@ serde = { version = "*", features = ["derive"] }
 
 [dev-dependencies]
 glob = "*"
+rand_chacha = "*"
 
 [features]
 bench = []
