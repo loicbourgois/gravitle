@@ -22,7 +22,7 @@ impl Kind {
     pub fn capacity(self) -> u32 {
         #[allow(clippy::match_same_arms)]
         match self {
-            Kind::PlasmaCargo => 2,Kind::Core => 1,Kind::ElectroFieldLauncher => 2500,Kind::PlasmaRawCollector => 2,Kind::ElectroField => 1,Kind::Booster => 100,Kind::PlasmaRawDepot => 20,Kind::PlasmaElectroFieldCollector => 2,Kind::PlasmaElectroField => 1,Kind::PlasmaRefineryInput => 20,
+            Kind::Booster => 100,Kind::PlasmaRawCollector => 2,Kind::PlasmaCargo => 2,Kind::PlasmaRawDepot => 20,Kind::PlasmaRefineryInput => 20,Kind::Core => 1,Kind::ElectroField => 1,Kind::ElectroFieldLauncher => 2500,Kind::PlasmaElectroField => 1,Kind::PlasmaElectroFieldCollector => 2,
             _ => 0,
         }
     }

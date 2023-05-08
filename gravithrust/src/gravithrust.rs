@@ -28,7 +28,6 @@ use crate::ship::ship_position;
 use crate::ship::Ship;
 use crate::ship::ShipControl;
 use crate::ship::ShipMore;
-use rand::Rng;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -232,8 +231,8 @@ impl Gravithrust {
         let sid = Some(self.ships.len());
         let ship = Ship {
             target: Vector {
-                x: rand::thread_rng().gen::<f32>(),
-                y: rand::thread_rng().gen::<f32>(),
+                x: 0.5,
+                y: 0.5,
             },
             p: Vector::default(),
             pp: Vector::default(),
