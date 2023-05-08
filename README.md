@@ -9,4 +9,3 @@ $HOME/github.com/loicbourgois/gravitle/build.sh
 
 ## Resources
 - https://nnethercote.github.io/perf-book/title-page.html
-- 

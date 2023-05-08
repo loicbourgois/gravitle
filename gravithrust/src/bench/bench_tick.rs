@@ -1,7 +1,6 @@
 extern crate test;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
-use crate::test::helpers::setup_simulation;
 use crate::test::helpers::setup_simulation_grid_side;
 use test::Bencher;
 #[bench]

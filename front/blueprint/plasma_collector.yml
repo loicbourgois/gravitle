@@ -19,8 +19,8 @@
     particles: [
         [2,0,1,armor],
         [3,0,2,booster],
-        [4,0,3,plasma_collector],
-        [5,0,4,plasma_collector],
+        [4,0,3,plasma_electro_field_collector],
+        [5,0,4,plasma_electro_field_collector],
         [6,0,5,booster],
         [7,1,6,core],
         [8,7,6,armor],

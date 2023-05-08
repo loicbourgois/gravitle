@@ -13,7 +13,7 @@
     right: [3, 8],
     translate_right: [5],
     translate_left: [6],
-    base_particles: [ray, cargo],
+    base_particles: [cargo, cargo],
     particles: [
         [2,0,1,cargo],
         [3,0,2,booster],

@@ -55,7 +55,7 @@ pub fn alchemy(
     }
     match (p1.k, p1.a, p2.k, p2.a) {
         // Energy transfer from core to booster|ray
-        (Kind::Core, _, Kind::Booster | Kind::Ray, _) => {
+        (Kind::Core, _, Kind::Booster | Kind::ElectroFieldLauncher, _) => {
             transfer_from_to(p1, p2, pi1, pi2);
         }
         // Harvest sun
@@ -68,15 +68,20 @@ pub fn alchemy(
                 });
             }
         }
-        // Collect plasma
-        (Kind::PlasmaElectroField, _, Kind::PlasmaCollector, 1) => {
+        // Collect electrofield plasma
+        (Kind::PlasmaElectroField, _, Kind::PlasmaElectroFieldCollector, 1) => {
             transfer_and_delete(p1, p2, pi1, pi2);
         }
-        (Kind::PlasmaDepot, _, Kind::PlasmaCollector, 1) => {
+        // Collect raw plasma
+        (Kind::PlasmaRawDepot, _, Kind::PlasmaRawCollector, 1) => {
             transfer_from_to(p1, p2, pi1, pi2);
         }
         // Drop plasma
-        (Kind::PlasmaCollector, 0, Kind::PlasmaDepot | Kind::PlasmaRefineryInput, _) => {
+        (Kind::PlasmaElectroFieldCollector, 0, Kind::PlasmaRawDepot, _) => {
+            transfer_from_to(p1, p2, pi1, pi2);
+        }
+        // Drop
+        (Kind::PlasmaRawCollector, 0, Kind::PlasmaRefineryInput, _) => {
             transfer_from_to(p1, p2, pi1, pi2);
         }
         _ => {}

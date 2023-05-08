@@ -6,17 +6,18 @@ use crate::job::Condition;
 use crate::kind::Kind;
 use crate::particle::Particle;
 use crate::ship::ShipMore;
-pub fn plasma_quantity_soft_capa(particles: &[Particle], ship_more: &ShipMore) -> (u32, u32) {
+pub fn quantity_soft_capa(
+    particles: &[Particle],
+    ship_more: &ShipMore,
+    kinds: &[Kind],
+) -> (u32, u32) {
     let mut quantity = 0;
     let mut capacity = 0;
     for pid in &ship_more.pids {
         let p = &particles[*pid];
-        match p.k {
-            Kind::PlasmaCargo | Kind::PlasmaCollector | Kind::PlasmaDepot => {
-                quantity += p.quantity;
-                capacity += p.k.soft_capacity();
-            }
-            _ => {}
+        if kinds.contains(&p.k) {
+            quantity += p.quantity;
+            capacity += p.k.soft_capacity();
         }
     }
     (quantity, capacity)
@@ -27,19 +28,36 @@ fn all_conditions_ok(
     conditions: &[Condition],
 ) -> bool {
     for condition in conditions {
-        match condition {
+        let r = match condition {
             Condition::PlasmaStorageNotFull => {
-                let (quantity, capacity) = plasma_quantity_soft_capa(particles, ship_more);
-                if quantity >= capacity {
-                    return false;
-                }
+                let (quantity, capacity) = quantity_soft_capa(
+                    particles,
+                    ship_more,
+                    &[
+                        Kind::PlasmaCargo,
+                        Kind::PlasmaRawCollector,
+                        Kind::PlasmaRawDepot,
+                        Kind::PlasmaElectroFieldCollector,
+                    ],
+                );
+                quantity < capacity
             }
             Condition::PlasmaStorageFull => {
-                let (quantity, capacity) = plasma_quantity_soft_capa(particles, ship_more);
-                if quantity < capacity {
-                    return false;
-                }
+                let (quantity, capacity) = quantity_soft_capa(
+                    particles,
+                    ship_more,
+                    &[
+                        Kind::PlasmaCargo,
+                        Kind::PlasmaRawCollector,
+                        Kind::PlasmaRawDepot,
+                        Kind::PlasmaElectroFieldCollector,
+                    ],
+                );
+                quantity >= capacity
             }
+        };
+        if !r {
+            return r;
         }
     }
     true
@@ -64,10 +82,10 @@ impl Gravithrust {
                             );
                         }
                         Action::DeliverPlasmaDepot => {
-                            deliver(ship_more, &mut self.particles, Kind::PlasmaDepot);
+                            deliver(ship_more, &mut self.particles, Kind::PlasmaRawDepot);
                         }
                         Action::CollectPlasmaDepot => {
-                            collect(ship, ship_more, &mut self.particles, Kind::PlasmaDepot);
+                            collect(ship, ship_more, &mut self.particles, Kind::PlasmaRawDepot);
                         }
                         Action::DeliverPlasmaRefineryIn => {
                             deliver(ship_more, &mut self.particles, Kind::PlasmaRefineryInput);

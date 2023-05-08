@@ -15,7 +15,7 @@
     right: [7],
     translate_right: [6],
     translate_left: [10],
-    base_particles: [ray, core],
+    base_particles: [electro_field_launcher, core],
     particles: [
         [2,0,1,core],
         [3,2,1,booster],

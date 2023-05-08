@@ -31,5 +31,8 @@ convert_case = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
 
+[dev-dependencies]
+glob = "*"
+
 [features]
 bench = []

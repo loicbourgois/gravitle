@@ -11,7 +11,7 @@
         "metal",
         "depot",
         "target",
-        "ray",
+        "electro_field_launcher",
         "cargo",
         "plasma",
         "field",
@@ -20,8 +20,9 @@
         "electro_field",
         "plasma_electro_field",
         "plasma_cargo",
-        "plasma_collector",
-        "plasma_depot",
+        "plasma_electro_field_collector",
+        "plasma_raw_depot",
+        "plasma_raw_collector",
         "plasma_refinery_input",
         "plasma_refinery_output",
         "static"
@@ -38,7 +39,11 @@
             "soft": 0,
             "hard": 100
         },
-        "plasma_collector": {
+        "plasma_electro_field_collector": {
+            "soft": 0,
+            "hard": 2
+        },
+        "plasma_raw_collector": {
             "soft": 0,
             "hard": 2
         },
@@ -50,7 +55,7 @@
             "soft": 20,
             "hard": 20
         },
-        "plasma_depot": {
+        "plasma_raw_depot": {
             "soft": 20,
             "hard": 20
         },
@@ -58,7 +63,7 @@
             "soft": 0,
             "hard": 1
         },
-        "ray": {
+        "electro_field_launcher": {
             "soft": 0,
             "hard": 2500
         },

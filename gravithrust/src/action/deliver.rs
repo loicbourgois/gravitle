@@ -19,12 +19,10 @@ pub fn deliver(sm: &mut ShipMore, particles: &mut [Particle], kind: Kind) {
                     for pid_2 in &sm.pids {
                         let p2 = &mut particles[*pid_2];
                         match (kind, p2.k) {
-                            (
-                                Kind::PlasmaElectroField
-                                | Kind::PlasmaDepot
-                                | Kind::PlasmaRefineryInput,
-                                Kind::PlasmaCollector,
-                            ) => {
+                            (Kind::PlasmaRawDepot, Kind::PlasmaElectroFieldCollector) => {
+                                p2.a = 0;
+                            }
+                            (Kind::PlasmaRefineryInput, Kind::PlasmaRawCollector) => {
                                 p2.a = 0;
                             }
                             _ => {}

@@ -54,7 +54,7 @@ const ZOOM = 3.0;
     case KIND_core: {
       vsOut.color = vec4f(0.85, 0.5, 0.0, 0.5);
     }
-    case KIND_plasma_collector: {
+    case KIND_plasma_raw_collector: {
       if (particle.a == 1) {
         vsOut.color = vec4f(0.0, 0.8, 0.8, 1.0);
       } else {
@@ -76,7 +76,7 @@ const ZOOM = 3.0;
     case KIND_plasma_electro_field: {
       vsOut.color = vec4f(1.0, 0.8, 0.0, 1.0);
     }
-    case KIND_plasma_depot: {
+    case KIND_plasma_raw_depot: {
       vsOut.color = vec4f(1.0, 0.8, 0.0, 1.0);
     }
     case KIND_static: {
@@ -85,7 +85,7 @@ const ZOOM = 3.0;
     case KIND_anchor: {
       vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
     }
-    case KIND_ray: {
+    case KIND_electro_field_launcher: {
       let quantity = f32(particle.quantity)/2500.0;
       vsOut.color = vec4f(0.0, quantity*0.5+0.35, quantity*0.5+0.25, 1.0);
     }

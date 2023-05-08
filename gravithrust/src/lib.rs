@@ -1,9 +1,10 @@
-// #![cfg_attr(feature = "bench", feature(test))]
+#![cfg_attr(feature = "bench", feature(test))]
 // #![warn(clippy::disallowed_types)]
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::wasm_bindgen;
 mod action;
 mod alchemy;
+mod bench;
 mod blueprint;
 mod gravithrust;
 mod gravithrust_check_job;

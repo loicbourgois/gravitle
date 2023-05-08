@@ -24,10 +24,10 @@ pub fn collect(s: &Ship, sm: &mut ShipMore, particles: &mut [Particle], kind: Ki
                     for pid_2 in &sm.pids {
                         let p2 = &mut particles[*pid_2];
                         match (kind, p2.k) {
-                            (
-                                Kind::PlasmaElectroField | Kind::PlasmaDepot,
-                                Kind::PlasmaCollector,
-                            ) => {
+                            (Kind::PlasmaElectroField, Kind::PlasmaElectroFieldCollector) => {
+                                p2.a = 1;
+                            }
+                            (Kind::PlasmaRawDepot, Kind::PlasmaRawCollector) => {
                                 p2.a = 1;
                             }
                             _ => {}

@@ -89,11 +89,11 @@ init().then( async (wasm) => {
   for (const x of ['small_ship', 'plasma_collector', 'sun', 'plasma_depot', 
     'harvester', 'plasma_refinery', 'plasma_transporter']
   ) {
-    yml_blueprints[x] = await (await fetch(`./blueprint/${x}.yml`)).text();
+    yml_blueprints[x] = await (await fetch(`./blueprint/${x}.yml`, {cache: "no-store"})).text();
   }
   for (const x of ['plasma_collector', 'plasma_transporter']
   ) {
-    json_jobs[x] = await (await fetch(`./job/${x}.json`)).text();
+    json_jobs[x] = await (await fetch(`./job/${x}.json`, {cache: "no-store"})).text();
   }
   setup(wasm, yml_blueprints, json_jobs)
 });
@@ -110,7 +110,7 @@ const start_sound = (ship_count, simulation) => {
 const setup = async (wasm, yml_blueprints, json_jobs) => {
   const gravithrust = Gravithrust.new(
     0.0025, // diameter
-    16*2, // substep per tick
+    16*2*10, // substep per tick
     0.000000004, // max_rotation_speed
     128, // grid_side
     0.00001, // max_speed_at_target
