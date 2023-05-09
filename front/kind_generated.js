@@ -26,6 +26,10 @@ const Kind = {
   PlasmaRefineryInput: 23,
   PlasmaRefineryOutput: 24,
   Static: 25,
+  Ice: 26,
+  Water: 27,
+  Heat: 28,
+  HeatLauncher: 29,
 }
 const kinds = [
   {label:'invalid'},
@@ -54,6 +58,10 @@ const kinds = [
   {label:'plasma_refinery_input'},
   {label:'plasma_refinery_output'},
   {label:'static'},
+  {label:'ice'},
+  {label:'water'},
+  {label:'heat'},
+  {label:'heat_launcher'},
 ]
 export {
     Kind,

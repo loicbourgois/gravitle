@@ -24,3 +24,7 @@ const KIND_plasma_raw_collector = 22;
 const KIND_plasma_refinery_input = 23;
 const KIND_plasma_refinery_output = 24;
 const KIND_static = 25;
+const KIND_ice = 26;
+const KIND_water = 27;
+const KIND_heat = 28;
+const KIND_heat_launcher = 29;

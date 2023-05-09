@@ -1,0 +1,16 @@
+flowchart TB
+  core -.->|transfer| booster
+  core -.->|transfer| electro_field_launcher
+  core -.->|transfer| heat_launcher
+  sun -.-> harvestsunelectro_field(harvest)
+  electro_field -.-> harvestsunelectro_field
+  harvestsunelectro_field -.-> plasma_electro_field
+  ice -.-> harvesticeheat(harvest)
+  heat -.-> harvesticeheat
+  harvesticeheat -.-> water
+  plasma_electro_field -.->|transfer_and_delete| plasma_electro_field_collector
+  plasma_raw_depot -.->|collect| plasma_raw_collector
+  plasma_electro_field_collector -.->|drop| plasma_raw_depot
+  plasma_raw_collector -.->|drop| plasma_refinery_input
+  heat_launcher -.->|create| heat
+  electro_field_launcher -.->|create| electro_field

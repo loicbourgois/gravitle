@@ -6,6 +6,7 @@ START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 rustup override set stable
 echo "" > $HOME/github.com/loicbourgois/gravitle/gravithrust/src/kind_generated.rs
+echo "" > $HOME/github.com/loicbourgois/gravitle/gravithrust/src/alchemy_generated.rs
 cargo +nightly fmt
 RUST_BACKTRACE=1 cargo test
 cargo clippy -- \
@@ -32,5 +33,6 @@ rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/package.json
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/LICENSE
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/README.md
 cargo +nightly fmt
+docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.png -t dark -b transparent
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "# Duration: $ELAPSED_TIME s"
