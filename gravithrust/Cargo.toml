@@ -30,6 +30,7 @@ anyhow = "*"
 convert_case = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
+wasm-bindgen = "*"
 
 [dev-dependencies]
 glob = "*"

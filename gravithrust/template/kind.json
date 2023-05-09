@@ -25,7 +25,11 @@
         "plasma_raw_collector",
         "plasma_refinery_input",
         "plasma_refinery_output",
-        "static"
+        "static",
+        "ice",
+        "water",
+        "heat",
+        "heat_launcher"
     ],
     "static_kinds": [
         "sun_core", "depot", "anchor", "static"

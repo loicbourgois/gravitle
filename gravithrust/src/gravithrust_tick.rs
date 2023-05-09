@@ -7,11 +7,11 @@ use crate::kind::Kind;
 // use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
-use crate::math::collision_response;
 use crate::math::normalize;
 use crate::math::wrap_around;
 use crate::math::Vector;
 use crate::particle;
+use crate::particle::collision_response;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {

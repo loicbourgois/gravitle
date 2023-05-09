@@ -1,12 +1,6 @@
-use crate::particle::Particle;
+pub use crate::math_small::rotate;
+pub use crate::math_small::Vector;
 use std::ops;
-use wasm_bindgen::prelude::*;
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub struct Vector {
-    pub x: f32,
-    pub y: f32,
-}
 impl Default for Vector {
     fn default() -> Self {
         Vector {
@@ -115,19 +109,6 @@ pub fn distance_sqrd(a: Vector, b: Vector) -> f32 {
     let dp = delta(a, b);
     dp.x * dp.x + dp.y * dp.y
 }
-pub fn collision_response(wa: &WrapAroundResponse, p1: &Particle, p2: &Particle) -> Vector {
-    // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
-    let delta_velocity = delta(p1.v, p2.v);
-    let delta_position = wa.d;
-    let mass_factor = 2.0 * p2.m / (p2.m + p1.m);
-    let dot_vp = dot(delta_velocity, delta_position);
-    let n_sqrd = norm_sqrd(delta_position);
-    let factor = mass_factor * dot_vp / n_sqrd;
-    Vector {
-        x: delta_position.x * factor,
-        y: delta_position.y * factor,
-    }
-}
 pub fn norm_sqrd(v: Vector) -> f32 {
     v.x * v.x + v.y * v.y
 }
@@ -145,19 +126,6 @@ pub fn normalize_2(p: Vector) -> Vector {
     Vector {
         x: p.x / d,
         y: p.y / d,
-    }
-}
-pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
-    // Rotates p2 around p1
-    // angle should be in [0 ; 1.0]
-    let angle = std::f32::consts::PI * 2.0 * angle;
-    let dx = p2.x - p1.x;
-    let dy = p2.y - p1.y;
-    let cos_ = angle.cos();
-    let sin_ = angle.sin();
-    Vector {
-        x: p1.x + dx * cos_ - dy * sin_,
-        y: p1.y + dy * cos_ + dx * sin_,
     }
 }
 pub fn dot(a: Vector, b: Vector) -> f32 {

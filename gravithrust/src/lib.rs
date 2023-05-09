@@ -4,6 +4,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 mod action;
 mod alchemy;
+mod alchemy_generated;
 mod bench;
 mod blueprint;
 mod gravithrust;
@@ -15,6 +16,7 @@ mod kind;
 mod kind_generated;
 mod link;
 mod math;
+mod math_small;
 mod particle;
 mod ship;
 mod test;

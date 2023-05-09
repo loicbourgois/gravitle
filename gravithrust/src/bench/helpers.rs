@@ -1,10 +1,10 @@
+use crate::gravithrust::Gravithrust;
 use rand::Rng;
 use rand::SeedableRng;
-use crate::gravithrust::Gravithrust;
+use rand_chacha::ChaCha8Rng;
+use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::collections::HashMap;
-use rand_chacha::ChaCha8Rng;
 pub fn setup_simulation_grid_side(grid_side: u32) -> Gravithrust {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let path = format!(
