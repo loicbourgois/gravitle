@@ -1,21 +1,8 @@
    Compiling gravithrust v0.1.0 (/Users/loicbourgois/github.com/loicbourgois/gravitle/gravithrust)
-    Finished bench [optimized] target(s) in 2.22s
-     Running unittests src/lib.rs (target/release/deps/gravithrust-6a879a650c7b6f9e)
+    Finished bench [optimized] target(s) in 2.40s
+     Running unittests src/lib.rs (target/release/deps/gravithrust-60392a492e7b7603)
 
 running 13 tests
 test test::test_2::size ... ignored
 test test::test_2::test_parse_blueprint ... ignored
 test test::test_job::test_job ... ignored
-test bench::bench_tick::bench_tick                                        ... bench:     245,180 ns/iter (+/- 17,077)
-test bench::bench_tick::bench_tick_grid_side_1                            ... bench:     270,321 ns/iter (+/- 19,608)
-test bench::bench_tick::bench_tick_grid_side_2                            ... bench:     247,211 ns/iter (+/- 14,993)
-test bench::bench_tick::bench_tick_grid_side_3                            ... bench:     236,534 ns/iter (+/- 28,310)
-test bench::bench_tick::bench_tick_grid_side_4                            ... bench:     291,765 ns/iter (+/- 25,148)
-test bench::bench_tick::bench_tick_partial_compute_collision_responses    ... bench:      22,395 ns/iter (+/- 1,145)
-test bench::bench_tick::bench_tick_partial_compute_compute_link_responses ... bench:      36,610 ns/iter (+/- 1,190)
-test bench::bench_tick::bench_tick_partial_grid_update                    ... bench:       9,601 ns/iter (+/- 298)
-test bench::bench_tick::bench_tick_partial_update_particles               ... bench:      22,989 ns/iter (+/- 832)
-test bench::bench_tick::bench_tick_partial_update_ships                   ... bench:      20,184 ns/iter (+/- 873)
-
-test result: ok. 0 passed; 0 failed; 3 ignored; 10 measured; 0 filtered out; finished in 40.69s
-

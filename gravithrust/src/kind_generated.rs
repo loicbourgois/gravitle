@@ -135,32 +135,29 @@ impl Kind {
         #[allow(clippy::match_same_arms)]
         match self {
             Kind::PlasmaElectroFieldCollector => 2,
-            Kind::Core => 1,
             Kind::Booster => 100,
-            Kind::PlasmaCargo => 2,
+            Kind::Core => 1,
             Kind::PlasmaElectroField => 1,
-            Kind::ElectroField => 1,
-            Kind::ElectroFieldLauncher => 2500,
-            Kind::PlasmaRawCollector => 2,
-            Kind::PlasmaRawDepot => 20,
             Kind::PlasmaRefineryInput => 20,
+            Kind::PlasmaCargo => 2,
+            Kind::ElectroField => 1,
+            Kind::PlasmaRawCollector => 2,
+            Kind::ElectroFieldLauncher => 2500,
+            Kind::PlasmaRawDepot => 20,
             _ => 0,
         }
     }
 
     pub fn soft_capacity(self) -> u32 {
         match self {
+            Kind::PlasmaRefineryInput => 20,
             Kind::PlasmaCargo => 2,
             Kind::PlasmaRawDepot => 20,
-            Kind::PlasmaRefineryInput => 20,
             _ => 0,
         }
     }
 
     pub fn is_static(self) -> bool {
-        matches!(
-            self,
-            Kind::SunCore | Kind::Depot | Kind::Anchor | Kind::Static | Kind::IronFurnace
-        )
+        matches!(self, Kind::Invalid)
     }
 }

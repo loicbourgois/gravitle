@@ -208,14 +208,13 @@ fn rand(v: vec2f) -> f32 {
 }
 
 
-
 @vertex fn vs_4(
   @builtin(vertex_index) vertexIndex : u32,
   @builtin(instance_index) instanceIndex: u32,
 ) -> VSOutput {
   let i = instanceIndex / 6;
   let aa = avg_durations[i];
-  let uu = 20000.0;
+  let uu = 10000.0;
   var color = vec3f(1.0, 0.0, 1.0);
   var p = positions[vertexIndex]*0.01;
   p.x += (f32(i) / 1000.0)*2.0 - 1.0;
@@ -233,7 +232,7 @@ fn rand(v: vec2f) -> f32 {
   }
   if ( instanceIndex % 6 == 3) {
     p.y += aa.d * uu - 1.0;
-    color = vec3f(0.0, 1.0, 0.5);
+    color = vec3f(1.0, 1.0, 0.5);
   }
   if ( instanceIndex % 6 == 4) {
     p.y += aa.e * uu - 1.0;

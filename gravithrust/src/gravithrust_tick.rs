@@ -102,6 +102,9 @@ pub fn compute_link_responses(
             let pi1 = &mut particles_internal[p1.idx];
             let pi2 = &mut (*particles_internal_2)[p2.idx];
             alchemy_transfer(p1, p2, pi1, pi2);
+            if p1.k.is_static() && p2.k.is_static() {
+                continue;
+            }
             let wa = wrap_around(p1.p, p2.p);
             links_js[i].p = p1.p + wa.d / 2.0;
             let d = wa.d_sqrd.sqrt();

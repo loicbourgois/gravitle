@@ -214,16 +214,16 @@ impl Particle {
             Kind::Heat => &[],
             Kind::HeatLauncher => &[QuantityKind::Energy],
             Kind::Generator => &[
+                QuantityKind::Energy,
                 QuantityKind::Water,
                 QuantityKind::Heat,
-                QuantityKind::Energy,
             ],
             Kind::Fuel => &[],
             Kind::Electricity => &[],
             Kind::IronFurnace => &[
                 QuantityKind::IronGangue,
-                QuantityKind::IronOre,
                 QuantityKind::Heat,
+                QuantityKind::IronOre,
                 QuantityKind::Coal,
                 QuantityKind::Iron,
             ],

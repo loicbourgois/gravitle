@@ -58,10 +58,11 @@
         "iron_ore_input",
         "iron_ore_output"
     ],
-    "static_kinds": [
+    "_static_kinds": [
         "sun_core", "depot", "anchor", "static",
         "iron_furnace"
     ],
+    "static_kinds": ["invalid"],
     "capacities": {
         "core": {
             "soft": 0,
