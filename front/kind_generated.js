@@ -50,6 +50,13 @@ const Kind = {
   IceAsteroid: 47,
   Battery: 48,
   IronGangueCollector: 49,
+  CoalDepot: 50,
+  IronOreDepot: 51,
+  HeatCollector: 52,
+  CoalOutput: 53,
+  CoalInput: 54,
+  IronOreInput: 55,
+  IronOreOutput: 56,
 }
 const kinds = [
   {label:'invalid'},
@@ -102,9 +109,21 @@ const kinds = [
   {label:'ice_asteroid'},
   {label:'battery'},
   {label:'iron_gangue_collector'},
+  {label:'coal_depot'},
+  {label:'iron_ore_depot'},
+  {label:'heat_collector'},
+  {label:'coal_output'},
+  {label:'coal_input'},
+  {label:'iron_ore_input'},
+  {label:'iron_ore_output'},
 ]
 export {
     Kind,
     kinds,
 }
 
+// [
+//   'small_ship', 'plasma_collector', 'sun', 'plasma_depot', 
+//   'harvester', 'plasma_refinery', 'plasma_transporter',
+//   'ice_asteroid', "iron_asteroid", "coal_asteroid", 'chain_reaction', 'iron_furnace'
+// ]

@@ -15,15 +15,26 @@ transfer water_droplet water luciole
 transfer iron_ore iron_asteroid iron_ore_collector
 transfer iron_ore iron_ore_collector iron_ore_cargo
 transfer iron_ore iron_ore_cargo iron_ore_collector
-transfer coal coal_asteroid coal_collector
-transfer coal coal_collector coal_cargo
-transfer coal coal_cargo coal_collector
-transfer iron_ore iron_ore_collector iron_furnace
-transfer coal coal_collector iron_furnace
+
+transfer coal coal_asteroid coal_input
+transfer coal coal_input coal_cargo
+transfer coal coal_cargo coal_output
+transfer coal coal_output coal_depot
+
+transfer iron_ore iron_asteroid iron_ore_input
+transfer iron_ore iron_ore_input iron_ore_cargo
+transfer iron_ore iron_ore_cargo iron_ore_output
+transfer iron_ore iron_ore_output iron_ore_depot
+
+transfer iron_ore iron_ore_depot iron_furnace
+transfer iron_ore iron_ore_collector iron_ore_depot
+transfer coal coal_collector coal_depot
+transfer coal coal_depot iron_furnace
 transfer iron iron_furnace iron_collector
 transfer iron_gangue iron_furnace iron_gangue_collector
 
 transfer heat iron_furnace generator
+transfer heat iron_furnace heat_collector
 transfer energy generator battery
 
 transfer ice ice_asteroid ice_collector
@@ -32,3 +43,7 @@ transfer ice ice_cargo ice_collector
 transfer ice ice_collector ice_melter
 transfer water ice_melter generator
 
+transform ice_asteroid=->1*ice
+transform iron_asteroid=->1*iron_ore
+transform coal_asteroid=->1*coal
+transform booster=->10*energy

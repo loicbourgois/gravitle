@@ -1,4 +1,13 @@
+struct Quantities {
+  q1: u32,
+  q2: u32,
+  q3: u32,
+  q4: u32,
+  q5: u32,
+  q6: u32,
+};
 struct Particle {
+  qs: Quantities,
   p: vec2f,
   v: vec2f,
   pp: vec2f,
@@ -6,8 +15,6 @@ struct Particle {
   m: f32,
   k: i32,
   a: u32, // activated, usefull for boosters
-  q1: u32,
-  q2: u32,
   live: u32,
   grid_id: i32,
   idx: i32,
@@ -26,7 +33,7 @@ struct VSOutput {
 }
 //__DISK_GENERATED__//
 //__KIND_GENERATED__//
-const ZOOM = 3.0;
+const ZOOM = 1.0;
 @group(0) @binding(0) var<storage, read> particles: array<Particle>;
 @group(0) @binding(1) var<storage, read> avg_durations: array<Duration>;
 @vertex fn vs(
@@ -86,8 +93,17 @@ const ZOOM = 3.0;
       vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
     }
     case KIND_electro_field_launcher: {
-      let q1 = f32(particle.q1)/2500.0;
+      let q1 = f32(particle.qs.q1)/2500.0;
       vsOut.color = vec4f(0.0, q1*0.5+0.35, q1*0.5+0.25, 1.0);
+    }
+    case KIND_ice_asteroid: {
+      vsOut.color = vec4f(0.7, 0.7, 1.0, 1.0);
+    }
+    case KIND_iron_asteroid: {
+      vsOut.color = vec4f(0.6, 0.6, 0.6, 1.0);
+    }
+    case KIND_coal_asteroid: {
+      vsOut.color = vec4f(0.3, 0.3, 0.3, 1.0);
     }
     
     default: {}
@@ -119,6 +135,15 @@ fn rand(v: vec2f) -> f32 {
     }
     case KIND_sun: {
       vsOut.color = vec4f(1.0, 0.5, 0.0, 1.0);
+    }
+    case KIND_ice_asteroid: {
+      vsOut.color = vec4f(0.5, 0.5, 1.0, 1.0);
+    }
+    case KIND_iron_asteroid: {
+      vsOut.color = vec4f(0.4, 0.4, 0.4, 1.0);
+    }
+    case KIND_coal_asteroid: {
+      vsOut.color = vec4f(0.2, 0.2, 0.2, 1.0);
     }
     default: {
       vsOut.position.z = 100.0;

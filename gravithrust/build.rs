@@ -10,6 +10,7 @@ use crate::builder::alchemy::build_alchemy_rs;
 use crate::builder::helpers::disk_generated;
 use crate::builder::helpers::kind_generated_js;
 use crate::builder::helpers::kind_generated_wgsl;
+use crate::builder::helpers::resources_generated;
 use crate::builder::helpers::KindDefinition;
 use std::fs;
 use std::fs::File;
@@ -90,6 +91,7 @@ fn main() -> Result<(), std::io::Error> {
     disk_generated()?;
     kind_generated_wgsl(&kd)?;
     build_alchemy_mermaid()?;
-    build_alchemy_rs()?;
+    build_alchemy_rs(&kd)?;
+    resources_generated()?;
     Ok(())
 }

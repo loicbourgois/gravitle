@@ -14,17 +14,30 @@ pub struct Task {
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Condition {
-    PlasmaStorageNotFull = 1,
-    PlasmaStorageFull = 2,
+    PlasmaStorageNotFull,
+    PlasmaStorageFull,
+    CoalStorageNotFull,
+    CoalStorageFull,
+    CoalStorageEmpty,
+    DeliverCoal,
+    CollectCoal,
+    IronOreStorageEmpty,
+    IronOreStorageFull,
+    DeliverIronOre,
+    CollectIronOre,
 }
 #[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Action {
-    CollectPlasmaElectroField = 1,
-    DeliverPlasmaDepot = 2,
-    ResetTarget = 3,
-    CollectPlasmaDepot = 4,
-    DeliverPlasmaRefineryIn = 5,
-    LaunchElectroField = 6,
+    CollectPlasmaElectroField,
+    DeliverPlasmaDepot,
+    ResetTarget,
+    CollectPlasmaDepot,
+    DeliverPlasmaRefineryIn,
+    LaunchElectroField,
+    CollectCoal,
+    DeliverCoal,
+    DeliverIronOre,
+    CollectIronOre,
 }

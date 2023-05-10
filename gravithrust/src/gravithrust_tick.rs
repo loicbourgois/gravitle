@@ -1,4 +1,4 @@
-use crate::alchemy::alchemy;
+use crate::alchemy::alchemy_transfer;
 use crate::error;
 use crate::gravithrust::Gravithrust;
 use crate::grid::grid_id_position;
@@ -39,11 +39,13 @@ pub fn compute_collision_responses(
     let diameter_sqrd = diameter * diameter;
     unsafe {
         let particles_2 = particles as *mut [Particle];
+        let particles_ = particles as *mut [Particle];
         let particles_internal_2 = particles_internal as *mut [ParticleInternal];
         for p1 in particles.iter_mut() {
             if p1.live == 0 {
                 continue;
             }
+            let p1_ = &mut (*particles_)[p1.idx];
             for ns in neighbours(&p1.p, grid) {
                 for pid2 in ns {
                     let p2 = &mut (*particles_2)[*pid2];
@@ -56,8 +58,7 @@ pub fn compute_collision_responses(
                         if wa.d_sqrd < diameter_sqrd {
                             let pi1 = &mut particles_internal[p1.idx];
                             let pi2 = &mut (*particles_internal_2)[p2.idx];
-                            alchemy(p1, p2, pi1, pi2);
-                            alchemy(p2, p1, pi2, pi1);
+                            alchemy_transfer(p1_, p2, pi1, pi2);
                             if particle::do_collision(p1) && particle::do_collision(p2) {
                                 let cr = collision_response(&wa, p1, p2);
                                 if !cr.x.is_nan() && !cr.y.is_nan() {
@@ -90,17 +91,17 @@ pub fn compute_link_responses(
     let diam_sqrd = diameter * diameter;
     unsafe {
         let particles_internal_2 = particles_internal as *mut [ParticleInternal];
+        let particles_2 = particles as *mut [Particle];
         for (i, l) in links.iter().enumerate() {
-            let p1 = &particles[l.a];
-            let p2 = &particles[l.b];
+            let p1 = &mut particles[l.a];
+            let p2 = &mut (*particles_2)[l.b];
             if p1.live == 0 || p2.live == 0 {
                 error("live link with dead particle");
                 continue;
             }
             let pi1 = &mut particles_internal[p1.idx];
             let pi2 = &mut (*particles_internal_2)[p2.idx];
-            alchemy(p1, p2, pi1, pi2);
-            alchemy(p2, p1, pi2, pi1);
+            alchemy_transfer(p1, p2, pi1, pi2);
             let wa = wrap_around(p1.p, p2.p);
             links_js[i].p = p1.p + wa.d / 2.0;
             let d = wa.d_sqrd.sqrt();

@@ -57,6 +57,13 @@ pub enum Kind {
     IceAsteroid      = 47,
     Battery          = 48,
     IronGangueCollector = 49,
+    CoalDepot        = 50,
+    IronOreDepot     = 51,
+    HeatCollector    = 52,
+    CoalOutput       = 53,
+    CoalInput        = 54,
+    IronOreInput     = 55,
+    IronOreOutput    = 56,
 }
 pub fn kindstr_to_kind(x: &str) -> Kind {
     match x.trim().to_lowercase().as_str() {
@@ -110,6 +117,13 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
         "ice_asteroid" => Kind::IceAsteroid,
         "battery" => Kind::Battery,
         "iron_gangue_collector" => Kind::IronGangueCollector,
+        "coal_depot" => Kind::CoalDepot,
+        "iron_ore_depot" => Kind::IronOreDepot,
+        "heat_collector" => Kind::HeatCollector,
+        "coal_output" => Kind::CoalOutput,
+        "coal_input" => Kind::CoalInput,
+        "iron_ore_input" => Kind::IronOreInput,
+        "iron_ore_output" => Kind::IronOreOutput,
         _ => {
             error(&format!("invalid kind: {x}"));
             panic!("invalid kind")
@@ -120,25 +134,25 @@ impl Kind {
     pub fn capacity(self) -> u32 {
         #[allow(clippy::match_same_arms)]
         match self {
-            Kind::Booster => 100,
-            Kind::ElectroFieldLauncher => 2500,
-            Kind::ElectroField => 1,
-            Kind::PlasmaRefineryInput => 20,
-            Kind::PlasmaRawDepot => 20,
             Kind::PlasmaElectroFieldCollector => 2,
             Kind::Core => 1,
+            Kind::Booster => 100,
             Kind::PlasmaCargo => 2,
             Kind::PlasmaElectroField => 1,
+            Kind::ElectroField => 1,
+            Kind::ElectroFieldLauncher => 2500,
             Kind::PlasmaRawCollector => 2,
+            Kind::PlasmaRawDepot => 20,
+            Kind::PlasmaRefineryInput => 20,
             _ => 0,
         }
     }
 
     pub fn soft_capacity(self) -> u32 {
         match self {
-            Kind::PlasmaRefineryInput => 20,
-            Kind::PlasmaRawDepot => 20,
             Kind::PlasmaCargo => 2,
+            Kind::PlasmaRawDepot => 20,
+            Kind::PlasmaRefineryInput => 20,
             _ => 0,
         }
     }
@@ -146,7 +160,7 @@ impl Kind {
     pub fn is_static(self) -> bool {
         matches!(
             self,
-            Kind::SunCore | Kind::Depot | Kind::Anchor | Kind::Static
+            Kind::SunCore | Kind::Depot | Kind::Anchor | Kind::Static | Kind::IronFurnace
         )
     }
 }

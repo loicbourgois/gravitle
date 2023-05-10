@@ -1,33 +1,35 @@
 use crate::kind::Kind;
 use crate::log;
+use crate::math::wrap_around;
 use crate::particle::Particle;
+use crate::particle::QuantityKind;
+use crate::ship::Ship;
 use crate::ship::ShipMore;
-pub fn deliver(sm: &mut ShipMore, particles: &mut [Particle], kind: Kind) {
+pub fn deliver(
+    s: &Ship,
+    sm: &mut ShipMore,
+    particles: &mut [Particle],
+    kind: Kind,
+    qk: QuantityKind,
+) {
     match sm.target_pid {
         None => {
-            let mut target_pid = None;
+            let mut dmin = std::f32::INFINITY;
+            let mut target_pid: Option<usize> = None;
             for p in particles.iter() {
-                if p.k == kind {
-                    target_pid = Some(p.idx);
-                    sm.target_pid = target_pid;
-                    log(&format!("s#{} -> p#{}:{:?}", sm.sid, p.idx, p.k));
-                    break;
+                if p.k == kind && p.remaining_capacity(qk) > 0 {
+                    let wa = wrap_around(p.p, s.p);
+                    if wa.d_sqrd < dmin {
+                        dmin = wa.d_sqrd;
+                        target_pid = Some(p.idx);
+                    }
                 }
             }
+            sm.target_pid = target_pid;
             match target_pid {
-                Some(_) => {
-                    for pid_2 in &sm.pids {
-                        let p2 = &mut particles[*pid_2];
-                        match (kind, p2.k) {
-                            (Kind::PlasmaRawDepot, Kind::PlasmaElectroFieldCollector) => {
-                                p2.a = 0;
-                            }
-                            (Kind::PlasmaRefineryInput, Kind::PlasmaRawCollector) => {
-                                p2.a = 0;
-                            }
-                            _ => {}
-                        }
-                    }
+                Some(pid) => {
+                    let p = &particles[pid];
+                    log(&format!("s#{} -> p#{}:{:?}", sm.sid, p.idx, p.k));
                 }
                 None => {}
             }

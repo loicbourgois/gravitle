@@ -9,8 +9,13 @@ import {
 import {
   Simulation,
 } from "./simulation.js"
+import {
+  blueprint_names,
+  job_names,
+} from "./resources_generated.js"
 import { world_1 } from "./world/world_1.js"
 import { world_2 } from "./world/world_2.js"
+import { world_3 } from "./world/world_3.js"
 
 
 let RESOLUTION = 1
@@ -88,13 +93,10 @@ init().then( async (wasm) => {
   window.addEventListener("keydown", unzen_mode)
   const yml_blueprints = {}
   const json_jobs = {}
-  for (const x of ['small_ship', 'plasma_collector', 'sun', 'plasma_depot', 
-    'harvester', 'plasma_refinery', 'plasma_transporter']
-  ) {
+  for (const x of blueprint_names) {
     yml_blueprints[x] = await (await fetch(`./blueprint/${x}.yml`, {cache: "no-store"})).text();
   }
-  for (const x of ['plasma_collector', 'plasma_transporter', 'electro_field_launcher']
-  ) {
+  for (const x of job_names) {
     json_jobs[x] = await (await fetch(`./job/${x}.json`, {cache: "no-store"})).text();
   }
   setup(wasm, yml_blueprints, json_jobs)
@@ -158,7 +160,7 @@ const setup = async (wasm, yml_blueprints, json_jobs) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-  setup_world(gravithrust, world_2, yml_blueprints, json_jobs);
+  setup_world(gravithrust, world_3, yml_blueprints, json_jobs);
   const keys = [
     'forward_max_speed',
     'forward_max_angle',

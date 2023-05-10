@@ -166,8 +166,20 @@ const ppms_count = 400
 const update = (self) => {
     const update_start = performance.now()
     self.update_starts.push(update_start)
-    const state = JSON.stringify(JSON.parse(self.gravithrust.ticks()), null, 4)
-    document.getElementById("state").innerHTML = state
+    const state = JSON.parse(self.gravithrust.ticks())
+    // console.log(state)
+    const lines = []
+    for (const k of Object.keys(state.count).sort()) {
+        lines.push(`${k}: ${state.count[k]}`)
+        for ( const k2 of Object.keys(state.capacity[k]).sort() ) {
+            const capacity = state.capacity[k][k2]
+            const quantity = state.quantity[k][k2]
+            lines.push(`    ${k2}: ${quantity} / ${capacity}`)
+        }
+    }
+
+    // const state = JSON.stringify(JSON.parse(self.gravithrust.ticks()), null, 4)
+    document.getElementById("state").innerHTML = lines.join("\n")
     self.ppms.push({
       high: self.gravithrust.points * 1000000 / self.gravithrust.step,
       low: self.gravithrust.points * 1000000 / self.gravithrust.step,

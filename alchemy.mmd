@@ -18,14 +18,22 @@ heat -.-> harvesticeheat
   iron_asteroid -.->|iron_ore| iron_ore_collector
   iron_ore_collector -.->|iron_ore| iron_ore_cargo
   iron_ore_cargo -.->|iron_ore| iron_ore_collector
-  coal_asteroid -.->|coal| coal_collector
-  coal_collector -.->|coal| coal_cargo
-  coal_cargo -.->|coal| coal_collector
-  iron_ore_collector -.->|iron_ore| iron_furnace
-  coal_collector -.->|coal| iron_furnace
+  coal_asteroid -.->|coal| coal_input
+  coal_input -.->|coal| coal_cargo
+  coal_cargo -.->|coal| coal_output
+  coal_output -.->|coal| coal_depot
+  iron_asteroid -.->|iron_ore| iron_ore_input
+  iron_ore_input -.->|iron_ore| iron_ore_cargo
+  iron_ore_cargo -.->|iron_ore| iron_ore_output
+  iron_ore_output -.->|iron_ore| iron_ore_depot
+  iron_ore_depot -.->|iron_ore| iron_furnace
+  iron_ore_collector -.->|iron_ore| iron_ore_depot
+  coal_collector -.->|coal| coal_depot
+  coal_depot -.->|coal| iron_furnace
   iron_furnace -.->|iron| iron_collector
   iron_furnace -.->|iron_gangue| iron_gangue_collector
   iron_furnace -.->|heat| generator
+  iron_furnace -.->|heat| heat_collector
   generator -.->|energy| battery
   ice_asteroid -.->|ice| ice_collector
   ice_collector -.->|ice| ice_cargo

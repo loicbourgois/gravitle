@@ -28,12 +28,7 @@ pub fn setup_simulation() -> Gravithrust {
     let _ = gravithrust.add_ship(&yaml, 0.55, 0.5);
     gravithrust
 }
-pub fn set_job_by_name(g: &mut Gravithrust, name: &str) -> Result<()> {
-    let envs = env::vars().collect::<HashMap<String, String>>();
-    let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/job/{}.json",
-        envs["HOME"], name,
-    );
+pub fn set_job_by_path(g: &mut Gravithrust, path: &str) -> Result<()> {
     let job_json = fs::read_to_string(path)?;
     g.set_job(0, &job_json);
     Ok(())

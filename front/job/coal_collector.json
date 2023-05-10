@@ -1,0 +1,28 @@
+{
+    "tasks": [
+        {
+            "conditions": [
+                "CoalStorageEmpty"
+            ],
+            "action": "CollectCoal"
+        },
+        {
+            "conditions": [
+                "CoalStorageFull"
+            ],
+            "action": "DeliverCoal"
+        },
+        {
+            "conditions": [
+                "DeliverCoal"
+            ],
+            "action": "DeliverCoal"
+        },
+        {
+            "conditions": [
+                "CollectCoal"
+            ],
+            "action": "DeliverCoal"
+        }
+    ]
+}

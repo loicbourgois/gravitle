@@ -49,10 +49,18 @@
         "ice_cargo",
         "ice_asteroid",
         "battery",
-        "iron_gangue_collector"
+        "iron_gangue_collector",
+        "coal_depot",
+        "iron_ore_depot",
+        "heat_collector",
+        "coal_output",
+        "coal_input",
+        "iron_ore_input",
+        "iron_ore_output"
     ],
     "static_kinds": [
-        "sun_core", "depot", "anchor", "static"
+        "sun_core", "depot", "anchor", "static",
+        "iron_furnace"
     ],
     "capacities": {
         "core": {

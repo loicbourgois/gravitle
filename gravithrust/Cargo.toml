@@ -24,6 +24,8 @@ serde_yaml = "*"
 serde_json = "*"
 anyhow = "*"
 js-sys = "*"
+strum = "*"
+strum_macros = "*"
 
 [build-dependencies]
 anyhow = "*"
@@ -31,6 +33,7 @@ convert_case = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
 wasm-bindgen = "*"
+glob = "*"
 
 [dev-dependencies]
 glob = "*"

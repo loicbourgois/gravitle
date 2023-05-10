@@ -3,6 +3,7 @@ use crate::src::math_small::Vector;
 use anyhow::Result;
 use convert_case::Case;
 use convert_case::Casing;
+use glob::glob;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -10,6 +11,7 @@ use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 #[derive(Serialize, Deserialize)]
 pub struct KindDefinition {
     pub kinds: Vec<String>,
@@ -30,7 +32,7 @@ pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/front/kind_generated.js.template",
+            "{}/github.com/loicbourgois/gravitle/gravithrust/template/kind_generated.js",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")
@@ -124,21 +126,46 @@ pub fn disk_generated() -> Result<(), std::io::Error> {
         )
     )
 }
-// #[derive(Copy, Clone)]
-// pub struct Vector {
-//     x: f32,
-//     y: f32,
-// }
-// pub fn rotate(p1: Vector, p2: Vector, angle: f32) -> Vector {
-//     // Rotates p2 around p1
-//     // angle should be in [0 ; 1.0]
-//     let angle = std::f32::consts::PI * 2.0 * angle;
-//     let dx = p2.x - p1.x;
-//     let dy = p2.y - p1.y;
-//     let cos_ = angle.cos();
-//     let sin_ = angle.sin();
-//     Vector {
-//         x: p1.x + dx * cos_ - dy * sin_,
-//         y: p1.y + dy * cos_ + dx * sin_,
-//     }
-// }
+pub fn resources_generated() -> Result<(), std::io::Error> {
+    let envs = env::vars().collect::<HashMap<String, String>>();
+    let job_names = glob(&format!(
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/job/*.json",
+        envs["HOME"],
+    ))
+    .expect("Failed to read glob pattern")
+    .map(|x| {
+        let pathbuf = x.unwrap();
+        let path = pathbuf.to_str().unwrap();
+        let name = Path::new(&path).file_stem().unwrap();
+        format!("'{}'", name.to_str().unwrap().to_owned())
+    })
+    .collect::<Vec<String>>()
+    .join(",\n  ");
+    let blueprint_names = glob(&format!(
+        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/*.yml",
+        envs["HOME"],
+    ))
+    .expect("Failed to read glob pattern")
+    .map(|x| {
+        let pathbuf = x.unwrap();
+        let path = pathbuf.to_str().unwrap();
+        let name = Path::new(&path).file_stem().unwrap();
+        format!("'{}'", name.to_str().unwrap().to_owned())
+    })
+    .collect::<Vec<String>>()
+    .join(",\n  ");
+    writeln!(
+        File::create(format!(
+            "{}/github.com/loicbourgois/gravitle/front/resources_generated.js",
+            envs["HOME"]
+        ))?,
+        "{}",
+        fs::read_to_string(format!(
+            "{}/github.com/loicbourgois/gravitle/gravithrust/template/resources_generated.js",
+            envs["HOME"]
+        ))
+        .expect("Should have been able to read the file")
+        .replace("//__job_names__//", &job_names)
+        .replace("//__blueprint_names__//", &blueprint_names)
+    )
+}

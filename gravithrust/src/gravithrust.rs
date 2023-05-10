@@ -1,3 +1,4 @@
+use crate::alchemy_generated::alchemy_transform;
 use crate::blueprint::load_raw_blueprint;
 use crate::blueprint::Blueprint;
 use crate::blueprint::RawBlueprint;
@@ -20,6 +21,8 @@ use crate::movement::apply_movement_action;
 use crate::now;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
+use crate::particle::Quantities;
+use crate::particle::QuantityKind;
 use crate::ship::ship_orientation;
 use crate::ship::ship_position;
 use crate::ship::Ship;
@@ -33,8 +36,8 @@ use std::collections::VecDeque;
 use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GravithrustState {
-    pub capacity: HashMap<Kind, u32>,
-    pub quantity: HashMap<Kind, u32>,
+    pub capacity: HashMap<Kind, HashMap<QuantityKind, u32>>,
+    pub quantity: HashMap<Kind, HashMap<QuantityKind, u32>>,
     pub count: HashMap<Kind, u32>,
 }
 #[wasm_bindgen]
@@ -272,7 +275,7 @@ impl Gravithrust {
     }
 
     pub fn particle_size_internal() -> usize {
-        16 * 4
+        20 * 4
     }
 
     pub fn particles_count(&self) -> u32 {
@@ -409,8 +412,7 @@ impl Gravithrust {
             a: 0,
             idx: pid,
             grid_id: 0,
-            q1: 0,
-            q2: 0,
+            qs: Quantities::default(),
             live: 1,
         };
         self.particles_internal[pid] = ParticleInternal {
@@ -430,8 +432,12 @@ impl Gravithrust {
         self.state.quantity.clear();
         for p in &self.particles {
             *self.state.count.entry(p.k).or_insert(0) += 1;
-            *self.state.capacity.entry(p.k).or_insert(0) += p.k.capacity();
-            *self.state.quantity.entry(p.k).or_insert(0) += p.q1;
+            let capacities = self.state.capacity.entry(p.k).or_insert(HashMap::new());
+            let quantities = self.state.quantity.entry(p.k).or_insert(HashMap::new());
+            for qk in p.qks() {
+                *capacities.entry(*qk).or_insert(0) += p.capacity(*qk);
+                *quantities.entry(*qk).or_insert(0) += p.quantity(*qk);
+            }
         }
     }
 
@@ -443,12 +449,20 @@ impl Gravithrust {
         self.ships_more[sid].job = Some(job);
     }
 
+    pub fn alchemy_transform(&mut self) {
+        for (pid, p1) in self.particles.iter_mut().enumerate() {
+            let pi1 = &mut self.particles_internal[pid];
+            alchemy_transform(p1, pi1);
+        }
+    }
+
     pub fn tick(&mut self) {
         let ia = now();
         self.grid.update_01();
+        self.grid.update_02(&mut self.particles);
         let a = elapsed_secs_f32(ia);
         let ib = now();
-        self.grid.update_02(&mut self.particles);
+        self.alchemy_transform();
         let b = elapsed_secs_f32(ib);
         let ic = now();
         compute_collision_responses(
