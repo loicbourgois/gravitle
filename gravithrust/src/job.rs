@@ -26,4 +26,5 @@ pub enum Action {
     ResetTarget = 3,
     CollectPlasmaDepot = 4,
     DeliverPlasmaRefineryIn = 5,
+    LaunchElectroField = 6,
 }

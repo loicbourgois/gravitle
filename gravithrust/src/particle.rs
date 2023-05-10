@@ -4,8 +4,20 @@ use crate::math::dot;
 use crate::math::norm_sqrd;
 use crate::math::Vector;
 use crate::math::WrapAroundResponse;
+use serde::Deserialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 pub type Particles = Vec<Particle>;
+#[wasm_bindgen]
+#[derive(Serialize, Deserialize, Hash, Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(u32)]
+pub enum QuantityKind {
+    Invalid = 0,
+    None    = 1,
+    Heat    = 2,
+    Energy  = 3,
+    Matter  = 4,
+}
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -17,15 +29,12 @@ pub struct Particle {
     pub m: f32,
     pub k: Kind,
     pub a: u32, // activated, usefull for boosters
-    pub quantity: u32,
-    // pub q1: u32,
-    // pub q2: u32,
-    // pub qk1: QuantityKind,
-    // pub qk2: QuantityKind,
+    pub q1: u32,
+    pub q2: u32,
     pub live: u32,
     pub grid_id: usize,
     pub idx: usize,
-    pub packer: f32,
+    // pub packer: f32,
 }
 impl Default for Particle {
     fn default() -> Self {
@@ -39,9 +48,10 @@ impl Default for Particle {
             a: 0,
             idx: 0,
             grid_id: 0,
-            quantity: 0,
+            q1: 0,
+            q2: 0,
             live: 0,
-            packer: -0.12,
+            // packer: -0.12,
         }
     }
 }
@@ -54,7 +64,8 @@ pub struct ParticleInternal {
     pub new_state: Option<State>,
 }
 pub struct State {
-    pub quantity: u32,
+    pub q1: u32,
+    pub q2: u32,
     pub kind: Kind,
     pub live: u32,
 }

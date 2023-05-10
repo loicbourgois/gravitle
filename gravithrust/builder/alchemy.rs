@@ -8,7 +8,7 @@ use std::io::Write;
 pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let in_ = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/template/alchemy.txt",
+        "{}/github.com/loicbourgois/gravitle/alchemy.txt",
         envs["HOME"]
     ))
     .expect("Should have been able to read the file");
@@ -21,27 +21,25 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
         in_.split('\n')
             .collect::<Vec<_>>()
             .iter()
+            .filter(|k| k.split(' ').collect::<Vec<_>>().len() >= 4)
             .map(|k| {
                 let words = k.split(' ').collect::<Vec<_>>();
+                let function = words[0];
+                let qk = words[1];
+                let k1 = words[2];
+                let k2 = words[3];
                 if words[0] == "harvest" {
-                    format!(
-                        "{} -.-> {}{}{}({})\n  {} -.-> {}{}{}\n  {}{}{} -.-> {}",
-                        words[1],
-                        words[0],
-                        words[1],
-                        words[2],
-                        words[0],
-                        words[2],
-                        words[0],
-                        words[1],
-                        words[2],
-                        words[0],
-                        words[1],
-                        words[2],
-                        words[3]
-                    )
+                    let k3 = words[4];
+                    vec![
+                        format!("{k1} -.-> {function}{k1}{k2}({function} {qk})"),
+                        format!("{k2} -.-> {function}{k1}{k2}"),
+                        format!("  {function}{k1}{k2} -.-> {k3}"),
+                    ]
+                    .join("\n")
+                } else if words[0] == "transfer" {
+                    format!("{k1} -.->|{qk}| {k2}")
                 } else {
-                    format!("{} -.->|{}| {}", words[1], words[0], words[2])
+                    format!("{k1} -.->|{function} {qk}| {k2}")
                 }
             })
             .collect::<Vec<_>>()
@@ -51,7 +49,7 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
 pub fn build_alchemy_rs() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let in_ = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/template/alchemy.txt",
+        "{}/github.com/loicbourgois/gravitle/alchemy.txt",
         envs["HOME"]
     ))?;
     writeln!(
@@ -70,6 +68,7 @@ pub fn build_alchemy_rs() -> Result<(), std::io::Error> {
             &in_.split('\n')
                 .collect::<Vec<_>>()
                 .iter()
+                .filter(|k| k.split(' ').collect::<Vec<_>>().len() >= 4)
                 .map(|k| {
                     let words = k.split(' ').collect::<Vec<_>>();
                     let function_name = match words[0] {
@@ -83,33 +82,27 @@ pub fn build_alchemy_rs() -> Result<(), std::io::Error> {
                     let new_kind = match words[0] {
                         "harvest" => format!(
                             ", Kind::{}",
-                            words[3].from_case(Case::Snake).to_case(Case::UpperCamel)
+                            words[4].from_case(Case::Snake).to_case(Case::UpperCamel)
                         ),
-                        _ => "".to_owned(),
+                        _ => String::new(),
                     };
                     match words[0] {
-                        "create" => "".to_owned(),
+                        "create" => String::new(),
                         _ => vec![
                             format!("// {k}"),
                             format!(
                                 "(Kind::{}, _, Kind::{}, _) => {{",
-                                words[1].from_case(Case::Snake).to_case(Case::UpperCamel),
-                                words[2].from_case(Case::Snake).to_case(Case::UpperCamel)
+                                words[2].from_case(Case::Snake).to_case(Case::UpperCamel),
+                                words[3].from_case(Case::Snake).to_case(Case::UpperCamel)
                             ),
                             format!("  {function_name}(p1, p2, pi1, pi2 {new_kind});"),
                             format!("}}"),
                         ]
                         .join("\n"),
                     }
-
-                    // format!("{} -.->|{}| {}", words[1], words[0], words[2])
                 })
                 .collect::<Vec<_>>()
                 .join("\n  ")
         )
     )
 }
-// Energy transfer from core to
-//     (Kind::Core, _, Kind::Booster, _) => {
-//         transfer_from_to(p1, p2, pi1, pi2);
-//     }

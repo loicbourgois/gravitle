@@ -9,6 +9,8 @@ import {
 import {
   Simulation,
 } from "./simulation.js"
+import { world_1 } from "./world/world_1.js"
+import { world_2 } from "./world/world_2.js"
 
 
 let RESOLUTION = 1
@@ -91,7 +93,7 @@ init().then( async (wasm) => {
   ) {
     yml_blueprints[x] = await (await fetch(`./blueprint/${x}.yml`, {cache: "no-store"})).text();
   }
-  for (const x of ['plasma_collector', 'plasma_transporter']
+  for (const x of ['plasma_collector', 'plasma_transporter', 'electro_field_launcher']
   ) {
     json_jobs[x] = await (await fetch(`./job/${x}.json`, {cache: "no-store"})).text();
   }
@@ -107,81 +109,20 @@ const start_sound = (ship_count, simulation) => {
 }
 
 
-const setup = async (wasm, yml_blueprints, json_jobs) => {
-  const gravithrust = Gravithrust.new(
-    0.0025, // diameter
-    16*2*1, // substep per tick
-    0.000000004, // max_rotation_speed
-    128, // grid_side
-    0.00001, // max_speed_at_target
-    0.0001, // forward_max_speed
-    30, // forward_max_angle
-    35,  // slow_down_max_angle
-    0.00025, // slow_down_max_speed_to_target_ratio
-    0.00005, // booster_acceleration
-  );
-  const world_blueprint = {
-    structures: [
-      {
-        blueprint: "sun",
-        x: 0.5,
-        y: 0.5,
-      },{
-        blueprint: "plasma_depot",
-        x: 0.6,
-        y: 0.6,
-      },{
-        blueprint: "plasma_refinery",
-        x: 0.5,
-        y: 0.6,
-      }
-    ],
-    particles: [
-      {
-        kind: "anchor",
-        x: 0.525,
-        y: 0.5,
-      }
-    ],
-    ships: [
-      {
-        blueprint: "harvester",
-        x: 0.525,
-        y: 0.5,
-        anchor: {k:'particles', id:0},
-        target: {k:'structures', id:0},
-      }, 
-      {
-        blueprint: "plasma_collector",
-        x: 0.6,
-        y: 0.4,
-        job: 'plasma_collector',
-      }, 
-      {
-        blueprint: "plasma_collector",
-        x: 0.4,
-        y: 0.4,
-        job: 'plasma_collector',
-      },
-      // {
-      //   blueprint: "plasma_collector",
-      //   x: 0.3,
-      //   y: 0.4,
-      //   job: 'plasma_collector',
-      // },
-      // {
-      //   blueprint: "plasma_collector",
-      //   x: 0.3,
-      //   y: 0.32,
-      //   job: 'plasma_collector',
-      // },
-      {
-        blueprint: "plasma_transporter",
-        x: 0.55,
-        y: 0.6,
-        job: 'plasma_transporter',
-      }
-    ]
+const setup_world = (
+  gravithrust, 
+  world_blueprint, 
+  yml_blueprints,
+  json_jobs,
+) => {
+  if (!world_blueprint.structures) {
+    world_blueprint.structures = []
+  }
+  if (!world_blueprint.particles) {
+    world_blueprint.particles = []
+  }
+  if (!world_blueprint.ships) {
+    world_blueprint.ships = []
   }
   for (const structure of world_blueprint.structures) {
     structure.pid = gravithrust.add_structure(yml_blueprints[structure.blueprint], structure.x, structure.y)
@@ -201,6 +142,23 @@ const setup = async (wasm, yml_blueprints, json_jobs) => {
       gravithrust.set_target(s.sid, world_blueprint[s.target.k][s.target.id].pid  )
     }
   }
+}
+
+
+const setup = async (wasm, yml_blueprints, json_jobs) => {
+  const gravithrust = Gravithrust.new(
+    0.0025, // diameter
+    16*2*1, // substep per tick
+    0.000000004, // max_rotation_speed
+    128, // grid_side
+    0.00001, // max_speed_at_target
+    0.0001, // forward_max_speed
+    30, // forward_max_angle
+    35,  // slow_down_max_angle
+    0.00025, // slow_down_max_speed_to_target_ratio
+    0.00005, // booster_acceleration
+  );
+  setup_world(gravithrust, world_2, yml_blueprints, json_jobs);
   const keys = [
     'forward_max_speed',
     'forward_max_angle',

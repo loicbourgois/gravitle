@@ -18,7 +18,7 @@ fn main() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let kd: KindDefinition = serde_json::from_str(
         &fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/gravithrust/template/kind.json",
+            "{}/github.com/loicbourgois/gravitle/kind.json",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file"),

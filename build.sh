@@ -20,7 +20,8 @@ cargo clippy -- \
     -A clippy::unused_self \
     -A clippy::match_same_arms \
     -A clippy::similar_names \
-    -A clippy::many_single_char_names
+    -A clippy::many_single_char_names \
+    -A clippy::match_on_vec_items
 wasm-pack build --no-typescript --release --target web
 rm $HOME/github.com/loicbourgois/gravitle/front/blueprint/* || true
 rmdir $HOME/github.com/loicbourgois/gravitle/front/blueprint || true

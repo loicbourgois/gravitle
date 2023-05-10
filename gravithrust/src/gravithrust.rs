@@ -2,7 +2,6 @@ use crate::blueprint::load_raw_blueprint;
 use crate::blueprint::Blueprint;
 use crate::blueprint::RawBlueprint;
 use crate::elapsed_secs_f32;
-use crate::error;
 use crate::gravithrust_tick::compute_collision_responses;
 use crate::gravithrust_tick::compute_link_responses;
 use crate::grid::Grid;
@@ -12,17 +11,15 @@ use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
 use crate::log;
-use crate::math::angle;
 use crate::math::cross;
 use crate::math::normalize_2;
 use crate::math::radians;
 use crate::math::wrap_around;
 use crate::math::Vector;
-use crate::math::WrapAroundResponse;
+use crate::movement::apply_movement_action;
 use crate::now;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
-use crate::particle::Particles;
 use crate::ship::ship_orientation;
 use crate::ship::ship_position;
 use crate::ship::Ship;
@@ -377,25 +374,6 @@ impl Gravithrust {
             self.avg_durations.pop_front();
         }
         self.avg_durations_vec = self.avg_durations.clone().into();
-        // self.ppms.push({
-        // high: self.gravithrust.points * 1000000 / self.gravithrust.step,
-        // low: self.gravithrust.points * 1000000 / self.gravithrust.step,
-        // step_high: self.gravithrust.step,
-        // step_low: self.gravithrust.step,
-        // })
-        // if (self.ppms.length >= ppms_count) {
-        // for (let i = 0; i < ppms_count/2; i++) {
-        //     self.ppms[i] = {
-        //     high: Math.max(self.ppms[i*2].high, self.ppms[i*2+1].high),
-        //     low: Math.min(self.ppms[i*2].low,self.ppms[i*2+1].low),
-        //     step_high: Math.max(self.ppms[i*2].step_high, self.ppms[i*2+1].step_high),
-        //     step_low: Math.min(self.ppms[i*2].step_low, self.ppms[i*2+1].step_low),
-        //     }
-        // }
-        // self.ppms.length = ppms_count / 2;
-        // }
-        // self.avg_durations[998] = self.avg_durations[999];
-        // self.avg_durations[999] = self.avg_duration;
         self.get_state()
     }
 
@@ -404,9 +382,6 @@ impl Gravithrust {
     }
 }
 impl Gravithrust {
-    // pub fn add_particle_internal(&mut self, p: Vector, k: Kind, sid: Option<usize>) -> usize {
-    //     self.add_particle_internal_2(p, Vector::default(), k, sid)
-    // }
     pub fn add_particle_internal_2(
         &mut self,
         position: Vector,
@@ -424,7 +399,6 @@ impl Gravithrust {
             assert!(self.dead_particles.remove(&pid));
             pid
         };
-        // log(&format!("{k:?}"));
         self.particles[pid] = Particle {
             p: position,
             pp: position - velocity,
@@ -435,9 +409,9 @@ impl Gravithrust {
             a: 0,
             idx: pid,
             grid_id: 0,
-            quantity: 0,
+            q1: 0,
+            q2: 0,
             live: 1,
-            packer: -0.12,
         };
         self.particles_internal[pid] = ParticleInternal {
             dp: Vector::default(),
@@ -457,7 +431,7 @@ impl Gravithrust {
         for p in &self.particles {
             *self.state.count.entry(p.k).or_insert(0) += 1;
             *self.state.capacity.entry(p.k).or_insert(0) += p.k.capacity();
-            *self.state.quantity.entry(p.k).or_insert(0) += p.quantity;
+            *self.state.quantity.entry(p.k).or_insert(0) += p.q1;
         }
     }
 
@@ -510,275 +484,43 @@ impl Gravithrust {
         self.step += 1;
     }
 
-    pub fn update_particles(&mut self) {
-        for (pid, p1) in self.particles.iter_mut().enumerate() {
-            let mut d1 = &mut self.particles_internal[pid];
-            p1.direction = normalize_2(d1.direction);
-            if !p1.k.is_static() {
-                p1.v.x += d1.dv.x;
-                p1.v.y += d1.dv.y;
-                p1.p.x += d1.dp.x;
-                p1.p.y += d1.dp.y;
-            }
-            if p1.k == Kind::Booster && p1.a == 1 && p1.quantity >= 10 {
-                p1.v.x -= d1.direction.x * self.booster_acceleration;
-                p1.v.y -= d1.direction.y * self.booster_acceleration;
-                p1.quantity -= 10;
-            }
-            // if p1.k == Kind::Booster {
-            // }
-            match &d1.new_state {
-                Some(state) => {
-                    p1.k = state.kind;
-                    p1.quantity = state.quantity;
-                    if p1.live != state.live {
-                        if state.live == 0 {
-                            self.dead_particles.insert(p1.idx);
-                            self.live_particles.remove(&p1.idx);
-                        } else {
-                            self.dead_particles.remove(&p1.idx);
-                            self.live_particles.insert(p1.idx);
-                        }
-                    }
-                    p1.live = state.live;
-                }
-                _ => {}
-            }
-            if p1.k == Kind::Core {
-                p1.quantity = 1;
-            }
-            d1.dp.x = 0.0;
-            d1.dp.y = 0.0;
-            d1.dv.x = 0.0;
-            d1.dv.y = 0.0;
-            d1.direction.x = 0.0;
-            d1.direction.y = 0.0;
-            d1.new_state = None;
-            // p1.a = 0;
-            p1.v.x = p1.v.x.max(-self.diameter * 0.5);
-            p1.v.x = p1.v.x.min(self.diameter * 0.5);
-            p1.v.y = p1.v.y.max(-self.diameter * 0.5);
-            p1.v.y = p1.v.y.min(self.diameter * 0.5);
-            p1.p.x = (10.0 + p1.p.x + p1.v.x) % 1.0;
-            p1.p.y = (10.0 + p1.p.y + p1.v.y) % 1.0;
-            p1.pp.x = p1.p.x - p1.v.x;
-            p1.pp.y = p1.p.y - p1.v.y;
-            if p1.quantity > p1.k.capacity() {
-                error(&format!(
-                    "over capacity | {:?} : {} > {}",
-                    p1.k,
-                    p1.quantity,
-                    p1.k.capacity()
-                ));
-            }
-        }
-    }
-
     pub fn update_ships(&mut self) {
+        let slow_down_max_angle_better = radians(self.slow_down_max_angle / 2.0).sin();
         let l = self.ships_more.len();
         for sid in 0..l {
-            self.check_job(sid);
-            let s = &mut self.ships_more[sid];
-            let mut ship = &mut self.ships[sid];
-            match s.target_pid {
-                Some(pid) => {
-                    ship.target = self.particles[pid].p;
-                }
-                None => {}
-            };
-            ship.pp = ship.p;
-            ship.p = ship_position(&self.particles, s);
-            let position_wa = wrap_around(ship.pp, ship.p);
-            let speed = position_wa.d_sqrd.sqrt();
-            ship.v = position_wa.d;
-            let target_delta_wa = wrap_around(ship.p, ship.target);
-            ship.td = target_delta_wa.d;
-            let previous_orientation = ship.orientation;
-            ship.orientation = ship_orientation(&self.particles, s);
-            ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
-            ship.cross =
-                normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
-            let slow_down_max_angle_better = radians(self.slow_down_max_angle / 2.0).sin();
-            let rotation_speed = cross(ship.orientation, previous_orientation);
-            let movement_action = match (s.anchor_pid, s.target_pid) {
-                (Some(anchor_pid), Some(target_pid)) => anchor_target_movement_action(
-                    rotation_speed,
-                    self.max_rotation_speed,
-                    slow_down_max_angle_better,
-                    ship,
-                    &self.particles,
-                    anchor_pid,
-                    target_pid,
-                ),
-                (None, Some(target_pid)) => target_only_movement_action(
-                    self.forward_max_speed,
-                    self.max_speed_at_target,
-                    self.slow_down_max_speed_to_target_ratio,
-                    self.forward_max_angle,
-                    self.max_rotation_speed,
-                    speed,
-                    rotation_speed,
-                    self.slow_down_max_angle,
-                    &self.particles,
-                    ship,
-                    &target_delta_wa,
-                    target_pid,
-                ),
-                _ => "-",
-            };
-            for pid in &s.pids {
-                if self.particles[*pid].k == Kind::Booster {
-                    self.particles[*pid].a = 0;
-                }
-            }
-            apply_movement_action(&mut self.particles, movement_action, s);
-            match (s.anchor_pid, s.target_pid) {
-                (Some(anchor_pid), Some(target_pid)) => {
-                    let anchor = self.particles[anchor_pid].p;
-                    let target = self.particles[target_pid].p;
-                    let anchor_delta = wrap_around(ship.p, anchor);
-                    let ray_particle = &mut self.particles[s.pids[0]];
-                    let uu = normalize_2(wrap_around(ship.p, target).d);
-                    if anchor_delta.d_sqrd < 0.001
-                        && ray_particle.quantity >= ray_particle.k.capacity()
-                        && angle(uu, normalize_2(ray_particle.direction)).abs() < 0.01
-                    {
-                        ray_particle.quantity = 0;
-                        let aa = ray_particle.p + ray_particle.direction * self.diameter * 1.75;
-                        self.add_particle_internal_2(
-                            aa,
-                            uu * self.diameter * 0.01,
-                            Kind::ElectroField,
-                            None,
-                        );
+            let ship_more = &self.ships_more[sid];
+            let previous_orientation = self.ships[sid].orientation;
+            {
+                let mut ship = &mut self.ships[sid];
+                match ship_more.target_pid {
+                    Some(pid) => {
+                        ship.target = self.particles[pid].p;
                     }
-                }
-                _ => {}
+                    None => {}
+                };
+                ship.pp = ship.p;
+                ship.p = ship_position(&self.particles, ship_more);
+                ship.v = wrap_around(ship.pp, ship.p).d;
+                ship.td = wrap_around(ship.p, ship.target).d;
+                ship.orientation = ship_orientation(&self.particles, ship_more);
+                ship.vt = normalize_2(normalize_2(ship.td) + normalize_2(ship.v));
+                ship.cross =
+                    normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
             }
+            let ship = &self.ships[sid];
+            let speed = wrap_around(ship.pp, ship.p).d_sqrd.sqrt();
+            let rotation_speed = cross(ship.orientation, previous_orientation);
+            let target_delta_wa = wrap_around(ship.p, ship.target);
+            let movement_action = self.get_movement_action(
+                &target_delta_wa,
+                ship,
+                rotation_speed,
+                slow_down_max_angle_better,
+                ship_more,
+                speed,
+            );
+            apply_movement_action(&mut self.particles, movement_action, ship_more);
+            self.check_job(sid);
         }
-    }
-}
-fn apply_movement_action(particles: &mut Particles, movement_action: &str, ship_more: &ShipMore) {
-    let pid0 = ship_more.pids[0];
-    match movement_action {
-        "slow down" => {
-            for x in &ship_more.ship_control.slow {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        "turn left" => {
-            for x in &ship_more.ship_control.left {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        "turn right" => {
-            for x in &ship_more.ship_control.right {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        "forward" => {
-            for x in &ship_more.ship_control.forward {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        "translate left" => {
-            for x in &ship_more.ship_control.translate_left {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        "translate right" => {
-            for x in &ship_more.ship_control.translate_right {
-                particles[pid0 + x].a = 1;
-            }
-        }
-        _ => {}
-    };
-}
-fn anchor_target_movement_action<'a>(
-    rotation_speed: f32,
-    max_rotation_speed: f32,
-    slow_down_max_angle_better: f32,
-    ship: &Ship,
-    particles: &Particles,
-    anchor_pid: usize,
-    target_pid: usize,
-) -> &'a str {
-    let anchor = particles[anchor_pid].p;
-    let target = particles[target_pid].p;
-    let target_delta = wrap_around(ship.p, target);
-    let target_delta_old = wrap_around(ship.pp, target);
-    let target_to_anchor = wrap_around(anchor, target);
-    let target_to_anchor_distance = target_to_anchor.d_sqrd.sqrt();
-    let distance_to_target = target_delta.d_sqrd.sqrt();
-    let speed_toward_target = target_delta_old.d_sqrd.sqrt() - distance_to_target;
-    let target_direction = target_delta.d;
-    let anchor_delta = wrap_around(ship.p, anchor);
-    let distance_to_anchor = anchor_delta.d_sqrd.sqrt();
-    let anchor_delta_old = wrap_around(ship.pp, anchor);
-    let speed_toward_anchor = anchor_delta_old.d_sqrd.sqrt() - distance_to_anchor;
-    let anchor_direction = anchor_delta.d;
-    let orientation_angle = cross(normalize_2(ship.orientation), normalize_2(target_direction));
-    let angle_anchor_to_target =
-        cross(normalize_2(anchor_direction), normalize_2(target_direction));
-    if distance_to_target < target_to_anchor_distance
-        && orientation_angle.abs() < slow_down_max_angle_better
-        && speed_toward_target > -0.000_000_5
-    {
-        "slow down"
-    } else if orientation_angle > 0.0 && rotation_speed > -max_rotation_speed {
-        "turn left"
-    } else if orientation_angle < 0.0 && rotation_speed < max_rotation_speed {
-        "turn right"
-    } else if angle_anchor_to_target > 0.0
-        && distance_to_target < target_to_anchor_distance * 1.2
-        && speed_toward_anchor < 0.000_001
-    {
-        "translate right"
-    } else if angle_anchor_to_target < 0.0
-        && distance_to_target < target_to_anchor_distance * 1.2
-        && speed_toward_anchor < 0.000_001
-    {
-        "translate left"
-    } else {
-        "-"
-    }
-}
-fn target_only_movement_action<'a>(
-    forward_max_speed: f32,
-    max_speed_to_target: f32,
-    slow_down_max_speed_to_target_ratio: f32,
-    forward_max_angle: f32,
-    max_rotation_speed: f32,
-    speed: f32,
-    rotation_speed: f32,
-    slow_down_max_angle: f32,
-    particles: &Particles,
-    ship: &mut Ship,
-    target_delta_wa: &WrapAroundResponse,
-    target_id: usize,
-) -> &'a str {
-    let pt = &particles[target_id];
-    let wa1 = wrap_around(ship.pp, pt.pp);
-    let wa2 = wrap_around(ship.p, pt.p);
-    let target_vs_ship_delta_v = wa1.d_sqrd.sqrt() - wa2.d_sqrd.sqrt();
-    let distance_to_target = target_delta_wa.d_sqrd.sqrt();
-    let orientation_angle_corrected_2 = angle(normalize_2(ship.cross), normalize_2(ship.td));
-    let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
-    if orientation_angle_corrected_2.abs() < slow_down_max_angle / 2.0
-        && target_vs_ship_delta_v
-            > (max_speed_to_target * 0.75)
-                .max(distance_to_target * slow_down_max_speed_to_target_ratio)
-    {
-        "slow down"
-    } else if orientation_angle_corrected > 0.0 && rotation_speed > -max_rotation_speed {
-        "turn left"
-    } else if orientation_angle_corrected < 0.0 && rotation_speed < max_rotation_speed {
-        "turn right"
-    } else if speed < forward_max_speed
-        && orientation_angle_corrected_2.abs() < forward_max_angle / 2.0
-    {
-        "forward"
-    } else {
-        "-"
     }
 }

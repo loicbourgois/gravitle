@@ -1,0 +1,34 @@
+transfer energy core booster
+transfer energy core electro_field_launcher
+transfer energy core heat_launcher
+harvest matter sun electro_field plasma_electro_field
+harvest matter ice heat water
+transfer_and_delete matter plasma_electro_field plasma_electro_field_collector
+collect matter plasma_raw_depot plasma_raw_collector
+drop matter plasma_electro_field_collector plasma_raw_depot
+drop matter plasma_raw_collector plasma_refinery_input
+create matter heat_launcher heat
+create matter electro_field_launcher electro_field
+
+transfer water_droplet water luciole
+
+transfer iron_ore iron_asteroid iron_ore_collector
+transfer iron_ore iron_ore_collector iron_ore_cargo
+transfer iron_ore iron_ore_cargo iron_ore_collector
+transfer coal coal_asteroid coal_collector
+transfer coal coal_collector coal_cargo
+transfer coal coal_cargo coal_collector
+transfer iron_ore iron_ore_collector iron_furnace
+transfer coal coal_collector iron_furnace
+transfer iron iron_furnace iron_collector
+transfer iron_gangue iron_furnace iron_gangue_collector
+
+transfer heat iron_furnace generator
+transfer energy generator battery
+
+transfer ice ice_asteroid ice_collector
+transfer ice ice_collector ice_cargo
+transfer ice ice_cargo ice_collector
+transfer ice ice_collector ice_melter
+transfer water ice_melter generator
+

@@ -6,11 +6,11 @@ struct Particle {
   m: f32,
   k: i32,
   a: u32, // activated, usefull for boosters
-  quantity: u32,
+  q1: u32,
+  q2: u32,
   live: u32,
   grid_id: i32,
   idx: i32,
-  packer: f32,
 };
 struct Duration {
   a: f32,
@@ -86,8 +86,8 @@ const ZOOM = 3.0;
       vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
     }
     case KIND_electro_field_launcher: {
-      let quantity = f32(particle.quantity)/2500.0;
-      vsOut.color = vec4f(0.0, quantity*0.5+0.35, quantity*0.5+0.25, 1.0);
+      let q1 = f32(particle.q1)/2500.0;
+      vsOut.color = vec4f(0.0, q1*0.5+0.35, q1*0.5+0.25, 1.0);
     }
     
     default: {}

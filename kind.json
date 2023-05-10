@@ -29,7 +29,27 @@
         "ice",
         "water",
         "heat",
-        "heat_launcher"
+        "heat_launcher",
+        "generator",
+        "fuel",
+        "electricity",
+        "iron_furnace",
+        "coal_cargo",
+        "coal_asteroid",
+        "coal_collector",
+        "iron_cargo",
+        "iron_collector",
+        "iron_asteroid",
+        "iron_ore_cargo",
+        "iron_ore_collector",
+        "luciole",
+        "vers",
+        "ice_melter",
+        "ice_collector",
+        "ice_cargo",
+        "ice_asteroid",
+        "battery",
+        "iron_gangue_collector"
     ],
     "static_kinds": [
         "sun_core", "depot", "anchor", "static"

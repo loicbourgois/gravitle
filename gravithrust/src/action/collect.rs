@@ -10,7 +10,7 @@ pub fn collect(s: &Ship, sm: &mut ShipMore, particles: &mut [Particle], kind: Ki
             let mut dmin = std::f32::INFINITY;
             let mut target_pid: Option<usize> = None;
             for p in particles.iter() {
-                if p.k == kind && p.quantity > 0 {
+                if p.k == kind && p.q1 > 0 {
                     let wa = wrap_around(p.p, s.p);
                     if wa.d_sqrd < dmin {
                         dmin = wa.d_sqrd;

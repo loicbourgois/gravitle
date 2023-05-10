@@ -9,15 +9,17 @@ pub fn transfer_from_to(
     pi1: &mut ParticleInternal,
     pi2: &mut ParticleInternal,
 ) {
-    if p2.quantity < p2.k.capacity() && p1.quantity > 0 {
+    if p2.q1 < p2.k.capacity() && p1.q1 > 0 {
         pi1.new_state = Some(State {
-            quantity: p1.quantity - 1,
+            q1: p1.q1 - 1,
+            q2: 0,
             kind: p1.k,
             live: p1.live,
         });
         pi2.new_state = Some(State {
-            quantity: p2.quantity + 1,
+            q1: p2.q1 + 1,
             kind: p2.k,
+            q2: 0,
             live: p2.live,
         });
     }
@@ -28,16 +30,18 @@ pub fn transfer_and_delete(
     pi1: &mut ParticleInternal,
     pi2: &mut ParticleInternal,
 ) {
-    if p2.quantity < p2.k.capacity() && p1.quantity > 0 {
+    if p2.q1 < p2.k.capacity() && p1.q1 > 0 {
         pi1.new_state = Some(State {
-            quantity: 0,
+            q1: 0,
             kind: Kind::Default,
             live: 0,
+            q2: 0,
         });
         pi2.new_state = Some(State {
-            quantity: p2.quantity + 1,
+            q1: p2.q1 + 1,
             kind: p2.k,
             live: 1,
+            q2: 0,
         });
     }
 }
@@ -48,11 +52,12 @@ pub fn harvest(
     pi2: &mut ParticleInternal,
     new_kind: Kind,
 ) {
-    if p2.quantity < p2.k.capacity() {
+    if p2.q1 < p2.k.capacity() {
         pi2.new_state = Some(State {
-            quantity: p2.quantity + 1,
+            q1: p2.q1 + 1,
             kind: new_kind,
             live: p2.live,
+            q2: 0,
         });
     }
 }
