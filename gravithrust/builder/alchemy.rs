@@ -19,7 +19,7 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
             "{}/github.com/loicbourgois/gravitle/alchemy.mmd",
             envs["HOME"]
         ))?,
-        "flowchart TB\n  {}",
+        "flowchart LR\n  {}",
         in_.split('\n')
             .collect::<Vec<_>>()
             .iter()
@@ -123,7 +123,7 @@ pub fn alchemy_transform(in_: &str) -> String {
                     let words_ = x.split('*').collect::<Vec<_>>();
                     let qk = words_[1].from_case(Case::Snake).to_case(Case::UpperCamel);
                     let quantity = words_[0];
-                    format!("p1.add_quantity(QuantityKind::{qk}, -{quantity});")
+                    format!("p1.remove_quantity(QuantityKind::{qk}, {quantity});")
                 })
                 .collect();
             let mut actions_2: Vec<_> = outputs

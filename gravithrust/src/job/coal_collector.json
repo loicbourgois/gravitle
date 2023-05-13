@@ -11,18 +11,6 @@
                 "CoalStorageFull"
             ],
             "action": "DeliverCoal"
-        },
-        {
-            "conditions": [
-                "DeliverCoal"
-            ],
-            "action": "DeliverCoal"
-        },
-        {
-            "conditions": [
-                "CollectCoal"
-            ],
-            "action": "DeliverCoal"
         }
     ]
 }

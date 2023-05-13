@@ -28,18 +28,6 @@ pub fn collect(
             sm.target_pid = target_pid;
             match target_pid {
                 Some(pid) => {
-                    // for pid_2 in &sm.pids {
-                    //     let p2 = &mut particles[*pid_2];
-                    //     match (kind, p2.k) {
-                    //         (Kind::PlasmaElectroField, Kind::PlasmaElectroFieldCollector) => {
-                    //             p2.a = 1;
-                    //         }
-                    //         (Kind::PlasmaRawDepot, Kind::PlasmaRawCollector) => {
-                    //             p2.a = 1;
-                    //         }
-                    //         _ => {}
-                    //     }
-                    // }
                     let p = &particles[pid];
                     log(&format!("s#{} -> p#{}:{:?}", sm.sid, p.idx, p.k));
                 }

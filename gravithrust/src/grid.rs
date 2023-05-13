@@ -3,7 +3,7 @@ use crate::particle::Particle;
 type Particles = Vec<Particle>;
 pub struct Grid {
     pub pidxs: Vec<Vec<usize>>, // particle indexes
-    pub gids: Vec<Vec<usize>>,  // grid ids
+    pub gids: Vec<[usize; 9]>,  // grid ids
     pub side: usize,
 }
 impl Grid {
@@ -20,7 +20,7 @@ impl Grid {
                 let grid_xs = [(x_side - 1) % side, x_side % side, (x_side + 1) % side];
                 let grid_ys = [(y_side - 1) % side, y_side % side, (y_side + 1) % side];
                 assert!(grid_id(x, y, grid.side) == grid.gids.len());
-                grid.gids.push(vec![
+                grid.gids.push([
                     grid_id(grid_xs[0], grid_ys[0], grid.side),
                     grid_id(grid_xs[0], grid_ys[1], grid.side),
                     grid_id(grid_xs[0], grid_ys[2], grid.side),

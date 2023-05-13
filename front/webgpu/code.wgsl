@@ -33,7 +33,7 @@ struct VSOutput {
 }
 //__DISK_GENERATED__//
 //__KIND_GENERATED__//
-const ZOOM = 1.0;
+const ZOOM = 2.5;
 @group(0) @binding(0) var<storage, read> particles: array<Particle>;
 @group(0) @binding(1) var<storage, read> avg_durations: array<Duration>;
 @vertex fn vs(
@@ -188,19 +188,19 @@ fn rand(v: vec2f) -> f32 {
       particle.p.x + particle.direction.x * 0.002 * rand(vec2f(particle.p.y, particle.direction.y)),
       particle.p.y + particle.direction.y * 0.002 * rand(vec2f(particle.p.x, particle.direction.x)),
   );
-  if (particle.k == KIND_booster && particle.a == 1) {
-    vsOut.position = vec4f(
-      positions[vertexIndex] * 0.0025 * .6
-      + pout * 2.0 
-      - vec2f( 1.0,  1.0), 0.0, 1.0
-    );
-    vsOut.position.x = vsOut.position.x * ZOOM; 
-    vsOut.position.y = vsOut.position.y * ZOOM;
-    if (particle.live != 1) {
-      vsOut.position.z = 100.0;
-    }
-    vsOut.color = vec4f(1.0, 0.25, 0.5, 1.0);
-  }
+  // if (particle.k == KIND_booster && particle.a == 1) {
+  //   vsOut.position = vec4f(
+  //     positions[vertexIndex] * 0.0025 * .6
+  //     + pout * 2.0 
+  //     - vec2f( 1.0,  1.0), 0.0, 1.0
+  //   );
+  //   vsOut.position.x = vsOut.position.x * ZOOM; 
+  //   vsOut.position.y = vsOut.position.y * ZOOM;
+  //   if (particle.live != 1) {
+  //     vsOut.position.z = 100.0;
+  //   }
+  //   vsOut.color = vec4f(1.0, 0.25, 0.5, 1.0);
+  // }
   return vsOut;
 }
 @fragment fn fs_3(vsOut: VSOutput) -> @location(0) vec4f {

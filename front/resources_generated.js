@@ -3,12 +3,14 @@ const blueprint_names = [
   'chain_reaction',
   'coal_asteroid',
   'coal_collector',
+  'coal_depot',
   'harvester',
   'ice_asteroid',
   'iron_asteroid',
   'iron_furnace',
-  'iron_ore_collector',
   'iron_ore_collector_2',
+  'iron_ore_depot',
+  'mothership',
   'plasma_collector',
   'plasma_depot',
   'plasma_refinery',
@@ -18,10 +20,8 @@ const blueprint_names = [
 ]
 const job_names = [
   'coal_collector',
-  'electro_field_launcher',
   'iron_ore_collector',
-  'plasma_collector',
-  'plasma_transporter'
+  'mothership'
 ]
 export {
   blueprint_names,

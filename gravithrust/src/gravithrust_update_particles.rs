@@ -13,10 +13,10 @@ impl Gravithrust {
                 p1.p.x += d1.dp.x;
                 p1.p.y += d1.dp.y;
             }
-            if p1.k == Kind::Booster && p1.a == 1 && p1.quantity(QuantityKind::Energy) >= 10 {
+            if p1.k == Kind::Booster && p1.a == 1 && p1.quantity(QuantityKind::Energy) >= 1 {
                 p1.v.x -= d1.direction.x * self.booster_acceleration;
                 p1.v.y -= d1.direction.y * self.booster_acceleration;
-                p1.remove_quantity(QuantityKind::Energy, 10);
+                p1.remove_quantity(QuantityKind::Energy, 1);
             }
             match &d1.new_state {
                 Some(state) => {

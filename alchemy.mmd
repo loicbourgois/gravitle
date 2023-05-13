@@ -1,42 +1,38 @@
-flowchart TB
-  core -.->|energy| booster
-  core -.->|energy| electro_field_launcher
-  core -.->|energy| heat_launcher
-  sun -.-> harvestsunelectro_field(harvest matter)
-electro_field -.-> harvestsunelectro_field
-  harvestsunelectro_field -.-> plasma_electro_field
-  ice -.-> harvesticeheat(harvest matter)
-heat -.-> harvesticeheat
-  harvesticeheat -.-> water
-  plasma_electro_field -.->|transfer_and_delete matter| plasma_electro_field_collector
-  plasma_raw_depot -.->|collect matter| plasma_raw_collector
-  plasma_electro_field_collector -.->|drop matter| plasma_raw_depot
-  plasma_raw_collector -.->|drop matter| plasma_refinery_input
-  heat_launcher -.->|create matter| heat
-  electro_field_launcher -.->|create matter| electro_field
-  water -.->|water_droplet| luciole
-  iron_asteroid -.->|iron_ore| iron_ore_collector
-  iron_ore_collector -.->|iron_ore| iron_ore_cargo
-  iron_ore_cargo -.->|iron_ore| iron_ore_collector
-  coal_asteroid -.->|coal| coal_input
-  coal_input -.->|coal| coal_cargo
-  coal_cargo -.->|coal| coal_output
-  coal_output -.->|coal| coal_depot
-  iron_asteroid -.->|iron_ore| iron_ore_input
-  iron_ore_input -.->|iron_ore| iron_ore_cargo
-  iron_ore_cargo -.->|iron_ore| iron_ore_output
-  iron_ore_output -.->|iron_ore| iron_ore_depot
-  iron_ore_depot -.->|iron_ore| iron_furnace
-  iron_ore_collector -.->|iron_ore| iron_ore_depot
+flowchart LR
+  ice_asteroid -.->|ice| ice_collector
+  ice_cargo -.->|ice| ice_collector
+  ice_collector -.->|ice| ice_cargo
+  ice_collector -.->|ice| ice_melter
+  water -.->|water| luciole
+  ice_melter -.->|water| water_collector
+  water_collector -.->|water| generator
+  water -.->|water| flower
+  flower -.->|nectar| luciole
   coal_collector -.->|coal| coal_depot
   coal_depot -.->|coal| iron_furnace
+  coal_depot -.->|coal| coal_depot
+  coal_asteroid -.->|coal| coal_collector
+  coal_collector -.->|coal| coal_cargo
+  coal_cargo -.->|coal| coal_collector
+  iron_asteroid -.->|iron_ore| iron_ore_collector
+  iron_ore_collector -.->|iron_ore| iron_ore_depot
+  iron_ore_collector -.->|iron_ore| iron_ore_cargo
+  iron_ore_cargo -.->|iron_ore| iron_ore_collector
+  iron_ore_depot -.->|iron_ore| iron_furnace
+  iron_ore_depot -.->|iron_ore| iron_ore_depot
   iron_furnace -.->|iron| iron_collector
   iron_furnace -.->|iron_gangue| iron_gangue_collector
-  iron_furnace -.->|heat| generator
+  heat_collector -.->|heat| generator
   iron_furnace -.->|heat| heat_collector
-  generator -.->|energy| battery
-  ice_asteroid -.->|ice| ice_collector
-  ice_collector -.->|ice| ice_cargo
-  ice_cargo -.->|ice| ice_collector
-  ice_collector -.->|ice| ice_melter
-  ice_melter -.->|water| generator
+  generator -.->|energy| energy_depot
+  energy_collector -.->|energy| battery
+  energy_collector -.->|energy| energy_cargo
+  energy_cargo -.->|energy| energy_collector
+  energy_cargo -.->|energy| energy_cargo
+  core -.->|energy| booster
+  battery -.->|energy| ice_melter
+  battery -.->|energy| booster
+  energy_depot -.->|energy| energy_collector
+  core -.->|energy| energy_cargo
+  core -.->|energy| energy_collector
+  battery -.->|energy| battery

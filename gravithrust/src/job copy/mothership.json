@@ -1,0 +1,28 @@
+{
+    "tasks": [
+        {
+            "conditions": [
+                "EnergyStorageEmpty"
+            ],
+            "action": "CollectEnergy"
+        },
+        {
+            "conditions": [
+                "EnergyStorageFull"
+            ],
+            "action": "DeliverEnergy"
+        },
+        {
+            "conditions": [
+                "DeliverEnergy"
+            ],
+            "action": "DeliverEnergy"
+        },
+        {
+            "conditions": [
+                "CollectEnergy"
+            ],
+            "action": "DeliverEnergy"
+        }
+    ]
+}

@@ -17,8 +17,10 @@ import { world_1 } from "./world/world_1.js"
 import { world_2 } from "./world/world_2.js"
 import { world_3 } from "./world/world_3.js"
 import { world_4 } from "./world/world_4.js"
+import { world_5 } from "./world/world_5.js"
 
 
+const  world = world_5
 let RESOLUTION = 1
 let zen_mode_active = false
 let started_sound = false
@@ -161,7 +163,7 @@ const setup = async (wasm, yml_blueprints, json_jobs) => {
     0.00025, // slow_down_max_speed_to_target_ratio
     0.00005, // booster_acceleration
   );
-  setup_world(gravithrust, world_4, yml_blueprints, json_jobs);
+  setup_world(gravithrust, world, yml_blueprints, json_jobs);
   const keys = [
     'forward_max_speed',
     'forward_max_angle',

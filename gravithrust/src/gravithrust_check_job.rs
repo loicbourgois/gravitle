@@ -1,5 +1,6 @@
 use crate::action::collect;
-use crate::action::deliver;
+use crate::action::deliver_closest;
+use crate::action::deliver_less_quantity;
 use crate::gravithrust::Gravithrust;
 use crate::job::Action;
 use crate::job::Condition;
@@ -7,6 +8,7 @@ use crate::kind::Kind;
 use crate::particle::Particle;
 use crate::particle::QuantityKind;
 use crate::ship::ShipMore;
+use rand::Rng;
 pub fn remaining_capacity(ship_more: &ShipMore, particles: &[Particle], qk: QuantityKind) -> u32 {
     let mut rc = 0;
     for pid in &ship_more.pids {
@@ -32,6 +34,7 @@ fn all_conditions_ok(
     ship_more: &ShipMore,
     conditions: &[Condition],
 ) -> bool {
+    let mut rng = rand::thread_rng();
     for condition in conditions {
         let r = match condition {
             Condition::CoalStorageEmpty => quantity(ship_more, particles, QuantityKind::Coal) == 0,
@@ -44,7 +47,15 @@ fn all_conditions_ok(
             Condition::IronOreStorageFull => {
                 remaining_capacity(ship_more, particles, QuantityKind::IronOre) == 0
             }
-            _ => false,
+            Condition::EnergyStorageEmpty => {
+                quantity(ship_more, particles, QuantityKind::Energy) == 0
+            }
+            Condition::EnergyStorageFull => {
+                remaining_capacity(ship_more, particles, QuantityKind::Energy) == 0
+            }
+            Condition::Random1Per1000 => rng.gen::<f32>() < 0.001,
+            Condition::Random1Per10 => rng.gen::<f32>() < 0.1,
+            Condition::Random1Per100 => rng.gen::<f32>() < 0.01,
         };
         if !r {
             return r;
@@ -73,7 +84,7 @@ impl Gravithrust {
                             );
                         }
                         Action::DeliverCoal => {
-                            deliver(
+                            deliver_closest(
                                 ship,
                                 ship_more,
                                 &mut self.particles,
@@ -81,6 +92,26 @@ impl Gravithrust {
                                 QuantityKind::Coal,
                             );
                         }
+
+                        Action::CollectEnergy => {
+                            collect(
+                                ship,
+                                ship_more,
+                                &mut self.particles,
+                                Kind::EnergyDepot,
+                                QuantityKind::Energy,
+                            );
+                        }
+                        Action::DeliverEnergy => {
+                            deliver_less_quantity(
+                                ship,
+                                ship_more,
+                                &mut self.particles,
+                                Kind::Battery,
+                                QuantityKind::Energy,
+                            );
+                        }
+
                         Action::CollectIronOre => {
                             collect(
                                 ship,
@@ -91,7 +122,7 @@ impl Gravithrust {
                             );
                         }
                         Action::DeliverIronOre => {
-                            deliver(
+                            deliver_closest(
                                 ship,
                                 ship_more,
                                 &mut self.particles,
@@ -102,8 +133,6 @@ impl Gravithrust {
                         Action::ResetTarget => {
                             ship_more.target_pid = None;
                         }
-                        // Action::LaunchElectroField => self.launch_electro_field(sid),
-                        _ => {}
                     }
                     break;
                 }
@@ -111,31 +140,4 @@ impl Gravithrust {
             None => {}
         }
     }
-    // pub fn launch_electro_field(&mut self, sid: usize) {
-    //     let ship_more = &self.ships_more[sid];
-    //     let ship = &self.ships[sid];
-    //     // match (ship_more.anchor_pid, ship_more.target_pid) {
-    //     //     (Some(anchor_pid), Some(target_pid)) => {
-    //     //         let anchor = self.particles[anchor_pid].p;
-    //     //         let target = self.particles[target_pid].p;
-    //     //         let uu = normalize_2(wrap_around(ship.p, target).d);
-    //     //         let anchor_delta = wrap_around(ship.p, anchor);
-    //     //         let ray_particle = &mut self.particles[ship_more.pids[0]];
-    //     //         if anchor_delta.d_sqrd < 0.001
-    //     //             && ray_particle.q1 >= ray_particle.k.capacity()
-    //     //             && angle(uu, normalize_2(ray_particle.direction)).abs() < 0.01
-    //     //         {
-    //     //             ray_particle.q1 = 0;
-    //     //             let aa = ray_particle.p + ray_particle.direction * self.diameter * 1.75;
-    //     //             self.add_particle_internal_2(
-    //     //                 aa,
-    //     //                 uu * self.diameter * 0.01,
-    //     //                 Kind::ElectroField,
-    //     //                 None,
-    //     //             );
-    //     //         }
-    //     //     }
-    //     //     _ => {}
-    //     // }
-    // }
 }

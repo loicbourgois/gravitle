@@ -53,16 +53,18 @@
         "coal_depot",
         "iron_ore_depot",
         "heat_collector",
-        "coal_output",
-        "coal_input",
-        "iron_ore_input",
-        "iron_ore_output"
+        "energy_cargo",
+        "energy_collector",
+        "water_collector",
+        "nectar",
+        "flower",
+        "energy_depot"
     ],
-    "_static_kinds": [
-        "sun_core", "depot", "anchor", "static",
+    "static_kinds": [
+        "anchor", "static",
         "iron_furnace"
     ],
-    "static_kinds": ["invalid"],
+    "_static_kinds": ["invalid"],
     "capacities": {
         "core": {
             "soft": 0,

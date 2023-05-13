@@ -1,6 +1,7 @@
 extern crate test;
 use crate::bench::helpers::setup_simulation_grid_side;
 use crate::gravithrust_tick::compute_collision_responses;
+use crate::gravithrust_tick::compute_collision_responses_2;
 use crate::gravithrust_tick::compute_link_responses;
 use test::Bencher;
 #[bench]
@@ -41,7 +42,19 @@ fn bench_tick_partial_compute_collision_responses(b: &mut Bencher) {
     });
 }
 #[bench]
-fn bench_tick_partial_compute_compute_link_responses(b: &mut Bencher) {
+fn bench_tick_partial_compute_collision_responses_2(b: &mut Bencher) {
+    let mut g = setup_simulation_grid_side(128);
+    b.iter(|| {
+        compute_collision_responses_2(
+            g.diameter,
+            &mut g.particles,
+            &mut g.particles_internal,
+            &g.grid,
+        )
+    });
+}
+#[bench]
+fn bench_tick_partial_compute_link_responses(b: &mut Bencher) {
     let mut g = setup_simulation_grid_side(128);
     b.iter(|| {
         compute_link_responses(
@@ -53,6 +66,19 @@ fn bench_tick_partial_compute_compute_link_responses(b: &mut Bencher) {
         )
     });
 }
+// #[bench]
+// fn bench_tick_partial_compute_link_responses_2(b: &mut Bencher) {
+//     let mut g = setup_simulation_grid_side(128);
+//     b.iter(|| {
+//         compute_link_responses_2(
+//             g.diameter,
+//             &mut g.particles,
+//             &mut g.particles_internal,
+//             &mut g.links,
+//             &mut g.links_js,
+//         )
+//     });
+// }
 #[bench]
 fn bench_tick_partial_update_particles(b: &mut Bencher) {
     let mut g = setup_simulation_grid_side(128);

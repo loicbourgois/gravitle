@@ -3,20 +3,24 @@ const world_4 = {
         {
             blueprint: "coal_asteroid",
             x: 0.4,
-            y: 0.53,
+            y: 0.4,
         }, {
-            blueprint: "iron_furnace",
-            x: 0.5,
-            y: 0.5,
+            blueprint: "iron_ore_depot",
+            x: 0.4,
+            y: 0.6,
         }, {
             blueprint: "iron_asteroid",
-            x: 0.4,
+            x: 0.6,
+            y: 0.4,
+        }, {
+            blueprint: "coal_depot",
+            x: 0.6,
             y: 0.6,
         }
     ],
     ships: []
 }
-for (let index = 0; index < 10; index++) {
+for (let index = 0; index < 16; index++) {
     world_4.ships.push({
         blueprint: "coal_collector",
         x: Math.random(),

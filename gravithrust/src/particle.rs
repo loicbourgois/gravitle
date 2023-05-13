@@ -28,6 +28,7 @@ pub enum QuantityKind {
     Coal         = 9,
     IronOre      = 10,
     WaterDroplet = 11,
+    Nectar       = 12,
 }
 #[wasm_bindgen]
 #[derive(Clone, Debug, Copy, Default)]
@@ -40,18 +41,6 @@ pub struct Quantities {
     pub q5: u32,
     pub q6: u32,
 }
-// impl Default for Quantities {
-//     fn default() -> Self {
-//         Quantities {
-//             q1: 0,
-//             q2: 0,
-//             q3: 0,
-//             q4: 0,
-//             q5: 0,
-//             q6: 0,
-//         }
-//     }
-// }
 impl Quantities {
     fn by_id(&self, idx: usize) -> u32 {
         match idx {
@@ -105,17 +94,18 @@ impl Particle {
             (Kind::IronOreCollector, QuantityKind::IronOre) => 1,
             (Kind::IronOreDepot, QuantityKind::IronOre) => 100,
             (Kind::IronOreCargo, QuantityKind::IronOre) => 10,
-            (Kind::Core, QuantityKind::Energy) => 1,
-            (Kind::CoalInput, QuantityKind::Coal) => 1,
-            (Kind::CoalOutput, QuantityKind::Coal) => 1,
             (Kind::IronFurnace, QuantityKind::Coal) => 1,
             (Kind::IronFurnace, QuantityKind::IronGangue) => 1,
             (Kind::IronFurnace, QuantityKind::Heat) => 1,
             (Kind::IronFurnace, QuantityKind::IronOre) => 1,
             (Kind::IronFurnace, QuantityKind::Iron) => 1,
-            (Kind::Booster, QuantityKind::Energy) => 100,
-            (Kind::IronOreInput, QuantityKind::IronOre) => 1,
-            (Kind::IronOreOutput, QuantityKind::IronOre) => 1,
+
+            (Kind::Booster, QuantityKind::Energy) => 1000,
+            (Kind::Core, QuantityKind::Energy) => 100_000,
+            (Kind::Battery, QuantityKind::Energy) => 100_000,
+            (Kind::EnergyCollector, QuantityKind::Energy) => 1_000_000,
+            (Kind::EnergyCargo, QuantityKind::Energy) => 1_000_000,
+            (Kind::EnergyDepot, QuantityKind::Energy) => 1_000_000,
             _ => 0,
         }
     }

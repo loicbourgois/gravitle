@@ -53,10 +53,12 @@ const Kind = {
   CoalDepot: 50,
   IronOreDepot: 51,
   HeatCollector: 52,
-  CoalOutput: 53,
-  CoalInput: 54,
-  IronOreInput: 55,
-  IronOreOutput: 56,
+  EnergyCargo: 53,
+  EnergyCollector: 54,
+  WaterCollector: 55,
+  Nectar: 56,
+  Flower: 57,
+  EnergyDepot: 58,
 }
 const kinds = [
   {label:'invalid'},
@@ -112,10 +114,12 @@ const kinds = [
   {label:'coal_depot'},
   {label:'iron_ore_depot'},
   {label:'heat_collector'},
-  {label:'coal_output'},
-  {label:'coal_input'},
-  {label:'iron_ore_input'},
-  {label:'iron_ore_output'},
+  {label:'energy_cargo'},
+  {label:'energy_collector'},
+  {label:'water_collector'},
+  {label:'nectar'},
+  {label:'flower'},
+  {label:'energy_depot'},
 ]
 export {
     Kind,

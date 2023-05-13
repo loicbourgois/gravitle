@@ -14,24 +14,72 @@ pub fn process_alchemy_transfer(
     qk: QuantityKind,
 ) {
     match (p1.k, p2.k, qk) {
-        // transfer energy core booster
-        (Kind::Core, Kind::Booster, QuantityKind::Energy) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        // transfer ice ice_asteroid ice_collector
+        (Kind::IceAsteroid, Kind::IceCollector, QuantityKind::Ice) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
         }
-        // transfer energy core electro_field_launcher
-        (Kind::Core, Kind::ElectroFieldLauncher, QuantityKind::Energy) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        // transfer ice ice_cargo ice_collector
+        (Kind::IceCargo, Kind::IceCollector, QuantityKind::Ice) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
         }
-        // transfer energy core heat_launcher
-        (Kind::Core, Kind::HeatLauncher, QuantityKind::Energy) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        // transfer ice ice_collector ice_cargo
+        (Kind::IceCollector, Kind::IceCargo, QuantityKind::Ice) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
         }
-        // transfer water_droplet water luciole
-        (Kind::Water, Kind::Luciole, QuantityKind::WaterDroplet) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::WaterDroplet);
+        // transfer ice ice_collector ice_melter
+        (Kind::IceCollector, Kind::IceMelter, QuantityKind::Ice) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
+        }
+        // transfer water water luciole
+        (Kind::Water, Kind::Luciole, QuantityKind::Water) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Water);
+        }
+        // transfer water ice_melter water_collector
+        (Kind::IceMelter, Kind::WaterCollector, QuantityKind::Water) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Water);
+        }
+        // transfer water water_collector generator
+        (Kind::WaterCollector, Kind::Generator, QuantityKind::Water) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Water);
+        }
+        // transfer water water flower
+        (Kind::Water, Kind::Flower, QuantityKind::Water) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Water);
+        }
+        // transfer nectar flower luciole
+        (Kind::Flower, Kind::Luciole, QuantityKind::Nectar) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Nectar);
+        }
+        // transfer coal coal_collector coal_depot
+        (Kind::CoalCollector, Kind::CoalDepot, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
+        }
+        // transfer coal coal_depot iron_furnace
+        (Kind::CoalDepot, Kind::IronFurnace, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
+        }
+        // transfer coal coal_depot coal_depot
+        (Kind::CoalDepot, Kind::CoalDepot, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
+        }
+        // transfer coal coal_asteroid coal_collector
+        (Kind::CoalAsteroid, Kind::CoalCollector, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
+        }
+        // transfer coal coal_collector coal_cargo
+        (Kind::CoalCollector, Kind::CoalCargo, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
+        }
+        // transfer coal coal_cargo coal_collector
+        (Kind::CoalCargo, Kind::CoalCollector, QuantityKind::Coal) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
         }
         // transfer iron_ore iron_asteroid iron_ore_collector
         (Kind::IronAsteroid, Kind::IronOreCollector, QuantityKind::IronOre) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
+        }
+        // transfer iron_ore iron_ore_collector iron_ore_depot
+        (Kind::IronOreCollector, Kind::IronOreDepot, QuantityKind::IronOre) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
         }
         // transfer iron_ore iron_ore_collector iron_ore_cargo
@@ -42,53 +90,13 @@ pub fn process_alchemy_transfer(
         (Kind::IronOreCargo, Kind::IronOreCollector, QuantityKind::IronOre) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
         }
-        // transfer coal coal_asteroid coal_input
-        (Kind::CoalAsteroid, Kind::CoalInput, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
-        }
-        // transfer coal coal_input coal_cargo
-        (Kind::CoalInput, Kind::CoalCargo, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
-        }
-        // transfer coal coal_cargo coal_output
-        (Kind::CoalCargo, Kind::CoalOutput, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
-        }
-        // transfer coal coal_output coal_depot
-        (Kind::CoalOutput, Kind::CoalDepot, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
-        }
-        // transfer iron_ore iron_asteroid iron_ore_input
-        (Kind::IronAsteroid, Kind::IronOreInput, QuantityKind::IronOre) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
-        }
-        // transfer iron_ore iron_ore_input iron_ore_cargo
-        (Kind::IronOreInput, Kind::IronOreCargo, QuantityKind::IronOre) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
-        }
-        // transfer iron_ore iron_ore_cargo iron_ore_output
-        (Kind::IronOreCargo, Kind::IronOreOutput, QuantityKind::IronOre) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
-        }
-        // transfer iron_ore iron_ore_output iron_ore_depot
-        (Kind::IronOreOutput, Kind::IronOreDepot, QuantityKind::IronOre) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
-        }
         // transfer iron_ore iron_ore_depot iron_furnace
         (Kind::IronOreDepot, Kind::IronFurnace, QuantityKind::IronOre) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
         }
-        // transfer iron_ore iron_ore_collector iron_ore_depot
-        (Kind::IronOreCollector, Kind::IronOreDepot, QuantityKind::IronOre) => {
+        // transfer iron_ore iron_ore_depot iron_ore_depot
+        (Kind::IronOreDepot, Kind::IronOreDepot, QuantityKind::IronOre) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronOre);
-        }
-        // transfer coal coal_collector coal_depot
-        (Kind::CoalCollector, Kind::CoalDepot, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
-        }
-        // transfer coal coal_depot iron_furnace
-        (Kind::CoalDepot, Kind::IronFurnace, QuantityKind::Coal) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Coal);
         }
         // transfer iron iron_furnace iron_collector
         (Kind::IronFurnace, Kind::IronCollector, QuantityKind::Iron) => {
@@ -98,37 +106,61 @@ pub fn process_alchemy_transfer(
         (Kind::IronFurnace, Kind::IronGangueCollector, QuantityKind::IronGangue) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::IronGangue);
         }
-        // transfer heat iron_furnace generator
-        (Kind::IronFurnace, Kind::Generator, QuantityKind::Heat) => {
+        // transfer heat heat_collector generator
+        (Kind::HeatCollector, Kind::Generator, QuantityKind::Heat) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Heat);
         }
         // transfer heat iron_furnace heat_collector
         (Kind::IronFurnace, Kind::HeatCollector, QuantityKind::Heat) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Heat);
         }
-        // transfer energy generator battery
-        (Kind::Generator, Kind::Battery, QuantityKind::Energy) => {
+        // transfer energy generator energy_depot
+        (Kind::Generator, Kind::EnergyDepot, QuantityKind::Energy) => {
             transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
-        // transfer ice ice_asteroid ice_collector
-        (Kind::IceAsteroid, Kind::IceCollector, QuantityKind::Ice) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
+        // transfer energy energy_collector battery
+        (Kind::EnergyCollector, Kind::Battery, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
-        // transfer ice ice_collector ice_cargo
-        (Kind::IceCollector, Kind::IceCargo, QuantityKind::Ice) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
+        // transfer energy energy_collector energy_cargo
+        (Kind::EnergyCollector, Kind::EnergyCargo, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
-        // transfer ice ice_cargo ice_collector
-        (Kind::IceCargo, Kind::IceCollector, QuantityKind::Ice) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
+        // transfer energy energy_cargo energy_collector
+        (Kind::EnergyCargo, Kind::EnergyCollector, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
-        // transfer ice ice_collector ice_melter
-        (Kind::IceCollector, Kind::IceMelter, QuantityKind::Ice) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Ice);
+        // transfer energy energy_cargo energy_cargo
+        (Kind::EnergyCargo, Kind::EnergyCargo, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
-        // transfer water ice_melter generator
-        (Kind::IceMelter, Kind::Generator, QuantityKind::Water) => {
-            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Water);
+        // transfer energy core booster
+        (Kind::Core, Kind::Booster, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy battery ice_melter
+        (Kind::Battery, Kind::IceMelter, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy battery booster
+        (Kind::Battery, Kind::Booster, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy energy_depot energy_collector
+        (Kind::EnergyDepot, Kind::EnergyCollector, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy core energy_cargo
+        (Kind::Core, Kind::EnergyCargo, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy core energy_collector
+        (Kind::Core, Kind::EnergyCollector, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
+        }
+        // transfer energy battery battery
+        (Kind::Battery, Kind::Battery, QuantityKind::Energy) => {
+            transfer_from_to(p1, p2, pi1, pi2, QuantityKind::Energy);
         }
         _ => {}
     }
@@ -168,10 +200,22 @@ pub fn alchemy_transform(p1: &mut Particle, pi1: &mut ParticleInternal) {
                 });
             }
         }
-        // transform booster=->10*energy
-        Kind::Booster => {
-            if p1.remaining_capacity(QuantityKind::Energy) >= 10 {
-                p1.add_quantity(QuantityKind::Energy, 10);
+        // transform core=->1000*energy
+        Kind::Core => {
+            if p1.remaining_capacity(QuantityKind::Energy) >= 1000 {
+                p1.add_quantity(QuantityKind::Energy, 1000);
+                pi1.new_state = Some(State {
+                    live: p1.live,
+                });
+            }
+        }
+        // transform flower=5*water->1*nectar
+        Kind::Flower => {
+            if p1.quantity(QuantityKind::Water) >= 5
+                && p1.remaining_capacity(QuantityKind::Nectar) >= 1
+            {
+                p1.remove_quantity(QuantityKind::Water, 5);
+                p1.add_quantity(QuantityKind::Nectar, 1);
                 pi1.new_state = Some(State {
                     live: p1.live,
                 });
@@ -194,7 +238,7 @@ impl Particle {
             Kind::Metal => &[],
             Kind::Depot => &[],
             Kind::Target => &[],
-            Kind::ElectroFieldLauncher => &[QuantityKind::Energy],
+            Kind::ElectroFieldLauncher => &[],
             Kind::Cargo => &[],
             Kind::Plasma => &[],
             Kind::Field => &[],
@@ -210,22 +254,22 @@ impl Particle {
             Kind::PlasmaRefineryOutput => &[],
             Kind::Static => &[],
             Kind::Ice => &[],
-            Kind::Water => &[QuantityKind::WaterDroplet],
+            Kind::Water => &[QuantityKind::Water],
             Kind::Heat => &[],
-            Kind::HeatLauncher => &[QuantityKind::Energy],
+            Kind::HeatLauncher => &[],
             Kind::Generator => &[
+                QuantityKind::Heat,
                 QuantityKind::Energy,
                 QuantityKind::Water,
-                QuantityKind::Heat,
             ],
             Kind::Fuel => &[],
             Kind::Electricity => &[],
             Kind::IronFurnace => &[
-                QuantityKind::IronGangue,
-                QuantityKind::Heat,
                 QuantityKind::IronOre,
-                QuantityKind::Coal,
+                QuantityKind::IronGangue,
                 QuantityKind::Iron,
+                QuantityKind::Coal,
+                QuantityKind::Heat,
             ],
             Kind::CoalCargo => &[QuantityKind::Coal],
             Kind::CoalAsteroid => &[QuantityKind::Coal],
@@ -235,9 +279,9 @@ impl Particle {
             Kind::IronAsteroid => &[QuantityKind::IronOre],
             Kind::IronOreCargo => &[QuantityKind::IronOre],
             Kind::IronOreCollector => &[QuantityKind::IronOre],
-            Kind::Luciole => &[QuantityKind::WaterDroplet],
+            Kind::Luciole => &[QuantityKind::Water, QuantityKind::Nectar],
             Kind::Vers => &[],
-            Kind::IceMelter => &[QuantityKind::Ice, QuantityKind::Water],
+            Kind::IceMelter => &[QuantityKind::Energy, QuantityKind::Water, QuantityKind::Ice],
             Kind::IceCollector => &[QuantityKind::Ice],
             Kind::IceCargo => &[QuantityKind::Ice],
             Kind::IceAsteroid => &[QuantityKind::Ice],
@@ -246,10 +290,12 @@ impl Particle {
             Kind::CoalDepot => &[QuantityKind::Coal],
             Kind::IronOreDepot => &[QuantityKind::IronOre],
             Kind::HeatCollector => &[QuantityKind::Heat],
-            Kind::CoalOutput => &[QuantityKind::Coal],
-            Kind::CoalInput => &[QuantityKind::Coal],
-            Kind::IronOreInput => &[QuantityKind::IronOre],
-            Kind::IronOreOutput => &[QuantityKind::IronOre],
+            Kind::EnergyCargo => &[QuantityKind::Energy],
+            Kind::EnergyCollector => &[QuantityKind::Energy],
+            Kind::WaterCollector => &[QuantityKind::Water],
+            Kind::Nectar => &[],
+            Kind::Flower => &[QuantityKind::Nectar, QuantityKind::Water],
+            Kind::EnergyDepot => &[QuantityKind::Energy],
         }
     }
 }
