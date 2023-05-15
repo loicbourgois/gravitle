@@ -13,7 +13,7 @@ use std::mem;
 fn test_parse_blueprint() {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/*.yml",
+        "{}/github.com/loicbourgois/gravitle/resources/blueprint/*.yml",
         envs["HOME"],
     );
     for e in glob(&path).expect("Failed to read glob pattern") {
@@ -21,7 +21,7 @@ fn test_parse_blueprint() {
         let path = pathbuf.to_str().unwrap();
         println!("testing {}", path);
         match test_parse_blueprint_by_path(path) {
-            Ok(_) => {}
+            Ok(_bl) => {}
             Err(err) => {
                 println!("error with {}", path);
                 panic!("{}", err);
@@ -32,6 +32,7 @@ fn test_parse_blueprint() {
 fn test_parse_blueprint_by_path(path: &str) -> Result<()> {
     let yaml = fs::read_to_string(path)?;
     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml)?;
+    println!("{:?}", raw_blueprint.orientation_mode);
     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
     Ok(())
 }

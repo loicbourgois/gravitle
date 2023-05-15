@@ -7,6 +7,7 @@ use crate::ship::Ship;
 use crate::ship::ShipMore;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use std::cmp::Ordering;
 pub fn deliver_closest(
     s: &Ship,
     sm: &mut ShipMore,
@@ -47,7 +48,6 @@ pub fn deliver_closest(
     }
 }
 pub fn deliver_less_quantity(
-    s: &Ship,
     sm: &mut ShipMore,
     particles: &mut [Particle],
     kind: Kind,
@@ -60,12 +60,16 @@ pub fn deliver_less_quantity(
             for p in particles.iter() {
                 if p.k == kind && p.remaining_capacity(qk) > 0 {
                     let x = p.quantity(qk);
-                    if x == min {
-                        target_pids.push(p.idx)
-                    } else if x < min {
-                        target_pids.clear();
-                        target_pids.push(p.idx);
-                        min = x;
+                    match x.cmp(&min) {
+                        Ordering::Equal => {
+                            target_pids.push(p.idx);
+                        }
+                        Ordering::Less => {
+                            target_pids.clear();
+                            target_pids.push(p.idx);
+                            min = x;
+                        }
+                        Ordering::Greater => {}
                     }
                 }
             }

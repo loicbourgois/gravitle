@@ -27,21 +27,21 @@ pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 
         &grid.pidxs[grid.gids[gid][8]],
     ]
 }
-pub fn neighbours_2<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
-    let gid = grid_id_position(*position, grid.side);
-    let uu = &grid.gids[gid];
-    [
-        &grid.pidxs[uu[0]],
-        &grid.pidxs[uu[1]],
-        &grid.pidxs[uu[2]],
-        &grid.pidxs[uu[3]],
-        &grid.pidxs[uu[4]],
-        &grid.pidxs[uu[5]],
-        &grid.pidxs[uu[6]],
-        &grid.pidxs[uu[7]],
-        &grid.pidxs[uu[8]],
-    ]
-}
+// pub fn neighbours_2<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
+//     let gid = grid_id_position(*position, grid.side);
+//     let uu = &grid.gids[gid];
+//     [
+//         &grid.pidxs[uu[0]],
+//         &grid.pidxs[uu[1]],
+//         &grid.pidxs[uu[2]],
+//         &grid.pidxs[uu[3]],
+//         &grid.pidxs[uu[4]],
+//         &grid.pidxs[uu[5]],
+//         &grid.pidxs[uu[6]],
+//         &grid.pidxs[uu[7]],
+//         &grid.pidxs[uu[8]],
+//     ]
+// }
 pub fn compute_collision_responses(
     diameter: f32,
     particles: &mut [Particle],

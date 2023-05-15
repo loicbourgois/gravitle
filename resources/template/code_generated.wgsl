@@ -33,7 +33,7 @@ struct VSOutput {
 }
 //__DISK_GENERATED__//
 //__KIND_GENERATED__//
-const ZOOM = 1.5;
+const ZOOM = 2.5;
 @group(0) @binding(0) var<storage, read> particles: array<Particle>;
 @group(0) @binding(1) var<storage, read> avg_durations: array<Duration>;
 @vertex fn vs(
@@ -53,10 +53,10 @@ const ZOOM = 1.5;
   vsOut.color = vec4f(1.0, 0.0, 1.0, 1.0);
   switch particle.k {
     case KIND_light: {
-      vsOut.color = vec4f(1.0, 1.0, 0.0, 1.0);
+      vsOut.color = vec4f(1.0, 1.0, 0.25, 1.0);
     }
     case KIND_booster: {
-      vsOut.color = vec4f(0.95, 0.6, 0., 1.0);
+      vsOut.color = vec4f(0.85, 0.5, 0.0, 1.0);
     }
     case KIND_armor: {
       vsOut.color = vec4f(0.85, 0.5, 0.0, 1.0);
@@ -79,9 +79,6 @@ const ZOOM = 1.5;
     }
     case KIND_sun: {
       vsOut.color = vec4f(1.0, 0.9, 0.0, 1.0);
-    }
-    case KIND_energy_collector: {
-      vsOut.color = vec4f(0.75, 0.5, 0.0, 1.0);
     }
     case KIND_sun_core: {
       vsOut.color = vec4f(1.0, 0.9, 0.0, 1.0);
@@ -111,9 +108,8 @@ const ZOOM = 1.5;
     case KIND_coal_asteroid: {
       vsOut.color = vec4f(0.3, 0.3, 0.3, 1.0);
     }
-    default: {
-      vsOut.color = vec4f(0.75, 0.5, 0.5, 1.0);
-    }
+    
+    default: {}
   }
   return vsOut;
 }
@@ -131,7 +127,7 @@ fn rand(v: vec2f) -> f32 {
   let center = vec2f( 0.0,  0.0);
   var vsOut : VSOutput = VSOutput(
     vec4f(
-      (positions[vertexIndex]*0.0025*1.25 + particle.p * 2.0 - vec2f( 1.0,  1.0))* ZOOM,
+      (positions[vertexIndex]*0.0025*1.75 + particle.p * 2.0 - vec2f( 1.0,  1.0))* ZOOM,
       0.0, 1.0),
     vec4f(1.0, 0.0, 1.0, 1.0),
   );
@@ -139,18 +135,6 @@ fn rand(v: vec2f) -> f32 {
   switch particle.k {
     case KIND_plasma_electro_field: {
       vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
-    }
-    case KIND_light: {
-      vsOut.color = vec4f(1.0, 1.0, 0.25, 1.0);
-    }
-    case KIND_booster: {
-      vsOut.color = vec4f(0.95, 0.6, 0.0, 1.0);
-    }
-    case KIND_core: {
-      vsOut.color = vec4f(0.85, 0.5, 0.0, 1.0);
-    }
-    case KIND_energy_collector: {
-      vsOut.color = vec4f(0.75, 0.5, 0.0, 1.0);
     }
     case KIND_sun: {
       vsOut.color = vec4f(1.0, 0.5, 0.0, 1.0);
@@ -165,11 +149,8 @@ fn rand(v: vec2f) -> f32 {
       vsOut.color = vec4f(0.2, 0.2, 0.2, 1.0);
     }
     default: {
-      vsOut.color = vec4f(0.65, 0.4, 0.4, 1.0);
+      vsOut.position.z = 100.0;
     }
-    // default: {
-    //   vsOut.position.z = 100.0;
-    // }
   }
   
   // if (particle.k == KIND_booster && particle.a == 1 && particle.live == 1) {
@@ -203,19 +184,26 @@ fn rand(v: vec2f) -> f32 {
   let particle = particles[instanceIndex];
   let center = vec2f( 0.0,  0.0);
   var vsOut : VSOutput = VSOutput(
-    vec4f(
-      (positions[vertexIndex]*0.0025*1.25 + particle.p * 2.0 - vec2f( 1.0,  1.0))* ZOOM,
-      0.0, 1.0),
-    vec4f(1.0, 0.0, 1.0, 1.0),
+    vec4f(0.0, 0.0, 0.0, 10.0),
+    vec4f(0.0, 0.0, 0.0, 0.0),
   );
-  switch particle.k {
-    case KIND_light: {
-      vsOut.color = vec4f(1.0, 1.0, 0.95, 1.0);
-    }
-    default: {
-      vsOut.position.z = 100.0;
-    }
-  }
+  let pout = vec2f(
+      particle.p.x + particle.direction.x * 0.002 * rand(vec2f(particle.p.y, particle.direction.y)),
+      particle.p.y + particle.direction.y * 0.002 * rand(vec2f(particle.p.x, particle.direction.x)),
+  );
+  // if (particle.k == KIND_booster && particle.a == 1) {
+  //   vsOut.position = vec4f(
+  //     positions[vertexIndex] * 0.0025 * .6
+  //     + pout * 2.0 
+  //     - vec2f( 1.0,  1.0), 0.0, 1.0
+  //   );
+  //   vsOut.position.x = vsOut.position.x * ZOOM; 
+  //   vsOut.position.y = vsOut.position.y * ZOOM;
+  //   if (particle.live != 1) {
+  //     vsOut.position.z = 100.0;
+  //   }
+  //   vsOut.color = vec4f(1.0, 0.25, 0.5, 1.0);
+  // }
   return vsOut;
 }
 @fragment fn fs_3(vsOut: VSOutput) -> @location(0) vec4f {

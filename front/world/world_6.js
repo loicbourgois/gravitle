@@ -1,4 +1,4 @@
-const world_5 = {
+const world_6 = {
     structures: [
         {
             blueprint: "coal_asteroid",
@@ -20,37 +20,13 @@ const world_5 = {
     ],
     ships: [
         {
-            blueprint: "luciole_2",
-            // blueprint: "luciole_2",
-            // blueprint: "luciole",
-            // blueprint: "mothership",
-            x: Math.random()*0.4+0.3,
-            y: Math.random()*0.4+0.3,
-            job: 'mothership',
-        },
-        {
-            blueprint: "luciole_3",
-            // blueprint: "luciole_2",
-            // blueprint: "luciole",
-            // blueprint: "mothership",
-            x: Math.random()*0.4+0.3,
-            y: Math.random()*0.4+0.3,
-            job: 'mothership',
-        },
-        {
-            blueprint: "luciole_4",
-            // blueprint: "luciole_2",
-            // blueprint: "luciole",
-            // blueprint: "mothership",
-            x: Math.random()*0.4+0.3,
-            y: Math.random()*0.4+0.3,
-            job: 'mothership',
-        },
-        {
-            // blueprint: "luciole_3",
             blueprint: "luciole_5",
-            // blueprint: "luciole",
-            // blueprint: "mothership",
+            x: Math.random()*0.4+0.3,
+            y: Math.random()*0.4+0.3,
+            job: 'mothership',
+        },
+        {
+            blueprint: "luciole_5",
             x: Math.random()*0.4+0.3,
             y: Math.random()*0.4+0.3,
             job: 'mothership',
@@ -82,5 +58,5 @@ const world_5 = {
     ]
 }
 export {
-    world_5,
+    world_6,
 }

@@ -1,11 +1,10 @@
-// use crate::alchemy::harvest;
-// use crate::alchemy::transfer_and_delete;
 use crate::alchemy::transfer_from_to;
 use crate::kind::Kind;
 use crate::particle::ParticleInternal;
 use crate::particle::QuantityKind;
 use crate::particle::State;
 use crate::particle::Particle;
+#[allow(clippy::too_many_lines)]
 pub fn process_alchemy_transfer(
     p1: &mut Particle,
     p2: &mut Particle,

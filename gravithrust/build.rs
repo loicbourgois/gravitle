@@ -7,6 +7,7 @@ mod builder;
 mod src;
 use crate::builder::alchemy::build_alchemy_mermaid;
 use crate::builder::alchemy::build_alchemy_rs;
+// use crate::builder::helpers::code_wgsl;
 use crate::builder::helpers::disk_generated;
 use crate::builder::helpers::kind_generated_js;
 use crate::builder::helpers::kind_generated_wgsl;
@@ -26,7 +27,7 @@ fn main() -> Result<(), std::io::Error> {
     )
     .unwrap();
     let mut kind_generated_rs = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/template/kind_generated.rs",
+        "{}/github.com/loicbourgois/gravitle/resources/template/kind_generated.rs",
         envs["HOME"]
     ))
     .expect("Should have been able to read the file");
@@ -93,5 +94,6 @@ fn main() -> Result<(), std::io::Error> {
     build_alchemy_mermaid()?;
     build_alchemy_rs(&kd)?;
     resources_generated()?;
+    // code_wgsl()?;
     Ok(())
 }

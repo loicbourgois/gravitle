@@ -32,7 +32,7 @@ pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/gravithrust/template/kind_generated.js",
+            "{}/github.com/loicbourgois/gravitle/resources/template/kind_generated.js",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")
@@ -69,7 +69,7 @@ pub fn kind_generated_wgsl(kd: &KindDefinition) -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/front/webgpu/kind_generated.wgsl.template",
+            "{}/github.com/loicbourgois/gravitle/resources/template/kind_generated.wgsl",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")
@@ -111,7 +111,7 @@ pub fn disk_generated() -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/front/webgpu/disk_generated.wgsl.template",
+            "{}/github.com/loicbourgois/gravitle/resources/template/disk_generated.wgsl",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")
@@ -126,10 +126,41 @@ pub fn disk_generated() -> Result<(), std::io::Error> {
         )
     )
 }
+// pub fn code_wgsl() -> Result<(), std::io::Error> {
+// let envs = env::vars().collect::<HashMap<String, String>>();
+// writeln!(
+//     File::create(format!(
+//         "{}/github.com/loicbourgois/gravitle/front/webgpu/code_generated.wgsl",
+//         envs["HOME"]
+//     ))?,
+//     "{}",
+//     fs::read_to_string(format!(
+//         "{}/github.com/loicbourgois/gravitle/resources/template/code_generated.wgsl",
+//         envs["HOME"]
+//     ))
+//     .expect("Should have been able to read the file")
+//     .replace(
+//         "//__DISK_GENERATED__//",
+//         &fs::read_to_string(format!(
+//             "{}/github.com/loicbourgois/gravitle/resources/templated/disk_generated.wgsl",
+//             envs["HOME"]
+//         ))
+//         .expect("Should have been able to read the file")
+//     )
+//     .replace(
+//         "//__KIND_GENERATED__//",
+//         &fs::read_to_string(format!(
+//             "{}/github.com/loicbourgois/gravitle/resources/templated/kind_generated.wgsl",
+//             envs["HOME"]
+//         ))
+//         .expect("Should have been able to read the file")
+//     )
+// )
+// }
 pub fn resources_generated() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let job_names = glob(&format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/job/*.json",
+        "{}/github.com/loicbourgois/gravitle/resources/job/*.json",
         envs["HOME"],
     ))
     .expect("Failed to read glob pattern")
@@ -142,7 +173,7 @@ pub fn resources_generated() -> Result<(), std::io::Error> {
     .collect::<Vec<String>>()
     .join(",\n  ");
     let blueprint_names = glob(&format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/*.yml",
+        "{}/github.com/loicbourgois/gravitle/resources/blueprint/*.yml",
         envs["HOME"],
     ))
     .expect("Failed to read glob pattern")
@@ -161,7 +192,7 @@ pub fn resources_generated() -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/gravithrust/template/resources_generated.js",
+            "{}/github.com/loicbourgois/gravitle/resources/template/resources_generated.js",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")

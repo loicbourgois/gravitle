@@ -3,6 +3,7 @@ use crate::kind::Kind;
 use crate::link::Link;
 use crate::math::rotate;
 use crate::math::Vector;
+use crate::ship::OrientationMode;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -10,6 +11,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub struct RawBlueprint {
     name: String,
     ascii: String,
+    pub orientation_mode: Option<OrientationMode>,
     base_particles: [String; 2],
     particles: Vec<[String; 4]>,
     links: Vec<[usize; 2]>,
@@ -40,6 +42,8 @@ pub struct Blueprint {
     pub translate_left: Vec<usize>,
     #[wasm_bindgen(skip)]
     pub translate_right: Vec<usize>,
+    #[wasm_bindgen(skip)]
+    pub orientation_mode: OrientationMode,
 }
 #[wasm_bindgen]
 pub struct ParticleBlueprint {
@@ -87,10 +91,15 @@ pub fn load_raw_blueprint(r_blueprint: &RawBlueprint, diameter: f32) -> Blueprin
         });
     }
     let blueprint_id = 2;
+    let orientation_mode = match r_blueprint.orientation_mode {
+        Some(x) => x,
+        None => OrientationMode::Triangle,
+    };
     Blueprint {
         blueprint_id,
         particles,
         links,
+        orientation_mode,
         left: r_blueprint.left.clone(),
         right: r_blueprint.right.clone(),
         forward: r_blueprint.forward.clone(),

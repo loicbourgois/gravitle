@@ -1,0 +1,54 @@
+{
+    links: [
+      [8,5],
+      [5,4],
+      [10,6],
+      [6,0],
+      [0,3],
+      [1,2],
+      [2,7],
+      [8,10],
+      [8,6],
+      [5,6],
+      [5,0],
+      [4,0],
+      [4,3],
+      [6,1],
+      [0,1],
+      [0,2],
+      [3,2],
+      [3,7],
+      [2,9],
+      [7,9],
+    ],
+    ascii: "
+     08----05----04
+    /  \  /  \  /  \  
+  10----06----00----03
+          \  /  \  /  \  
+           01----02----07
+                   \  /
+                    09
+    ",
+    name: luciole_3,
+    orientation_mode: Line,
+    forward: [],
+    slow: [],
+    left: [9],
+    right: [10],
+    translate_right: [],
+    translate_left: [],
+    base_particles: [light, light],
+    particles: [
+        [2,0,1, light],
+        [3,0,2, core],
+        [4,0,3, energy_collector],
+        [5,0,4, core],
+        [6,1,0, light],
+        [7,3,2, core],
+        [8,6,5, core],
+        [9,7,2, booster],
+        [10,6,8, booster],
+    ],
+    
+}

@@ -258,6 +258,7 @@ impl Gravithrust {
             target_pid: None,
             job: None,
             sid: sid.unwrap(),
+            orientation_mode: blueprint.orientation_mode,
         };
         self.ships.push(ship);
         self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);

@@ -20,6 +20,14 @@ pub struct ShipMore {
     pub target_pid: Option<usize>,
     pub job: Option<Job>,
     pub sid: usize,
+    pub orientation_mode: OrientationMode,
+}
+use serde::Deserialize;
+use serde::Serialize;
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum OrientationMode {
+    Line,
+    Triangle,
 }
 pub struct ShipControl {
     pub forward: Vec<usize>,
@@ -43,7 +51,12 @@ pub fn ship_position(particles: &[Particle], s: &ShipMore) -> Vector {
 pub fn ship_orientation(particles: &[Particle], s: &ShipMore) -> Vector {
     let p0 = &particles[s.pids[0]];
     let p1 = &particles[s.pids[1]];
-    let p2 = &particles[s.pids[2]];
-    let p12 = p1.p + wrap_around(p1.p, p2.p).d * 0.5;
-    wrap_around(p12, p0.p).d
+    match s.orientation_mode {
+        OrientationMode::Line => wrap_around(p1.p, p0.p).d,
+        OrientationMode::Triangle => {
+            let p2 = &particles[s.pids[2]];
+            let p12 = p1.p + wrap_around(p1.p, p2.p).d * 0.5;
+            wrap_around(p12, p0.p).d
+        }
+    }
 }

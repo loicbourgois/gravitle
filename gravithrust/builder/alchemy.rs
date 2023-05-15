@@ -167,7 +167,7 @@ pub fn build_alchemy_rs(kd: &KindDefinition) -> Result<(), std::io::Error> {
         ))?,
         "{}",
         fs::read_to_string(format!(
-            "{}/github.com/loicbourgois/gravitle/gravithrust/template/alchemy_generated.rs",
+            "{}/github.com/loicbourgois/gravitle/resources/template/alchemy_generated.rs",
             envs["HOME"]
         ))
         .expect("Should have been able to read the file")

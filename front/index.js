@@ -18,9 +18,10 @@ import { world_2 } from "./world/world_2.js"
 import { world_3 } from "./world/world_3.js"
 import { world_4 } from "./world/world_4.js"
 import { world_5 } from "./world/world_5.js"
+import { world_6 } from "./world/world_6.js"
 
 
-const  world = world_5
+const  world = world_6
 let RESOLUTION = 1
 let zen_mode_active = false
 let started_sound = false

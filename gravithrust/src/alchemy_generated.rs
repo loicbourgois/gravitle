@@ -1,11 +1,10 @@
-// use crate::alchemy::harvest;
-// use crate::alchemy::transfer_and_delete;
 use crate::alchemy::transfer_from_to;
 use crate::kind::Kind;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
 use crate::particle::QuantityKind;
 use crate::particle::State;
+#[allow(clippy::too_many_lines)]
 pub fn process_alchemy_transfer(
     p1: &mut Particle,
     p2: &mut Particle,
@@ -258,17 +257,17 @@ impl Particle {
             Kind::Heat => &[],
             Kind::HeatLauncher => &[],
             Kind::Generator => &[
-                QuantityKind::Heat,
                 QuantityKind::Energy,
                 QuantityKind::Water,
+                QuantityKind::Heat,
             ],
             Kind::Fuel => &[],
             Kind::Electricity => &[],
             Kind::IronFurnace => &[
+                QuantityKind::Coal,
+                QuantityKind::Iron,
                 QuantityKind::IronOre,
                 QuantityKind::IronGangue,
-                QuantityKind::Iron,
-                QuantityKind::Coal,
                 QuantityKind::Heat,
             ],
             Kind::CoalCargo => &[QuantityKind::Coal],
@@ -279,9 +278,9 @@ impl Particle {
             Kind::IronAsteroid => &[QuantityKind::IronOre],
             Kind::IronOreCargo => &[QuantityKind::IronOre],
             Kind::IronOreCollector => &[QuantityKind::IronOre],
-            Kind::Luciole => &[QuantityKind::Water, QuantityKind::Nectar],
+            Kind::Luciole => &[QuantityKind::Nectar, QuantityKind::Water],
             Kind::Vers => &[],
-            Kind::IceMelter => &[QuantityKind::Energy, QuantityKind::Water, QuantityKind::Ice],
+            Kind::IceMelter => &[QuantityKind::Energy, QuantityKind::Ice, QuantityKind::Water],
             Kind::IceCollector => &[QuantityKind::Ice],
             Kind::IceCargo => &[QuantityKind::Ice],
             Kind::IceAsteroid => &[QuantityKind::Ice],

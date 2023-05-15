@@ -6,7 +6,7 @@ use std::fs;
 pub fn setup_simulation() -> Gravithrust {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let path = format!(
-        "{}/github.com/loicbourgois/gravitle/gravithrust/src/blueprint/plasma_collector.yml",
+        "{}/github.com/loicbourgois/gravitle/resources/blueprint/plasma_collector.yml",
         envs["HOME"]
     );
     let yaml = match fs::read_to_string(path) {

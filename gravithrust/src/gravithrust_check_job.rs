@@ -104,7 +104,6 @@ impl Gravithrust {
                         }
                         Action::DeliverEnergy => {
                             deliver_less_quantity(
-                                ship,
                                 ship_more,
                                 &mut self.particles,
                                 Kind::Battery,
