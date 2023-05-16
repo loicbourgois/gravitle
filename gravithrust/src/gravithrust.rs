@@ -12,7 +12,6 @@ use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
 use crate::log;
-use crate::math::cross;
 use crate::math::normalize_2;
 use crate::math::radians;
 use crate::math::wrap_around;
@@ -235,6 +234,7 @@ impl Gravithrust {
                 y: 0.5,
             },
             p: Vector::default(),
+            previous_orientation: Vector::default(),
             pp: Vector::default(),
             v: Vector::default(),
             td: Vector::default(),
@@ -296,7 +296,7 @@ impl Gravithrust {
     }
 
     pub fn ship_size_internal() -> usize {
-        17 * 4
+        19 * 4
     }
 
     pub fn ships_count(&self) -> u32 {
@@ -504,7 +504,6 @@ impl Gravithrust {
         let l = self.ships_more.len();
         for sid in 0..l {
             let ship_more = &self.ships_more[sid];
-            let previous_orientation = self.ships[sid].orientation;
             {
                 let mut ship = &mut self.ships[sid];
                 match ship_more.target_pid {
@@ -514,6 +513,7 @@ impl Gravithrust {
                     None => {}
                 };
                 ship.pp = ship.p;
+                ship.previous_orientation = ship.orientation;
                 ship.p = ship_position(&self.particles, ship_more);
                 ship.v = wrap_around(ship.pp, ship.p).d;
                 ship.td = wrap_around(ship.p, ship.target).d;
@@ -523,17 +523,8 @@ impl Gravithrust {
                     normalize_2(normalize_2(ship.orientation) * 1.0 + normalize_2(ship.v) * 0.5);
             }
             let ship = &self.ships[sid];
-            let speed = wrap_around(ship.pp, ship.p).d_sqrd.sqrt();
-            let rotation_speed = cross(ship.orientation, previous_orientation);
-            let target_delta_wa = wrap_around(ship.p, ship.target);
-            let movement_action = self.get_movement_action(
-                &target_delta_wa,
-                ship,
-                rotation_speed,
-                slow_down_max_angle_better,
-                ship_more,
-                speed,
-            );
+            let movement_action =
+                self.get_movement_action(ship, slow_down_max_angle_better, ship_more);
             apply_movement_action(&mut self.particles, movement_action, ship_more);
             self.check_job(sid);
         }

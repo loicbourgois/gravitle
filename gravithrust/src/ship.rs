@@ -7,8 +7,9 @@ pub struct Ship {
     pub pp: Vector,
     pub v: Vector, // velocity
     pub target: Vector,
-    pub td: Vector,          // target direction
-    pub orientation: Vector, // orientation is where the ship is facing
+    pub td: Vector,                   // target direction
+    pub orientation: Vector,          // orientation is where the ship is facing
+    pub previous_orientation: Vector, // previous orientation
     pub vt: Vector,
     pub cross: Vector,
     pub on_target: u32,

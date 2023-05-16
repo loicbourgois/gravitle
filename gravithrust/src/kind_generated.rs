@@ -138,25 +138,25 @@ impl Kind {
     pub fn capacity(self) -> u32 {
         #[allow(clippy::match_same_arms)]
         match self {
-            Kind::Booster => 100,
-            Kind::PlasmaRawDepot => 20,
-            Kind::PlasmaCargo => 2,
-            Kind::PlasmaElectroField => 1,
-            Kind::ElectroField => 1,
             Kind::ElectroFieldLauncher => 2500,
-            Kind::Core => 1,
-            Kind::PlasmaRefineryInput => 20,
+            Kind::PlasmaElectroField => 1,
             Kind::PlasmaRawCollector => 2,
+            Kind::Core => 1,
             Kind::PlasmaElectroFieldCollector => 2,
+            Kind::PlasmaCargo => 2,
+            Kind::ElectroField => 1,
+            Kind::PlasmaRefineryInput => 20,
+            Kind::PlasmaRawDepot => 20,
+            Kind::Booster => 100,
             _ => 0,
         }
     }
 
     pub fn soft_capacity(self) -> u32 {
         match self {
-            Kind::PlasmaRawDepot => 20,
             Kind::PlasmaCargo => 2,
             Kind::PlasmaRefineryInput => 20,
+            Kind::PlasmaRawDepot => 20,
             _ => 0,
         }
     }

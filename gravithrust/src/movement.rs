@@ -4,29 +4,27 @@ use crate::math::angle;
 use crate::math::cross;
 use crate::math::normalize_2;
 use crate::math::wrap_around;
-use crate::math::WrapAroundResponse;
+use crate::math_small::Vector;
+use crate::particle::Particle;
 use crate::particle::Particles;
 use crate::ship::Ship;
 use crate::ship::ShipMore;
 impl Gravithrust {
     pub fn get_movement_action(
         &self,
-        target_delta_wa: &WrapAroundResponse,
         ship: &Ship,
-        rotation_speed: f32,
         slow_down_max_angle_better: f32,
         s: &ShipMore,
-        speed: f32,
     ) -> MovementAction {
         match (s.anchor_pid, s.target_pid) {
             (Some(anchor_pid), Some(target_pid)) => anchor_target_movement_action(
-                rotation_speed,
                 self.max_rotation_speed,
                 slow_down_max_angle_better,
                 ship,
                 &self.particles,
                 anchor_pid,
                 target_pid,
+                ship.previous_orientation,
             ),
             (None, Some(target_pid)) => target_only_movement_action(
                 self.forward_max_speed,
@@ -34,13 +32,9 @@ impl Gravithrust {
                 self.slow_down_max_speed_to_target_ratio,
                 self.forward_max_angle,
                 self.max_rotation_speed,
-                speed,
-                rotation_speed,
                 self.slow_down_max_angle,
-                &self.particles,
                 ship,
-                target_delta_wa,
-                target_pid,
+                &self.particles[target_pid],
             ),
             _ => MovementAction::Nothing,
         }
@@ -102,14 +96,15 @@ pub fn apply_movement_action(
     };
 }
 pub fn anchor_target_movement_action(
-    rotation_speed: f32,
     max_rotation_speed: f32,
     slow_down_max_angle_better: f32,
     ship: &Ship,
     particles: &Particles,
     anchor_pid: usize,
     target_pid: usize,
+    ship_previous_orientation: Vector,
 ) -> MovementAction {
+    let rotation_speed = cross(ship.orientation, ship_previous_orientation);
     let anchor = particles[anchor_pid].p;
     let target = particles[target_pid].p;
     let target_delta = wrap_around(ship.p, target);
@@ -152,28 +147,25 @@ pub fn anchor_target_movement_action(
 }
 pub fn target_only_movement_action(
     forward_max_speed: f32,
-    max_speed_to_target: f32,
+    max_speed_at_target: f32,
     slow_down_max_speed_to_target_ratio: f32,
     forward_max_angle: f32,
     max_rotation_speed: f32,
-    speed: f32,
-    rotation_speed: f32,
     slow_down_max_angle: f32,
-    particles: &Particles,
     ship: &Ship,
-    target_delta_wa: &WrapAroundResponse,
-    target_id: usize,
+    target: &Particle,
 ) -> MovementAction {
-    let pt = &particles[target_id];
-    let wa1 = wrap_around(ship.pp, pt.pp);
-    let wa2 = wrap_around(ship.p, pt.p);
-    let target_vs_ship_delta_v = wa1.d_sqrd.sqrt() - wa2.d_sqrd.sqrt();
-    let distance_to_target = target_delta_wa.d_sqrd.sqrt();
+    let rotation_speed = cross(ship.orientation, ship.previous_orientation);
+    let speed = wrap_around(ship.pp, ship.p).d_sqrd.sqrt();
+    let wa1 = wrap_around(ship.pp, target.pp);
+    let wa2 = wrap_around(ship.p, target.p);
+    let distance_to_target = wa2.d_sqrd.sqrt();
+    let target_vs_ship_delta_v = wa1.d_sqrd.sqrt() - distance_to_target;
     let orientation_angle_corrected_2 = angle(normalize_2(ship.cross), normalize_2(ship.td));
     let orientation_angle_corrected = cross(normalize_2(ship.cross), normalize_2(ship.td));
     if orientation_angle_corrected_2.abs() < slow_down_max_angle / 2.0
         && target_vs_ship_delta_v
-            > (max_speed_to_target * 0.75)
+            > (max_speed_at_target * 0.75)
                 .max(distance_to_target * slow_down_max_speed_to_target_ratio)
     {
         MovementAction::SlowDown

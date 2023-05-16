@@ -33,7 +33,7 @@ struct VSOutput {
 }
 //__DISK_GENERATED__//
 //__KIND_GENERATED__//
-const ZOOM = 1.5;
+const ZOOM = 3.0;
 @group(0) @binding(0) var<storage, read> particles: array<Particle>;
 @group(0) @binding(1) var<storage, read> avg_durations: array<Duration>;
 @vertex fn vs(
