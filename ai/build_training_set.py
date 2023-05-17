@@ -59,17 +59,17 @@ def target_only_movement_action(
     wa1 = wrap_around(ship.pp, target.pp)
     wa2 = wrap_around(ship.p, target.p)
     distance_to_target = math.sqrt(wa2.d_sqrd)
-    target_vs_ship_delta_v = math.sqrt(wa1.d_sqrd) - distance_to_target
+    target_vs_ship_delta_v = math.sqrt(wa1.d_sqrd) - math.sqrt(wa2.d_sqrd)
     orientation_angle_corrected_2 = angle(normalize_2(ship_cross), normalize_2(target.p))
     orientation_angle_corrected = cross(normalize_2(ship_cross), normalize_2(target.p))
     max_aa = max(max_speed_to_target * 0.75, distance_to_target * slow_down_max_speed_to_target_ratio)
-    if abs(orientation_angle_corrected_2) < slow_down_max_angle / 2.0 and target_vs_ship_delta_v > max_aa:
+    if abs(orientation_angle_corrected_2) < slow_down_max_angle * 0.5 and target_vs_ship_delta_v > max_aa:
         return "slowdown"
     elif orientation_angle_corrected > 0.0 and rotation_speed > -max_rotation_speed:
         return "turnleft"
     elif orientation_angle_corrected < 0.0 and rotation_speed < max_rotation_speed:
         return "turnright"
-    elif speed < forward_max_speed and abs(orientation_angle_corrected_2) < forward_max_angle / 2.0:
+    elif speed < forward_max_speed and abs(orientation_angle_corrected_2) < forward_max_angle * 0.5:
         return "forward"
     else:
         return "nothing"
@@ -124,6 +124,33 @@ def get_data():
         ship,
         target,
     )
+    decision_multi = {
+        'slowdown': {
+            'l': 0,
+            'r': 0,
+            'f': 1,
+        },
+        'turnleft': {
+            'l': 0,
+            'r': 1,
+            'f': 0,
+        },
+        'turnright': {
+            'l': 1,
+            'r': 0,
+            'f': 0,
+        },
+        'forward': {
+            'l': 1,
+            'r': 1,
+            'f': 0,
+        },
+        'nothing': {
+            'l': 0,
+            'r': 0,
+            'f': 0,
+        }
+    }[decision]
     return {
         'spx': ship.p.x,
         'spy': ship.p.y,
@@ -138,18 +165,21 @@ def get_data():
         'tppx': target.pp.x,
         'tppy': target.pp.y,
         'decision': decision,
+        'l':decision_multi['l'],
+        'r':decision_multi['r'],
+        'f':decision_multi['f'],
     }
 
 
 columns = list(get_data().keys())
-count = 100
+count = 256
 df = pandas.DataFrame(
     [ get_data() for x in range(count) ]
 )[columns]
 logging.info(df[['decision']].value_counts())
 df.to_csv("ai/train.csv", index=False)
 (pandas.DataFrame(
-    [ get_data() for x in range(count) ]
+    [ get_data() for x in range(int(count/4)) ]
 )[columns]).to_csv("ai/test.csv", index=False)
 
 

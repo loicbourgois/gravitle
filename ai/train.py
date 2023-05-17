@@ -12,7 +12,9 @@ import ray
 from ray import air, tune
 from ray.air import Checkpoint, session
 from ray.tune.schedulers import ASHAScheduler
-from ray.tune.search.hyperopt import HyperOptSearch
+# from ray.tune.search.hyperopt import HyperOptSearch
+from ray.tune import ProgressReporter
+from ray.tune.search.bayesopt import BayesOptSearch
 
 
 logging.basicConfig(
@@ -36,36 +38,76 @@ ai_dir = os.environ['HOME'] + "/github.com/loicbourgois/gravitle/ai/"
 class CustomDataset(Dataset):
     def __init__(self, path):
         self.df = pd.read_csv(path)
-        self.decisions = ['turnright', 'turnleft', 'nothing', 'forward', 'slowdown']
-
-
+        # self.decisions = ['turnright', 'turnleft', 'nothing', 'forward', 'slowdown']
     def __len__(self):
         return len(self.df.index)
-
     def __getitem__(self, idx):
         r = self.df.iloc[idx]
-        d = self.decisions.index(r.decision)
-        # except:
-        #     d = len(self.decisions)
-        r = r.drop('decision')
-        return torch.tensor(r.values.tolist(), dtype=torch.float32).to(device), torch.tensor(d).to(device)
+        # d = self.decisions.index(r.decision)
+        y = torch.tensor([ r['l'], r['r'], r['f'] ], dtype=torch.float32)
+        y = y.to(device)
+        r = r.drop(['decision', 'l', 'r', 'f'])
+        x = torch.tensor(r.values.tolist(), dtype=torch.float32)
+        x = x.to(device)
+        return x, y
+
+
+class NeuralNetwork_1(torch.nn.Module):
+    def __init__(self, config):
+        self.l1 = int(config['l1'])
+        self.activation = config['activation']
+        activation_f = {
+            'Tanh': torch.nn.Tanh,
+            'ReLU': torch.nn.ReLU,
+            'Hardtanh': torch.nn.Hardtanh,
+        }[self.activation]
+        super(NeuralNetwork_1, self).__init__()
+        self.flatten = torch.nn.Flatten()
+        self.stack = torch.nn.Sequential(
+            torch.nn.Linear(12, self.l1),
+            activation_f(),
+            torch.nn.Linear(self.l1, self.l1),
+            activation_f(),
+            torch.nn.Linear(self.l1, self.l1),
+            activation_f(),
+            torch.nn.Linear(self.l1, 3),
+            # torch.nn.Hardsigmoid(),
+        )
+    def forward(self, x):
+        logits = self.stack(x)
+        return logits
+    def save_dict(self):
+        return {
+            "model_state_dict": self.state_dict(),
+            "l1": self.l1,
+            "activation": self.activation,
+        }
 
 
 class NeuralNetwork_3(torch.nn.Module):
-    def __init__(self, l1, l2, l3):
+    def __init__(self, l1, l2, l3, activation):
+        self.l1 = int(l1)
+        self.l2 = int(l2)
+        self.l3 = int(l3)
+        self.activation = activation
+        activation_f = {
+            'Tanh': torch.nn.Tanh,
+            'ReLU': torch.nn.ReLU,
+            'Hardtanh': torch.nn.Hardtanh,
+        }[self.activation]
         super(NeuralNetwork_3, self).__init__()
         self.flatten = torch.nn.Flatten()
-        self.linear_relu_stack = torch.nn.Sequential(
-            torch.nn.Linear(12, l1),
-            torch.nn.ReLU(),
-            torch.nn.Linear(l1, l2),
-            torch.nn.ReLU(),
-            torch.nn.Linear(l2, l3),
-            torch.nn.ReLU(),
-            torch.nn.Linear(l3, 5),
+        self.stack = torch.nn.Sequential(
+            torch.nn.Linear(12, self.l1),
+            activation_f(),
+            torch.nn.Linear(self.l1, self.l2),
+            activation_f(),
+            torch.nn.Linear(self.l2, self.l3),
+            activation_f(),
+            torch.nn.Linear(self.l3, 5),
         )
     def forward(self, x):
-        logits = self.linear_relu_stack(x)
+        logits = self.stack(x)
         return logits
 
 
@@ -83,80 +125,29 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 def test_loop(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    test_loss, correct = 0, 0
+    test_loss, correct, delta = 0, 0, 0
     with torch.no_grad():
         for X, y in dataloader:
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float32).sum().item()
+            # correct += (pred.argmax(1) == y).type(torch.float32).sum().item()
+            delta += (y - pred).abs().sum().item()
     test_loss /= num_batches
-    correct /= size
-    logging.info(f"Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}")
-    return correct
-
-# https://docs.ray.io/en/latest/tune/api/doc/ray.tune.Trainable.save_checkpoint.html#ray.tune.Trainable.save_checkpoint
-class Trainable(tune.Trainable):
-    def setup(self, config: dict):
-        self.config = config
-        batch_size = 100
-        # epochs = config['epochs']
-        if config.get("start_from_checkpoint"):
-            checkpoint_ref = config["start_from_checkpoint"]
-            checkpoint: Checkpoint = ray.get(checkpoint_ref)
-            cd = checkpoint.to_dict()
-            self.model = NeuralNetwork_3(
-                cd['l1'],
-                cd['l2'],
-                cd['l3'],
-            )
-            model_state_dict = cd["model_state_dict"]
-            self.model.load_state_dict(model_state_dict)
-        else:
-            self.model = NeuralNetwork_3(
-                config['l1'],
-                config['l2'],
-                config['l3'],
-            )
-        self.optimizer = SGD(self.model.parameters(), lr=config['lr'])
-        training_data = CustomDataset(f"{ai_dir}/train.csv")
-        self.train_dataloader = DataLoader(training_data, batch_size=batch_size)
-        test_data = CustomDataset(f"{ai_dir}/test.csv")
-        self.test_dataloader = DataLoader(test_data, batch_size=batch_size)
-        self.loss_fn = torch.nn.CrossEntropyLoss()
-        self.model.to(device)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, 'min', patience=config['patience'], factor=config['reduce_factor'],
-        )
-
-    def load_checkpoint(self, checkpoint):
-        pass
-    
-    def save_checkpoint(self, checkpoint_dir: str):
-        pass
-
-    def step(self):
-        loss = train_loop(self.train_dataloader, self.model, self.loss_fn, self.optimizer)
-        self.scheduler.step(loss)
-        accuracy = test_loop(self.test_dataloader, self.model, self.loss_fn)
-        self.save_checkpoint(Checkpoint.from_dict({
-            "model_state_dict": self.model.state_dict(),
-            "l1": self.config['l1'],
-            "l2": self.config['l2'],
-            "l3": self.config['l3'],
-        }))
-        return {"accuracy": accuracy}
-    
-
-    def log_result(self, result):
-        pass
+    accuracy = correct / size
+    # logging.info(f"Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {test_loss:>8f}")
+    return {
+        'accuracy': accuracy,
+        'delta': delta,
+    }
 
 
-from ray.tune import ProgressReporter
 class CustomReporter(ProgressReporter):
-    def __init__(self, num_samples):
+    def __init__(self, num_samples, i, c):
         super(CustomReporter, self).__init__()
         self.num_samples = num_samples
         self.start_time = time.time()
+        self.i = i
+        self.c = c
         self.last_time_should_report = self.start_time
     def should_report(self, trials, done=False):
         if int(time.time()) > int(self.last_time_should_report):
@@ -165,127 +156,308 @@ class CustomReporter(ProgressReporter):
         else:
             return False
     def report(self, trials, *sys_info):
-        # print(dir(trials[0]))
-        # print(trials[0].config)
-        # print(trials[0].status)
-        # print(trials[0].results)
-        # print(trials[0].last_result)
-        # print(trials[0].l)
-        # acc = "-"
-        # try:
-        #     acc = x.last_result['accuracy']
-        # except:
-        #     pass
         data = [{
-            'acc': x.last_result.get('accuracy'),
+            'accuracy': x.last_result.get('accuracy'),
+            'delta': x.last_result.get('delta'),
+            'loss': x.last_result.get('loss'),
             'iter': x.last_result.get('training_iteration'),
             'status': x.status,
             **x.config,
             'done': x.last_result.get('done'),
         } for x in trials]
         df = pd.DataFrame(data)
-        # df = df.fillna('')
-        df = df.astype({'acc':float, 'iter':int}, errors="ignore").sort_values(
-            by=['acc'],
-            ascending=[False]
+        df = df.astype({'accuracy':float, 'iter':int}, errors="ignore").sort_values(
+            by=['delta'],
+            ascending=[True]
         )
+        df = df.drop(columns=['checkpoint'], errors="ignore")
         progress = df[ df['status']  == 'TERMINATED' ].count()['status']
         print(*sys_info)
         print(df.head(10))
-        print(f"{progress} / {self.num_samples} - {int(time.time()-start_time)}")
+        print(f"{self.i+1}/{self.c} - {progress}/{self.num_samples} - {int(time.time()-start_time)}")
     def print_result(self):
         pass
 
 
-def run(epochs=None, num_samples=None):
+# https://docs.ray.io/en/latest/tune/api/doc/ray.tune.Trainable.save_checkpoint.html#ray.tune.Trainable.save_checkpoint
+# https://docs.ray.io/en/latest/tune/faq.html#how-can-i-continue-training-a-completed-tune-experiment-for-longer-and-with-new-configurations-iterative-experimentation 
+class Trainable(tune.Trainable):
+    def setup(self, config: dict):
+        self.config = config
+        if config.get('checkpoint'):
+            self.load_checkpoint(config.get('checkpoint').to_dict())
+        else:
+            self.model = NeuralNetwork_1({
+                'l1': config['l1'],
+                # config['l2'],
+                # config['l3'],
+                'activation': sorted(
+                    {
+                        'Tanh': config['activation_Tanh'],
+                        'ReLU': config['activation_ReLU'],
+                        'Hardtanh': config['activation_Hardtanh'],
+                    }.items(),
+                    key=lambda x:x[1]
+                )[-1][0],
+            })
+        self.optimizer = SGD(self.model.parameters(), lr=config['lr'])
+        training_data = CustomDataset(f"{ai_dir}/train.csv")
+        self.train_dataloader = DataLoader(
+            training_data, 
+            batch_size=int(config['batch_size'])
+        )
+        test_data = CustomDataset(f"{ai_dir}/test.csv")
+        self.test_dataloader = DataLoader(
+            test_data, 
+            batch_size=int(config['batch_size'])
+        )
+        # self.loss_fn = torch.nn.CrossEntropyLoss()
+        self.loss_fn = torch.nn.L1Loss()
+        
+        self.model.to(device)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, 'min', patience=config['patience'], factor=config['reduce_factor'],
+        )
+
+    def load_checkpoint(self, checkpoint):
+        self.model = NeuralNetwork_1(checkpoint)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+    
+    def save_checkpoint(self, checkpoint_dir: str):
+        return self.model.save_dict()
+
+    def step(self):
+        loss = train_loop(self.train_dataloader, self.model, self.loss_fn, self.optimizer)
+        self.scheduler.step(loss)
+        r = test_loop(self.test_dataloader, self.model, self.loss_fn)
+        self.save()
+        return {
+            "accuracy": r['accuracy'],
+            "delta": r['delta'],
+            "loss": loss,
+        }
+
+# https://docs.ray.io/en/latest/tune/api/doc/ray.tune.search.bayesopt.BayesOptSearch.html#ray-tune-search-bayesopt-bayesoptsearch
+
+def run(steps):
     _context = ray.init()
-    config = {
-        "lr": tune.uniform(0.01, 10),
-        "patience": tune.uniform(1, 10),
-        "reduce_factor": tune.uniform(0.1, 1),
-        "l1": tune.randint(10, 30),
-        "l2": tune.randint(10, 30),
-        "l3": tune.randint(10, 30),
-        'epochs': epochs,
-    }
-    tuner = tune.Tuner(
-        Trainable,
-        tune_config=tune.TuneConfig(
-            num_samples=num_samples,
-            scheduler=ASHAScheduler(
-                metric="accuracy", 
-                mode="max",
-                max_t=config['epochs'],
-            ),
-        ),
-        run_config=air.RunConfig(
-            progress_reporter=CustomReporter(num_samples),
-            verbose=1,
-        ),
-        param_space=config,
-    )
-    result_grid = tuner.fit()
-    df_1 = result_grid.get_dataframe()
-    df_1 = df_1.sort_values(
-        by=['accuracy'],
-        ascending=[False]
-    )
-    logging.info(df_1[['accuracy', 'config/lr', 'config/patience', 'config/reduce_factor', 'config/lr', 'config/l1', 'config/l2', 'config/l3']].head(10))
+    best_checkpoint = None
+    results = []
+    for i, step in enumerate(steps):
+        if i == 0:
+            tuner = tune.Tuner(
+                Trainable,
+                tune_config=tune.TuneConfig(
+                    num_samples=steps[i]['num_samples'],
+                    scheduler=ASHAScheduler(
+                        metric=step['opti']['metric'],
+                        mode=step['opti']['mode'],
+                        max_t=steps[i]['max_t'],
+                    ),
+                    search_alg=BayesOptSearch({
+                        "lr": (0.000001, 10.0),
+                        "patience": (0.01, 10.0),
+                        "reduce_factor": ( 0.0001, 0.9),
+                        "batch_size": (4, 64),
+                        "l1": ( 2, 64),
+                        "activation_Tanh": ( 0.0, 1.0),
+                        "activation_ReLU": ( 0.0, 1.0),
+                        "activation_Hardtanh": ( 0.0, 1.0),
+                    }, metric="loss", mode="min"),
+                ),
+                run_config=air.RunConfig(
+                    progress_reporter=CustomReporter(steps[i]['num_samples'], i, len(steps)),
+                    verbose=1,
+                ),
+                # param_space={
+                #     "batch_size": 64,
+                # },
+            )
+        else:
+            tuner = tune.Tuner(
+                Trainable,
+                tune_config=tune.TuneConfig(
+                    num_samples=steps[i]['num_samples'],
+                    scheduler=ASHAScheduler(
+                        metric=step['opti']['metric'], 
+                        mode=step['opti']['mode'],
+                        max_t=steps[i]['max_t'],
+                    ),
+                    search_alg=BayesOptSearch({
+                        "lr": (0.000001, 0.1),
+                        "patience": (0.01, 10.0),
+                        "reduce_factor": ( 0.0001, 0.9),
+                        "batch_size": (4, 64),
+                    }, metric=step['opti']['metric'], mode=step['opti']['mode']),
+                ),
+                run_config=air.RunConfig(
+                    progress_reporter=CustomReporter(steps[i]['num_samples'], i, len(steps)),
+                    verbose=1,
+                ),
+                param_space={
+                    "checkpoint": best_checkpoint,
+                    # "l1": best_checkpoint.to_dict()['l1'],
+                    # "l2": best_checkpoint.to_dict()['l2'],
+                    # "l3": best_checkpoint.to_dict()['l3'],
+                },
+            )
+        result_grid = tuner.fit()
+        best_result = result_grid.get_best_result(metric="delta", mode="min")
+        best_checkpoint = best_result.checkpoint
+        results.append(result_grid)
+    for i, result_grid in enumerate(results):
+        df = result_grid.get_dataframe()
+        df = df.sort_values(
+            by=['delta'],
+            ascending=[True],
+        )
+        def transform(r):
+            r['activation'] = sorted(
+                {
+                    'Tanh': r['config/activation_Tanh'],
+                    'ReLU': r['config/activation_ReLU'],
+                    'Hardtanh': r['config/activation_Hardtanh'],
+                }.items(),
+                key=lambda x:x[1]
+            )[-1][0]
+            return r
+        try:
+            df = df.apply(transform, axis=1)
+        except:
+            pass
+        if i == 0:
+            logging.info(df[['accuracy', 'delta', 'loss', 'config/lr', 'config/patience', 'config/reduce_factor', 'config/lr', 'config/l1', 'activation']].head(10))
+        else:
+            logging.info(df[['accuracy', 'delta', 'loss', 'config/lr', 'config/patience', 'config/reduce_factor', 'config/lr']].head(10))
     logging.info(f"duration: {time.time()-start_time}")
 
-# log_result
 
-# best_result = result_grid.get_best_result(metric="accuracy", mode="max")
-# best_checkpoint = best_result.checkpoint
-# config['start_from_checkpoint'] = ray.put(best_checkpoint)
-# config['epochs'] = 1000
-# new_tuner = tune.Tuner(
-#     train,
-#     param_space=config,
-#     tune_config=tune.TuneConfig(
-#         num_samples=1000,
-#         scheduler=ASHAScheduler(
-#             metric="accuracy", 
-#             mode="max",
-#             max_t=config['epochs'],
-#         ),
-#     ),
-# )
-# result_grid_2 = new_tuner.fit()
+# run([
+#     {
+#         'max_t': 4,
+#         'num_samples': 64,
+#         'opti': {
+#             'metric': "accuracy",
+#             'mode': "max",
+#         },
+#     },
+# ])
 
-
-# search_space = {
-#     "lr": tune.uniform(0.1, 1),
-#     "patience": tune.uniform(1, 10),
-#     'epochs': 100,
-# }
-# tuner = tune.Tuner(
-#     train,
-#     tune_config=tune.TuneConfig(
-#         num_samples=100,
-#         # time_budget_s=10,
-#         scheduler=ASHAScheduler(metric="accuracy", mode="max"),
-#     ),
-#     param_space=search_space,
-# )
-# result_grid_3 = tuner.fit()
+model = NeuralNetwork_1({
+    'l1': 10,
+    'activation': 'ReLU'
+})
+training_data = CustomDataset(f"{ai_dir}/train.csv")
+train_dataloader = DataLoader(
+    training_data, 
+    batch_size=4,
+)
+test_data = CustomDataset(f"{ai_dir}/test.csv")
+test_dataloader = DataLoader(
+    test_data, 
+    batch_size=4
+)
+loss_fn = torch.nn.CrossEntropyLoss()
+optimizer = SGD(model.parameters(), lr=0.1)
+train_loop(train_dataloader, model, loss_fn, optimizer)
+test_loop(test_dataloader, model, loss_fn)
 
 
-
-# df_2 = result_grid_2.get_dataframe()
-# df_2 = df_2.sort_values(
-#     by=['accuracy'],
-#     ascending=[False]
-# )
-# df_3 = result_grid_3.get_dataframe()
-# df_3 = df_3.sort_values(
-#     by=['accuracy'],
-#     ascending=[False]
-# )
-# logging.info(df_2[['accuracy', 'config/lr', 'config/patience', 'config/reduce_factor', 'config/lr', 'config/l1', 'config/l2', 'config/l3']].head(10))
-# logging.info(df_3.head())
-
-# logging.info(df.info())
-
-
-run(epochs=100, num_samples=1000)
+# 47.958
+# 39.
+# 35.002718
+run([
+    {
+        'max_t': 16,
+        'num_samples': 256,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    },
+    {
+        'max_t': 64,
+        'num_samples': 128,
+        'opti': {
+            'metric': "delta",
+            'mode': "min",
+        },
+    }
+    # {
+    #     'max_t': 32,
+    #     'num_samples': 64,
+    #     'opti': {
+    #         'metric': "loss",
+    #         'mode': "min",
+    #     },
+    # },{
+    #     'max_t': 128,
+    #     'num_samples': 64,
+    #     'opti': {
+    #         'metric': "accuracy",
+    #         'mode': "max",
+    #     },
+    # },{
+    #     'max_t': 256,
+    #     'num_samples': 64,
+    #     'opti': {
+    #         'metric': "loss",
+    #         'mode': "min",
+    #     },
+    # },{
+    #     'max_t': 256,
+    #     'num_samples': 64,
+    #     'opti': {
+    #         'metric': "accuracy",
+    #         'mode': "max",
+    #     },
+    # }
+])

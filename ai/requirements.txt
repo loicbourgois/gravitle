@@ -4,3 +4,4 @@ ray[tune]
 hyperopt
 ray[default]
 pylint
+bayesian-optimization
