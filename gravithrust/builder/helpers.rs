@@ -13,17 +13,11 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 #[derive(Serialize, Deserialize)]
-pub struct KindDefinition {
-    pub kinds: Vec<String>,
-    pub static_kinds: Vec<String>,
-    pub capacities: HashMap<String, Capacities>,
-}
-#[derive(Serialize, Deserialize)]
 pub struct Capacities {
     pub hard: u32,
     pub soft: u32,
 }
-pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
+pub fn kind_generated_js(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     writeln!(
         File::create(format!(
@@ -38,7 +32,7 @@ pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         .expect("Should have been able to read the file")
         .replace(
             "__KIND__",
-            &kd.kinds
+            &kinds
                 .iter()
                 .enumerate()
                 .map(|(i, k)| {
@@ -52,7 +46,7 @@ pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         )
         .replace(
             "__KINDS__",
-            &kd.kinds
+            &kinds
                 .iter()
                 .map(|k| format!("{{label:'{k}'}},",))
                 .collect::<Vec<_>>()
@@ -60,7 +54,7 @@ pub fn kind_generated_js(kd: &KindDefinition) -> Result<(), std::io::Error> {
         )
     )
 }
-pub fn kind_generated_wgsl(kd: &KindDefinition) -> Result<(), std::io::Error> {
+pub fn kind_generated_wgsl(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     writeln!(
         File::create(format!(
@@ -75,7 +69,7 @@ pub fn kind_generated_wgsl(kd: &KindDefinition) -> Result<(), std::io::Error> {
         .expect("Should have been able to read the file")
         .replace(
             "__KINDS__",
-            &kd.kinds
+            &kinds
                 .iter()
                 .enumerate()
                 .map(|(i, k)| format!("const KIND_{k} = {i};"))

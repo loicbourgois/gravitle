@@ -5,3 +5,4 @@ hyperopt
 ray[default]
 pylint
 bayesian-optimization
+prettytable

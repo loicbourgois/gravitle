@@ -13,25 +13,13 @@ pub fn kindstr_to_kind(x: &str) -> Kind {
     match x.trim().to_lowercase().as_str() {
         __kindstr_to_kind__
         _ => {
-            error(&format!("invalid kind: {x}"));
-            panic!("invalid kind")
+            let m = format!("invalid kind: {x}");
+            error(&m);
+            panic!("{}",m)
         }
     }
 }
 impl Kind {
-    pub fn capacity(self) -> u32 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            __hard_capacity__
-            _ => 0,
-        }
-    }
-    pub fn soft_capacity(self) -> u32 {
-        match self {
-            __soft_capacity__
-            _ => 0,
-        }
-    }
     pub fn is_static(self) -> bool {
         matches!(
             self,

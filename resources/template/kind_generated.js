@@ -9,9 +9,3 @@ export {
     Kind,
     kinds,
 }
-
-// [
-//   'small_ship', 'plasma_collector', 'sun', 'plasma_depot', 
-//   'harvester', 'plasma_refinery', 'plasma_transporter',
-//   'ice_asteroid', "iron_asteroid", "coal_asteroid", 'chain_reaction', 'iron_furnace'
-// ]

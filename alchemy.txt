@@ -50,3 +50,24 @@ transform iron_asteroid=->1*iron_ore
 transform coal_asteroid=->1*coal
 transform core=->1000*energy
 transform flower=5*water->1*nectar
+
+
+anchor
+target
+sun
+static
+plasma_cargo
+armor
+plasma_electro_field_collector
+electro_field_launcher
+light
+plasma_raw_depot
+plasma_refinery_input
+plasma_refinery_output
+plasma_raw_collector
+cargo
+sun_core
+
+static anchor 
+static static
+static iron_furnace

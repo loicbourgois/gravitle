@@ -1,4 +1,3 @@
-use crate::KindDefinition;
 use convert_case::Case;
 use convert_case::Casing;
 use std::collections::HashMap;
@@ -153,7 +152,7 @@ pub fn alchemy_transform(in_: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n  ")
 }
-pub fn build_alchemy_rs(kd: &KindDefinition) -> Result<(), std::io::Error> {
+pub fn build_alchemy_rs(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let in_ = fs::read_to_string(format!(
         "{}/github.com/loicbourgois/gravitle/alchemy.txt",
@@ -178,7 +177,7 @@ pub fn build_alchemy_rs(kd: &KindDefinition) -> Result<(), std::io::Error> {
         .replace("//__ALCHEMY_TRANSFORM__//", &alchemy_transform(&in_))
         .replace(
             "//__QKS__//",
-            &kd.kinds
+            &kinds
                 .iter()
                 .map(|k| {
                     let kind = k.from_case(Case::Snake).to_case(Case::UpperCamel);

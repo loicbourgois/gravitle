@@ -35,7 +35,7 @@ rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/package.json
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/LICENSE
 rm $HOME/github.com/loicbourgois/gravitle/front/gravithrust/README.md
 cargo +nightly fmt
-docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.png -t dark -b black
-docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.svg -t dark -b black
+docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.png -t dark -b black || true
+docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.svg -t dark -b black || true
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "# Duration: $ELAPSED_TIME s"
