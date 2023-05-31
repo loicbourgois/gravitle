@@ -379,7 +379,7 @@ def ray_train(training_data):
             'num_samples': 64,
             'checkpoint_threshold': 4,
             'opti': {
-                'metric': "dpps",
+                'metric': "delta",
                 'mode': "min",
             },
         },
@@ -443,3 +443,9 @@ training_data = CustomDataset("ai/poc_1/train.csv")
 ray_train(training_data)
 
 # delta = 0.035635
+# delta = 0.000003
+# delta = 0.006356
+
+# 6.067597
+# 5.661710
+# 4.81779

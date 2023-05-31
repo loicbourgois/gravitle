@@ -12,6 +12,7 @@ def gen_test_case():
         'x_0':x_0,
         'x_1':x_1,
         'y_0':y_0,
+        'y_1':y_1,
     }
 count = 256
 df = pandas.DataFrame(
