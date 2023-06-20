@@ -77,6 +77,40 @@ const drawers = {
     [Kind.PlasmaRefineryOutput]: (context, context_trace, diameter, p) => {
         fill_circle_2(context, p.p, diameter*1, "#f0f")
     },
+    [Kind.CoalAsteroid]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#444")
+    },
+    [Kind.CoalDepot]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#444")
+    },
+    [Kind.IronAsteroid]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#888")
+    },
+    [Kind.IronOreDepot]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#888")
+    },
+    [Kind.Light]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#FF4")
+    },
+    [Kind.EnergyCollector]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    [Kind.CoalCargo]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    [Kind.Battery]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    [Kind.CoalCollector]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    [Kind.IronOreCargo]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    [Kind.IronOreCollector]: (context, context_trace, diameter, p) => {
+        fill_circle_2(context, p.p, diameter*1, "#B80")
+    },
+    
 }
 
 

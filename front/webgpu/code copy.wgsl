@@ -74,6 +74,9 @@ const ZOOM = 3.0;
     case KIND_plasma_cargo: {
       vsOut.color = vec4f(0.85, 0.5, 0.0, 0.5);
     }
+    // case KIND_electro_field: {
+    //   vsOut.color = vec4f(0.0, 0.75, 1.0, 1.0);
+    // }
     case KIND_sun: {
       vsOut.color = vec4f(1.0, 0.9, 0.0, 1.0);
     }
@@ -83,6 +86,9 @@ const ZOOM = 3.0;
     case KIND_sun_core: {
       vsOut.color = vec4f(1.0, 0.9, 0.0, 1.0);
     }
+    // case KIND_plasma_electro_field: {
+    //   vsOut.color = vec4f(1.0, 0.8, 0.0, 1.0);
+    // }
     case KIND_plasma_raw_depot: {
       vsOut.color = vec4f(1.0, 0.8, 0.0, 1.0);
     }
@@ -92,6 +98,10 @@ const ZOOM = 3.0;
     case KIND_anchor: {
       vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
     }
+    // case KIND_electro_field_launcher: {
+    //   let q1 = f32(particle.qs.q1)/2500.0;
+    //   vsOut.color = vec4f(0.0, q1*0.5+0.35, q1*0.5+0.25, 1.0);
+    // }
     case KIND_ice_asteroid: {
       vsOut.color = vec4f(0.7, 0.7, 1.0, 1.0);
     }
@@ -127,6 +137,9 @@ fn rand(v: vec2f) -> f32 {
   );
   
   switch particle.k {
+    // case KIND_plasma_electro_field: {
+    //   vsOut.color = vec4f(0.0, 0.5, 1.0, 1.0);
+    // }
     case KIND_light: {
       vsOut.color = vec4f(1.0, 1.0, 0.25, 1.0);
     }
@@ -154,7 +167,25 @@ fn rand(v: vec2f) -> f32 {
     default: {
       vsOut.color = vec4f(0.65, 0.4, 0.4, 1.0);
     }
+    // default: {
+    //   vsOut.position.z = 100.0;
+    // }
   }
+  
+  // if (particle.k == KIND_booster && particle.a == 1 && particle.live == 1) {
+  //   let pout = vec2f(
+  //       particle.p.x + particle.direction.x * 0.0018 * rand(vec2f(particle.p.x, particle.direction.x)),
+  //       particle.p.y + particle.direction.y * 0.0018 * rand(vec2f(particle.p.y, particle.direction.y)),
+  //   );
+  //   vsOut.position = vec4f(
+  //     positions[vertexIndex] * 0.0025 * 0.7
+  //     + pout * 2.0 
+  //     - vec2f( 1.0,  1.0), 0.0, 1.0
+  //   );
+  //   vsOut.position.x = vsOut.position.x * ZOOM; 
+  //   vsOut.position.y = vsOut.position.y * ZOOM;
+  //   vsOut.color = vec4f(1.0, 0.0, 0.0, 1.0);
+  // }
   if (particle.live != 1) {
     vsOut.position.z = 100.0;
   }
