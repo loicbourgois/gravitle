@@ -1,8 +1,8 @@
-use crate::kind::kindstr_to_kind;
 use crate::kind::Kind;
+use crate::kind::kindstr_to_kind;
 use crate::link::Link;
-use crate::math::rotate;
 use crate::math::Vector;
+use crate::math::rotate;
 use crate::ship::OrientationMode;
 use serde::Deserialize;
 use serde::Serialize;

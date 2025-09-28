@@ -1,0 +1,92 @@
+* {
+  font-family: monospace;
+  color: #0000;
+  spacing: 0;
+  margin: 0;
+}
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background: #000;
+}
+canvas {
+  image-rendering: pixelated;
+}
+#panel {
+  position: fixed;
+  z-index: 1;
+}
+#minimap {
+  width: 16em;
+  height: 16em;
+  background: blueviolet;
+}
+#left, #right, #top, #bottom {
+  /* background: #444; */
+  background: #102D;
+  flex-grow: 1;
+}
+#content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+#center {
+  height: 100vh;
+  width: min(100vh, 100vw);
+  display: flex;
+  flex-direction: column;
+}
+#canvas {
+  height: min(100vh, 100vw);
+  width: min(100vh, 100vw);
+  background: #0000;
+}
+#victory {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  /* transition: background-color 1s ease; */
+}
+#victory.yes {
+  background-color: #fff2;
+}
+#victory p {
+  color: #ff90;
+  /* transition: color 2s ease; */
+}
+#victory.yes p {
+  padding: 2rem;
+  font-size: 3rem;
+  color: #ff9d;
+  text-align: center;
+}
+#victory.yes .ex {
+  width: 0;
+  flex-grow: 1;
+}
+#aa {
+  margin-top: 15vh;
+  margin-bottom: auto;
+}
+#vic_text {
+  display: flex;
+}
+button{
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  background: none;
+  margin: 2rem;
+}
+#victory.yes #vic_text button {
+  color: #ff9d;
+}
+#victory.yes #vic_text button:hover {
+  color: #ff9f;
+}
+#victory.yes #victory_duration_1 {
+  font-size: 2rem;
+}

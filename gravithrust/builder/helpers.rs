@@ -1,5 +1,5 @@
-use crate::src::math_small::rotate;
 use crate::src::math_small::Vector;
+use crate::src::math_small::rotate;
 use anyhow::Result;
 use convert_case::Case;
 use convert_case::Casing;

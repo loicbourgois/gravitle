@@ -1,10 +1,10 @@
 use crate::error;
 use crate::kind::Kind;
+use crate::math::Vector;
+use crate::math::WrapAroundResponse;
 use crate::math::delta;
 use crate::math::dot;
 use crate::math::norm_sqrd;
-use crate::math::Vector;
-use crate::math::WrapAroundResponse;
 use serde::Deserialize;
 use serde::Serialize;
 use strum_macros::EnumIter;

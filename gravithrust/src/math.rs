@@ -1,5 +1,5 @@
-pub use crate::math_small::rotate;
 pub use crate::math_small::Vector;
+pub use crate::math_small::rotate;
 use std::ops;
 impl Default for Vector {
     fn default() -> Self {

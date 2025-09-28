@@ -1,18 +1,18 @@
 use crate::alchemy::alchemy_transfer;
 use crate::error;
 use crate::gravithrust::Gravithrust;
-use crate::grid::grid_id_position;
 use crate::grid::Grid;
+use crate::grid::grid_id_position;
 use crate::kind::Kind;
 use crate::link::Link;
 use crate::link::LinkJS;
+use crate::math::Vector;
 use crate::math::normalize;
 use crate::math::wrap_around;
-use crate::math::Vector;
 use crate::particle;
-use crate::particle::collision_response;
 use crate::particle::Particle;
 use crate::particle::ParticleInternal;
+use crate::particle::collision_response;
 pub fn neighbours<'a>(position: &'a Vector, grid: &'a Grid) -> [&'a Vec<usize>; 9] {
     let gid = grid_id_position(*position, grid.side);
     [

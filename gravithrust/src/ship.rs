@@ -1,6 +1,6 @@
 use crate::job::Job;
-use crate::math::wrap_around;
 use crate::math::Vector;
+use crate::math::wrap_around;
 use crate::particle::Particle;
 pub struct Ship {
     pub p: Vector,

@@ -1,5 +1,4 @@
 #!/bin/sh
-# $HOME/github.com/loicbourgois/gravitle/build.sh
 set -e
 echo "# Start"
 START_TIME=$SECONDS
