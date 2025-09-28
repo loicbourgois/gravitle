@@ -4,13 +4,13 @@ import {
     clear_trans,
     resize_square,
     // resize,
-} from "../canvas.js"
+} from "./canvas.js"
 import {
     particle,
 } from "./particle.js"
 import {
     link_js,
-} from "../link.js"
+} from "./link.js"
 import {
     Ship,
 } from "./ship.js"
@@ -27,7 +27,6 @@ import {
 
 
 const RESOLUTION = 2
-
 
 const Simulation = async (
     gravithrust,

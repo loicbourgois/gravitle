@@ -3,7 +3,7 @@ import {
 } from "./kind_generated.js"
 import {
     fill_circle_2,
-} from "../canvas.js"
+} from "./canvas.js"
 
 
 const drawers = {

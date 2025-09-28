@@ -53,9 +53,9 @@ fn all_conditions_ok(
             Condition::EnergyStorageFull => {
                 remaining_capacity(ship_more, particles, QuantityKind::Energy) == 0
             }
-            Condition::Random1Per1000 => rng.gen::<f32>() < 0.001,
-            Condition::Random1Per10 => rng.gen::<f32>() < 0.1,
-            Condition::Random1Per100 => rng.gen::<f32>() < 0.01,
+            Condition::Random1Per1000 => rng.random::<f32>() < 0.001,
+            Condition::Random1Per10 => rng.random::<f32>() < 0.1,
+            Condition::Random1Per100 => rng.random::<f32>() < 0.01,
         };
         if !r {
             return r;

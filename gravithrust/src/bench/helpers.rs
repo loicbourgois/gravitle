@@ -29,7 +29,7 @@ pub fn setup_simulation_grid_side(grid_side: u32) -> Gravithrust {
     );
     let mut rng = ChaCha8Rng::seed_from_u64(0);
     for _ in 0..100 {
-        gravithrust.add_ship(&yaml, rng.gen::<f32>(), rng.gen::<f32>());
+        gravithrust.add_ship(&yaml, rng.random::<f32>(), rng.random::<f32>());
     }
     gravithrust
 }

@@ -21,7 +21,7 @@ pub fn kind_generated_js(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     writeln!(
         File::create(format!(
-            "{}/github.com/loicbourgois/gravitle/front/kind_generated.js",
+            "{}/github.com/loicbourgois/gravitle/front/mining/kind_generated.js",
             envs["HOME"]
         ))?,
         "{}",
@@ -58,7 +58,7 @@ pub fn kind_generated_wgsl(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     writeln!(
         File::create(format!(
-            "{}/github.com/loicbourgois/gravitle/front/webgpu/kind_generated.wgsl",
+            "{}/github.com/loicbourgois/gravitle/front/mining/webgpu/kind_generated.wgsl",
             envs["HOME"]
         ))?,
         "{}",
@@ -100,7 +100,7 @@ pub fn disk_generated() -> Result<(), std::io::Error> {
     }
     writeln!(
         File::create(format!(
-            "{}/github.com/loicbourgois/gravitle/front/webgpu/disk_generated.wgsl",
+            "{}/github.com/loicbourgois/gravitle/front/mining/webgpu/disk_generated.wgsl",
             envs["HOME"]
         ))?,
         "{}",
@@ -124,7 +124,7 @@ pub fn disk_generated() -> Result<(), std::io::Error> {
 // let envs = env::vars().collect::<HashMap<String, String>>();
 // writeln!(
 //     File::create(format!(
-//         "{}/github.com/loicbourgois/gravitle/front/webgpu/code_generated.wgsl",
+//         "{}/github.com/loicbourgois/gravitle/front/mining/webgpu/code_generated.wgsl",
 //         envs["HOME"]
 //     ))?,
 //     "{}",
@@ -181,7 +181,7 @@ pub fn resources_generated() -> Result<(), std::io::Error> {
     .join(",\n  ");
     writeln!(
         File::create(format!(
-            "{}/github.com/loicbourgois/gravitle/front/resources_generated.js",
+            "{}/github.com/loicbourgois/gravitle/front/mining/resources_generated.js",
             envs["HOME"]
         ))?,
         "{}",

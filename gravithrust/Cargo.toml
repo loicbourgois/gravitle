@@ -1,7 +1,9 @@
+cargo-features = ["edition2024"]
+
 [package]
 name = "gravithrust"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Gravithrust"
 repository = "https://github.com/loicbourgois/gravitle/"
 license = "MIT"
@@ -18,7 +20,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 wasm-bindgen = "*"
 rand = "*"
-getrandom = { version = "*", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 serde_json = "*"

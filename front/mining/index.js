@@ -1,3 +1,4 @@
+console.log("start")
 import init, {Gravithrust} from "./gravithrust/gravithrust.js";
 import {
   resize_square,

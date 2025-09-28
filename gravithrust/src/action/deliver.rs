@@ -5,6 +5,7 @@ use crate::particle::Particle;
 use crate::particle::QuantityKind;
 use crate::ship::Ship;
 use crate::ship::ShipMore;
+use rand::prelude::IndexedRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::cmp::Ordering;
