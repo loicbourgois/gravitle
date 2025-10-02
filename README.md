@@ -18,3 +18,4 @@ open http://localhost/sound_design
 
 ## TODO
 - /mining: buggy booster flares if initial zoom != 100%
+- 

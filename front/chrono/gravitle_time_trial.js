@@ -97,10 +97,6 @@ function isLikeNone(x) {
     return x === undefined || x === null;
 }
 
-export function setup() {
-    wasm.setup();
-}
-
 function _assertClass(instance, klass) {
     if (!(instance instanceof klass)) {
         throw new Error(`expected instance of ${klass.name}`);
@@ -118,6 +114,10 @@ export function wrap_around(a, b) {
     var ptr1 = b.__destroy_into_raw();
     const ret = wasm.wrap_around(ptr0, ptr1);
     return WrapAroundResult.__wrap(ret);
+}
+
+export function setup() {
+    wasm.setup();
 }
 
 const CellFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -1012,6 +1012,9 @@ function __wbg_get_imports() {
         } finally {
             wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
         }
+    };
+    imports.wbg.__wbg_log_388245756f43e8bb = function(arg0, arg1) {
+        console.log(getStringFromWasm0(arg0, arg1));
     };
     imports.wbg.__wbg_new_8a6f238a6ece86ea = function() {
         const ret = new Error();

@@ -1,4 +1,3 @@
-use crate::log;
 use crate::wasm_bindgen;
 #[wasm_bindgen]
 pub struct Link {

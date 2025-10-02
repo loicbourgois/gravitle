@@ -81,7 +81,13 @@ button{
   background: none;
   margin: 2rem;
 }
+.key_interact {
+  font-size: 1.25rem;
+}
 #victory.yes #vic_text button {
+  color: #ff9d;
+}
+#victory.yes .key_interact {
   color: #ff9d;
 }
 #victory.yes #vic_text button:hover {

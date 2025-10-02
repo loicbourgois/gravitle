@@ -5,7 +5,7 @@ use std::ops::Sub;
 use std::ops::SubAssign;
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Point {
     pub x: f32,
     pub y: f32,

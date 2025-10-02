@@ -19,7 +19,7 @@ extern "C" {
 }
 #[wasm_bindgen]
 pub fn setup() {
-    // log("setup - start");
+    log("setup - start");
     set_panic_hook();
-    // log("setup - ok");
+    log("setup - ok");
 }

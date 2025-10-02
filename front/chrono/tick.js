@@ -17,34 +17,34 @@ const tick = (gravitle, view, worlds, memory, ghost_json, context) => {
 	}
 	last_frame = now;
 	for (let index = 0; index < steps; index++) {
-		if (ghost_json) {
-			const es = ghost_json[worlds[1].step];
-			if (es != null) {
-				for (const e of es) {
-					worlds[1].switch_cell_activated(e.c);
-					ghost_cells.add(e.c);
-				}
-				delete ghost_json[worlds[1].step];
-			}
-			if (
-				!Object.keys(ghost_json).length &&
-				!ghost_deactivated &&
-				worlds[1].victory
-			) {
-				ghost_deactivated = true;
-				for (const c of ghost_cells) {
-					worlds[1].set_cell_activated(c, 0);
-				}
-			}
-		}
+		// if (ghost_json) {
+		// 	const es = ghost_json[worlds[1].step];
+		// 	if (es != null) {
+		// 		for (const e of es) {
+		// 			worlds[1].switch_cell_activated(e.c);
+		// 			ghost_cells.add(e.c);
+		// 		}
+		// 		delete ghost_json[worlds[1].step];
+		// 	}
+		// 	if (
+		// 		!Object.keys(ghost_json).length &&
+		// 		!ghost_deactivated &&
+		// 		worlds[1].victory
+		// 	) {
+		// 		ghost_deactivated = true;
+		// 		for (const c of ghost_cells) {
+		// 			worlds[1].set_cell_activated(c, 0);
+		// 		}
+		// 	}
+		// 	worlds[1].run_step();
+		// }
 		worlds[0].run_step();
-		worlds[1].run_step();
-		if (worlds[1].victory == 1 && !victory_celebrated_1) {
-			victory_celebrated_1 = 1;
-			console.log(worlds[1].victory_duration);
-			document.getElementById("victory_duration_1").innerHTML =
-				worlds[1].victory_duration;
-		}
+		// if (ghost_json && worlds[1].victory == 1 && !victory_celebrated_1) {
+		// 	victory_celebrated_1 = 1;
+		// 	console.log(worlds[1].victory_duration);
+		// 	document.getElementById("victory_duration_1").innerHTML =
+		// 		worlds[1].victory_duration;
+		// }
 		if (worlds[0].victory == 1 && !victory_celebrated) {
 			victory_celebrated = 1;
 			document.getElementById("victory_duration").innerHTML =
