@@ -6,16 +6,35 @@
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
+    <div id="overlay">
+      <span class="spacer"></span>
+      <p id="fps"></p>
+    </div>
     <div id="victory">
       <span class="ex"></span>
       <div id="aa">
-        <div id="vic_text">
+        <div id="vic_text" class="hide">
           <button id="again">Again<br><span class="key_interact">[e]</span></button>
           <button id="new">New<br><span class="key_interact">[space]</span></button>
-          <button id="share">Share<br><span class="key_interact">[r]</span></button>
+          <button id="share">Share<br><span id="share_1" class="key_interact">[r]</span><span id="share_2" class="key_interact hide">Saved to clipboard</span></button>
         </div>
-        <p id="victory_duration"></p>
-        <p id="victory_duration_1"></p>
+        <div id="notice_text">
+          <span class="spacer"></span>
+          <div id="left_key">
+            <span class="direction">Left</span>
+            <span class="key_interact">[s]</span>
+          </div>
+          <div id="right_key">
+            <span class="direction">Right</span>
+            <span class="key_interact">[d]</span>
+          </div>
+          <span class="spacer"></span>
+        </div>
+        <div id="durations">
+          <p id="victory_duration_lower"></p>
+          <p id="victory_duration"></p>
+          <p id="victory_duration_higher"></p>
+        </div>
       </div>
       <span class="ex"></span>
     </div>

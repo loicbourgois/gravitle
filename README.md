@@ -9,6 +9,7 @@ $HOME/github.com/loicbourgois/gravitle/dev.sh
 $HOME/github.com/loicbourgois/gravitle/bench.sh
 open http://localhost
 open http://localhost/sound_design
+http://localhost/chrono/?seed=efopiw-gakura&stars=1
 ```
 
 
@@ -18,4 +19,3 @@ open http://localhost/sound_design
 
 ## TODO
 - /mining: buggy booster flares if initial zoom != 100%
-- 

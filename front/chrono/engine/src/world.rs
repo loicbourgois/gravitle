@@ -97,7 +97,7 @@ impl World {
                 if ca.activated_previous != ca.activated {
                     self.activation_events
                         // we can't adjust the start time back to 0
-                        // because we'd be removing tiny fluctuation 
+                        // because we'd be removing tiny fluctuation
                         // and derailling the full course later on
                         // .entry(self.step - self.move_start.unwrap())
                         .entry(self.step)
@@ -106,7 +106,7 @@ impl World {
                             c: ca.idx,
                             a: ca.activated,
                         });
-                    log(&format!("{} {} {}", self.step, ca.idx, ca.activated));
+                    // log(&format!("{} {} {}", self.step, ca.idx, ca.activated));
                 }
                 ca.activated_previous = ca.activated;
                 ca.np.x = ca.p.x + ca.dp.x;

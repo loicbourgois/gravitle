@@ -1,7 +1,6 @@
 function getRandomElement(arr) {
 	return arr[Math.floor(Math.random() * arr.length)];
 }
-
 const consonants = [
 	"b",
 	"c",
@@ -26,7 +25,6 @@ const consonants = [
 ];
 const vowels = ["a", "e", "i", "o", "u"];
 const isConsonants = [true, false];
-
 function generateRandomWord(length) {
 	let word = "";
 	let isConsonant = getRandomElement(isConsonants);
@@ -44,7 +42,6 @@ function generateRandomWord(length) {
 const random_seed = () => {
 	return `${generateRandomWord(6)}-${generateRandomWord(6)}`;
 };
-
 // https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
 function cyrb128(str) {
 	let h1 = 1779033703,
@@ -65,7 +62,6 @@ function cyrb128(str) {
 	(h1 ^= h2 ^ h3 ^ h4), (h2 ^= h1), (h3 ^= h1), (h4 ^= h1);
 	return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
 }
-
 function sfc32(a, b, c, d) {
 	return function () {
 		a |= 0;
@@ -81,5 +77,4 @@ function sfc32(a, b, c, d) {
 		return (t >>> 0) / 4294967296;
 	};
 }
-
 export { cyrb128, sfc32, random_seed };
