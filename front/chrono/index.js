@@ -13,13 +13,13 @@ const main = async () => {
 	const url = new URL(window.location.href);
 	const params = new URLSearchParams(url.search);
 	const stars_count = params.get("stars") ?? defaults.stars_count;
-	const seed_input = params.get("seed") ?? new Date().toISOString().split("T")[0];
+	const seed_input =
+		params.get("seed") ?? new Date().toISOString().split("T")[0];
 	let ghost = params.get("ghost");
 	const view = new View("canvas");
 	window.addEventListener("resize", function () {
 		view.resize();
 	});
-	// history.pushState({}, "seed_input", `?seed=${seed_input}`);
 	new Game({
 		gravitle,
 		memory,

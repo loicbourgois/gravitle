@@ -24,12 +24,11 @@ const multiply_vector = (a, k) => {
 	};
 };
 
-
 const get_color = (cell_kind, activation, layer, player_kind) => {
-	const ARMOR = 0
-	const BOOSTER = 1
-	const CORE = 2
-	const LIGHTED = 6
+	const ARMOR = 0;
+	const BOOSTER = 1;
+	const CORE = 2;
+	const LIGHTED = 6;
 	try {
 		const aa = {
 			[ARMOR]: {
@@ -41,8 +40,8 @@ const get_color = (cell_kind, activation, layer, player_kind) => {
 						g: "#558",
 						// other_ghost
 						o: "#585",
-					}
-				}
+					},
+				},
 			},
 			[BOOSTER]: {
 				0: {
@@ -50,7 +49,7 @@ const get_color = (cell_kind, activation, layer, player_kind) => {
 						m: "#___",
 						g: "#850",
 						o: "#850",
-					}
+					},
 				},
 				1: {
 					0: {
@@ -76,8 +75,8 @@ const get_color = (cell_kind, activation, layer, player_kind) => {
 						m: "#___",
 						g: "#885",
 						o: "#885",
-					}
-				}
+					},
+				},
 			},
 			[LIGHTED]: {
 				0: {
@@ -85,18 +84,18 @@ const get_color = (cell_kind, activation, layer, player_kind) => {
 						m: "#ff9d",
 						g: "#0000",
 						o: "#9f95",
-					}
-				}
+					},
+				},
 			},
-		}
-		return aa[cell_kind][activation][layer][player_kind]
+		};
+		return aa[cell_kind][activation][layer][player_kind];
 	} catch (error) {
-		console.log(cell_kind, activation, layer, player_kind)
-		throw error
+		console.log(cell_kind, activation, layer, player_kind);
+		throw error;
 	}
-}
+};
 
-const draw_ship_only = (gravitle, world, memory, view, player_kind="g") => {
+const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	const cells_ptr = world.cells();
 	const cell_size = gravitle.Cell.size();
 	const cells_view = new DataView(
@@ -121,8 +120,10 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind="g") => {
 			);
 			const d = cell.diameter * 0.7 * mult;
 			view.draw_disk_multi(
-				p.x, p.y, d, 
-				get_color(cell.kind, cell.activated, 2, player_kind)
+				p.x,
+				p.y,
+				d,
+				get_color(cell.kind, cell.activated, 2, player_kind),
 			);
 			const p2 = add_vectors(
 				cell.ap,
@@ -130,34 +131,43 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind="g") => {
 			);
 			const d2 = cell.diameter * 0.9 * mult;
 			view.draw_disk_multi(
-				p2.x, p2.y, d2, 
-				get_color(cell.kind, cell.activated, 1, player_kind)
+				p2.x,
+				p2.y,
+				d2,
+				get_color(cell.kind, cell.activated, 1, player_kind),
 			);
 			const p3 = cell.ap;
 			const d3 = cell.diameter * mult;
 			view.draw_disk_multi(
-				p3.x, p3.y, d3, 
-				get_color(cell.kind, cell.activated, 0, player_kind)
+				p3.x,
+				p3.y,
+				d3,
+				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
 		} else if (cell.kind == 1) {
 			const p3 = cell.ap;
 			const d3 = cell.diameter * mult;
 			view.draw_disk_multi(
-				p3.x, p3.y, d3, 
-				get_color(cell.kind, cell.activated, 0, player_kind)
+				p3.x,
+				p3.y,
+				d3,
+				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
 		} else {
 		}
 	}
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if ([1,4,5].includes(cell.kind)) {
+		if ([1, 4, 5].includes(cell.kind)) {
 			// pass
 		} else {
 			const p3 = cell.ap;
 			const d3 = cell.diameter * mult;
-			view.draw_disk_multi(p3.x, p3.y, d3, 
-				get_color(cell.kind, cell.activated, 0, player_kind)
+			view.draw_disk_multi(
+				p3.x,
+				p3.y,
+				d3,
+				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
 		}
 	}
@@ -171,7 +181,7 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind="g") => {
 			if (color_id_1 == kind) {
 				const wa = wrap_around(p1.ap, p2.ap);
 				const delt = multiply_vector(delta(wa.a, wa.b), 0.5);
-				const color = get_color(kind,0,0,player_kind)
+				const color = get_color(kind, 0, 0, player_kind);
 				const aa = 0.75;
 				const pos1 = add_vectors(p1.p, delt);
 				const pos2 = del_vector(p2.p, delt);

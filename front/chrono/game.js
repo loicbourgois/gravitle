@@ -21,16 +21,16 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 	this.ghost = ghost;
 	this.ghosts = [];
 	this.seed = cyrb128(seed_input);
-	this.seed_input = seed_input
+	this.seed_input = seed_input;
 	this.last_frame = null;
-	this.tick_starts = []
+	this.tick_starts = [];
 	if (this.ghost) {
-		this.ghosto = short_to_json(this.ghost)
+		this.ghosto = short_to_json(this.ghost);
 	}
 	if (this.ghosto) {
 		this.ghosts.push({
 			kind: "other",
-			o: this.ghosto
+			o: this.ghosto,
 		});
 	}
 	ship.parts.forEach((e, idx) => {
@@ -52,23 +52,23 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 			for (let idx of this.key_bindings.get(e.key)) {
 				this.worlds[0].set_cell_activated(idx, 1);
 			}
-			this.started = true
-			document.getElementById("notice_text").classList.add("hide")
+			this.started = true;
+			document.getElementById("notice_text").classList.add("hide");
 		}
 		if (e.key == "e" && !this.trying_again) {
-			this.trying_again = true
+			this.trying_again = true;
 			this.try_again();
 		}
 		if (e.key == "r" && !this.trying_again && this.victory_celebrated) {
-			this.sharing = true
-			this.share()
+			this.sharing = true;
+			this.share();
 		}
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
 			const url = new URL(window.location.href);
 			const url2 = new URL(url.origin + url.pathname);
 			url2.searchParams.append("seed", random_seed());
 			url2.searchParams.append("stars", this.stars_count);
-			window.location.href = url2
+			window.location.href = url2;
 		}
 		document.querySelectorAll(".disappearable").forEach((x, i) => {
 			x.classList.remove("disappear");
@@ -80,15 +80,15 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 				this.worlds[0].set_cell_activated(idx, 0);
 			}
 		}
-		if (e.key == "e" ) {
-			this.trying_again = false
+		if (e.key == "e") {
+			this.trying_again = false;
 		}
 		if (e.key == "r") {
-			this.sharing = false
+			this.sharing = false;
 		}
 	});
 	document.getElementById("share").addEventListener("click", () => {
-		this.share()
+		this.share();
 	});
 	this.restart();
 	this.tick();
@@ -106,13 +106,13 @@ Game.prototype.share = function () {
 	navigator.clipboard
 		.writeText(share_link)
 		.then(() => {
-			document.getElementById("share_1").classList.add("hide")
-			document.getElementById("share_2").classList.remove("hide")
+			document.getElementById("share_1").classList.add("hide");
+			document.getElementById("share_2").classList.remove("hide");
 		})
 		.catch((err) => {
 			console.error("Failed to copy text: ", err);
 		});
-}
+};
 Game.prototype.celebrate_victory = function () {
 	this.victory_celebrated = 1;
 	document.getElementById("victory").classList.add("yes");
@@ -120,15 +120,18 @@ Game.prototype.celebrate_victory = function () {
 	this.ghost_to_share = json_to_short(
 		JSON.parse(this.worlds[0].get_activation_events()),
 	);
-}
+};
 Game.prototype.tick = function () {
 	const now = performance.now();
-	this.tick_starts.push(now)
+	this.tick_starts.push(now);
 	while (this.tick_starts.length > 200) {
-        this.tick_starts.shift();
-    }
-	const fps = 1000 / ((this.tick_starts[this.tick_starts.length-1] - this.tick_starts[0]) / (this.tick_starts.length-1))
-	document.getElementById("fps").innerHTML = Math.round(fps)
+		this.tick_starts.shift();
+	}
+	const fps =
+		1000 /
+		((this.tick_starts[this.tick_starts.length - 1] - this.tick_starts[0]) /
+			(this.tick_starts.length - 1));
+	document.getElementById("fps").innerHTML = Math.round(fps);
 	const elapsed = now - this.last_frame;
 	let steps = 2;
 	if (elapsed > 15 && this.last_frame != null) {
@@ -146,60 +149,74 @@ Game.prototype.tick = function () {
 				}
 			}
 		}
-		this.switch_cell_limit = this.worlds[0].step
+		this.switch_cell_limit = this.worlds[0].step;
 		if (this.started) {
 			for (const world of this.worlds) {
 				world.run_step();
 			}
 		}
 		if (this.worlds[0].victory == 1 && !this.victory_celebrated) {
-			this.celebrate_victory()
+			this.celebrate_victory();
 		}
 	}
 	this.view.set_backgound("#102");
 	for (let i = 1; i < this.worlds.length; i++) {
-		if ( this.ghosts[i-1].kind == "me") {
-			draw_ship_only(this.gravitle, this.worlds[i], this.memory, this.view, "g");
+		if (this.ghosts[i - 1].kind == "me") {
+			draw_ship_only(
+				this.gravitle,
+				this.worlds[i],
+				this.memory,
+				this.view,
+				"g",
+			);
 		}
 	}
 	for (let i = 1; i < this.worlds.length; i++) {
-		if (this.ghosts[i-1].kind != "me") {
-			draw_ship_only(this.gravitle, this.worlds[i], this.memory, this.view, "o");
+		if (this.ghosts[i - 1].kind != "me") {
+			draw_ship_only(
+				this.gravitle,
+				this.worlds[i],
+				this.memory,
+				this.view,
+				"o",
+			);
 		}
 	}
 	draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
 	if (this.victory_celebrated) {
-		const durations = []
+		const durations = [];
 		for (const world of this.worlds) {
 			if (world.victory_end) {
-				durations.push(world.victory_end)
+				durations.push(world.victory_end);
 			}
 		}
-		const duration_0 = this.worlds[0].victory_end
-		const durations_left = durations.filter(x => x < duration_0);
-		const durations_right = durations.filter(x => x > duration_0);
-		durations_left.sort((a, b) => a - b)
-		durations_right.sort((a, b) => a - b)
-		let durations_left_str = durations_left.join(" · ")
+		const duration_0 = this.worlds[0].victory_end;
+		const durations_left = durations.filter((x) => x < duration_0);
+		const durations_right = durations.filter((x) => x > duration_0);
+		durations_left.sort((a, b) => a - b);
+		durations_right.sort((a, b) => a - b);
+		let durations_left_str = durations_left.join(" · ");
 		if (durations_left_str) {
-			durations_left_str = durations_left_str + " · "
+			durations_left_str = durations_left_str + " · ";
 		}
-		let durations_right_str = durations_right.join(" · ")
+		let durations_right_str = durations_right.join(" · ");
 		if (durations_right_str) {
-			durations_right_str = " · " + durations_right_str
+			durations_right_str = " · " + durations_right_str;
 		}
-		document.getElementById("victory_duration").innerHTML = duration_0
-		document.getElementById("victory_duration_lower").innerHTML = durations_left_str;
-		document.getElementById("victory_duration_higher").innerHTML = durations_right_str;
+		document.getElementById("victory_duration").innerHTML = duration_0;
+		document.getElementById("victory_duration_lower").innerHTML =
+			durations_left_str;
+		document.getElementById("victory_duration_higher").innerHTML =
+			durations_right_str;
 	}
 	requestAnimationFrame(() => {
 		this.tick();
 	});
 };
 Game.prototype.restart = function () {
-	this.victory_celebrated = false
-	this.started = false
-	this.switch_cell_limit = -1
+	this.victory_celebrated = false;
+	this.started = false;
+	this.switch_cell_limit = -1;
 	this.worlds = [this.gravitle.World.new()];
 	for (const _ghost of this.ghosts) {
 		this.worlds.push(this.gravitle.World.new());
@@ -281,17 +298,14 @@ Game.prototype.restart = function () {
 			world.add_link(l.a, l.b);
 		}
 	}
-	// this.celebrate_victory()
-	// document.getElementById("notice_text").classList.add("hide")
 };
 Game.prototype.try_again = function () {
-	console.log("try_again");
 	this.ghosts.push({
 		kind: "me",
-		o: JSON.parse(this.worlds[0].get_activation_events())
+		o: JSON.parse(this.worlds[0].get_activation_events()),
 	});
-	this.ghost_to_share = null
-	document.getElementById("victory").classList.remove("yes")
+	this.ghost_to_share = null;
+	document.getElementById("victory").classList.remove("yes");
 	this.restart();
 };
 export { Game };

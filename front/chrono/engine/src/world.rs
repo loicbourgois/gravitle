@@ -1,6 +1,5 @@
 use crate::cell::Cell;
 use crate::link::Link;
-use crate::log;
 use crate::math::Cri;
 use crate::math::collision_response;
 use crate::math::delta;
@@ -106,7 +105,6 @@ impl World {
                             c: ca.idx,
                             a: ca.activated,
                         });
-                    // log(&format!("{} {} {}", self.step, ca.idx, ca.activated));
                 }
                 ca.activated_previous = ca.activated;
                 ca.np.x = ca.p.x + ca.dp.x;
@@ -212,12 +210,6 @@ impl World {
             self.victory_end = Some(self.step);
             self.victory_duration = Some(self.step - self.move_start.unwrap());
             self.victory = 1;
-            log("victory");
-            for c in &self.cells {
-                if c.kind == BOOSTER {
-                    log(&format!("{} - {}: {:?}", self.step, c.idx, c.p));
-                }
-            }
         }
     }
     pub fn get_activation_events(&self) -> String {
