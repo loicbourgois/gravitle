@@ -1,6 +1,7 @@
 :root {
   --primary-color: #ff9;
   --background: #102;
+  --secondary-color: #fffd;
 }
 * {
   font-family: monospace;
@@ -149,8 +150,45 @@ button{
 #victory.yes #victory_duration_lower {
   text-align:right;
   padding-right: 1rem;
+  direction: rtl;
 }
 #victory.yes #victory_duration_higher {
   text-align:left;
   padding-left: 1rem;
+}
+#overlay {
+  z-index: 2;
+}
+#overlay-right {
+  display: flex;
+  flex-direction: column;
+}
+#overlay-right > * {
+  color: var(--primary-color);
+  padding: 0;
+}
+#overlay-right svg {
+   fill: #fff8;
+   max-width: 2rem;
+   height: 2rem;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+#overlay-right svg:hover {
+  fill: #fffd;
+}
+#overlay-right #fps {
+  color: #fffd;
+}
+#overlay-right a {
+  align-items: end;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1rem;
+}
+#notice_text span {
+  color: #ff9d;
+}
+#fps {
+  text-align: right;
 }

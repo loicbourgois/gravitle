@@ -24,6 +24,10 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 	this.seed_input = seed_input;
 	this.last_frame = null;
 	this.tick_starts = [];
+	this.debug_durations = {
+		engine: [],
+		draw: [],
+	}
 	if (this.ghost) {
 		this.ghosto = short_to_json(this.ghost);
 	}
@@ -138,6 +142,9 @@ Game.prototype.tick = function () {
 		steps = 4;
 	}
 	this.last_frame = now;
+	this.debug_durations.engine.push({
+		start: performance.now(),
+	})
 	for (let index = 0; index < steps; index++) {
 		for (let i = 1; i < this.worlds.length; i++) {
 			const world = this.worlds[i];
@@ -159,6 +166,10 @@ Game.prototype.tick = function () {
 			this.celebrate_victory();
 		}
 	}
+	this.debug_durations.engine.at(-1).duration = performance.now() - this.debug_durations.engine.at(-1).start
+	this.debug_durations.draw.push({
+		start: performance.now(),
+	})
 	this.view.set_backgound("#102");
 	for (let i = 1; i < this.worlds.length; i++) {
 		if (this.ghosts[i - 1].kind == "me") {
@@ -183,6 +194,7 @@ Game.prototype.tick = function () {
 		}
 	}
 	draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
+	this.debug_durations.draw.at(-1).duration = performance.now() - this.debug_durations.draw.at(-1).start
 	if (this.victory_celebrated) {
 		const durations = [];
 		for (const world of this.worlds) {
@@ -193,11 +205,11 @@ Game.prototype.tick = function () {
 		const duration_0 = this.worlds[0].victory_end;
 		const durations_left = durations.filter((x) => x < duration_0);
 		const durations_right = durations.filter((x) => x > duration_0);
-		durations_left.sort((a, b) => a - b);
+		durations_left.sort((a, b) => b - a);
 		durations_right.sort((a, b) => a - b);
 		let durations_left_str = durations_left.join(" · ");
 		if (durations_left_str) {
-			durations_left_str = durations_left_str + " · ";
+			durations_left_str = " · " + durations_left_str;
 		}
 		let durations_right_str = durations_right.join(" · ");
 		if (durations_right_str) {
@@ -209,6 +221,17 @@ Game.prototype.tick = function () {
 		document.getElementById("victory_duration_higher").innerHTML =
 			durations_right_str;
 	}
+	while (this.debug_durations.engine.length > 200) {
+		this.debug_durations.engine.shift();
+	}
+	while (this.debug_durations.draw.length > 200) {
+		this.debug_durations.draw.shift();
+	}
+	const debug_durations_engine = this.debug_durations.engine.reduce((sum, obj) => sum + obj.duration, 0) / this.debug_durations.engine.length;
+	const debug_durations_draw = this.debug_durations.draw.reduce((sum, obj) => sum + obj.duration, 0) / this.debug_durations.draw.length;
+
+	document.getElementById("debug_durations_engine").innerHTML = debug_durations_engine.toFixed(5)
+	document.getElementById("debug_durations_draw").innerHTML = debug_durations_draw.toFixed(5)
 	requestAnimationFrame(() => {
 		this.tick();
 	});

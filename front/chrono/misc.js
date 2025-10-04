@@ -1,3 +1,6 @@
+const sep1 = "."
+const sep2 = "l"
+
 const json_to_b64 = (j) => {
 	let b = "";
 	for (const k in j) {
@@ -17,19 +20,19 @@ const json_to_short = (j) => {
 		const e = j[k];
 		b += `${k}`;
 		for (const e2 of e) {
-			b += `.${e2.c}`;
+			b += `${sep2}${e2.c}`;
 		}
-		b += `_`;
+		b += sep1;
 	}
 	return b;
 };
 
 const short_to_json = (s) => {
 	const j = {};
-	for (const e of s.split("_")) {
+	for (const e of s.split(sep1)) {
 		let i = "step";
 		let step = null;
-		for (const e2 of e.split(".")) {
+		for (const e2 of e.split(sep2)) {
 			if (i == "step") {
 				step = e2;
 				i = "c";

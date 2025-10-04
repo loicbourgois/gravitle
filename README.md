@@ -18,4 +18,9 @@ http://localhost/chrono/?seed=efopiw-gakura&stars=1
 
 
 ## TODO
+- asteroids color
+- notice color
+- drawing performances
+- booster sound
+- 60 fps test
 - /mining: buggy booster flares if initial zoom != 100%
