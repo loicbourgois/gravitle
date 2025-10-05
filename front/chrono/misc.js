@@ -1,5 +1,5 @@
-const sep1 = "."
-const sep2 = "l"
+const sep1 = ".";
+const sep2 = "l";
 
 const json_to_b64 = (j) => {
 	let b = "";

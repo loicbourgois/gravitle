@@ -93,7 +93,7 @@ pub fn apply_movement_action(
             }
         }
         MovementAction::Nothing => {}
-    };
+    }
 }
 pub fn anchor_target_movement_action(
     max_rotation_speed: f32,

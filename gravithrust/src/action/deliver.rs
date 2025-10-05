@@ -6,8 +6,8 @@ use crate::particle::QuantityKind;
 use crate::ship::Ship;
 use crate::ship::ShipMore;
 use rand::prelude::IndexedRandom;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::rng;
+// use rand::seq::SliceRandom;
 use std::cmp::Ordering;
 pub fn deliver_closest(
     s: &Ship,
@@ -18,7 +18,7 @@ pub fn deliver_closest(
 ) {
     match sm.target_pid {
         None => {
-            let mut dmin = std::f32::INFINITY;
+            let mut dmin = f32::INFINITY;
             let mut target_pid: Option<usize> = None;
             for p in particles.iter() {
                 if p.k == kind && p.remaining_capacity(qk) > 0 {
@@ -56,7 +56,7 @@ pub fn deliver_less_quantity(
 ) {
     match sm.target_pid {
         None => {
-            let mut min = std::u32::MAX;
+            let mut min = u32::MAX;
             let mut target_pids = Vec::new();
             for p in particles.iter() {
                 if p.k == kind && p.remaining_capacity(qk) > 0 {
@@ -74,7 +74,7 @@ pub fn deliver_less_quantity(
                     }
                 }
             }
-            sm.target_pid = target_pids.choose(&mut thread_rng()).copied();
+            sm.target_pid = target_pids.choose(&mut rng()).copied();
             match sm.target_pid {
                 Some(pid) => {
                     let p = &particles[pid];

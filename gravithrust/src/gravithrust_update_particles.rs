@@ -5,7 +5,7 @@ use crate::particle::QuantityKind;
 impl Gravithrust {
     pub fn update_particles(&mut self) {
         for (pid, p1) in self.particles.iter_mut().enumerate() {
-            let mut d1 = &mut self.particles_internal[pid];
+            let d1 = &mut self.particles_internal[pid];
             p1.direction = normalize_2(d1.direction);
             if !p1.k.is_static() {
                 p1.v.x += d1.dv.x;

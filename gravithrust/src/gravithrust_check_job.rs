@@ -34,7 +34,7 @@ fn all_conditions_ok(
     ship_more: &ShipMore,
     conditions: &[Condition],
 ) -> bool {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for condition in conditions {
         let r = match condition {
             Condition::CoalStorageEmpty => quantity(ship_more, particles, QuantityKind::Coal) == 0,
@@ -65,7 +65,7 @@ fn all_conditions_ok(
 }
 impl Gravithrust {
     pub fn check_job(&mut self, sid: usize) {
-        let mut ship_more = &mut self.ships_more[sid];
+        let ship_more = &mut self.ships_more[sid];
         let ship = &self.ships[sid];
         match &ship_more.job {
             Some(job) => {

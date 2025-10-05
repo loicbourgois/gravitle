@@ -15,7 +15,7 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
     .expect("Should have been able to read the file");
     writeln!(
         File::create(format!(
-            "{}/github.com/loicbourgois/gravitle/alchemy.mmd",
+            "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.mmd",
             envs["HOME"]
         ))?,
         "flowchart LR\n  {}",
@@ -31,7 +31,7 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
                 let k2 = words[3];
                 if words[0] == "harvest" {
                     let k3 = words[4];
-                    vec![
+                    [
                         format!("{k1} -.-> {function}{k1}{k2}({function} {qk})"),
                         format!("{k2} -.-> {function}{k1}{k2}"),
                         format!("  {function}{k1}{k2} -.-> {k3}"),
@@ -62,15 +62,9 @@ pub fn alchemy_transfer(in_: &str, qks_by_k: &mut HashMap<String, HashSet<String
             let k1 = words[2].from_case(Case::Snake).to_case(Case::UpperCamel);
             let k2 = words[3].from_case(Case::Snake).to_case(Case::UpperCamel);
             let qk = words[1].from_case(Case::Snake).to_case(Case::UpperCamel);
-            qks_by_k
-                .entry(k1.clone())
-                .or_insert(HashSet::new())
-                .insert(qk.clone());
-            qks_by_k
-                .entry(k2.clone())
-                .or_insert(HashSet::new())
-                .insert(qk.clone());
-            vec![
+            qks_by_k.entry(k1.clone()).or_default().insert(qk.clone());
+            qks_by_k.entry(k2.clone()).or_default().insert(qk.clone());
+            [
                 format!("// {k}"),
                 format!("(Kind::{k1}, Kind::{k2}, QuantityKind::{qk}) => {{",),
                 format!("  {function_name}(p1, p2, pi1, pi2, QuantityKind::{qk});"),
@@ -138,7 +132,7 @@ pub fn alchemy_transform(in_: &str) -> String {
             actions.append(&mut actions_2);
             let condition_str = conditions.join("&&");
             let action_str = actions.join("\n");
-            vec![
+            [
                 format!("// {line}"),
                 format!("Kind::{k1} => {{"),
                 format!("  if {condition_str} {{"),
@@ -183,7 +177,7 @@ pub fn build_alchemy_rs(kinds: &[&String]) -> Result<(), std::io::Error> {
                     let kind = k.from_case(Case::Snake).to_case(Case::UpperCamel);
                     let qks = qks_by_k
                         .entry(kind.clone())
-                        .or_insert(HashSet::new())
+                        .or_default()
                         .iter()
                         .map(|x| {
                             let aa = x;

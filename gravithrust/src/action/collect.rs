@@ -14,7 +14,7 @@ pub fn collect(
 ) {
     match sm.target_pid {
         None => {
-            let mut dmin = std::f32::INFINITY;
+            let mut dmin = f32::INFINITY;
             let mut target_pid: Option<usize> = None;
             for p in particles.iter() {
                 if p.k == kind && p.quantity(qk) > 0 {

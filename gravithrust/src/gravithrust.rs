@@ -227,7 +227,7 @@ impl Gravithrust {
     }
 
     pub fn add_ship_internal(&mut self, blueprint: &Blueprint, position: Vector) -> usize {
-        let sid = Some(self.ships.len());
+        let sid = self.ships.len();
         let ship = Ship {
             target: Vector {
                 x: 0.5,
@@ -243,7 +243,7 @@ impl Gravithrust {
             cross: Vector::default(),
             on_target: 0,
         };
-        let pids = self.add_structure_internal(blueprint, position, sid);
+        let pids = self.add_structure_internal(blueprint, position, Some(sid));
         let ship_more = ShipMore {
             pids,
             ship_control: ShipControl {
@@ -257,14 +257,14 @@ impl Gravithrust {
             anchor_pid: None,
             target_pid: None,
             job: None,
-            sid: sid.unwrap(),
+            sid,
             orientation_mode: blueprint.orientation_mode,
         };
         self.ships.push(ship);
-        self.ships[sid.unwrap()].p = ship_position(&self.particles, &ship_more);
+        self.ships[sid].p = ship_position(&self.particles, &ship_more);
         self.ships_more.push(ship_more);
-        self.ships[sid.unwrap()].pp = self.ships[sid.unwrap()].p;
-        sid.unwrap()
+        self.ships[sid].pp = self.ships[sid].p;
+        sid
     }
 
     pub fn particles_size(&self) -> u32 {
@@ -433,8 +433,8 @@ impl Gravithrust {
         self.state.quantity.clear();
         for p in &self.particles {
             *self.state.count.entry(p.k).or_insert(0) += 1;
-            let capacities = self.state.capacity.entry(p.k).or_insert(HashMap::new());
-            let quantities = self.state.quantity.entry(p.k).or_insert(HashMap::new());
+            let capacities = self.state.capacity.entry(p.k).or_default();
+            let quantities = self.state.quantity.entry(p.k).or_default();
             for qk in p.qks() {
                 *capacities.entry(*qk).or_insert(0) += p.capacity(*qk);
                 *quantities.entry(*qk).or_insert(0) += p.quantity(*qk);
@@ -505,13 +505,13 @@ impl Gravithrust {
         for sid in 0..l {
             let ship_more = &self.ships_more[sid];
             {
-                let mut ship = &mut self.ships[sid];
+                let ship = &mut self.ships[sid];
                 match ship_more.target_pid {
                     Some(pid) => {
                         ship.target = self.particles[pid].p;
                     }
                     None => {}
-                };
+                }
                 ship.pp = ship.p;
                 ship.previous_orientation = ship.orientation;
                 ship.p = ship_position(&self.particles, ship_more);
