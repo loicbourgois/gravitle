@@ -1,14 +1,9 @@
 import { cyrb128, sfc32, random_seed } from "./random.js";
 import { ship } from "./ship.js";
-import { get_cell } from "./get_cell.js";
-import { wrap_around } from "./math.js";
 import { draw_cells, draw_ship_only } from "./draw_cells.js";
 import { json_to_short, short_to_json } from "./misc.js";
-const kinds = {
-	armor: 0,
-	booster: 1,
-	core: 2,
-};
+import { game_setup } from "./game_setup.js";
+
 const kb = {
 	s: [],
 	d: [],
@@ -244,6 +239,7 @@ Game.prototype.tick = function () {
 		this.tick();
 	});
 };
+Game.prototype.setup = game_setup;
 Game.prototype.restart = function () {
 	this.victory_celebrated = false;
 	this.started = false;
@@ -252,83 +248,7 @@ Game.prototype.restart = function () {
 	for (const _ghost of this.ghosts) {
 		this.worlds.push(this.gravitle.World.new());
 	}
-	for (const world of this.worlds) {
-		ship.parts.forEach((e, idx) => {
-			world.add_cell(e.p.x - 0.3, e.p.y - 0.3, e.d, kinds[e.kind]);
-		});
-		const rand = sfc32(this.seed[0], this.seed[1], this.seed[2], this.seed[3]);
-		for (let index = 0; index < 20; index++) {
-			const diameter = 0.05;
-			let iterations = 0;
-			while (true) {
-				iterations += 1;
-				if (iterations > 100) {
-					throw "too many iterations";
-				}
-				const x = rand();
-				const y = rand();
-				const cells_ptr = world.cells();
-				const cell_size = this.gravitle.Cell.size();
-				const cells_view = new DataView(
-					this.memory.buffer,
-					cells_ptr,
-					world.cells_count() * cell_size,
-				);
-				let ok = true;
-				for (let i = 0; i < world.cells_count(); i++) {
-					const cell = get_cell(cells_view, cell_size, i);
-					const wa = wrap_around(cell.p, { x, y });
-					let diams = cell.diameter + diameter * 1.5;
-					let colliding = wa.d_sqrd < diams * diams;
-					if (colliding) {
-						ok = false;
-						break;
-					}
-				}
-				if (ok) {
-					world.add_cell(x, y, diameter, 4);
-					break;
-				}
-			}
-		}
-		for (let index = 0; index < this.stars_count; index++) {
-			const diameter = 0.015;
-			let iterations = 0;
-			while (true) {
-				iterations += 1;
-				if (iterations > 200) {
-					throw "too many iterations";
-				}
-				const x = rand();
-				const y = rand();
-				const cells_ptr = world.cells();
-				const cell_size = this.gravitle.Cell.size();
-				const cells_view = new DataView(
-					this.memory.buffer,
-					cells_ptr,
-					world.cells_count() * cell_size,
-				);
-				let ok = true;
-				for (let i = 0; i < world.cells_count(); i++) {
-					const cell = get_cell(cells_view, cell_size, i);
-					const wa = wrap_around(cell.p, { x: x, y: y });
-					let diams = cell.diameter * 0.5 + diameter * 5;
-					let colliding = wa.d_sqrd < diams * diams;
-					if (colliding) {
-						ok = false;
-						break;
-					}
-				}
-				if (ok) {
-					world.add_cell(x, y, diameter, 5);
-					break;
-				}
-			}
-		}
-		for (const l of ship.links) {
-			world.add_link(l.a, l.b);
-		}
-	}
+	this.setup();
 };
 Game.prototype.try_again = function () {
 	this.ghosts.push({

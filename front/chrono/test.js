@@ -2,11 +2,12 @@ import { get_cell } from "./get_cell.js";
 import { get_link } from "./get_link.js";
 const test = (gravitle, memory) => {
 	console.log("test - start");
+	console.log(`gravitle.Cell.size(): ${gravitle.Cell.size()}`);
 	const world = gravitle.World.new();
 	const input = [
 		{
 			item_kind: "cell",
-			kind: 23,
+			kind: 1,
 			p: {
 				x: 2.4,
 				y: -3.6,
@@ -31,7 +32,7 @@ const test = (gravitle, memory) => {
 			},
 		},
 		{
-			kind: 12,
+			kind: 4,
 			item_kind: "cell",
 			p: {
 				x: 12.4,
@@ -57,7 +58,7 @@ const test = (gravitle, memory) => {
 			},
 		},
 		{
-			kind: 19,
+			kind: 5,
 			item_kind: "cell",
 			p: {
 				x: 5.4,
@@ -83,7 +84,7 @@ const test = (gravitle, memory) => {
 			},
 		},
 		{
-			kind: 13,
+			kind: 6,
 			item_kind: "cell",
 			p: {
 				x: 5.4,

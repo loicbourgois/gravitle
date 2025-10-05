@@ -19,6 +19,7 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 
 
 ## TODO
+- asteroid rest position
 - asteroids color
 - notice color
 - drawing performances

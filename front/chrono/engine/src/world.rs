@@ -8,8 +8,19 @@ use crate::point::Point;
 use crate::wasm_bindgen;
 use serde::Serialize;
 use std::collections::HashMap;
-const BOOSTER: u8 = 1;
 const LINK_STRENGH: f32 = 0.2;
+
+#[wasm_bindgen]
+#[repr(u8)]
+#[derive(PartialEq, Copy, Clone)]
+pub enum Kind {
+    Armor = 0,
+    Booster = 1,
+    Core = 2,
+    Asteroid = 4,
+    Unlighted = 5,
+    Lighted = 6,
+}
 
 #[derive(Serialize)]
 struct ActivationEvent {
@@ -86,7 +97,7 @@ impl World {
                 ca.direction.normalize();
                 ca.dp.x = ca.p.x - ca.pp.x;
                 ca.dp.y = ca.p.y - ca.pp.y;
-                if ca.kind == BOOSTER && ca.activated == 1 {
+                if ca.kind == Kind::Booster && ca.activated == 1 {
                     ca.dp.x -= ca.direction.x * 0.0001;
                     ca.dp.y -= ca.direction.y * 0.0001;
                     if self.move_start.is_none() {
@@ -140,7 +151,12 @@ impl World {
                     };
                     let diams = (ca.diameter + cb.diameter) * 0.5;
                     let colliding = wa.d_sqrd < diams * diams;
-                    if colliding && ca.kind != 5 && ca.kind != 6 && cb.kind != 5 && cb.kind != 6 {
+                    if colliding
+                        && ca.kind != Kind::Unlighted
+                        && ca.kind != Kind::Lighted
+                        && cb.kind != Kind::Unlighted
+                        && cb.kind != Kind::Lighted
+                    {
                         let mut cr = collision_response(&cria, &crib);
                         if self.link_exists(ia, ib) {
                             cr.x *= 0.5;
@@ -153,11 +169,17 @@ impl World {
                         cb.collision_response.y += cr.y;
                         cb.collision_response_count += 1;
                     }
-                    if colliding && ca.kind == 5 && [0u8, 1u8, 2u8].contains(&cb.kind) {
-                        ca.kind = 6;
+                    if colliding
+                        && ca.kind == Kind::Unlighted
+                        && [Kind::Armor, Kind::Booster, Kind::Core].contains(&cb.kind)
+                    {
+                        ca.kind = Kind::Lighted;
                     }
-                    if colliding && cb.kind == 5 && [0u8, 1u8, 2u8].contains(&ca.kind) {
-                        cb.kind = 6;
+                    if colliding
+                        && cb.kind == Kind::Unlighted
+                        && [Kind::Armor, Kind::Booster, Kind::Core].contains(&ca.kind)
+                    {
+                        cb.kind = Kind::Lighted;
                     }
                 }
             }
@@ -184,10 +206,10 @@ impl World {
         }
     }
     pub fn update_04(&mut self) {
-        let mut c5 = 0;
+        let mut c_unlighted = 0;
         for p in &mut self.cells {
-            if p.kind == 5 {
-                c5 += 1;
+            if p.kind == Kind::Unlighted {
+                c_unlighted += 1;
             }
             if p.collision_response_count > 0 {
                 p.collision_response.x /= p.collision_response_count as f32;
@@ -197,7 +219,7 @@ impl World {
                 p.np.x += p.link_response.x;
                 p.np.y += p.link_response.y;
             }
-            if p.kind == 4 || p.kind == 5 || p.kind == 6 {
+            if p.kind == Kind::Asteroid || p.kind == Kind::Unlighted || p.kind == Kind::Lighted {
                 // pass
             } else {
                 p.p.x = (p.np.x + 1.0) % 1.0;
@@ -206,7 +228,7 @@ impl World {
                 p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y;
             }
         }
-        if c5 == 0 && self.victory != 1 && self.move_start.is_some() {
+        if c_unlighted == 0 && self.victory != 1 && self.move_start.is_some() {
             self.victory_end = Some(self.step);
             self.victory_duration = Some(self.step - self.move_start.unwrap());
             self.victory = 1;
@@ -217,7 +239,7 @@ impl World {
             .unwrap_or_else(|_| "Error serializing activation_events to JSON".to_string())
     }
     // Cell
-    pub fn add_cell(&mut self, x: f32, y: f32, diameter: f32, kind: u8) -> u32 {
+    pub fn add_cell(&mut self, x: f32, y: f32, diameter: f32, kind: Kind) -> u32 {
         let l = self.cells.len();
         let l_u32 = l as u32;
         self.cells.push(Cell::new(l_u32, diameter, kind));
@@ -231,7 +253,7 @@ impl World {
     pub fn switch_cell_activated(&mut self, idx: u32) {
         self.cells[idx as usize].activated = (self.cells[idx as usize].activated + 1) % 2;
     }
-    pub fn set_cell_kind(&mut self, idx: u32, kind: u8) {
+    pub fn set_cell_kind(&mut self, idx: u32, kind: Kind) {
         self.cells[idx as usize].kind = kind;
     }
     pub fn set_cell_position_x(&mut self, idx: u32, x: f32) {

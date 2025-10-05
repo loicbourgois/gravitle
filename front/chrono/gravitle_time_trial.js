@@ -120,6 +120,18 @@ export function setup() {
     wasm.setup();
 }
 
+/**
+ * @enum {0 | 1 | 2 | 4 | 5 | 6}
+ */
+export const Kind = Object.freeze({
+    Armor: 0, "0": "Armor",
+    Booster: 1, "1": "Booster",
+    Core: 2, "2": "Core",
+    Asteroid: 4, "4": "Asteroid",
+    Unlighted: 5, "5": "Unlighted",
+    Lighted: 6, "6": "Lighted",
+});
+
 const CellFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_cell_free(ptr >>> 0, 1));
@@ -331,17 +343,35 @@ export class Cell {
         wasm.__wbg_set_cell_activated_previous(this.__wbg_ptr, arg0);
     }
     /**
-     * @returns {number}
+     * @returns {Kind}
      */
     get kind() {
         const ret = wasm.__wbg_get_cell_kind(this.__wbg_ptr);
         return ret;
     }
     /**
-     * @param {number} arg0
+     * @param {Kind} arg0
      */
     set kind(arg0) {
         wasm.__wbg_set_cell_kind(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {Point | undefined}
+     */
+    get rp() {
+        const ret = wasm.__wbg_get_cell_rp(this.__wbg_ptr);
+        return ret === 0 ? undefined : Point.__wrap(ret);
+    }
+    /**
+     * @param {Point | null} [arg0]
+     */
+    set rp(arg0) {
+        let ptr0 = 0;
+        if (!isLikeNone(arg0)) {
+            _assertClass(arg0, Point);
+            ptr0 = arg0.__destroy_into_raw();
+        }
+        wasm.__wbg_set_cell_rp(this.__wbg_ptr, ptr0);
     }
     /**
      * @param {number} x
@@ -360,7 +390,7 @@ export class Cell {
     /**
      * @param {number} idx
      * @param {number} diameter
-     * @param {number} kind
+     * @param {Kind} kind
      * @returns {Cell}
      */
     static new(idx, diameter, kind) {
@@ -815,7 +845,7 @@ export class World {
     }
     /**
      * @param {number} idx
-     * @param {number} kind
+     * @param {Kind} kind
      */
     set_cell_kind(idx, kind) {
         wasm.world_set_cell_kind(this.__wbg_ptr, idx, kind);
@@ -837,7 +867,7 @@ export class World {
      * @param {number} x
      * @param {number} y
      * @param {number} diameter
-     * @param {number} kind
+     * @param {Kind} kind
      * @returns {number}
      */
     add_cell(x, y, diameter, kind) {
