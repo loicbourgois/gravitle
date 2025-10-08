@@ -7,6 +7,14 @@
   font-family: monospace;
   color: #0000;
   margin: 0;
+  text-decoration: none;
+}
+a {
+  color: var(--secondary-color);
+}
+a:hover {
+  cursor: pointer;
+  color: var(--primary-color);
 }
 body {
   width: 100vw;
@@ -14,16 +22,39 @@ body {
   display: flex;
   background: var(--background);
 }
+button{
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  background: none;
+}
 canvas {
   image-rendering: pixelated;
 }
+
+
+.direction {
+  font-size: 2rem;
+}
+.hide {
+  display: none !important;
+}
+.key_interact {
+  font-size: 1.25rem;
+}
+.spacer {
+  flex-grow: 1;
+}
+
+
 #left, #right, #top, #bottom {
   flex-grow: 1;
 }
-#content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: row;
+
+
+#canvas {
+  height: min(100vh, 100vw);
+  width: min(100vh, 100vw);
 }
 #center {
   height: 100vh;
@@ -31,81 +62,26 @@ canvas {
   display: flex;
   flex-direction: column;
 }
-#canvas {
-  height: min(100vh, 100vw);
-  width: min(100vh, 100vw);
-}
-#victory {
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-}
-#victory.yes {
-  background-color: #fff1;
-}
-#victory p {
-  color: #ff90;
-}
-#victory.yes p {
-  font-size: 3rem;
-  color: #ff9d;
-  text-align: center;
-}
-#victory.yes .ex {
-  width: 0;
+#content {
   flex-grow: 1;
-}
-#aa {
-  margin-top: 15vh;
-  margin-bottom: auto;
-}
-#vic_text {
   display: flex;
-  justify-content: center;
+  flex-direction: row;
 }
-#vic_text button {
-  width: 15rem;
+#durations {
+  display: flex;
+  margin-top: 7rem;
+  width: 100vw;
 }
-.hide {
-  display: none !important;
-}
-button{
-  border: none;
-  cursor: pointer;
-  font-size: 2rem;
-  background: none;
-}
-.key_interact {
-  font-size: 1.25rem;
-}
-#victory.yes #vic_text button {
-  color: #ff9d;
-}
-#victory.yes .key_interact {
-  color: #ff9d;
-}
-#victory.yes #vic_text button:hover {
-  color: #ff9f;
-}
-#victory.yes #victory_duration_1 {
-  font-size: 2rem;
-}
-#vic_text {
-  margin-top: 4rem;
+#fps {
+  text-align: right;
 }
 #notice_text {
   margin-top: 8rem;
-}
-
-#notice_text {
   display: flex;
   width: 100vw;
 }
 #notice_text span {
   color: #ff9f;
-}
-#notice_text > * {
   padding-left: 1rem;
   padding-right: 1rem;
   display: flex;
@@ -113,48 +89,26 @@ button{
   text-align: center;
   width: 10rem;
 }
-.spacer {
-  flex-grow: 1;
+#notice_text span {
+  color: #ff9d;
 }
-.direction {
-  font-size: 2rem;
-}
-
 #overlay {
   display: flex;
   position: absolute;
   width: 100vw;
+  height: 100vh;
+}
+#overlay-left {
+  display: flex;
+  flex-direction: column;
+}
+#overlay-left a {
+  padding-top: 1rem;
+  padding-left: 1rem;
 }
 #overlay p {
   color: var(--primary-color);
   padding: 1rem;
-}
-
-#durations {
-  display: flex;
-  margin-top: 7rem;
-  width: 100vw;
-}
-#victory_duration {
-  flex-grow: 0;
-}
-#victory_duration_lower, #victory_duration_higher {
-  flex-grow: 1;
-  width: 0;
-}
-#victory.yes #victory_duration_lower, #victory.yes #victory_duration_higher {
-  font-size: 1.5rem;
-  align-content: center;
-  text-wrap: nowrap;
-}
-#victory.yes #victory_duration_lower {
-  text-align:right;
-  padding-right: 1rem;
-  direction: rtl;
-}
-#victory.yes #victory_duration_higher {
-  text-align:left;
-  padding-left: 1rem;
 }
 #overlay {
   z-index: 2;
@@ -186,9 +140,70 @@ button{
   flex-direction: column;
   padding-bottom: 1rem;
 }
-#notice_text span {
+#victory {
+  z-index: 5;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+#victory p {
+  color: #ff90;
+}
+#victory_main {
+  margin-top: 15vh;
+  margin-bottom: auto;
+}
+#victory.yes {
+  background-color: #fff1;
+}
+#victory.yes p {
+  font-size: 3rem;
+  color: #ff9d;
+  text-align: center;
+}
+#victory.yes .spacer {
+  width: 0;
+  flex-grow: 1;
+}
+#vic_text {
+  display: flex;
+  justify-content: center;
+  margin-top: 4rem;
+}
+#vic_text button {
+  width: 15rem;
+}
+#victory.yes #vic_text button {
   color: #ff9d;
 }
-#fps {
-  text-align: right;
+#victory.yes .key_interact {
+  color: #ff9d;
+}
+#victory.yes #vic_text button:hover {
+  color: #ff9f;
+}
+#victory.yes #victory_duration_1 {
+  font-size: 2rem;
+}
+#victory_duration {
+  flex-grow: 0;
+}
+#victory_duration_lower, #victory_duration_higher {
+  flex-grow: 1;
+  width: 0;
+}
+#victory.yes #victory_duration_lower, #victory.yes #victory_duration_higher {
+  font-size: 1.5rem;
+  align-content: center;
+  text-wrap: nowrap;
+}
+#victory.yes #victory_duration_lower {
+  text-align:right;
+  padding-right: 1rem;
+  direction: rtl;
+}
+#victory.yes #victory_duration_higher {
+  text-align:left;
+  padding-left: 1rem;
 }

@@ -2,19 +2,84 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Gravitle</title>
-    <link rel="stylesheet" href="index.css">
+    <title>Gravitle - Chrono</title>
+    <link rel="stylesheet" href="chrono/index.css">
   </head>
   <body>
-      <div id="top">
-        <a href="/">home</a>
-        <a href="/chrono/">chrono</a>
+    <div id="overlay">
+      <div id="overlay-left">
+        <a href="/alpha/">alpha</a>
+        <a href="/">chrono</a>
+        <!-- <a href="/playground">playground</a> -->
         <a href="/duel/">duel</a>
         <!-- <a href="./mining/">mining</a> -->
-        <a href="/v0/">v0</a>
         <a href="https://github.com/loicbourgois/gravitle">github</a>
+        <a href="https://discord.gg/ejqGJkm7KM">discord</a>
       </div>
       <span class="spacer"></span>
-      
+      <div id="overlay-right">
+        <p id="fps"></p>
+        <p id="debug_durations_engine"></p>
+        <p id="debug_durations_draw"></p>
+        <span class="spacer"></span>
+        <!-- <a href="https://github.com/loicbourgois/gravitle">
+          <svg 
+            height="32" aria-hidden="true" 
+            viewBox="0 0 24 24" 
+            version="1.1" width="32" 
+            data-view-component="true"
+            xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 1C5.923 1 1 5.923 1 12c0 4.867 3.149 8.979 7.521 10.436.55.096.756-.233.756-.522 0-.262-.013-1.128-.013-2.049-2.764.509-3.479-.674-3.699-1.292-.124-.317-.66-1.293-1.127-1.554-.385-.207-.936-.715-.014-.729.866-.014 1.485.797 1.691 1.128.99 1.663 2.571 1.196 3.204.907.096-.715.385-1.196.701-1.471-2.448-.275-5.005-1.224-5.005-5.432 0-1.196.426-2.186 1.128-2.956-.111-.275-.496-1.402.11-2.915 0 0 .921-.288 3.024 1.128a10.193 10.193 0 0 1 2.75-.371c.936 0 1.871.123 2.75.371 2.104-1.43 3.025-1.128 3.025-1.128.605 1.513.221 2.64.111 2.915.701.77 1.127 1.747 1.127 2.956 0 4.222-2.571 5.157-5.019 5.432.399.344.743 1.004.743 2.035 0 1.471-.014 2.654-.014 3.025 0 .289.206.632.756.522C19.851 20.979 23 16.854 23 12c0-6.077-4.922-11-11-11Z"></path>
+          </svg>
+        </a>
+        <a href="https://discord.gg/ejqGJkm7KM">
+          <svg id="Discord-Logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 126.644 96">
+            <path id="Discord-Symbol-Black" d="M81.15,0c-1.2376,2.1973-2.3489,4.4704-3.3591,6.794-9.5975-1.4396-19.3718-1.4396-28.9945,0-.985-2.3236-2.1216-4.5967-3.3591-6.794-9.0166,1.5407-17.8059,4.2431-26.1405,8.0568C2.779,32.5304-1.6914,56.3725.5312,79.8863c9.6732,7.1476,20.5083,12.603,32.0505,16.0884,2.6014-3.4854,4.8998-7.1981,6.8698-11.0623-3.738-1.3891-7.3497-3.1318-10.8098-5.1523.9092-.6567,1.7932-1.3386,2.6519-1.9953,20.281,9.547,43.7696,9.547,64.0758,0,.8587.7072,1.7427,1.3891,2.6519,1.9953-3.4601,2.0457-7.0718,3.7632-10.835,5.1776,1.97,3.8642,4.2683,7.5769,6.8698,11.0623,11.5419-3.4854,22.3769-8.9156,32.0509-16.0631,2.626-27.2771-4.496-50.9172-18.817-71.8548C98.9811,4.2684,90.1918,1.5659,81.1752.0505l-.0252-.0505ZM42.2802,65.4144c-6.2383,0-11.4159-5.6575-11.4159-12.6535s4.9755-12.6788,11.3907-12.6788,11.5169,5.708,11.4159,12.6788c-.101,6.9708-5.026,12.6535-11.3907,12.6535ZM84.3576,65.4144c-6.2637,0-11.3907-5.6575-11.3907-12.6535s4.9755-12.6788,11.3907-12.6788,11.4917,5.708,11.3906,12.6788c-.101,6.9708-5.026,12.6535-11.3906,12.6535Z"/>
+          </svg>
+        </a> -->
+      </div>
+    </div>
+    <div id="victory">
+      <span class="spacer"></span>
+      <div id="victory_main">
+        <div id="vic_text" class="hide">
+          <button id="again">Again<br><span class="key_interact">[e]</span></button>
+          <button id="new">New<br><span class="key_interact">[space]</span></button>
+          <button id="share">Share<br><span id="share_1" class="key_interact">[r]</span><span id="share_2" class="key_interact hide">Saved to clipboard</span></button>
+        </div>
+        <div id="notice_text">
+          <span class="spacer"></span>
+          <div id="left_key">
+            <span class="direction">Left</span>
+            <span class="key_interact">[s]</span>
+          </div>
+          <div id="right_key">
+            <span class="direction">Right</span>
+            <span class="key_interact">[d]</span>
+          </div>
+          <span class="spacer"></span>
+        </div>
+        <div id="durations">
+          <p id="victory_duration_lower"></p>
+          <p id="victory_duration"></p>
+          <p id="victory_duration_higher"></p>
+        </div>
+      </div>
+      <span class="ex"></span>
+    </div>
+    <div id="content">
+      <div id="left"></div>
+      <div id="center">
+        <div id="top"></div>
+        <canvas id="canvas">
+          
+        </canvas>
+        <div id="bottom"></div>
+      </div>
+      <div id="right"></div>
+    </div>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <script type="module" src="chrono/index.js"></script>
   </body>
 </html>

@@ -63,11 +63,7 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 			this.share();
 		}
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
-			const url = new URL(window.location.href);
-			const url2 = new URL(url.origin + url.pathname);
-			url2.searchParams.append("seed", random_seed());
-			url2.searchParams.append("stars", this.stars_count);
-			window.location.href = url2;
+			this.new_level()
 		}
 		document.querySelectorAll(".disappearable").forEach((x, i) => {
 			x.classList.remove("disappear");
@@ -89,8 +85,21 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 	document.getElementById("share").addEventListener("click", () => {
 		this.share();
 	});
+	document.getElementById("again").addEventListener("click", () => {
+		this.try_again();
+	});
+	document.getElementById("new").addEventListener("click", () => {
+		this.new_level();
+	});
 	this.restart();
 	this.tick();
+}
+Game.prototype.new_level = function () {
+	const url = new URL(window.location.href);
+	const url2 = new URL(url.origin + url.pathname);
+	url2.searchParams.append("seed", random_seed());
+	url2.searchParams.append("stars", this.stars_count);
+	window.location.href = url2;
 }
 Game.prototype.share = function () {
 	const url = new URL(window.location.href);
