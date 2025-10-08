@@ -82,15 +82,13 @@ canvas {
 }
 #notice_text span {
   color: #ff9f;
+  color: var(--primary-color);
   padding-left: 1rem;
   padding-right: 1rem;
   display: flex;
   flex-direction: column;
   text-align: center;
   width: 10rem;
-}
-#notice_text span {
-  color: #ff9d;
 }
 #overlay {
   display: flex;
@@ -140,12 +138,32 @@ canvas {
   flex-direction: column;
   padding-bottom: 1rem;
 }
+
+
+#vic_text button {
+  flex-direction: column;
+  display: flex;
+}
+
+#vic_text button span {
+  color: var(--primary-color);
+}
+
+.vt {
+  margin-bottom: 0.25rem;
+}
+
+
 #victory {
+  pointer-events: none;
   z-index: 5;
   position: fixed;
   width: 100vw;
   height: 100vh;
   display: flex;
+}
+#vic_text * {
+  pointer-events: all;
 }
 #victory p {
   color: #ff90;

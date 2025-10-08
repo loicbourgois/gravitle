@@ -65,9 +65,9 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
 			this.new_level()
 		}
-		document.querySelectorAll(".disappearable").forEach((x, i) => {
-			x.classList.remove("disappear");
-		});
+		// document.querySelectorAll(".disappearable").forEach((x, i) => {
+		// 	x.classList.remove("disappear");
+		// });
 	});
 	document.addEventListener("keyup", (e) => {
 		if (this.key_bindings.get(e.key)) {
