@@ -9,7 +9,6 @@ function game_setup() {
 		booster: this.gravitle.Kind.Booster,
 		core: this.gravitle.Kind.Core,
 	};
-	console.log();
 	for (const world of this.worlds) {
 		for (const e of ship.parts) {
 			world.add_cell(e.p.x - 0.3, e.p.y - 0.3, e.d, kinds[e.kind]);

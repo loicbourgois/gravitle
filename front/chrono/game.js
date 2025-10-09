@@ -3,6 +3,7 @@ import { ship } from "./ship.js";
 import { draw_cells, draw_ship_only } from "./draw_cells.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
+import { Audio } from "./sound.js"
 
 const kb = {
 	s: [],
@@ -15,6 +16,7 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 	this.stars_count = stars_count;
 	this.ghost = ghost;
 	this.ghosts = [];
+	this.audio = null
 	this.seed = cyrb128(seed_input);
 	this.seed_input = seed_input;
 	this.last_frame = null;
@@ -46,10 +48,16 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 			this.key_bindings.get(k).add(idx);
 		}
 	}
+
 	document.addEventListener("keydown", (e) => {
+		if (this.audio === null) {
+			this.audio = new Audio()
+			console.log(this.audio.left.gain)
+		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
 				this.worlds[0].set_cell_activated(idx, 1);
+				this.audio.activate(idx)
 			}
 			this.started = true;
 			document.getElementById("notice_text").classList.add("hide");
@@ -65,15 +73,27 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
 			this.new_level()
 		}
-		// document.querySelectorAll(".disappearable").forEach((x, i) => {
-		// 	x.classList.remove("disappear");
-		// });
 	});
 	document.addEventListener("keyup", (e) => {
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
 				this.worlds[0].set_cell_activated(idx, 0);
+				this.audio.deactivate(idx)
 			}
+			// if (e.key == "s") {
+			// 	this.audio.left.gain.cancelScheduledValues(0)
+			// 	const now = this.audio.audio_context.currentTime
+			// 	for (let i = 0; i < this.audio.cc; i++) {
+			// 		const value = Math.min(this.audio.left.gain.value, 1-i/this.audio.cc)
+			// 		const time = i/this.audio.cc * this.audio.transition
+			// 		this.audio.left.gain.exponentialRampToValueAtTime(value, now+time)
+			// 	}
+			// 	this.audio.left.gain.setValueAtTime(0, now+this.audio.transition)
+			// 	this.audio.keys.s = false
+			// }
+			// if (e.key == "d") {
+			// 	this.audio.right.gain.setValueCurveAtTime([1, 0], this.audio.audio_context.currentTime, 0.1);
+			// }
 		}
 		if (e.key == "e") {
 			this.trying_again = false;
@@ -266,6 +286,7 @@ Game.prototype.try_again = function () {
 	});
 	this.ghost_to_share = null;
 	document.getElementById("victory").classList.remove("yes");
+	document.getElementById("vic_text").classList.add("hide");
 	this.restart();
 };
 export { Game };

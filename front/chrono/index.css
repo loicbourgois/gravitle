@@ -1,5 +1,6 @@
 :root {
   --primary-color: #ff9;
+  --primary-color-low: #ff9d;
   --background: #102;
   --secondary-color: #fffd;
 }
@@ -81,8 +82,7 @@ canvas {
   width: 100vw;
 }
 #notice_text span {
-  color: #ff9f;
-  color: var(--primary-color);
+  color: var(--primary-color-low);
   padding-left: 1rem;
   padding-right: 1rem;
   display: flex;
@@ -145,12 +145,19 @@ canvas {
   display: flex;
 }
 
-#vic_text button span {
+#vic_text button:hover {
   color: var(--primary-color);
 }
 
-.vt {
-  margin-bottom: 0.25rem;
+#vic_text button * {
+    color: var(--primary-color-low);
+}
+#vic_text button:hover * {
+    color: var(--primary-color);
+}
+
+.vt, .direction {
+  margin-bottom: 0.5rem;
 }
 
 
@@ -191,15 +198,6 @@ canvas {
 }
 #vic_text button {
   width: 15rem;
-}
-#victory.yes #vic_text button {
-  color: #ff9d;
-}
-#victory.yes .key_interact {
-  color: #ff9d;
-}
-#victory.yes #vic_text button:hover {
-  color: #ff9f;
 }
 #victory.yes #victory_duration_1 {
   font-size: 2rem;
