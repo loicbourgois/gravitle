@@ -49,10 +49,10 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 		}
 	}
 
-	document.addEventListener("keydown", (e) => {
+	document.addEventListener("keydown", async (e) => {
 		if (this.audio === null) {
 			this.audio = new Audio()
-			console.log(this.audio.left.gain)
+			await this.audio.setup()
 		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
