@@ -12,6 +12,7 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 
 ## Misc
 ```sh
+$HOME/github.com/loicbourgois/gravitle/deploy.sh
 $HOME/github.com/loicbourgois/gravitle/build_mining.sh
 $HOME/github.com/loicbourgois/gravitle/bench.sh
 $HOME/github.com/loicbourgois/gravitle/all.sh
