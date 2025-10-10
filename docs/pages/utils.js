@@ -1,1 +1,0 @@
-const set_html=e=>{document.querySelector("#content").innerHTML=e},set_css=e=>{const t=document.createElement("style");document.head.appendChild(t);for(let s of e.split("}"))try{t.sheet.insertRule(s+"}")}catch(e){}};export{set_html,set_css};

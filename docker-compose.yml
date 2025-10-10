@@ -1,5 +1,11 @@
 version: "3"
 services:
+    front_deployed:
+        image: nginx
+        ports:
+            - 81:80
+        volumes:
+            - $HOME/github.com/loicbourgois/gravitle/docs:/usr/share/nginx/html
     front:
         image: nginx
         ports:
