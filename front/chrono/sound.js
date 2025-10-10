@@ -19,48 +19,40 @@ const get_filter = (audio_context, type, frequency) => {
 	return n;
 };
 
-// const get_booster_old = (audio_context) => {
-//     const m2 = get_osc(audio_context, 6000)
-//     const o2 = get_osc(audio_context, 194)
-//     const g3 = get_gain(audio_context, 5000)
-//     const g2 = get_gain(audio_context, 5000)
-//     const g4 = get_gain(audio_context, 1)
-//     const g5 = get_gain(audio_context, 30)
-//     const l1 = get_filter(audio_context, 'lowpass', 100)
-//     const l2 = get_filter(audio_context, 'lowpass', 50)
-//     const h1 = get_filter(audio_context, 'highpass', 100)
-//     const g = get_gain(audio_context, 0)
-//     m2.connect(g2)
-//     g2.connect(o2.detune)
-//     o2.connect(g3)
-//     g3.connect(m2.detune)
-//     o2.connect(h1)
-//     l1.connect(l2)
-//     l1.connect(g4)
-//     l2.connect(g5)
-//     h1.connect(l1)
-//     g4.connect(g)
-//     g5.connect(g)
-//     return g
-// }
+const get_booster_v1 = (audio_context) => {
+    const m2 = get_osc(audio_context, 6000)
+    const o2 = get_osc(audio_context, 194)
+    const g3 = get_gain(audio_context, 5000)
+    const g2 = get_gain(audio_context, 5000)
+    const g4 = get_gain(audio_context, 1)
+    const g5 = get_gain(audio_context, 30)
+    const l1 = get_filter(audio_context, 'lowpass', 100)
+    const l2 = get_filter(audio_context, 'lowpass', 50)
+    const h1 = get_filter(audio_context, 'highpass', 100)
+    const g = get_gain(audio_context, 0)
+    m2.connect(g2)
+    g2.connect(o2.detune)
+    o2.connect(g3)
+    g3.connect(m2.detune)
+    o2.connect(h1)
+    l1.connect(l2)
+    l1.connect(g4)
+    l2.connect(g5)
+    h1.connect(l1)
+    g4.connect(g)
+    g5.connect(g)
+    return g
+}
 
 const get_booster_v2 = (audio_context) => {
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
-	// add_node(2, 4, `gA`, `gain`, 0.01)
 	const g = get_gain(audio_context, 0.0);
-	// add_node(3, 1, 'h1', 'filter', 'highpass', 51.69)
 	const h1 = get_filter(audio_context, "highpass", 51.69);
-	// add_node(4, 1, 'l1', 'filter', 'lowpass', 198.93)
 	const l1 = get_filter(audio_context, "lowpass", 198.93);
-	// add_node(5, 1, 'l2', 'filter', 'lowpass', 218.77)
 	const l2 = get_filter(audio_context, "lowpass", 218.77);
-	// add_node(6, 1, 'l3', 'filter', 'lowpass', 209.50)
 	const l3 = get_filter(audio_context, "lowpass", 209.5);
-	// add_node(5, 2, `g5`, `gain`, 4.76)
 	const g5 = get_gain(audio_context, 4.76);
-	// add_node(6, 2, `g3`, `gain`, 10.53)
 	const g3 = get_gain(audio_context, 10.53);
-	// add_node(2, 3, 'h2', 'filter', 'highpass', 130.72)
 	const h2 = get_filter(audio_context, "highpass", 130.72);
 	noise.connect(h1);
 	l1.connect(l2);
@@ -135,28 +127,36 @@ Audio.prototype.setup = async function () {
 	};
 };
 Audio.prototype.activate = function (idx) {
-	const c = this.cells[idx];
-	if (!c.activated) {
-		c.activated = true;
-		const now = this.audio_context.currentTime + 0.001;
-		c.node.gain.cancelScheduledValues(now);
-		for (let i = 1; i < this.cc; i++) {
-			const value = Math.max(c.node.gain.value, i / this.cc);
-			const time = (i / this.cc) * 1.0;
-			c.node.gain.exponentialRampToValueAtTime(value, now + time);
+	try {
+		const c = this.cells[idx];
+		if (!c.activated) {
+			c.activated = true;
+			const now = this.audio_context.currentTime + 0.001;
+			c.node.gain.cancelScheduledValues(now);
+			for (let i = 1; i < this.cc; i++) {
+				const value = Math.max(c.node.gain.value, i / this.cc);
+				const time = (i / this.cc) * 1.0;
+				c.node.gain.exponentialRampToValueAtTime(value, now + time);
+			}
 		}
+	} catch (error) {
+		console.error(error)
 	}
 };
 Audio.prototype.deactivate = function (idx) {
-	const c = this.cells[idx];
-	c.node.gain.cancelScheduledValues(0);
-	const now = this.audio_context.currentTime;
-	for (let i = 0; i < this.cc; i++) {
-		const value = Math.min(c.node.gain.value, 1 - i / this.cc);
-		const time = (i / this.cc) * this.release;
-		c.node.gain.exponentialRampToValueAtTime(value, now + time);
+	try {
+		const c = this.cells[idx];
+		c.node.gain.cancelScheduledValues(0);
+		const now = this.audio_context.currentTime;
+		for (let i = 0; i < this.cc; i++) {
+			const value = Math.min(c.node.gain.value, 1 - i / this.cc);
+			const time = (i / this.cc) * this.release;
+			c.node.gain.exponentialRampToValueAtTime(value, now + time);
+		}
+		c.node.gain.setValueAtTime(0, now + this.release);
+		c.activated = false;
+	} catch (error) {
+		console.error(error)
 	}
-	c.node.gain.setValueAtTime(0, now + this.release);
-	c.activated = false;
 };
 export { Audio };

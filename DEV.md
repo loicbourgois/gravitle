@@ -16,6 +16,7 @@ $HOME/github.com/loicbourgois/gravitle/deploy.sh
 $HOME/github.com/loicbourgois/gravitle/front_deployed.sh
 open http://localhost:81
 open http://localhost:81/?seed=efopiw-gakura&stars=1
+open https://gravitle.com/?seed=efopiw-gakura&stars=1
 ```
 
 

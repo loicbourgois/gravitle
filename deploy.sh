@@ -9,4 +9,4 @@ rsync -a --exclude-from=$HOME/github.com/loicbourgois/gravitle/deploy_ignore \
     $HOME/github.com/loicbourgois/gravitle/docs/
 cp $HOME/github.com/loicbourgois/gravitle/front/index.html \
     $HOME/github.com/loicbourgois/gravitle/docs/404.html
-echo "deploy - ok"
+echo "deploy - ready"
