@@ -90,6 +90,7 @@ pub fn compute_collision_responses(
         }
     }
 }
+#[cfg(feature = "bench")]
 pub fn compute_collision_responses_2(
     diameter: f32,
     particles: &mut [Particle],

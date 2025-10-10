@@ -4,19 +4,19 @@ use anyhow::Result;
 use convert_case::Case;
 use convert_case::Casing;
 use glob::glob;
-use serde::Deserialize;
-use serde::Serialize;
+// use serde::Deserialize;
+// use serde::Serialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-#[derive(Serialize, Deserialize)]
-pub struct Capacities {
-    pub hard: u32,
-    pub soft: u32,
-}
+// #[derive(Serialize, Deserialize)]
+// pub struct Capacities {
+//     pub hard: u32,
+//     pub soft: u32,
+// }
 pub fn kind_generated_js(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     writeln!(

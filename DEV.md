@@ -22,12 +22,12 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 - https://nnethercote.github.io/perf-book/title-page.html
 
 
-## TODO
+## Todo
+- drawing performances
 - asteroid rest position
 - asteroids color
 - notice color
-- drawing performances
 - star light sound
 - settings
 - 60 fps test
-- /mining: buggy booster flares if initial zoom != 100%
+- /mining: buggy booster flares if initial browser zoom != 100%

@@ -51,8 +51,8 @@ impl ops::Sub<Vector> for Vector {
 }
 #[derive(Clone, Debug)]
 pub struct WrapAroundResponse {
-    pub a: Vector,
-    pub b: Vector,
+    // pub a: Vector,
+    // pub b: Vector,
     pub d: Vector,
     pub d_sqrd: f32,
 }
@@ -87,14 +87,14 @@ pub fn wrap_around(a: Vector, b: Vector) -> WrapAroundResponse {
         x: b.x + ijwin[0],
         y: b.y + ijwin[1],
     };
-    let aaa = Vector {
-        x: a.x + ijwin[0],
-        y: a.y + ijwin[1],
-    };
+    // let aaa = Vector {
+    //     x: a.x + ijwin[0],
+    //     y: a.y + ijwin[1],
+    // };
     let d = delta(a, bbb);
     WrapAroundResponse {
-        a: aaa,
-        b: bbb,
+        // a: aaa,
+        // b: bbb,
         d,
         d_sqrd: dsqrd_min,
     }
