@@ -4,15 +4,23 @@
 ## Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
-$HOME/github.com/loicbourgois/gravitle/dev.sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
 open http://localhost:82
 open http://localhost:82/?seed=efopiw-gakura&stars=1
 ```
 
 
-## Misc
+## Deploy
 ```sh
 $HOME/github.com/loicbourgois/gravitle/deploy.sh
+$HOME/github.com/loicbourgois/gravitle/front_deployed.sh
+open http://localhost:81
+open http://localhost:81/?seed=efopiw-gakura&stars=1
+```
+
+
+## Misc
+```sh
 $HOME/github.com/loicbourgois/gravitle/build_mining.sh
 $HOME/github.com/loicbourgois/gravitle/bench.sh
 $HOME/github.com/loicbourgois/gravitle/all.sh
