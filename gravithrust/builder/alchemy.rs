@@ -9,7 +9,7 @@ use std::io::Write;
 pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let in_ = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/alchemy.txt",
+        "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.txt",
         envs["HOME"]
     ))
     .expect("Should have been able to read the file");
@@ -149,7 +149,7 @@ pub fn alchemy_transform(in_: &str) -> String {
 pub fn build_alchemy_rs(kinds: &[&String]) -> Result<(), std::io::Error> {
     let envs = env::vars().collect::<HashMap<String, String>>();
     let in_ = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/alchemy.txt",
+        "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.txt",
         envs["HOME"]
     ))?;
     let mut qks_by_k: HashMap<String, HashSet<String>> = HashMap::new();

@@ -52,7 +52,7 @@ const html = () => {
         oninput="localStorage.setItem('player_1_name', document.querySelector('#player_1_name').value)"></input>
       <p><span id="score_player_1"></span></p>
       <p id="move_with_instructions" class="disappearable disappear">Loading...</p>
-      <p class="disappearable disappear"> <a href="garage">Go to Garage</a> </p>
+      <p class="disappearable disappear"> <a href="./garage">Go to Garage</a> </p>
       <p class="disappearable disappear">  </p>
       <p class="disappearable disappear"> <a href="https://github.com/loicbourgois/loicbourgois/tree/master/gravitle-duel">Github</a> </p>
     </div>

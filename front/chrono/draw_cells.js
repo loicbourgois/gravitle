@@ -1,119 +1,14 @@
 import { get_cell } from "./get_cell.js";
 import { get_link } from "./get_link.js";
-import { wrap_around, delta } from "./math.js";
-import { colors } from "./colors.js";
-
-const add_vectors = (a, b) => {
-	return {
-		x: a.x + b.x,
-		y: a.y + b.y,
-	};
-};
-
-const del_vector = (a, b) => {
-	return {
-		x: a.x - b.x,
-		y: a.y - b.y,
-	};
-};
-
-const multiply_vector = (a, k) => {
-	return {
-		x: a.x * k,
-		y: a.y * k,
-	};
-};
-
-const ARMOR = 0;
-const BOOSTER = 1;
-const CORE = 2;
-const ASTEROID = 4;
-const UNLIGHTED = 5;
-const LIGHTED = 6;
-
-const get_color = (cell_kind, activation, layer, player_kind) => {
-	try {
-		const aa = {
-			[ARMOR]: {
-				0: {
-					0: {
-						// me
-						m: "#aaf",
-						// ghost
-						g: "#558",
-						// other_ghost
-						o: "#585",
-					},
-				},
-			},
-			[BOOSTER]: {
-				0: {
-					0: {
-						m: "#fa0",
-						g: "#850",
-						o: "#850",
-					},
-				},
-				1: {
-					0: {
-						m: "#fa0",
-						g: "#850",
-						o: "#850",
-					},
-					1: {
-						m: "#f80",
-						g: "#840",
-						o: "#840",
-					},
-					2: {
-						m: "#f00",
-						g: "#800",
-						o: "#800",
-					},
-				},
-			},
-			[CORE]: {
-				0: {
-					0: {
-						m: "#ffa",
-						g: "#885",
-						o: "#885",
-					},
-				},
-			},
-			[ASTEROID]: {
-				0: {
-					0: {
-						// "rgba(203, 110, 63, 1)";
-						m: "#d84",
-					},
-				},
-			},
-			[UNLIGHTED]: {
-				0: {
-					0: {
-						m: "#ff93",
-						// g: "#0000",
-						// o: "#9f95",
-					},
-				},
-			},
-			[LIGHTED]: {
-				0: {
-					0: {
-						m: "#ff9d",
-						g: "#0000",
-						o: "#9f95",
-					},
-				},
-			},
-		};
-		return aa[cell_kind][activation][layer][player_kind];
-	} catch (error) {
-		console.log(cell_kind, activation, layer, player_kind);
-		throw error;
-	}
-};
+import {
+	wrap_around,
+	delta,
+	multiply_vector,
+	del_vector,
+	add_vectors,
+} from "./math.js";
+import { link_color_priority, get_color } from "./colors.js";
+import { kind } from "./kind.js";
 
 const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	const cells_ptr = world.cells();
@@ -182,7 +77,7 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	}
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if ([ARMOR, CORE].includes(cell.kind)) {
+		if ([kind.ARMOR, kind.CORE].includes(cell.kind)) {
 			const p3 = cell.ap;
 			const d3 = cell.diameter;
 			view.draw_disk_multi(
@@ -199,7 +94,9 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 			const p1 = get_cell(cells_view, cell_size, l.a);
 			const p2 = get_cell(cells_view, cell_size, l.b);
 			const kind =
-				colors[p1.kind].score > colors[p2.kind].score ? p1.kind : p2.kind;
+				link_color_priority[p1.kind] < link_color_priority[p2.kind]
+					? p1.kind
+					: p2.kind;
 			if (color_id_1 == kind) {
 				const wa = wrap_around(p1.ap, p2.ap);
 				const delt = multiply_vector(delta(wa.a, wa.b), 0.5);

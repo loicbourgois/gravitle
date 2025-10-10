@@ -1,3 +1,24 @@
+const add_vectors = (a, b) => {
+	return {
+		x: a.x + b.x,
+		y: a.y + b.y,
+	};
+};
+
+const del_vector = (a, b) => {
+	return {
+		x: a.x - b.x,
+		y: a.y - b.y,
+	};
+};
+
+const multiply_vector = (a, k) => {
+	return {
+		x: a.x * k,
+		y: a.y * k,
+	};
+};
+
 const delta = (a, b) => {
 	return {
 		x: b.x - a.x,
@@ -78,4 +99,11 @@ const wrap_around = (a, b) => {
 	};
 };
 
-export { wrap_around, delta, test_wrap_around };
+export {
+	wrap_around,
+	delta,
+	test_wrap_around,
+	multiply_vector,
+	del_vector,
+	add_vectors,
+};

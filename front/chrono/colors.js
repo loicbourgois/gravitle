@@ -1,65 +1,90 @@
-const colors = {
-	emerald: {
-		value: {
-			0: "#0ff8",
-			1: "#0ff8",
-			undefined: "#0ff8",
-		},
-		score: 3,
-	},
-	glass: {
-		value: {
-			0: "#aaf3",
-			1: "#aaf3",
-			undefined: "#aaf3",
-		},
-		score: 4,
-	},
-	1: {
-		value: "#fb0",
-		value_1: "#fa0",
-		value_2: "#f80",
-		value_3: "#f00",
-		score: 2,
-	},
-	2: {
-		value: {
-			0: "#ffa",
-			1: "#ffa",
-			undefined: "#fda",
-		},
-		score: 4,
-	},
-	0: {
-		value: {
-			0: "#aafe",
-			1: "#afae",
-			undefined: "#faae",
-		},
-		score: 3,
-	},
-	gun: {
-		value: {
-			0: "#f88",
-			1: "#f88",
-			undefined: "#f88",
-		},
-		score: 1,
-	},
-	option: {
-		value: {
-			0: "#faf",
-			1: "#faf",
-			undefined: "#faf",
-		},
-	},
-	"link-option": {
-		value: {
-			0: "#afa",
-			1: "#afa",
-			undefined: "#afa",
-		},
-	},
+import { kind } from "./kind.js";
+
+const link_color_priority = {
+	[kind.CORE]: 0,
+	[kind.ARMOR]: 1,
+	[kind.BOOSTER]: 2,
 };
 
-export { colors };
+// m: me: player's ship
+// g: ghost: player's ghosts
+// o: other_ghost: shared ghost
+const get_color = (cell_kind, activation, layer, player_kind) => {
+	try {
+		const aa = {
+			[kind.ARMOR]: {
+				0: {
+					0: {
+						m: "#aaf",
+						g: "#558",
+						o: "#585",
+					},
+				},
+			},
+			[kind.BOOSTER]: {
+				0: {
+					0: {
+						m: "#fa0",
+						g: "#850",
+						o: "#850",
+					},
+				},
+				1: {
+					0: {
+						m: "#fa0",
+						g: "#850",
+						o: "#850",
+					},
+					1: {
+						m: "#f80",
+						g: "#840",
+						o: "#840",
+					},
+					2: {
+						m: "#f00",
+						g: "#800",
+						o: "#800",
+					},
+				},
+			},
+			[kind.CORE]: {
+				0: {
+					0: {
+						m: "#ffa",
+						g: "#885",
+						o: "#885",
+					},
+				},
+			},
+			[kind.ASTEROID]: {
+				0: {
+					0: {
+						m: "#b60",
+					},
+				},
+			},
+			[kind.UNLIGHTED]: {
+				0: {
+					0: {
+						m: "#ff93",
+					},
+				},
+			},
+			[kind.LIGHTED]: {
+				0: {
+					0: {
+						m: "#ffad",
+						g: "#0000",
+						o: "#4f44",
+					},
+				},
+			},
+		};
+		return aa[cell_kind][activation][layer][player_kind];
+	} catch (error) {
+		console.log(cell_kind, activation, layer, player_kind);
+		throw error;
+	}
+};
+
+export { link_color_priority, get_color };

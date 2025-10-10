@@ -27,7 +27,7 @@ fn main() -> Result<(), std::io::Error> {
     let mut kinds_set: HashSet<String> = HashSet::new();
     let mut static_kind_set: HashSet<String> = HashSet::new();
     let in_ = fs::read_to_string(format!(
-        "{}/github.com/loicbourgois/gravitle/alchemy.txt",
+        "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.txt",
         envs["HOME"]
     ))
     .expect("Should have been able to read the file");

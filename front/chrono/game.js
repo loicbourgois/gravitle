@@ -1,22 +1,23 @@
-import { cyrb128, sfc32, random_seed } from "./random.js";
+import { cyrb128, random_seed } from "./random.js";
 import { ship } from "./ship.js";
 import { draw_cells, draw_ship_only } from "./draw_cells.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
-import { Audio } from "./sound.js"
+import { Audio } from "./sound.js";
 
 const kb = {
 	s: [],
 	d: [],
 };
 function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
+	console.log("game - start");
 	this.gravitle = gravitle;
 	this.memory = memory;
 	this.view = view;
 	this.stars_count = stars_count;
 	this.ghost = ghost;
 	this.ghosts = [];
-	this.audio = null
+	this.audio = null;
 	this.seed = cyrb128(seed_input);
 	this.seed_input = seed_input;
 	this.last_frame = null;
@@ -48,16 +49,15 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 			this.key_bindings.get(k).add(idx);
 		}
 	}
-
 	document.addEventListener("keydown", async (e) => {
 		if (this.audio === null) {
-			this.audio = new Audio()
-			await this.audio.setup()
+			this.audio = new Audio();
+			await this.audio.setup();
 		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
 				this.worlds[0].set_cell_activated(idx, 1);
-				this.audio.activate(idx)
+				this.audio.activate(idx);
 			}
 			this.started = true;
 			document.getElementById("notice_text").classList.add("hide");
@@ -71,14 +71,14 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 			this.share();
 		}
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
-			this.new_level()
+			this.new_level();
 		}
 	});
 	document.addEventListener("keyup", (e) => {
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
 				this.worlds[0].set_cell_activated(idx, 0);
-				this.audio.deactivate(idx)
+				this.audio.deactivate(idx);
 			}
 			// if (e.key == "s") {
 			// 	this.audio.left.gain.cancelScheduledValues(0)
@@ -120,7 +120,7 @@ Game.prototype.new_level = function () {
 	url2.searchParams.append("seed", random_seed());
 	url2.searchParams.append("stars", this.stars_count);
 	window.location.href = url2;
-}
+};
 Game.prototype.share = function () {
 	const url = new URL(window.location.href);
 	const url2 = new URL(url.origin + url.pathname);

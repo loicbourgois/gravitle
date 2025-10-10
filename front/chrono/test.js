@@ -2,7 +2,6 @@ import { get_cell } from "./get_cell.js";
 import { get_link } from "./get_link.js";
 const test = (gravitle, memory) => {
 	console.log("test - start");
-	console.log(`gravitle.Cell.size(): ${gravitle.Cell.size()}`);
 	const world = gravitle.World.new();
 	const input = [
 		{
@@ -211,6 +210,7 @@ const test = (gravitle, memory) => {
 		}
 	}
 	if (errors.length) {
+		console.log(`gravitle.Cell.size(): ${gravitle.Cell.size()}`);
 		for (let i = 0; i < world.cells_count() * gravitle.Cell.size(); i++) {
 			try {
 				console.log(
