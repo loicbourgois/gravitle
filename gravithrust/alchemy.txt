@@ -1,0 +1,73 @@
+transfer ice ice_asteroid ice_collector
+transfer ice ice_cargo ice_collector
+transfer ice ice_collector ice_cargo
+transfer ice ice_collector ice_melter
+
+transfer water water luciole
+transfer water ice_melter water_collector
+transfer water water_collector generator
+transfer water water flower
+
+transfer nectar flower luciole
+
+transfer coal coal_collector coal_depot
+transfer coal coal_depot iron_furnace
+transfer coal coal_depot coal_depot
+transfer coal coal_asteroid coal_collector
+transfer coal coal_collector coal_cargo
+transfer coal coal_cargo coal_collector
+
+transfer iron_ore iron_asteroid iron_ore_collector
+transfer iron_ore iron_ore_collector iron_ore_depot
+transfer iron_ore iron_ore_collector iron_ore_cargo
+transfer iron_ore iron_ore_cargo iron_ore_collector
+transfer iron_ore iron_ore_depot iron_furnace
+transfer iron_ore iron_ore_depot iron_ore_depot
+
+transfer iron iron_furnace iron_collector
+
+transfer iron_gangue iron_furnace iron_gangue_collector
+
+transfer heat heat_collector generator
+transfer heat iron_furnace heat_collector
+
+transfer energy generator energy_depot
+transfer energy energy_collector battery
+transfer energy energy_collector energy_cargo
+transfer energy energy_cargo energy_collector
+transfer energy energy_cargo energy_cargo
+transfer energy core booster
+transfer energy battery ice_melter
+transfer energy battery booster
+transfer energy energy_depot energy_collector
+transfer energy core energy_cargo
+transfer energy core energy_collector
+transfer energy battery battery
+
+
+transform ice_asteroid=->1*ice
+transform iron_asteroid=->1*iron_ore
+transform coal_asteroid=->1*coal
+transform core=->1000*energy
+transform flower=5*water->1*nectar
+
+
+anchor
+target
+sun
+static
+plasma_cargo
+armor
+plasma_electro_field_collector
+electro_field_launcher
+light
+plasma_raw_depot
+plasma_refinery_input
+plasma_refinery_output
+plasma_raw_collector
+cargo
+sun_core
+
+static anchor 
+static static
+static iron_furnace

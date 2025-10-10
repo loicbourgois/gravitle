@@ -1,0 +1,42 @@
+[package]
+name = "gravithrust"
+version = "0.1.0"
+edition = "2024"
+description = "Gravithrust"
+repository = "https://github.com/loicbourgois/gravitle/"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# [profile.release]
+# lto = true
+# codegen-units = 1
+
+[dependencies]
+wasm-bindgen = "*"
+rand = "*"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+serde = { version = "*", features = ["derive"] }
+serde_yaml = "*"
+serde_json = "*"
+anyhow = "*"
+js-sys = "*"
+strum = "*"
+strum_macros = "*"
+
+[build-dependencies]
+anyhow = "*"
+convert_case = "*"
+serde_json = "*"
+serde = { version = "*", features = ["derive"] }
+wasm-bindgen = "*"
+glob = "*"
+
+[dev-dependencies]
+glob = "*"
+rand_chacha = "*"
+
+[features]
+bench = []

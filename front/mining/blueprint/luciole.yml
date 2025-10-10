@@ -1,0 +1,39 @@
+{
+    ascii: "
+      05----04
+     /  \  /  \ 
+   06----00----03
+     \  /  \  /
+      01----02
+    ",
+    name: luciole,
+    orientation_mode: Line,
+    forward: [2,6],
+    slow: [],
+    left: [2],
+    right: [6],
+    translate_right: [],
+    translate_left: [],
+    base_particles: [core, core],
+    particles: [
+        [2,0,1, booster],
+        [3,0,2, core],
+        [4,0,3, energy_collector],
+        [5,0,4, core],
+        [6,1,0, booster],
+    ],
+    links: [
+      [0,1],
+      [0,2],
+      [0,3],
+      [0,4],
+      [0,5],
+      [0,6],
+      [1,2],
+      [2,3],
+      [3,4],
+      [4,5],
+      [5,6],
+      [6,1],
+    ],
+}

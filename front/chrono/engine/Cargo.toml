@@ -1,0 +1,37 @@
+[package]
+name = "gravitle-time-trial"
+version = "0.1.0"
+authors = ["Loïc Bourgois <loic@bourgois.pro>"]
+# https://doc.rust-lang.org/edition-guide/rust-2024/index.html
+edition = "2024"
+repository = "loicbourgois"
+description = "gravitle-time-trial"
+
+[lib]
+# https://doc.rust-lang.org/reference/linkage.html
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+chrono = "*"
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "*", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wasm-bindgen = "*"
+
+# TODO: add working rand
+# getrandom = { version = "*", features = ["wasm_js"] }
+# rand = "*"
+
+[dev-dependencies]
+wasm-bindgen-test = "*"
+
+[profile.release]
+# https://doc.rust-lang.org/cargo/reference/profiles.html#opt-level
+opt-level = 3

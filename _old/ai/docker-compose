@@ -1,0 +1,16 @@
+version: "3.0"
+services:
+  gravitle_ai_train:
+    build:
+      context: $HOME/github.com/loicbourgois/gravitle
+      dockerfile: $HOME/github.com/loicbourgois/gravitle/ai/Dockerfile
+    command: /root/github.com/loicbourgois/gravitle/ai/inner/train.sh
+    volumes:
+      - $HOME/github.com/loicbourgois/gravitle:/root/github.com/loicbourgois/gravitle:ro
+  gravitle_ai_build_training_set:
+    build:
+      context: $HOME/github.com/loicbourgois/gravitle
+      dockerfile: $HOME/github.com/loicbourgois/gravitle/ai/Dockerfile
+    command: /root/github.com/loicbourgois/gravitle/ai/inner/build_training_set.sh
+    volumes:
+      - $HOME/github.com/loicbourgois/gravitle:/root/github.com/loicbourgois/gravitle:rw

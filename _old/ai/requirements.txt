@@ -1,0 +1,8 @@
+torch
+pandas
+ray[tune]
+hyperopt
+ray[default]
+pylint
+bayesian-optimization
+prettytable

@@ -1,0 +1,95 @@
+use crate::kind::Kind;
+use crate::log;
+use crate::math::wrap_around;
+use crate::particle::Particle;
+use crate::particle::QuantityKind;
+use crate::ship::Ship;
+use crate::ship::ShipMore;
+use rand::prelude::IndexedRandom;
+use rand::rng;
+// use rand::seq::SliceRandom;
+use std::cmp::Ordering;
+pub fn deliver_closest(
+    s: &Ship,
+    sm: &mut ShipMore,
+    particles: &mut [Particle],
+    kind: Kind,
+    qk: QuantityKind,
+) {
+    match sm.target_pid {
+        None => {
+            let mut dmin = f32::INFINITY;
+            let mut target_pid: Option<usize> = None;
+            for p in particles.iter() {
+                if p.k == kind && p.remaining_capacity(qk) > 0 {
+                    let wa = wrap_around(p.p, s.p);
+                    if wa.d_sqrd < dmin {
+                        dmin = wa.d_sqrd;
+                        target_pid = Some(p.idx);
+                    }
+                }
+            }
+            sm.target_pid = target_pid;
+            match target_pid {
+                Some(pid) => {
+                    let p = &particles[pid];
+                    log(&format!(
+                        "s#{} -> p#{}:{:?} [{} {}]",
+                        sm.sid, p.idx, p.k, p.p.x, p.p.y
+                    ));
+                }
+                None => {}
+            }
+        }
+        Some(target_pid) => {
+            if particles[target_pid].k != kind {
+                sm.target_pid = None;
+            }
+        }
+    }
+}
+pub fn deliver_less_quantity(
+    sm: &mut ShipMore,
+    particles: &mut [Particle],
+    kind: Kind,
+    qk: QuantityKind,
+) {
+    match sm.target_pid {
+        None => {
+            let mut min = u32::MAX;
+            let mut target_pids = Vec::new();
+            for p in particles.iter() {
+                if p.k == kind && p.remaining_capacity(qk) > 0 {
+                    let x = p.quantity(qk);
+                    match x.cmp(&min) {
+                        Ordering::Equal => {
+                            target_pids.push(p.idx);
+                        }
+                        Ordering::Less => {
+                            target_pids.clear();
+                            target_pids.push(p.idx);
+                            min = x;
+                        }
+                        Ordering::Greater => {}
+                    }
+                }
+            }
+            sm.target_pid = target_pids.choose(&mut rng()).copied();
+            match sm.target_pid {
+                Some(pid) => {
+                    let p = &particles[pid];
+                    log(&format!(
+                        "s#{} -> p#{}:{:?} [{} {}]",
+                        sm.sid, p.idx, p.k, p.p.x, p.p.y
+                    ));
+                }
+                None => {}
+            }
+        }
+        Some(target_pid) => {
+            if particles[target_pid].k != kind {
+                sm.target_pid = None;
+            }
+        }
+    }
+}

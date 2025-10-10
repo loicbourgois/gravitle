@@ -1,0 +1,15 @@
+{
+    "tasks": [
+        {
+            "conditions": [
+                "Random1Per1000",
+                "Random1Per100"
+            ],
+            "action": "ResetTarget"
+        },
+        {
+            "conditions": [],
+            "action": "DeliverEnergy"
+        }
+    ]
+}

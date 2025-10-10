@@ -1,0 +1,8 @@
+blank_lines_lower_bound = 0
+blank_lines_upper_bound = 0
+enum_discrim_align_threshold = 16
+imports_granularity = "Item"
+reorder_impl_items = true
+reorder_imports = true
+group_imports = "One"
+struct_lit_single_line = false
