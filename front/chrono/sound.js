@@ -20,29 +20,29 @@ const get_filter = (audio_context, type, frequency) => {
 };
 
 const get_booster_v1 = (audio_context) => {
-    const m2 = get_osc(audio_context, 6000)
-    const o2 = get_osc(audio_context, 194)
-    const g3 = get_gain(audio_context, 5000)
-    const g2 = get_gain(audio_context, 5000)
-    const g4 = get_gain(audio_context, 1)
-    const g5 = get_gain(audio_context, 30)
-    const l1 = get_filter(audio_context, 'lowpass', 100)
-    const l2 = get_filter(audio_context, 'lowpass', 50)
-    const h1 = get_filter(audio_context, 'highpass', 100)
-    const g = get_gain(audio_context, 0)
-    m2.connect(g2)
-    g2.connect(o2.detune)
-    o2.connect(g3)
-    g3.connect(m2.detune)
-    o2.connect(h1)
-    l1.connect(l2)
-    l1.connect(g4)
-    l2.connect(g5)
-    h1.connect(l1)
-    g4.connect(g)
-    g5.connect(g)
-    return g
-}
+	const m2 = get_osc(audio_context, 6000);
+	const o2 = get_osc(audio_context, 194);
+	const g3 = get_gain(audio_context, 5000);
+	const g2 = get_gain(audio_context, 5000);
+	const g4 = get_gain(audio_context, 1);
+	const g5 = get_gain(audio_context, 30);
+	const l1 = get_filter(audio_context, "lowpass", 100);
+	const l2 = get_filter(audio_context, "lowpass", 50);
+	const h1 = get_filter(audio_context, "highpass", 100);
+	const g = get_gain(audio_context, 0);
+	m2.connect(g2);
+	g2.connect(o2.detune);
+	o2.connect(g3);
+	g3.connect(m2.detune);
+	o2.connect(h1);
+	l1.connect(l2);
+	l1.connect(g4);
+	l2.connect(g5);
+	h1.connect(l1);
+	g4.connect(g);
+	g5.connect(g);
+	return g;
+};
 
 const get_booster_v2 = (audio_context) => {
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
@@ -140,7 +140,7 @@ Audio.prototype.activate = function (idx) {
 			}
 		}
 	} catch (error) {
-		console.error(error)
+		console.error(error);
 	}
 };
 Audio.prototype.deactivate = function (idx) {
@@ -156,7 +156,7 @@ Audio.prototype.deactivate = function (idx) {
 		c.node.gain.setValueAtTime(0, now + this.release);
 		c.activated = false;
 	} catch (error) {
-		console.error(error)
+		console.error(error);
 	}
 };
 export { Audio };

@@ -1,0 +1,16 @@
+{
+    "tasks": [
+        {
+            "conditions": [
+                "IronOreStorageEmpty"
+            ],
+            "action": "CollectIronOre"
+        },
+        {
+            "conditions": [
+                "IronOreStorageFull"
+            ],
+            "action": "DeliverIronOre"
+        }
+    ]
+}

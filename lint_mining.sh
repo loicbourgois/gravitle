@@ -1,9 +1,8 @@
 #!/bin/sh
 set -e
-echo "# Start"
+echo "# Lint mining - start"
 START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
-cargo +nightly fmt
 cargo clippy -- \
     -W clippy::pedantic \
     -A clippy::single_match \
@@ -21,6 +20,5 @@ cargo clippy -- \
     -A clippy::useless_format \
     -A dead_code \
     -A clippy::format_push_string 
-cargo +nightly fmt
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
-echo "# Duration: $ELAPSED_TIME s"
+echo "# Lint mining -  end  - $ELAPSED_TIME s"

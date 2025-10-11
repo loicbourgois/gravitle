@@ -32,16 +32,15 @@ fn test_parse_blueprint() {
 fn test_parse_blueprint_by_path(path: &str) -> Result<()> {
     let yaml = fs::read_to_string(path)?;
     let raw_blueprint: RawBlueprint = serde_yaml::from_str(&yaml)?;
-    println!("{:?}", raw_blueprint.orientation_mode);
     let _blueprint = load_raw_blueprint(&raw_blueprint, 0.005);
     Ok(())
 }
 #[test]
 fn size() {
-    println!("{}", mem::size_of::<Ship>());
-    println!("{}", Gravithrust::ship_size_internal());
+    println!("size_of(Ship):      {}", mem::size_of::<Ship>());
+    println!("ship_size_internal: {}", Gravithrust::ship_size_internal());
     assert!(mem::size_of::<Ship>() == Gravithrust::ship_size_internal());
-    println!("{}", mem::size_of::<Particle>());
-    println!("{}", Gravithrust::particle_size_internal());
+    println!("size_of(Particle):      {}", mem::size_of::<Particle>());
+    println!("particle_size_internal: {}", Gravithrust::particle_size_internal());
     assert!(mem::size_of::<Particle>() == Gravithrust::particle_size_internal() + 8);
 }

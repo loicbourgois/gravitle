@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-echo "# Start"
+echo "# Bench - start"
 START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 batt=$(pmset -g batt)
@@ -15,4 +15,4 @@ git diff --word-diff \
     $HOME/github.com/loicbourgois/gravitle/gravithrust/bench_setup.txt \
     $HOME/github.com/loicbourgois/gravitle/gravithrust/bench.txt
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
-echo "# Duration: $ELAPSED_TIME s"
+echo "# Bench - end - $ELAPSED_TIME s"

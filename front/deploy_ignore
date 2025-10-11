@@ -1,3 +1,4 @@
+deploy_ignore
 chrono/engine
 chrono/engine/src
 chrono/engine/pkg/.gitignore
@@ -8,5 +9,4 @@ chrono/engine/target
 chrono/engine/Cargo.lock
 chrono/engine/Cargo.toml
 mining/gravithrust/.gitignore
-mining/blueprint
-mining/job
+favicon

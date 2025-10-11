@@ -1,0 +1,7 @@
+* {
+    background: #000;
+}
+canvas {
+    background: #0000;
+    image-rendering: pixelated;
+}

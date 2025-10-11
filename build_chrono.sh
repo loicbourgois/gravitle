@@ -1,12 +1,6 @@
 #!/bin/sh
 set -e
-echo "Format"
-cd $HOME/github.com/loicbourgois/gravitle/front/chrono
-dprint fmt
-
-echo "Validate rust"
 cd $HOME/github.com/loicbourgois/gravitle/front/chrono/engine
-cargo fmt
 cargo clippy --release \
     -- -Dwarnings -Dclippy::pedantic \
     -Aclippy::cast_precision_loss \
@@ -20,10 +14,8 @@ cargo clippy --release \
     -Aunused_variables \
     -Adead_code \
     -Aunused_imports
-
 echo "Build wasm"
 RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build --target web
-
 echo "Copy wasm"
 source="$HOME/github.com/loicbourgois/gravitle/front/chrono/engine/pkg/"
 dest="$HOME/github.com/loicbourgois/gravitle/front/chrono/"
