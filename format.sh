@@ -9,4 +9,4 @@ cargo fmt
 cd $HOME/github.com/loicbourgois/gravitle/front/chrono
 dprint fmt
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
-echo "# Format -  end  - $ELAPSED_TIME s"
+echo "# Format - end - $ELAPSED_TIME s"
