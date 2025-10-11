@@ -19,5 +19,6 @@ rm $HOME/github.com/loicbourgois/gravitle/front/mining/gravithrust/LICENSE
 rm $HOME/github.com/loicbourgois/gravitle/front/mining/gravithrust/README.md
 docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle/gravithrust:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.png -t dark -b black || true
 docker run --rm -u `id -u`:`id -g` -v $HOME/github.com/loicbourgois/gravitle/gravithrust:/data minlag/mermaid-cli --width 5000 --height 5000 -i alchemy.mmd -o alchemy.svg -t dark -b black || true
+$HOME/github.com/loicbourgois/gravitle/lint_mining.sh
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "# Duration: $ELAPSED_TIME s"
