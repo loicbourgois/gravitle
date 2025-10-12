@@ -1,3 +1,5 @@
+import { wrap_around } from "./math.js";
+
 function View(id) {
 	this.canvas = document.getElementById(id);
 	this.context = canvas.getContext("2d");

@@ -1,22 +1,22 @@
    Compiling gravithrust v0.1.0 (/Users/loicbourgois/github.com/loicbourgois/gravitle/gravithrust)
-    Finished `bench` profile [optimized] target(s) in 2.27s
+    Finished `bench` profile [optimized] target(s) in 2.49s
      Running unittests src/lib.rs (target/release/deps/gravithrust-7b6edee44728bcef)
 
 running 14 tests
 test test::test_2::size ... ignored
 test test::test_2::test_parse_blueprint ... ignored
 test test::test_job::test_job ... ignored
-test bench::bench_tick::bench_tick                                       ... bench:     200,076.56 ns/iter (+/- 15,878.63)
-test bench::bench_tick::bench_tick_grid_side_1                           ... bench:     222,290.36 ns/iter (+/- 11,744.51)
-test bench::bench_tick::bench_tick_grid_side_2                           ... bench:     194,917.62 ns/iter (+/- 28,626.45)
-test bench::bench_tick::bench_tick_grid_side_3                           ... bench:     155,152.07 ns/iter (+/- 7,973.61)
-test bench::bench_tick::bench_tick_grid_side_4                           ... bench:     226,336.80 ns/iter (+/- 18,946.03)
-test bench::bench_tick::bench_tick_partial_compute_collision_responses   ... bench:      14,490.34 ns/iter (+/- 621.97)
-test bench::bench_tick::bench_tick_partial_compute_collision_responses_2 ... bench:      14,887.15 ns/iter (+/- 858.81)
-test bench::bench_tick::bench_tick_partial_compute_link_responses        ... bench:      42,504.07 ns/iter (+/- 1,141.62)
-test bench::bench_tick::bench_tick_partial_grid_update                   ... bench:       9,071.07 ns/iter (+/- 128.62)
-test bench::bench_tick::bench_tick_partial_update_particles              ... bench:       8,168.24 ns/iter (+/- 4,627.83)
-test bench::bench_tick::bench_tick_partial_update_ships                  ... bench:      16,905.13 ns/iter (+/- 212.97)
+test bench::bench_tick::bench_tick                                       ... bench:     195,253.26 ns/iter (+/- 12,660.89)
+test bench::bench_tick::bench_tick_grid_side_1                           ... bench:     223,518.58 ns/iter (+/- 15,039.87)
+test bench::bench_tick::bench_tick_grid_side_2                           ... bench:     201,200.09 ns/iter (+/- 14,760.09)
+test bench::bench_tick::bench_tick_grid_side_3                           ... bench:     190,001.73 ns/iter (+/- 25,646.65)
+test bench::bench_tick::bench_tick_grid_side_4                           ... bench:     249,264.45 ns/iter (+/- 18,263.21)
+test bench::bench_tick::bench_tick_partial_compute_collision_responses   ... bench:      14,917.74 ns/iter (+/- 776.36)
+test bench::bench_tick::bench_tick_partial_compute_collision_responses_2 ... bench:      15,257.09 ns/iter (+/- 838.08)
+test bench::bench_tick::bench_tick_partial_compute_link_responses        ... bench:      44,222.08 ns/iter (+/- 2,479.22)
+test bench::bench_tick::bench_tick_partial_grid_update                   ... bench:       9,304.07 ns/iter (+/- 513.00)
+test bench::bench_tick::bench_tick_partial_update_particles              ... bench:       7,602.33 ns/iter (+/- 2,709.68)
+test bench::bench_tick::bench_tick_partial_update_ships                  ... bench:      16,755.94 ns/iter (+/- 220.30)
 
-test result: ok. 0 passed; 0 failed; 3 ignored; 11 measured; 0 filtered out; finished in 26.41s
+test result: ok. 0 passed; 0 failed; 3 ignored; 11 measured; 0 filtered out; finished in 40.41s
 
