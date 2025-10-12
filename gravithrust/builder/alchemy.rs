@@ -1,7 +1,7 @@
 use convert_case::Case;
 use convert_case::Casing;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -47,7 +47,7 @@ pub fn build_alchemy_mermaid() -> Result<(), std::io::Error> {
             .join("\n  "),
     )
 }
-pub fn alchemy_transfer(in_: &str, qks_by_k: &mut HashMap<String, HashSet<String>>) -> String {
+pub fn alchemy_transfer(in_: &str, qks_by_k: &mut HashMap<String, BTreeSet<String>>) -> String {
     in_.split('\n')
         .collect::<Vec<_>>()
         .iter()
@@ -152,7 +152,7 @@ pub fn build_alchemy_rs(kinds: &[&String]) -> Result<(), std::io::Error> {
         "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.txt",
         envs["HOME"]
     ))?;
-    let mut qks_by_k: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut qks_by_k: HashMap<String, BTreeSet<String>> = HashMap::new();
     writeln!(
         File::create(format!(
             "{}/github.com/loicbourgois/gravitle/gravithrust/src/alchemy_generated.rs",

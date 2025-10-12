@@ -11,7 +11,7 @@ use crate::builder::helpers::disk_generated;
 use crate::builder::helpers::kind_generated_js;
 use crate::builder::helpers::kind_generated_wgsl;
 use crate::builder::helpers::resources_generated;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -24,8 +24,8 @@ fn main() -> Result<(), std::io::Error> {
     .expect("Should have been able to read the file");
     let mut aa = String::new();
     let mut bb = String::new();
-    let mut kinds_set: HashSet<String> = HashSet::new();
-    let mut static_kind_set: HashSet<String> = HashSet::new();
+    let mut kinds_set: BTreeSet<String> = BTreeSet::new();
+    let mut static_kind_set: BTreeSet<String> = BTreeSet::new();
     let in_ = fs::read_to_string(format!(
         "{}/github.com/loicbourgois/gravitle/gravithrust/alchemy.txt",
         envs["HOME"]

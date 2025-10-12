@@ -7,23 +7,102 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Serialize, Deserialize, Hash, Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Kind {
-        ElectroFieldLauncher = 0,    EnergyCollector = 1,    Anchor = 2,    EnergyCargo = 3,    IronFurnace = 4,    EnergyDepot = 5,    Flower = 6,    CoalCollector = 7,    CoalAsteroid = 8,    WaterCollector = 9,    IceCollector = 10,    Light = 11,    Sun = 12,    PlasmaRawDepot = 13,    Static = 14,    Target = 15,    PlasmaRefineryInput = 16,    CoalDepot = 17,    PlasmaRawCollector = 18,    CoalCargo = 19,    IronGangueCollector = 20,    IceAsteroid = 21,    Core = 22,    PlasmaElectroFieldCollector = 23,    Cargo = 24,    IceCargo = 25,    HeatCollector = 26,    IronOreCollector = 27,    Luciole = 28,    IronAsteroid = 29,    IronOreDepot = 30,    Battery = 31,    IceMelter = 32,    IronOreCargo = 33,    Booster = 34,    PlasmaCargo = 35,    PlasmaRefineryOutput = 36,    SunCore = 37,    IronCollector = 38,    Generator = 39,    Water = 40,    Armor = 41,
+    Anchor           = 0,
+    Armor            = 1,
+    Battery          = 2,
+    Booster          = 3,
+    Cargo            = 4,
+    CoalAsteroid     = 5,
+    CoalCargo        = 6,
+    CoalCollector    = 7,
+    CoalDepot        = 8,
+    Core             = 9,
+    ElectroFieldLauncher = 10,
+    EnergyCargo      = 11,
+    EnergyCollector  = 12,
+    EnergyDepot      = 13,
+    Flower           = 14,
+    Generator        = 15,
+    HeatCollector    = 16,
+    IceAsteroid      = 17,
+    IceCargo         = 18,
+    IceCollector     = 19,
+    IceMelter        = 20,
+    IronAsteroid     = 21,
+    IronCollector    = 22,
+    IronFurnace      = 23,
+    IronGangueCollector = 24,
+    IronOreCargo     = 25,
+    IronOreCollector = 26,
+    IronOreDepot     = 27,
+    Light            = 28,
+    Luciole          = 29,
+    PlasmaCargo      = 30,
+    PlasmaElectroFieldCollector = 31,
+    PlasmaRawCollector = 32,
+    PlasmaRawDepot   = 33,
+    PlasmaRefineryInput = 34,
+    PlasmaRefineryOutput = 35,
+    Static           = 36,
+    Sun              = 37,
+    SunCore          = 38,
+    Target           = 39,
+    Water            = 40,
+    WaterCollector   = 41,
 }
 pub fn kindstr_to_kind(x: &str) -> Kind {
     match x.trim().to_lowercase().as_str() {
-            "electro_field_launcher" => Kind::ElectroFieldLauncher,    "energy_collector" => Kind::EnergyCollector,    "anchor" => Kind::Anchor,    "energy_cargo" => Kind::EnergyCargo,    "iron_furnace" => Kind::IronFurnace,    "energy_depot" => Kind::EnergyDepot,    "flower" => Kind::Flower,    "coal_collector" => Kind::CoalCollector,    "coal_asteroid" => Kind::CoalAsteroid,    "water_collector" => Kind::WaterCollector,    "ice_collector" => Kind::IceCollector,    "light" => Kind::Light,    "sun" => Kind::Sun,    "plasma_raw_depot" => Kind::PlasmaRawDepot,    "static" => Kind::Static,    "target" => Kind::Target,    "plasma_refinery_input" => Kind::PlasmaRefineryInput,    "coal_depot" => Kind::CoalDepot,    "plasma_raw_collector" => Kind::PlasmaRawCollector,    "coal_cargo" => Kind::CoalCargo,    "iron_gangue_collector" => Kind::IronGangueCollector,    "ice_asteroid" => Kind::IceAsteroid,    "core" => Kind::Core,    "plasma_electro_field_collector" => Kind::PlasmaElectroFieldCollector,    "cargo" => Kind::Cargo,    "ice_cargo" => Kind::IceCargo,    "heat_collector" => Kind::HeatCollector,    "iron_ore_collector" => Kind::IronOreCollector,    "luciole" => Kind::Luciole,    "iron_asteroid" => Kind::IronAsteroid,    "iron_ore_depot" => Kind::IronOreDepot,    "battery" => Kind::Battery,    "ice_melter" => Kind::IceMelter,    "iron_ore_cargo" => Kind::IronOreCargo,    "booster" => Kind::Booster,    "plasma_cargo" => Kind::PlasmaCargo,    "plasma_refinery_output" => Kind::PlasmaRefineryOutput,    "sun_core" => Kind::SunCore,    "iron_collector" => Kind::IronCollector,    "generator" => Kind::Generator,    "water" => Kind::Water,    "armor" => Kind::Armor,
+        "anchor" => Kind::Anchor,
+        "armor" => Kind::Armor,
+        "battery" => Kind::Battery,
+        "booster" => Kind::Booster,
+        "cargo" => Kind::Cargo,
+        "coal_asteroid" => Kind::CoalAsteroid,
+        "coal_cargo" => Kind::CoalCargo,
+        "coal_collector" => Kind::CoalCollector,
+        "coal_depot" => Kind::CoalDepot,
+        "core" => Kind::Core,
+        "electro_field_launcher" => Kind::ElectroFieldLauncher,
+        "energy_cargo" => Kind::EnergyCargo,
+        "energy_collector" => Kind::EnergyCollector,
+        "energy_depot" => Kind::EnergyDepot,
+        "flower" => Kind::Flower,
+        "generator" => Kind::Generator,
+        "heat_collector" => Kind::HeatCollector,
+        "ice_asteroid" => Kind::IceAsteroid,
+        "ice_cargo" => Kind::IceCargo,
+        "ice_collector" => Kind::IceCollector,
+        "ice_melter" => Kind::IceMelter,
+        "iron_asteroid" => Kind::IronAsteroid,
+        "iron_collector" => Kind::IronCollector,
+        "iron_furnace" => Kind::IronFurnace,
+        "iron_gangue_collector" => Kind::IronGangueCollector,
+        "iron_ore_cargo" => Kind::IronOreCargo,
+        "iron_ore_collector" => Kind::IronOreCollector,
+        "iron_ore_depot" => Kind::IronOreDepot,
+        "light" => Kind::Light,
+        "luciole" => Kind::Luciole,
+        "plasma_cargo" => Kind::PlasmaCargo,
+        "plasma_electro_field_collector" => Kind::PlasmaElectroFieldCollector,
+        "plasma_raw_collector" => Kind::PlasmaRawCollector,
+        "plasma_raw_depot" => Kind::PlasmaRawDepot,
+        "plasma_refinery_input" => Kind::PlasmaRefineryInput,
+        "plasma_refinery_output" => Kind::PlasmaRefineryOutput,
+        "static" => Kind::Static,
+        "sun" => Kind::Sun,
+        "sun_core" => Kind::SunCore,
+        "target" => Kind::Target,
+        "water" => Kind::Water,
+        "water_collector" => Kind::WaterCollector,
         _ => {
             let m = format!("invalid kind: {x}");
             error(&m);
-            panic!("{}",m)
+            panic!("{}", m)
         }
     }
 }
 impl Kind {
     pub fn is_static(self) -> bool {
-        matches!(
-            self,
-            Kind::IronFurnace|Kind::Static
-        )
+        matches!(self, Kind::IronFurnace | Kind::Static)
     }
 }

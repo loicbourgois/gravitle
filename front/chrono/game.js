@@ -264,9 +264,7 @@ Game.prototype.tick = function () {
 			debug_durations_engine.toFixed(5);
 		document.getElementById("debug_durations_draw").innerHTML =
 			debug_durations_draw.toFixed(5);
-	} catch (error) {
-		
-	}
+	} catch (error) {}
 	requestAnimationFrame(() => {
 		this.tick();
 	});
