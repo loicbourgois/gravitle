@@ -3,7 +3,6 @@ import {
     clear,
     clear_trans,
     resize_square,
-    // resize,
 } from "./canvas.js"
 import {
     particle,

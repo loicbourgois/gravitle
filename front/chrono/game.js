@@ -219,6 +219,7 @@ Game.prototype.tick = function () {
 		}
 	}
 	draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
+	this.view.render(this.worlds[0], this.memory, this.gravitle)
 	this.debug_durations.draw.at(-1).duration =
 		performance.now() - this.debug_durations.draw.at(-1).start;
 	if (this.victory_celebrated) {

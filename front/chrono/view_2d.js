@@ -1,6 +1,4 @@
-import { wrap_around } from "./math.js";
-
-function View(id) {
+function View2d(id) {
 	this.canvas = document.getElementById(id);
 	this.context = canvas.getContext("2d");
 	this.center = {
@@ -8,17 +6,17 @@ function View(id) {
 		y: 0.5,
 	};
 	this.zoom = 1;
-	this.resize();
 	this.mouse = null;
+	this.resize();
 }
 
-View.prototype.set_backgound = function (color) {
+View2d.prototype.set_backgound = function (color) {
 	this.background_color = color;
 	this.context.fillStyle = color;
 	this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 };
 
-View.prototype.set_mouse = function (x, y) {
+View2d.prototype.set_mouse = function (x, y) {
 	this.mouse = {
 		html: {
 			x: x,
@@ -35,18 +33,18 @@ View.prototype.set_mouse = function (x, y) {
 	};
 };
 
-View.prototype.resize = function () {
+View2d.prototype.resize = function () {
 	this.dpr = window.devicePixelRatio || 1;
 	const size = Math.min(window.innerWidth, window.innerHeight) * this.dpr;
 	this.canvas.width = size;
 	this.canvas.height = size;
 };
 
-View.prototype.min_dim = function () {
+View2d.prototype.min_dim = function () {
 	return Math.min(this.canvas.width, this.canvas.height);
 };
 
-View.prototype.world_to_pixel_2 = function (x, y) {
+View2d.prototype.world_to_pixel_2 = function (x, y) {
 	return {
 		x:
 			x * this.min_dim() * this.zoom +
@@ -59,18 +57,18 @@ View.prototype.world_to_pixel_2 = function (x, y) {
 	};
 };
 
-View.prototype.world_to_pixel = function (p) {
+View2d.prototype.world_to_pixel = function (p) {
 	return this.world_to_pixel_2(p.x, p.y);
 };
 
-View.prototype.pixel_to_world = function (p) {
+View2d.prototype.pixel_to_world = function (p) {
 	return {
 		x: (p.x - this.canvas.width / 2) / (this.min_dim() * this.zoom),
 		y: -(p.y - this.canvas.height / 2) / (this.min_dim() * this.zoom),
 	};
 };
 
-View.prototype.draw_disk = function (x, y, diameter, color) {
+View2d.prototype.draw_disk = function (x, y, diameter, color) {
 	const radius = diameter * this.min_dim() * 0.5 * this.zoom;
 	this.context.beginPath();
 	const vp = this.world_to_pixel_2(x, y);
@@ -79,7 +77,7 @@ View.prototype.draw_disk = function (x, y, diameter, color) {
 	this.context.fill();
 };
 
-View.prototype.draw_disk_multi = function (x, y, diameter, color) {
+View2d.prototype.draw_disk_multi = function (x, y, diameter, color) {
 	for (const x2 of [-1, 0, 1]) {
 		for (const y2 of [-1, 0, 1]) {
 			this.draw_disk(x + x2, y + y2, diameter, color);
@@ -87,7 +85,7 @@ View.prototype.draw_disk_multi = function (x, y, diameter, color) {
 	}
 };
 
-View.prototype.draw_square = function (x, y, size, color) {
+View2d.prototype.draw_square = function (x, y, size, color) {
 	const vp = this.world_to_pixel_2(x, y);
 	const size_ = this.world_to_pixel_2(size, size);
 	this.context.fillStyle = color;
@@ -99,7 +97,7 @@ View.prototype.draw_square = function (x, y, size, color) {
 	);
 };
 
-View.prototype.draw_line = function (a, b, color, line_width) {
+View2d.prototype.draw_line = function (a, b, color, line_width) {
 	const avp = this.world_to_pixel(a);
 	const bvp = this.world_to_pixel(b);
 	this.context.beginPath();
@@ -110,4 +108,4 @@ View.prototype.draw_line = function (a, b, color, line_width) {
 	this.context.stroke();
 };
 
-export { View };
+export { View2d };

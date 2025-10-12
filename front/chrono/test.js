@@ -1,7 +1,9 @@
 import { get_cell } from "./get_cell.js";
 import { get_link } from "./get_link.js";
+import { test_wrap_around } from "./math.js";
 const test = (gravitle, memory) => {
 	console.log("test - start");
+	test_wrap_around();
 	const world = gravitle.World.new();
 	const input = [
 		{

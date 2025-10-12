@@ -25,7 +25,7 @@ pub enum Kind {
 #[derive(Serialize)]
 struct ActivationEvent {
     c: u32,
-    a: u8,
+    a: u32,
 }
 
 #[wasm_bindgen]
@@ -247,7 +247,7 @@ impl World {
         cell.set_position(x, y);
         l_u32
     }
-    pub fn set_cell_activated(&mut self, idx: u32, activated: u8) {
+    pub fn set_cell_activated(&mut self, idx: u32, activated: u32) {
         self.cells[idx as usize].activated = activated;
     }
     pub fn switch_cell_activated(&mut self, idx: u32) {
