@@ -48,4 +48,3 @@ const disk_positions = array<vec2f, 48>(
     vec2f( 0.92387956,  -0.38268343),
     vec2f( 1,  0.00000017484555),
 );
-

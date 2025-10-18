@@ -81,7 +81,6 @@ const disk_positions = array<vec2f, 48>(
     vec2f( 1,  0.00000017484555),
 );
 
-
 const ZOOM = 1.5;
 @group(0) @binding(0) var<storage, read> particles: array<Cell>;
 @vertex fn vs_0(

@@ -18,20 +18,9 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 ```
 
 
-## Deploy
-```sh
-$HOME/github.com/loicbourgois/gravitle/deploy.sh
-$HOME/github.com/loicbourgois/gravitle/front_deployed.sh
-open http://localhost:81
-open http://localhost:81/?seed=efopiw-gakura&stars=1
-open https://gravitle.com/?seed=efopiw-gakura&stars=1
-```
-
-
 ## All
 ```sh
 $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
-
 ```
 
 
@@ -48,6 +37,10 @@ $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
   - draw links
   - track ship to always center the view on it
   - handle wrap around drawing
+- better name than "chrono"
+- fuel mode for chrono
+  - log fuel used
+  - show at the end below duration
 - star light sound
 - notice color
 - asteroids color
