@@ -9,9 +9,18 @@ function game_setup() {
 		booster: this.gravitle.Kind.Booster,
 		core: this.gravitle.Kind.Core,
 	};
-	for (const world of this.worlds) {
+	for (let idx = 0; idx < this.worlds.length; idx++) {
+		const world = this.worlds[idx];
+		const ghost = this.ghosts[idx - 1];
+		let user_kind = 1;
+		if (ghost && ghost.kind == "me") {
+			user_kind = 2;
+		}
+		if (ghost && ghost.kind == "other") {
+			user_kind = 3;
+		}
 		for (const e of ship.parts) {
-			world.add_cell(e.p.x - 0.3, e.p.y - 0.3, e.d, kinds[e.kind]);
+			world.add_cell(e.p.x - 0.3, e.p.y - 0.3, e.d, kinds[e.kind], user_kind);
 		}
 		const rand = sfc32(this.seed[0], this.seed[1], this.seed[2], this.seed[3]);
 		for (let index = 0; index < 20; index++) {
@@ -43,7 +52,7 @@ function game_setup() {
 					}
 				}
 				if (ok) {
-					world.add_cell(x, y, diameter, 4);
+					world.add_cell(x, y, diameter, 4, user_kind);
 					break;
 				}
 			}
@@ -77,7 +86,7 @@ function game_setup() {
 					}
 				}
 				if (ok) {
-					world.add_cell(x, y, diameter, 5);
+					world.add_cell(x, y, diameter, 5, user_kind);
 					break;
 				}
 			}
