@@ -1,3 +1,5 @@
+import { draw_cells, draw_ship_only } from "./draw_cells.js";
+
 function View2d(id) {
 	this.canvas = document.getElementById(id);
 	this.context = canvas.getContext("2d");
@@ -14,6 +16,21 @@ View2d.prototype.set_backgound = function (color) {
 	this.background_color = color;
 	this.context.fillStyle = color;
 	this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+};
+
+View2d.prototype.render = function (worlds, ghosts, gravitle, memory) {
+	this.set_backgound("#102");
+	for (let i = 1; i < worlds.length; i++) {
+		if (ghosts[i - 1].kind == "me") {
+			draw_ship_only(gravitle, worlds[i], memory, this, "g");
+		}
+	}
+	for (let i = 1; i < worlds.length; i++) {
+		if (ghosts[i - 1].kind != "me") {
+			draw_ship_only(gravitle, worlds[i], memory, this, "o");
+		}
+	}
+	draw_cells(gravitle, worlds[0], memory, this);
 };
 
 View2d.prototype.set_mouse = function (x, y) {

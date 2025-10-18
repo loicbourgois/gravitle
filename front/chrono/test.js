@@ -4,6 +4,10 @@ import { test_wrap_around } from "./math.js";
 const test = (gravitle, memory) => {
 	console.log("test - start");
 	test_wrap_around();
+	for (let index = 0; index < 10; index++) {
+		gravitle.World.new();
+	}
+	// const world_0 =
 	const world = gravitle.World.new();
 	const input = [
 		{
@@ -120,7 +124,7 @@ const test = (gravitle, memory) => {
 	];
 	for (const e of input) {
 		if (e.item_kind == "cell") {
-			const idx = world.add_cell();
+			const idx = world.add_cell(null, null, null, null, 2);
 			world.set_cell_position_x(idx, e.p.x);
 			world.set_cell_position_y(idx, e.p.y);
 			world.set_cell_pp_x(idx, e.pp.x);

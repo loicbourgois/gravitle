@@ -38,10 +38,7 @@ const get_cell = (cells_view, cell_size, idx) => {
 		activated: cells_view.getUint32(idx * cell_size + 76, true),
 		activated_previous: cells_view.getUint32(idx * cell_size + 80, true),
 		kind: cells_view.getUint32(idx * cell_size + 84, true),
-		// rp: {
-		// 	x: cells_view.getFloat32(idx * cell_size + 92, true),
-		// 	y: cells_view.getFloat32(idx * cell_size + 96, true),
-		// },
+		user_kind: cells_view.getUint32(idx * cell_size + 88, true),
 	};
 	cell.ap = {
 		x: (cell.p.x + cell.pp.x) * 0.5,

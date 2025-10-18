@@ -1,6 +1,5 @@
 import { cyrb128, random_seed } from "./random.js";
 import { ship } from "./ship.js";
-import { draw_cells, draw_ship_only } from "./draw_cells.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
 import { Audio } from "./sound.js";
@@ -195,31 +194,35 @@ Game.prototype.tick = function () {
 	this.debug_durations.draw.push({
 		start: performance.now(),
 	});
-	this.view.set_backgound("#102");
-	for (let i = 1; i < this.worlds.length; i++) {
-		if (this.ghosts[i - 1].kind == "me") {
-			draw_ship_only(
-				this.gravitle,
-				this.worlds[i],
-				this.memory,
-				this.view,
-				"g",
-			);
-		}
-	}
-	for (let i = 1; i < this.worlds.length; i++) {
-		if (this.ghosts[i - 1].kind != "me") {
-			draw_ship_only(
-				this.gravitle,
-				this.worlds[i],
-				this.memory,
-				this.view,
-				"o",
-			);
-		}
-	}
-	draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
-	this.view.render(this.worlds[0], this.memory, this.gravitle)
+
+	// this.view.set_backgound("#102");
+	// for (let i = 1; i < this.worlds.length; i++) {
+	// 	if (this.ghosts[i - 1].kind == "me") {
+	// 		draw_ship_only(
+	// 			this.gravitle,
+	// 			this.worlds[i],
+	// 			this.memory,
+	// 			this.view,
+	// 			"g",
+	// 		);
+	// 	}
+	// }
+	// for (let i = 1; i < this.worlds.length; i++) {
+	// 	if (this.ghosts[i - 1].kind != "me") {
+	// 		draw_ship_only(
+	// 			this.gravitle,
+	// 			this.worlds[i],
+	// 			this.memory,
+	// 			this.view,
+	// 			"o",
+	// 		);
+	// 	}
+	// }
+	// draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
+
+	// this.view.render(this.worlds[0], this.memory, this.gravitle);
+	this.view.render(this.worlds, this.ghosts, this.gravitle, this.memory);
+
 	this.debug_durations.draw.at(-1).duration =
 		performance.now() - this.debug_durations.draw.at(-1).start;
 	if (this.victory_celebrated) {

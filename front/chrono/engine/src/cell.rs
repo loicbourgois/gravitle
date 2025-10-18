@@ -1,6 +1,7 @@
 use crate::point::Point;
 use crate::wasm_bindgen;
 use crate::world::Kind;
+use crate::world::UserKind;
 #[wasm_bindgen]
 #[repr(C)]
 pub struct Cell {
@@ -25,13 +26,15 @@ pub struct Cell {
     pub activated: u32,
     pub activated_previous: u32,
     pub kind: Kind,
+    pub user_kind: UserKind,
+    pub padding: u32,
     // rest position
     // usefull only for asteroids
     // pub rp: Option<Point>,
 }
 #[wasm_bindgen]
 impl Cell {
-    pub fn new(idx: u32, diameter: f32, kind: Kind) -> Cell {
+    pub fn new(idx: u32, diameter: f32, kind: Kind, user_kind: UserKind) -> Cell {
         Cell {
             idx,
             diameter,
@@ -48,9 +51,11 @@ impl Cell {
             activated: 0,
             activated_previous: 0,
             kind,
+            user_kind,
             collision_response: Point::new(0.0, 0.0),
             collision_response_count: 0,
             link_response: Point::new(0.0, 0.0),
+            padding: 0,
         }
     }
     pub fn size() -> u32 {

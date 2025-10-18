@@ -3,6 +3,7 @@
 
 ## Chrono
 ```sh
+$HOME/github.com/loicbourgois/gravitle/generate.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 open http://localhost:82
@@ -34,10 +35,11 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 
 ## Todo
 - drawing performances
-- asteroid rest position
-- asteroids color
-- notice color
 - star light sound
+- notice color
+- asteroids color
 - settings
 - 60 fps test
 - /mining: buggy booster flares if initial browser zoom != 100%
+- format .wgsl
+  https://docs.rs/naga/latest/naga/
