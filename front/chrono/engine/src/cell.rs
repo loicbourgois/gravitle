@@ -28,9 +28,6 @@ pub struct Cell {
     pub kind: Kind,
     pub user_kind: UserKind,
     pub padding: u32,
-    // rest position
-    // usefull only for asteroids
-    // pub rp: Option<Point>,
 }
 #[wasm_bindgen]
 impl Cell {
@@ -43,10 +40,6 @@ impl Cell {
             pp: Point::new(0.0, 0.0),
             dp: Point::new(0.0, 0.0),
             dv: Point::new(0.0, 0.0),
-            // rp: match kind {
-            //     Kind::Asteroid => Some(Point::new(0.0, 0.0)),
-            //     _ => None,
-            // },
             direction: Point::new(0.0, 0.0),
             activated: 0,
             activated_previous: 0,

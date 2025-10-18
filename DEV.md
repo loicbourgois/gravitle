@@ -1,6 +1,13 @@
 # Gravitle
 
 
+## Wip
+```sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+http://localhost:82/?render=webgpu 
+```
+
+
 ## Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
@@ -21,11 +28,10 @@ open https://gravitle.com/?seed=efopiw-gakura&stars=1
 ```
 
 
-## Misc
+## All
 ```sh
-$HOME/github.com/loicbourgois/gravitle/build_mining.sh
-$HOME/github.com/loicbourgois/gravitle/bench.sh
-$HOME/github.com/loicbourgois/gravitle/all.sh
+$HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
+
 ```
 
 
@@ -34,7 +40,14 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 
 
 ## Todo
-- drawing performances
+- improve render performance using webgpu
+  - add url param to choose renderer
+    default to canvas until webgpu implementation is good enough
+  - increase poly count for cells drawing, especially asteroids
+  - light up engine + draw exhaust
+  - draw links
+  - track ship to always center the view on it
+  - handle wrap around drawing
 - star light sound
 - notice color
 - asteroids color

@@ -26,13 +26,14 @@ const main = async () => {
 	const seed_input =
 		params.get("seed") ?? new Date().toISOString().split("T")[0];
 	const ghost = params.get("ghost");
-	const render_mode =
-		params.get("render") ??
-		{
-			[true]: "webgpu",
-			[false]: "2d",
-		}[await has_webgpu_support()];
-	// console.log("render_mode", render_mode)
+	// TODO: webgpu as default once good enough
+	// const render_mode =
+	// 	params.get("render") ??
+	// 	{
+	// 		[true]: "webgpu",
+	// 		[false]: "2d",
+	// 	}[await has_webgpu_support()];
+	const render_mode = params.get("render") ?? "2d";
 	const view = await {
 		"2d": () => {
 			return new View2d("canvas");

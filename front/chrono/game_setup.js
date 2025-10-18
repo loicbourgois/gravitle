@@ -4,7 +4,6 @@ import { get_cell } from "./get_cell.js";
 import { wrap_around } from "./math.js";
 
 function game_setup() {
-	console.log(this.ghosts)
 	const kinds = {
 		armor: this.gravitle.Kind.Armor,
 		booster: this.gravitle.Kind.Booster,
