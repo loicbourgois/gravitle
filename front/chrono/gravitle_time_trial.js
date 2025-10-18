@@ -154,6 +154,17 @@ export const Kind = Object.freeze({
 	Lighted: 6,
 	6: "Lighted",
 });
+/**
+ * @enum {1 | 2 | 3}
+ */
+export const UserKind = Object.freeze({
+	User: 1,
+	1: "User",
+	Ghost: 2,
+	2: "Ghost",
+	Other: 3,
+	3: "Other",
+});
 
 const CellFinalization =
 	typeof FinalizationRegistry === "undefined"
@@ -344,7 +355,7 @@ export class Cell {
 	 */
 	get activated() {
 		const ret = wasm.__wbg_get_cell_activated(this.__wbg_ptr);
-		return ret;
+		return ret >>> 0;
 	}
 	/**
 	 * @param {number} arg0
@@ -357,7 +368,7 @@ export class Cell {
 	 */
 	get activated_previous() {
 		const ret = wasm.__wbg_get_cell_activated_previous(this.__wbg_ptr);
-		return ret;
+		return ret >>> 0;
 	}
 	/**
 	 * @param {number} arg0
@@ -379,22 +390,30 @@ export class Cell {
 		wasm.__wbg_set_cell_kind(this.__wbg_ptr, arg0);
 	}
 	/**
-	 * @returns {Point | undefined}
+	 * @returns {UserKind}
 	 */
-	get rp() {
-		const ret = wasm.__wbg_get_cell_rp(this.__wbg_ptr);
-		return ret === 0 ? undefined : Point.__wrap(ret);
+	get user_kind() {
+		const ret = wasm.__wbg_get_cell_user_kind(this.__wbg_ptr);
+		return ret;
 	}
 	/**
-	 * @param {Point | null} [arg0]
+	 * @param {UserKind} arg0
 	 */
-	set rp(arg0) {
-		let ptr0 = 0;
-		if (!isLikeNone(arg0)) {
-			_assertClass(arg0, Point);
-			ptr0 = arg0.__destroy_into_raw();
-		}
-		wasm.__wbg_set_cell_rp(this.__wbg_ptr, ptr0);
+	set user_kind(arg0) {
+		wasm.__wbg_set_cell_user_kind(this.__wbg_ptr, arg0);
+	}
+	/**
+	 * @returns {number}
+	 */
+	get padding() {
+		const ret = wasm.__wbg_get_cell_padding(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @param {number} arg0
+	 */
+	set padding(arg0) {
+		wasm.__wbg_set_cell_padding(this.__wbg_ptr, arg0);
 	}
 	/**
 	 * @param {number} x
@@ -414,10 +433,11 @@ export class Cell {
 	 * @param {number} idx
 	 * @param {number} diameter
 	 * @param {Kind} kind
+	 * @param {UserKind} user_kind
 	 * @returns {Cell}
 	 */
-	static new(idx, diameter, kind) {
-		const ret = wasm.cell_new(idx, diameter, kind);
+	static new(idx, diameter, kind, user_kind) {
+		const ret = wasm.cell_new(idx, diameter, kind, user_kind);
 		return Cell.__wrap(ret);
 	}
 }
@@ -900,10 +920,18 @@ export class World {
 	 * @param {number} y
 	 * @param {number} diameter
 	 * @param {Kind} kind
+	 * @param {UserKind} user_kind
 	 * @returns {number}
 	 */
-	add_cell(x, y, diameter, kind) {
-		const ret = wasm.world_add_cell(this.__wbg_ptr, x, y, diameter, kind);
+	add_cell(x, y, diameter, kind, user_kind) {
+		const ret = wasm.world_add_cell(
+			this.__wbg_ptr,
+			x,
+			y,
+			diameter,
+			kind,
+			user_kind,
+		);
 		return ret >>> 0;
 	}
 	/**

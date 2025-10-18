@@ -1,4 +1,3 @@
-version: "3"
 services:
     front_deployed:
         image: nginx
@@ -12,3 +11,10 @@ services:
             - 82:80
         volumes:
             - $HOME/github.com/loicbourgois/gravitle/front:/usr/share/nginx/html
+    generate:
+        build:
+            context: $HOME/github.com/loicbourgois/gravitle
+            dockerfile: $HOME/github.com/loicbourgois/gravitle/generate/Dockerfile
+        command: /root/github.com/loicbourgois/gravitle/generate/inner.sh
+        volumes:
+            - $HOME/github.com/loicbourgois/gravitle:/root/github.com/loicbourgois/gravitle:rw

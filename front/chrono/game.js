@@ -1,10 +1,8 @@
 import { cyrb128, random_seed } from "./random.js";
 import { ship } from "./ship.js";
-import { draw_cells, draw_ship_only } from "./draw_cells.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
 import { Audio } from "./sound.js";
-
 const kb = {
 	s: [],
 	d: [],
@@ -80,20 +78,6 @@ function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
 				this.worlds[0].set_cell_activated(idx, 0);
 				this.audio.deactivate(idx);
 			}
-			// if (e.key == "s") {
-			// 	this.audio.left.gain.cancelScheduledValues(0)
-			// 	const now = this.audio.audio_context.currentTime
-			// 	for (let i = 0; i < this.audio.cc; i++) {
-			// 		const value = Math.min(this.audio.left.gain.value, 1-i/this.audio.cc)
-			// 		const time = i/this.audio.cc * this.audio.transition
-			// 		this.audio.left.gain.exponentialRampToValueAtTime(value, now+time)
-			// 	}
-			// 	this.audio.left.gain.setValueAtTime(0, now+this.audio.transition)
-			// 	this.audio.keys.s = false
-			// }
-			// if (e.key == "d") {
-			// 	this.audio.right.gain.setValueCurveAtTime([1, 0], this.audio.audio_context.currentTime, 0.1);
-			// }
 		}
 		if (e.key == "e") {
 			this.trying_again = false;
@@ -195,30 +179,7 @@ Game.prototype.tick = function () {
 	this.debug_durations.draw.push({
 		start: performance.now(),
 	});
-	this.view.set_backgound("#102");
-	for (let i = 1; i < this.worlds.length; i++) {
-		if (this.ghosts[i - 1].kind == "me") {
-			draw_ship_only(
-				this.gravitle,
-				this.worlds[i],
-				this.memory,
-				this.view,
-				"g",
-			);
-		}
-	}
-	for (let i = 1; i < this.worlds.length; i++) {
-		if (this.ghosts[i - 1].kind != "me") {
-			draw_ship_only(
-				this.gravitle,
-				this.worlds[i],
-				this.memory,
-				this.view,
-				"o",
-			);
-		}
-	}
-	draw_cells(this.gravitle, this.worlds[0], this.memory, this.view);
+	this.view.render(this.worlds, this.ghosts, this.gravitle, this.memory);
 	this.debug_durations.draw.at(-1).duration =
 		performance.now() - this.debug_durations.draw.at(-1).start;
 	if (this.victory_celebrated) {

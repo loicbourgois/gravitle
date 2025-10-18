@@ -1,0 +1,18 @@
+struct Cell {
+    idx: u32,
+    diameter: f32,
+    p: vec2f,
+    pp: vec2f,
+    np: vec2f,
+    dp: vec2f,
+    direction: vec2f,
+    dv: vec2f,
+    link_response: vec2f,
+    collision_response: vec2f,
+    collision_response_count: u32,
+    activated: u32,
+    activated_previous: u32,
+    kind: u32,
+    user_kind: u32,
+    padding: u32,
+}

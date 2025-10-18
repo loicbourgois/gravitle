@@ -1,11 +1,21 @@
 import init, * as gravitle from "./gravitle_time_trial.js";
 import { test } from "./test.js";
-import { View } from "./view.js";
-import { test_wrap_around } from "./math.js";
+import { View2d } from "./view_2d.js";
+import { ViewWebGPU } from "./view_webgpu.js";
 import { Game } from "./game.js";
 import { defaults } from "./defaults.js";
+
+const has_webgpu_support = async () => {
+	const adapter = await navigator.gpu?.requestAdapter();
+	const device = await adapter?.requestDevice();
+	if (device) {
+		return true;
+	} else {
+		return false;
+	}
+};
+
 const main = async () => {
-	test_wrap_around();
 	await init();
 	gravitle.setup();
 	const memory = gravitle.initSync().memory;
@@ -15,8 +25,25 @@ const main = async () => {
 	const stars_count = params.get("stars") ?? defaults.stars_count;
 	const seed_input =
 		params.get("seed") ?? new Date().toISOString().split("T")[0];
-	let ghost = params.get("ghost");
-	const view = new View("canvas");
+	const ghost = params.get("ghost");
+	// TODO: webgpu as default once good enough
+	// const render_mode =
+	// 	params.get("render") ??
+	// 	{
+	// 		[true]: "webgpu",
+	// 		[false]: "2d",
+	// 	}[await has_webgpu_support()];
+	const render_mode = params.get("render") ?? "2d";
+	const view = await {
+		"2d": () => {
+			return new View2d("canvas");
+		},
+		webgpu: async () => {
+			const v = new ViewWebGPU("canvas");
+			await v.setup(gravitle);
+			return v;
+		},
+	}[render_mode]();
 	window.addEventListener("resize", function () {
 		view.resize();
 	});

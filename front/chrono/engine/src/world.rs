@@ -11,7 +11,7 @@ use std::collections::HashMap;
 const LINK_STRENGH: f32 = 0.2;
 
 #[wasm_bindgen]
-#[repr(u8)]
+#[repr(u32)]
 #[derive(PartialEq, Copy, Clone)]
 pub enum Kind {
     Armor = 0,
@@ -22,10 +22,19 @@ pub enum Kind {
     Lighted = 6,
 }
 
+#[wasm_bindgen]
+#[repr(u32)]
+#[derive(PartialEq, Copy, Clone)]
+pub enum UserKind {
+    User = 1,
+    Ghost = 2,
+    Other = 3,
+}
+
 #[derive(Serialize)]
 struct ActivationEvent {
     c: u32,
-    a: u8,
+    a: u32,
 }
 
 #[wasm_bindgen]
@@ -239,15 +248,22 @@ impl World {
             .unwrap_or_else(|_| "Error serializing activation_events to JSON".to_string())
     }
     // Cell
-    pub fn add_cell(&mut self, x: f32, y: f32, diameter: f32, kind: Kind) -> u32 {
+    pub fn add_cell(
+        &mut self,
+        x: f32,
+        y: f32,
+        diameter: f32,
+        kind: Kind,
+        user_kind: UserKind,
+    ) -> u32 {
         let l = self.cells.len();
         let l_u32 = l as u32;
-        self.cells.push(Cell::new(l_u32, diameter, kind));
+        self.cells.push(Cell::new(l_u32, diameter, kind, user_kind));
         let cell = &mut self.cells[l];
         cell.set_position(x, y);
         l_u32
     }
-    pub fn set_cell_activated(&mut self, idx: u32, activated: u8) {
+    pub fn set_cell_activated(&mut self, idx: u32, activated: u32) {
         self.cells[idx as usize].activated = activated;
     }
     pub fn switch_cell_activated(&mut self, idx: u32) {
