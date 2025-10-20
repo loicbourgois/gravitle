@@ -3,6 +3,11 @@
 
 ## Wip
 ```sh
+$HOME/github.com/loicbourgois/gravitle/generate.sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+http://localhost:82
+
+
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82/?render=webgpu 
 ```
@@ -29,6 +34,10 @@ $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
 
 
 ## Todo
+- blueprint
+  - define blueprint
+  - generate from blueprint
+  -  
 - improve render performance using webgpu
   - add url param to choose renderer
     default to canvas until webgpu implementation is good enough

@@ -82,8 +82,8 @@ const ship = {
       },
       "d": 0.0125,
       "player_id": "0",
-      "kind": "booster",
-      "binding": "s"
+      "kind": "armor",
+      "binding": null
     },
     {
       "p": {
@@ -132,8 +132,8 @@ const ship = {
       },
       "d": 0.0125,
       "player_id": "0",
-      "kind": "booster",
-      "binding": "d"
+      "kind": "armor",
+      "binding": null
     },
     {
       "p": {
