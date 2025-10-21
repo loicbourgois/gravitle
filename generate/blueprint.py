@@ -9,7 +9,7 @@ y_ratio = math.sqrt(3) / 2
 
 def blueprint():
     print("blueprint")
-    name = "ship_2"
+    name = "ship"
     path = "{HOME}/github.com/loicbourgois/gravitle/blueprint/{name}.{extension}"
     s = read(path.format(HOME=HOME, name=name, extension="txt"))
     print(s)
@@ -27,16 +27,16 @@ def blueprint():
                 "kind": "armor",
                 "xy": [col, row],
                 "idx": len(cells),
-                "x": 0.5+col/6*DIAM,
-                "y": 0.5-row*DIAM*y_ratio/2,
+                "x": col/6*DIAM,
+                "y": -row*DIAM*y_ratio/2,
             })
         elif c == "b":
             cells.append({
                 "kind": "booster",
                 "xy": [col, row],
                 "idx": len(cells),
-                "x": 0.5+col/6*DIAM,
-                "y": 0.5-row*DIAM*y_ratio/2,
+                "x": col/6*DIAM,
+                "y": -row*DIAM*y_ratio/2,
                 "binding": s[i+1],
             })
         elif c2 == "cc":
@@ -44,8 +44,8 @@ def blueprint():
                 "kind": "core",
                 "xy": [col, row],
                 "idx": len(cells),
-                "x": 0.5+col/6*DIAM,
-                "y": 0.5-row*DIAM*y_ratio/2,
+                "x": col/6*DIAM,
+                "y": -row*DIAM*y_ratio/2,
             })
         elif c == "\\":
             links.append({
@@ -105,6 +105,22 @@ def blueprint():
         center["y"] += c['y']
     center["x"] /= len(cells)
     center["y"] /= len(cells)
+
+    for c in cells:
+        c['x'] += 0.5 - center["x"]
+        c['y'] += 0.5 - center["y"]
+    
+    center = {
+        "x": 0,
+        "y": 0,
+    }
+    for c in cells:
+        center["x"] += c['x']
+        center["y"] += c['y']
+    center["x"] /= len(cells)
+    center["y"] /= len(cells)
+    
+
     str_ = "const ship = " + json.dumps({
             "DIAM": DIAM,
             "center": center,
