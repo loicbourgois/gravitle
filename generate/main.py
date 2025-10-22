@@ -2,17 +2,8 @@ import os
 from .color import color
 from .kind import kind
 from .user_kind import user_kind
-
-def read(path):
-    with open(path, "r") as file:
-        return file.read()
-
-def write_force(path, content):
-    folder = path.replace(path.split("/")[-1], "")
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    with open(path, "w") as f:
-        f.write(content)
+from .blueprint import blueprint
+from .misc import read, write_force
 
 
 def colors_generated_js():
@@ -99,3 +90,5 @@ if __name__ == "__main__":
     colors_wgsl()
     kind_wgsl()
     code_wgsl()
+    blueprint()
+    print("# Generate - end")

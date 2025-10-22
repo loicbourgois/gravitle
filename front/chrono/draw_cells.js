@@ -135,6 +135,8 @@ const draw_cells = (gravitle, world, memory, view) => {
 				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
 		}
+		// console.log(view.center)
+		// document.getElementById("debug_center").innerHTML = `${view.center.x.toFixed(2)} | ${view.center.y.toFixed(2)}`
 	}
 	draw_ship_only(gravitle, world, memory, view, "m");
 	for (let i = 0; i < world.cells_count(); i++) {

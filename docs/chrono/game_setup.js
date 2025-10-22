@@ -20,7 +20,7 @@ function game_setup() {
 			user_kind = 3;
 		}
 		for (const e of ship.parts) {
-			world.add_cell(e.p.x - 0.3, e.p.y - 0.3, e.d, kinds[e.kind], user_kind);
+			world.add_cell(e.p.x, e.p.y, e.d, kinds[e.kind], user_kind);
 		}
 		const rand = sfc32(this.seed[0], this.seed[1], this.seed[2], this.seed[3]);
 		for (let index = 0; index < 20; index++) {
