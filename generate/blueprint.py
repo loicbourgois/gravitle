@@ -118,7 +118,8 @@ def blueprint():
         center["y"] += c['y']
     center["x"] /= len(cells)
     center["y"] /= len(cells)
-    str_ = "const ship = " + json.dumps({
+    str_ = """# Generated from generate/blueprint.py
+const ship = """ + json.dumps({
             "DIAM": DIAM,
             "center": center,
             "parts": [
