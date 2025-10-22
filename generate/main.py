@@ -87,8 +87,9 @@ def kind_wgsl():
 
 if __name__ == "__main__":
     print("# Generate - start")
-    # colors_generated_js()
-    # colors_wgsl()
-    # kind_wgsl()
-    # code_wgsl()
+    colors_generated_js()
+    colors_wgsl()
+    kind_wgsl()
+    code_wgsl()
     blueprint()
+    print("# Generate - end")

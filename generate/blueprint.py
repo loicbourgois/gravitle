@@ -8,11 +8,10 @@ DIAM = 0.0125
 y_ratio = math.sqrt(3) / 2
 
 def blueprint():
-    print("blueprint")
     name = "ship"
     path = "{HOME}/github.com/loicbourgois/gravitle/blueprint/{name}.{extension}"
     s = read(path.format(HOME=HOME, name=name, extension="txt"))
-    print(s)
+    # print(s)
     col = 0
     row = 0
     cells = []
@@ -94,8 +93,8 @@ def blueprint():
             "a": aci, 
             "b": bci,
         })
-    print(cells)
-    print(links_detailed)
+    # print(cells)
+    # print(links_detailed)
     center = {
         "x": 0,
         "y": 0,
@@ -119,8 +118,6 @@ def blueprint():
         center["y"] += c['y']
     center["x"] /= len(cells)
     center["y"] /= len(cells)
-    
-
     str_ = "const ship = " + json.dumps({
             "DIAM": DIAM,
             "center": center,

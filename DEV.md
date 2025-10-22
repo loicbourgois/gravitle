@@ -3,11 +3,6 @@
 
 ## Wip
 ```sh
-$HOME/github.com/loicbourgois/gravitle/generate.sh
-$HOME/github.com/loicbourgois/gravitle/front.sh
-http://localhost:82
-
-
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82/?render=webgpu 
 ```
@@ -25,7 +20,8 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 
 ## All
 ```sh
-$HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
+ls $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
+cat $HOME/github.com/loicbourgois/gravitle/all.sh | grep "\.sh" | wc -l
 ```
 
 
