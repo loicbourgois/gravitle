@@ -1,3 +1,4 @@
+// Generated from generate/blueprint.py
 const ship = {
   "DIAM": 0.0125,
   "center": {
