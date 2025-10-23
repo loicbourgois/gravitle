@@ -207,6 +207,30 @@ Game.prototype.tick = function () {
 			durations_left_str;
 		document.getElementById("victory_duration_higher").innerHTML =
 			durations_right_str;
+		//
+		const fuel_useds = [];
+		for (const world of this.worlds) {
+			if (world.victory_end) {
+				fuel_useds.push(world.victory_fuel_used);
+			}
+		}
+		const fuel_used_0 = this.worlds[0].victory_fuel_used;
+		const fuel_useds_left = fuel_useds.filter((x) => x < fuel_used_0);
+		const fuel_useds_right = fuel_useds.filter((x) => x > fuel_used_0);
+		fuel_useds_left.sort((a, b) => b - a);
+		fuel_useds_right.sort((a, b) => a - b);
+		let fuel_useds_left_str = fuel_useds_left.join(" · ");
+		if (fuel_useds_left_str) {
+			fuel_useds_left_str = " · " + fuel_useds_left_str;
+		}
+		let fuel_useds_right_str = fuel_useds_right.join(" · ");
+		if (fuel_useds_right_str) {
+			fuel_useds_right_str = " · " + fuel_useds_right_str;
+		}
+		document.getElementById("fuel_used_me").innerHTML = fuel_used_0;
+		document.getElementById("fuel_used_lower").innerHTML = fuel_useds_left_str;
+		document.getElementById("fuel_used_higher").innerHTML =
+			fuel_useds_right_str;
 	}
 	while (this.debug_durations.engine.length > 200) {
 		this.debug_durations.engine.shift();

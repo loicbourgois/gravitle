@@ -752,6 +752,22 @@ export class World {
 	/**
 	 * @returns {number | undefined}
 	 */
+	get victory_fuel_used() {
+		const ret = wasm.__wbg_get_world_victory_fuel_used(this.__wbg_ptr);
+		return ret === 0x100000001 ? undefined : ret;
+	}
+	/**
+	 * @param {number | null} [arg0]
+	 */
+	set victory_fuel_used(arg0) {
+		wasm.__wbg_set_world_victory_fuel_used(
+			this.__wbg_ptr,
+			isLikeNone(arg0) ? 0x100000001 : arg0 >>> 0,
+		);
+	}
+	/**
+	 * @returns {number | undefined}
+	 */
 	get victory_end() {
 		const ret = wasm.__wbg_get_world_victory_end(this.__wbg_ptr);
 		return ret === 0x100000001 ? undefined : ret;

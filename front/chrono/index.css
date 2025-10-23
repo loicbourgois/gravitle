@@ -68,11 +68,6 @@ canvas {
   display: flex;
   flex-direction: row;
 }
-#durations {
-  display: flex;
-  margin-top: 7rem;
-  width: 100vw;
-}
 #fps {
   text-align: right;
 }
@@ -176,7 +171,7 @@ canvas {
   color: #ff90;
 }
 #victory_main {
-  margin-top: 15vh;
+  margin-top: 10vh;
   margin-bottom: auto;
 }
 #victory.yes {
@@ -194,32 +189,50 @@ canvas {
 #vic_text {
   display: flex;
   justify-content: center;
-  margin-top: 4rem;
+  /* margin-top: 4rem; */
 }
 #vic_text button {
   width: 15rem;
 }
-#victory.yes #victory_duration_1 {
+/* #victory.yes #victory_duration_1 {
   font-size: 2rem;
+} */
+
+
+#durations, #fuel_used {
+  display: flex;
+  width: 100vw;
 }
-#victory_duration {
+#durations {
+  margin-top: 5rem;
+}
+#fuel_used {
+  margin-top: 5rem;
+}
+#victory_duration, #fuel_used_me {
   flex-grow: 0;
 }
-#victory_duration_lower, #victory_duration_higher {
+#victory_duration_lower, #victory_duration_higher, #fuel_used_lower, #fuel_used_higher {
   flex-grow: 1;
   width: 0;
 }
-#victory.yes #victory_duration_lower, #victory.yes #victory_duration_higher {
+#victory.yes #victory_duration_lower, 
+#victory.yes #victory_duration_higher,
+#victory.yes #fuel_used_lower,
+#victory.yes #fuel_used_higher
+{
   font-size: 1.5rem;
   align-content: center;
   text-wrap: nowrap;
 }
-#victory.yes #victory_duration_lower {
+#victory.yes #victory_duration_lower,
+#victory.yes #fuel_used_lower {
   text-align:right;
   padding-right: 1rem;
   direction: rtl;
 }
-#victory.yes #victory_duration_higher {
+#victory.yes #victory_duration_higher,
+#victory.yes #fuel_used_higher {
   text-align:left;
   padding-left: 1rem;
 }
