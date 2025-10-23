@@ -1,10 +1,11 @@
 # Gravitle
 
 
-## Wip
+## All
 ```sh
-$HOME/github.com/loicbourgois/gravitle/front.sh
-http://localhost:82/?render=webgpu 
+ls $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
+cat $HOME/github.com/loicbourgois/gravitle/all.sh | grep "\.sh" | wc -l
+$HOME/github.com/loicbourgois/gravitle/all.sh
 ```
 
 
@@ -18,18 +19,21 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 ```
 
 
-## All
-```sh
-ls $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
-cat $HOME/github.com/loicbourgois/gravitle/all.sh | grep "\.sh" | wc -l
-```
-
-
 ## Resources
 - https://nnethercote.github.io/perf-book/title-page.html
 
 
+
+## wip - webgpu
+```sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+http://localhost:82/?render=webgpu 
+```
+
+
 ## Todo
+- move world generation to rust
+- logo blueprint
 - lint .py code
 - improve render performance using webgpu
   - increase poly count for cells drawing, especially asteroids
@@ -47,9 +51,6 @@ cat $HOME/github.com/loicbourgois/gravitle/all.sh | grep "\.sh" | wc -l
   - 2 different messages
     - initial: tasked with relighting the stars 
     - welcome back captain ... 
-- fuel mode for chrono
-  - log fuel used
-  - show at the end below duration
 - star lighting up sound
 - notice color
 - asteroids color

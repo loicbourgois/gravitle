@@ -44,6 +44,8 @@ pub struct World {
     pub victory: u8,
     pub step: u32,
     pub victory_duration: Option<u32>,
+    pub victory_fuel_used: Option<u32>,
+    fuel_used: u32,
     pub victory_end: Option<u32>,
     pub move_start: Option<u32>,
     activation_events: HashMap<u32, Vec<ActivationEvent>>,
@@ -61,9 +63,11 @@ impl World {
             links: Vec::new(),
             step: 0,
             victory: 0,
+            fuel_used: 0,
             victory_duration: None,
             move_start: None,
             victory_end: None,
+            victory_fuel_used: None,
             activation_events: HashMap::new(),
         }
     }
@@ -109,6 +113,7 @@ impl World {
                 if ca.kind == Kind::Booster && ca.activated == 1 {
                     ca.dp.x -= ca.direction.x * 0.0001;
                     ca.dp.y -= ca.direction.y * 0.0001;
+                    self.fuel_used += 1;
                     if self.move_start.is_none() {
                         self.move_start = Some(self.step);
                     }
@@ -240,6 +245,7 @@ impl World {
         if c_unlighted == 0 && self.victory != 1 && self.move_start.is_some() {
             self.victory_end = Some(self.step);
             self.victory_duration = Some(self.step - self.move_start.unwrap());
+            self.victory_fuel_used = Some(self.fuel_used);
             self.victory = 1;
         }
     }
