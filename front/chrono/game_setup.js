@@ -23,7 +23,7 @@ function game_setup() {
 		for (const l of ship.links) {
 			world.add_link(l.a, l.b);
 		}
-		world.setup(this.seed, 20, this.stars_count, user_kind)
+		world.setup(this.seed, 20, this.stars_count, user_kind);
 	}
 }
 export { game_setup };

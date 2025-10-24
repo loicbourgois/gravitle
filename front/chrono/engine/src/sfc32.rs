@@ -28,7 +28,7 @@ impl Sfc32 {
     }
 
     pub fn next_f32(&mut self) -> f32 {
-        let i:i64 = 4_294_967_296;
+        let i: i64 = 4_294_967_296;
         self.next_u32() as f32 / (i as f32)
     }
 }

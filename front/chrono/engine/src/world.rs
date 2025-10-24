@@ -5,8 +5,8 @@ use crate::math::collision_response;
 use crate::math::delta;
 use crate::math::wrap_around;
 use crate::point::Point;
-use crate::wasm_bindgen;
 use crate::sfc32::Sfc32;
+use crate::wasm_bindgen;
 use serde::Serialize;
 use std::collections::HashMap;
 const LINK_STRENGH: f32 = 0.2;
@@ -72,58 +72,63 @@ impl World {
             activation_events: HashMap::new(),
         }
     }
-    pub fn setup(&mut self, seed: &[u32], asteroid_count: u32, star_count: u32, user_kind: UserKind) {
+    pub fn setup(
+        &mut self,
+        seed: &[u32],
+        asteroid_count: u32,
+        star_count: u32,
+        user_kind: UserKind,
+    ) {
         let mut sfc32 = Sfc32::new(seed);
         for _ in 0..asteroid_count {
-			let diameter = 0.05;
-			let mut iterations = 0;
-			loop {
-				iterations += 1;
-				assert!(iterations < 100, "too many iterations");
-				let x = sfc32.next_f32();
-				let y = sfc32.next_f32();
-				let mut ok = true;
-				for cell in &self.cells {
-					let wa = wrap_around(cell.p, Point{ x, y });
-					let diams = cell.diameter + diameter * 1.5;
-					let colliding = wa.d_sqrd < diams * diams;
-					if colliding {
-						ok = false;
-						break;
-					}
-				}
-				if ok {
-					self.add_cell(x, y, diameter, Kind::Asteroid, user_kind);
-					break;
-				}
-			}
-		}
+            let diameter = 0.05;
+            let mut iterations = 0;
+            loop {
+                iterations += 1;
+                assert!(iterations < 100, "too many iterations");
+                let x = sfc32.next_f32();
+                let y = sfc32.next_f32();
+                let mut ok = true;
+                for cell in &self.cells {
+                    let wa = wrap_around(cell.p, Point { x, y });
+                    let diams = cell.diameter + diameter * 1.5;
+                    let colliding = wa.d_sqrd < diams * diams;
+                    if colliding {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    self.add_cell(x, y, diameter, Kind::Asteroid, user_kind);
+                    break;
+                }
+            }
+        }
 
         for _ in 0..star_count {
-			let diameter = 0.015;
-			let mut iterations = 0;
-			loop {
-				iterations += 1;
-				assert!(iterations < 200, "too many iterations");
-				let x = sfc32.next_f32();
-				let y = sfc32.next_f32();
-				let mut ok = true;
-				for cell in &self.cells {
-					let wa = wrap_around(cell.p, Point{ x, y});
-					let diams = cell.diameter * 0.5 + diameter * 5.0;
-					let colliding = wa.d_sqrd < diams * diams;
-					if colliding {
-						ok = false;
-						break;
-					}
-				}
-				if ok {
-					self.add_cell(x, y, diameter, Kind::Unlighted, user_kind);
-					break;
-				}
-			}
-		}
-
+            let diameter = 0.015;
+            let mut iterations = 0;
+            loop {
+                iterations += 1;
+                assert!(iterations < 200, "too many iterations");
+                let x = sfc32.next_f32();
+                let y = sfc32.next_f32();
+                let mut ok = true;
+                for cell in &self.cells {
+                    let wa = wrap_around(cell.p, Point { x, y });
+                    let diams = cell.diameter * 0.5 + diameter * 5.0;
+                    let colliding = wa.d_sqrd < diams * diams;
+                    if colliding {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    self.add_cell(x, y, diameter, Kind::Unlighted, user_kind);
+                    break;
+                }
+            }
+        }
     }
     pub fn link_exists(&self, aidx: usize, bidx: usize) -> bool {
         for l in &self.links {
