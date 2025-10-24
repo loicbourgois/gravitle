@@ -2,6 +2,7 @@ mod cell;
 mod link;
 mod math;
 mod point;
+mod sfc32;
 mod utils;
 mod world;
 use crate::utils::set_panic_hook;

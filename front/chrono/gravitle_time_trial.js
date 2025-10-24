@@ -114,11 +114,35 @@ function isLikeNone(x) {
 	return x === undefined || x === null;
 }
 
+let cachedUint32ArrayMemory0 = null;
+
+function getUint32ArrayMemory0() {
+	if (
+		cachedUint32ArrayMemory0 === null ||
+		cachedUint32ArrayMemory0.byteLength === 0
+	) {
+		cachedUint32ArrayMemory0 = new Uint32Array(wasm.memory.buffer);
+	}
+	return cachedUint32ArrayMemory0;
+}
+
+function passArray32ToWasm0(arg, malloc) {
+	const ptr = malloc(arg.length * 4, 4) >>> 0;
+	getUint32ArrayMemory0().set(arg, ptr / 4);
+	WASM_VECTOR_LEN = arg.length;
+	return ptr;
+}
+
 function _assertClass(instance, klass) {
 	if (!(instance instanceof klass)) {
 		throw new Error(`expected instance of ${klass.name}`);
 	}
 }
+
+export function setup() {
+	wasm.setup();
+}
+
 /**
  * @param {Point} a
  * @param {Point} b
@@ -131,10 +155,6 @@ export function wrap_around(a, b) {
 	var ptr1 = b.__destroy_into_raw();
 	const ret = wasm.wrap_around(ptr0, ptr1);
 	return WrapAroundResult.__wrap(ret);
-}
-
-export function setup() {
-	wasm.setup();
 }
 
 /**
@@ -990,6 +1010,24 @@ export class World {
 		return ret !== 0;
 	}
 	/**
+	 * @param {Uint32Array} seed
+	 * @param {number} asteroid_count
+	 * @param {number} star_count
+	 * @param {UserKind} user_kind
+	 */
+	setup(seed, asteroid_count, star_count, user_kind) {
+		const ptr0 = passArray32ToWasm0(seed, wasm.__wbindgen_malloc);
+		const len0 = WASM_VECTOR_LEN;
+		wasm.world_setup(
+			this.__wbg_ptr,
+			ptr0,
+			len0,
+			asteroid_count,
+			star_count,
+			user_kind,
+		);
+	}
+	/**
 	 * @returns {World}
 	 */
 	static new() {
@@ -1165,6 +1203,7 @@ function __wbg_finalize_init(instance, module) {
 	wasm = instance.exports;
 	__wbg_init.__wbindgen_wasm_module = module;
 	cachedDataViewMemory0 = null;
+	cachedUint32ArrayMemory0 = null;
 	cachedUint8ArrayMemory0 = null;
 
 	wasm.__wbindgen_start();

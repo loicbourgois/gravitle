@@ -32,7 +32,6 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
-- move world generation to rust
 - logo blueprint
 - lint .py code
 - improve render performance using webgpu
