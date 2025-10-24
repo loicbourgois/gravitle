@@ -4,6 +4,7 @@ mod math;
 mod point;
 mod utils;
 mod world;
+mod sfc32;
 use crate::utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
