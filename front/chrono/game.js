@@ -6,10 +6,19 @@ const kb = {
 	s: [],
 	d: [],
 };
-function Game({ gravitle, memory, seed_input, stars_count, ghost, view, ship, asteroid_count }) {
+function Game({
+	gravitle,
+	memory,
+	seed_input,
+	stars_count,
+	ghost,
+	view,
+	ship,
+	asteroid_count,
+}) {
 	console.log("game - start");
 	this.gravitle = gravitle;
-	this.ship = ship
+	this.ship = ship;
 	this.asteroid_count = asteroid_count;
 	this.memory = memory;
 	this.view = view;

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Gravitle - Logo</title>
+    <link rel="stylesheet" href="/chrono/index.css">
+  </head>
+  <body>
+    <div id="overlay">
+      <div id="overlay-left">
+        <a href="/alpha/">alpha</a>
+        <a href="/">chrono</a>
+        <a href="/duel/">duel</a>
+        <a href="https://github.com/loicbourgois/gravitle">github</a>
+      </div>
+      <span class="spacer"></span>
+      <div id="overlay-right">
+        <p id="fps"></p>
+        <p id="debug_center"></p>
+        <span class="spacer"></span>
+      </div>
+    </div>
+    <div id="victory">
+      <span class="spacer"></span>
+      <div id="victory_main">
+        <div id="vic_text" class="hide">
+          <button id="again">
+            <span class="vt">Again</span>
+            <span class="key_interact">[e]</span>
+          </button>
+          <button id="new"><span class="vt">New</span><span class="key_interact">[space]</span></button>
+          <button id="share"><span class="vt">Share</span><span id="share_1" class="key_interact">[r]</span><span id="share_2" class="key_interact hide">Saved to clipboard</span></button>
+        </div>
+        <div id="notice_text">
+          <span class="spacer"></span>
+          <div id="left_key">
+            <span class="direction"></span>
+            <span class="key_interact"></span>
+          </div>
+          <div id="right_key">
+            <span class="direction"></span>
+            <span class="key_interact"></span>
+          </div>
+          <span class="spacer"></span>
+        </div>
+        <div id="durations">
+          <p id="victory_duration_lower"></p>
+          <p id="victory_duration"></p>
+          <p id="victory_duration_higher"></p>
+        </div>
+        <div id="fuel_used">
+          <p id="fuel_used_lower"></p>
+          <p id="fuel_used_me"></p>
+          <p id="fuel_used_higher"></p>
+        </div>
+      </div>
+      <span class="ex"></span>
+    </div>
+    <div id="content">
+      <div id="left"></div>
+      <div id="center">
+        <div id="top"></div>
+        <canvas id="canvas" style="z-index: 100;">
+        </canvas>
+        <div id="bottom"></div>
+      </div>
+      <div id="right"></div>
+    </div>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <script type="module" src="/logo/index.js"></script>
+  </body>
+</html>

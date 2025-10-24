@@ -4,6 +4,7 @@ import { View2d } from "./view_2d.js";
 import { ViewWebGPU } from "./view_webgpu.js";
 import { Game } from "./game.js";
 import { defaults } from "./defaults.js";
+import { ship } from "./ship.js";
 
 const has_webgpu_support = async () => {
 	const adapter = await navigator.gpu?.requestAdapter();
@@ -54,6 +55,8 @@ const main = async () => {
 		stars_count,
 		ghost,
 		view,
+		ship,
+		asteroid_count: 20,
 	});
 };
 window.onload = () => {
