@@ -41,6 +41,7 @@ http://localhost:82/?render=webgpu
   - draw links
   - track ship to always center the view on it
   - handle wrap around drawing
+- asteroids as clumps of smaller cells
 - different ships
   - create blueprint
   - add url param for self and for ghost

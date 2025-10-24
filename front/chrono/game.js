@@ -1,5 +1,4 @@
 import { cyrb128, random_seed } from "./random.js";
-import { ship } from "./ship.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
 import { Audio } from "./sound.js";
@@ -7,9 +6,11 @@ const kb = {
 	s: [],
 	d: [],
 };
-function Game({ gravitle, memory, seed_input, stars_count, ghost, view }) {
+function Game({ gravitle, memory, seed_input, stars_count, ghost, view, ship, asteroid_count }) {
 	console.log("game - start");
 	this.gravitle = gravitle;
+	this.ship = ship
+	this.asteroid_count = asteroid_count;
 	this.memory = memory;
 	this.view = view;
 	this.stars_count = stars_count;
