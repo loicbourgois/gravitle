@@ -1,5 +1,3 @@
-import { ship } from "./ship.js";
-
 function game_setup() {
 	const kinds = {
 		armor: this.gravitle.Kind.Armor,
@@ -17,13 +15,13 @@ function game_setup() {
 			user_kind = 3;
 		}
 		// add ship
-		for (const e of ship.parts) {
+		for (const e of this.ship.parts) {
 			world.add_cell(e.p.x, e.p.y, e.d, kinds[e.kind], user_kind);
 		}
-		for (const l of ship.links) {
+		for (const l of this.ship.links) {
 			world.add_link(l.a, l.b);
 		}
-		world.setup(this.seed, 20, this.stars_count, user_kind);
+		world.setup(this.seed, this.asteroid_count, this.stars_count, user_kind);
 	}
 }
 export { game_setup };

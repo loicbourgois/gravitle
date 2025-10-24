@@ -1,5 +1,5 @@
 // Generated from generate/blueprint.py
-const ship = {
+    const ship = {
   "DIAM": 0.0125,
   "center": {
     "x": 0.5,
@@ -272,4 +272,5 @@ const ship = {
     }
   ]
 };
-export { ship };
+    export { ship };
+    
