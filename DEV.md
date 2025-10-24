@@ -32,7 +32,6 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
-- logo blueprint
 - lint .py code
 - improve render performance using webgpu
   - increase poly count for cells drawing, especially asteroids
