@@ -1,4 +1,3 @@
-import os
 from .color import color
 from .kind import kind
 from .user_kind import user_kind
@@ -29,7 +28,7 @@ def colors_wgsl():
     ]
     for y in user_kind:
         lines.append(f"  case USER_KIND_{y.name}: {{")
-        lines.append(f"    switch particle.kind {{")
+        lines.append("    switch particle.kind {")
         kl = {
             user_kind.USER:'m',
             user_kind.GHOST:'g',
@@ -46,12 +45,12 @@ def colors_wgsl():
                     a = 1.0
                 lines.append(f"      case KIND_{x.name}: {{")
                 lines.append(f"        vsOut.color = vec4f({r*a}, {g*a}, {b*a}, {a});")
-                lines.append(f"      }}")
-        lines.append(f"  default:{{}}")
-        lines.append(f"    }}")
-        lines.append(f"  }}")
-    lines.append(f"  default:{{}}")
-    lines.append(f"}}")
+                lines.append("      }")
+        lines.append("  default:{}")
+        lines.append("    }")
+        lines.append("  }")
+    lines.append("  default:{}")
+    lines.append("}")
 
     write_force(
         "/root/github.com/loicbourgois/gravitle/generate/wgsl/colors.wgsl",
