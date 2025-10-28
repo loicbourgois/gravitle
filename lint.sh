@@ -2,6 +2,7 @@
 set -e
 echo "# Lint - start"
 START_TIME=$SECONDS
+cd $HOME/github.com/loicbourgois/gravitle
 $HOME/github.com/loicbourgois/gravitle/.venv/bin/python -m ruff check
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 cargo clippy --release \

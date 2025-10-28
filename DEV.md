@@ -38,7 +38,6 @@ http://localhost:82/?render=webgpu
     - validate user play
     - store play
   - deploy
-- lint .py code
 - improve render performance using webgpu
   - increase poly count for cells drawing, especially asteroids
     this should be generated
@@ -65,10 +64,3 @@ http://localhost:82/?render=webgpu
 - /mining: buggy booster flares if initial browser zoom != 100%
 - format .wgsl
   https://docs.rs/naga/latest/naga/
-
-
-## venv setup
-```sh
-cd $HOME/github.com/loicbourgois/gravitle
-python3.13 -m venv .venv
-```
