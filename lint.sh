@@ -4,6 +4,7 @@ echo "# Lint - start"
 START_TIME=$SECONDS
 
 $HOME/github.com/loicbourgois/gravitle/.venv/bin/python -m ruff check
+$HOME/github.com/loicbourgois/gravitle/.venv/bin/python -m ruff format
 
 # cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 # cargo clippy --release \
