@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class kind(Enum):
     ARMOR = 0
     BOOSTER = 1

@@ -21,7 +21,7 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 
 ## Resources
 - https://nnethercote.github.io/perf-book/title-page.html
-
+- https://github.com/snapview/tokio-tungstenite
 
 
 ## wip - webgpu
@@ -32,7 +32,12 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
-- lint .py code
+- multiplayer leaderboard
+  - local server
+    - ping
+    - validate user play
+    - store play
+  - deploy
 - improve render performance using webgpu
   - increase poly count for cells drawing, especially asteroids
     this should be generated

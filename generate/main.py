@@ -1,4 +1,3 @@
-import os
 from .color import color
 from .kind import kind
 from .user_kind import user_kind
@@ -29,11 +28,11 @@ def colors_wgsl():
     ]
     for y in user_kind:
         lines.append(f"  case USER_KIND_{y.name}: {{")
-        lines.append(f"    switch particle.kind {{")
+        lines.append("    switch particle.kind {")
         kl = {
-            user_kind.USER:'m',
-            user_kind.GHOST:'g',
-            user_kind.OTHER:'o',
+            user_kind.USER: "m",
+            user_kind.GHOST: "g",
+            user_kind.OTHER: "o",
         }[y]
         for x in kind:
             if color[x][0][0].get(kl):
@@ -41,17 +40,19 @@ def colors_wgsl():
                 g = int(color[x][0][0][kl][2], 16) * 17 / 255.0
                 b = int(color[x][0][0][kl][3], 16) * 17 / 255.0
                 if len(color[x][0][0][kl]) == 5:
-                    a = int(color[x][0][0][kl][4], 16) * 17 / 255.0 
+                    a = int(color[x][0][0][kl][4], 16) * 17 / 255.0
                 else:
                     a = 1.0
                 lines.append(f"      case KIND_{x.name}: {{")
-                lines.append(f"        vsOut.color = vec4f({r*a}, {g*a}, {b*a}, {a});")
-                lines.append(f"      }}")
-        lines.append(f"  default:{{}}")
-        lines.append(f"    }}")
-        lines.append(f"  }}")
-    lines.append(f"  default:{{}}")
-    lines.append(f"}}")
+                lines.append(
+                    f"        vsOut.color = vec4f({r * a}, {g * a}, {b * a}, {a});"
+                )
+                lines.append("      }")
+        lines.append("  default:{}")
+        lines.append("    }")
+        lines.append("  }")
+    lines.append("  default:{}")
+    lines.append("}")
 
     write_force(
         "/root/github.com/loicbourgois/gravitle/generate/wgsl/colors.wgsl",
@@ -60,14 +61,24 @@ def colors_wgsl():
 
 
 def code_wgsl():
-    content = read("/root/github.com/loicbourgois/gravitle/generate/wgsl/code.wgsl").replace(
-        "{colors}", read("/root/github.com/loicbourgois/gravitle/generate/wgsl/colors.wgsl")
-    ).replace(
-        "{disk}", read("/root/github.com/loicbourgois/gravitle/generate/wgsl/disk.wgsl"),
-    ).replace(
-        "{cell}", read("/root/github.com/loicbourgois/gravitle/generate/wgsl/cell.wgsl"),
-    ).replace(
-        "{kind}", read("/root/github.com/loicbourgois/gravitle/generate/wgsl/kind.wgsl"),
+    content = (
+        read("/root/github.com/loicbourgois/gravitle/generate/wgsl/code.wgsl")
+        .replace(
+            "{colors}",
+            read("/root/github.com/loicbourgois/gravitle/generate/wgsl/colors.wgsl"),
+        )
+        .replace(
+            "{disk}",
+            read("/root/github.com/loicbourgois/gravitle/generate/wgsl/disk.wgsl"),
+        )
+        .replace(
+            "{cell}",
+            read("/root/github.com/loicbourgois/gravitle/generate/wgsl/cell.wgsl"),
+        )
+        .replace(
+            "{kind}",
+            read("/root/github.com/loicbourgois/gravitle/generate/wgsl/kind.wgsl"),
+        )
     )
     write_force(
         "/root/github.com/loicbourgois/gravitle/front/chrono/webgpu/code.wgsl",
@@ -83,6 +94,7 @@ def kind_wgsl():
         "/root/github.com/loicbourgois/gravitle/generate/wgsl/kind.wgsl",
         "\n".join(lines),
     )
+
 
 if __name__ == "__main__":
     print("# Generate - start")
