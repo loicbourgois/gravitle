@@ -32,6 +32,10 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
+- generator: json to txt
+- generator: python to rust
+- autopilot
+- tree generator
 - multiplayer leaderboard
   - local server
     - ping

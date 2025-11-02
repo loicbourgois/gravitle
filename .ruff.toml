@@ -1,0 +1,6 @@
+# https://docs.astral.sh/ruff/configuration/
+[lint]
+ignore = [
+    "E741",
+    "F401",
+]

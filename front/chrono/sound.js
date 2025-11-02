@@ -91,9 +91,9 @@ const get_booster_v3 = (audio_context) => {
 };
 
 function Audio() {}
-Audio.prototype.setup = async function () {
+Audio.prototype.setup = async function (booster_ids) {
 	const audio_context = new AudioContext();
-	await audio_context.audioWorklet.addModule("chrono/noise-processor.js");
+	await audio_context.audioWorklet.addModule("/chrono/noise-processor.js");
 	const compressor = audio_context.createDynamicsCompressor();
 	compressor.threshold.setValueAtTime(-10, audio_context.currentTime); // dB value where compression starts
 	compressor.knee.setValueAtTime(10, audio_context.currentTime); // How smoothly the curve transitions
@@ -101,30 +101,24 @@ Audio.prototype.setup = async function () {
 	compressor.attack.setValueAtTime(0.05, audio_context.currentTime); // Time (s) to start compressing
 	compressor.release.setValueAtTime(0.05, audio_context.currentTime); // Time (s) to release compression
 	const main = get_gain(audio_context, 0.1);
-	const left = get_booster_v3(audio_context);
-	const right = get_booster_v3(audio_context);
-	left.connect(compressor);
-	right.connect(compressor);
 	compressor.connect(main);
 	main.connect(audio_context.destination);
 	this.audio_context = audio_context;
 	this.main = main;
-	this.left = left;
-	this.right = right;
 	this.keys = {};
 	this.cc = 1000;
 	this.transition = 0.5;
 	this.release = 0.125;
-	this.cells = {
-		13: {
+	// const ids = [13, 14]
+	this.cells = []
+	for (const id of booster_ids) {
+		const node = get_booster_v3(audio_context);
+		this.cells[id] = {
 			activated: false,
-			node: left,
-		},
-		14: {
-			activated: false,
-			node: right,
-		},
-	};
+			node: node,
+		}
+		node.connect(compressor)
+	}
 };
 Audio.prototype.activate = function (idx) {
 	try {
@@ -140,7 +134,7 @@ Audio.prototype.activate = function (idx) {
 			}
 		}
 	} catch (error) {
-		console.error(error);
+		// console.error(error);
 	}
 };
 Audio.prototype.deactivate = function (idx) {
@@ -156,7 +150,7 @@ Audio.prototype.deactivate = function (idx) {
 		c.node.gain.setValueAtTime(0, now + this.release);
 		c.activated = false;
 	} catch (error) {
-		console.error(error);
+		// console.error(error);
 	}
 };
 export { Audio };

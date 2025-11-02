@@ -43,9 +43,13 @@ function Game({
 			o: this.ghosto,
 		});
 	}
+	const booster_ids = []
 	ship.parts.forEach((e, idx) => {
 		if (e.binding) {
 			kb[e.binding].push(idx);
+		}
+		if (e.kind === "booster") {
+			booster_ids.push(idx)
 		}
 	});
 	this.key_bindings = new Map();
@@ -60,7 +64,7 @@ function Game({
 	document.addEventListener("keydown", async (e) => {
 		if (this.audio === null) {
 			this.audio = new Audio();
-			await this.audio.setup();
+			await this.audio.setup(booster_ids);
 		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {

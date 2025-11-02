@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-echo "# Format - start"
 START_TIME=$SECONDS
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 cargo +nightly fmt
@@ -9,6 +8,6 @@ cargo fmt
 cd $HOME/github.com/loicbourgois/gravitle/front/chrono
 dprint fmt
 cd $HOME/github.com/loicbourgois/gravitle
-$HOME/github.com/loicbourgois/gravitle/.venv/bin/python -m ruff format
+$HOME/github.com/loicbourgois/gravitle/.venv/bin/python -m ruff --quiet format
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
-echo "# Format - end - $ELAPSED_TIME s"
+echo "✅ format - $ELAPSED_TIME s"
