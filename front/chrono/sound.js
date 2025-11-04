@@ -110,14 +110,14 @@ Audio.prototype.setup = async function (booster_ids) {
 	this.transition = 0.5;
 	this.release = 0.125;
 	// const ids = [13, 14]
-	this.cells = []
+	this.cells = [];
 	for (const id of booster_ids) {
 		const node = get_booster_v3(audio_context);
 		this.cells[id] = {
 			activated: false,
 			node: node,
-		}
-		node.connect(compressor)
+		};
+		node.connect(compressor);
 	}
 };
 Audio.prototype.activate = function (idx) {

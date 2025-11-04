@@ -34,19 +34,16 @@ class Thing:
         self.rand_links = {}
         self.add_cell(first_kind, 0, 0)
 
-
     def add_link(self, ia, ib, s):
         idx = len(self.links)
         self.links.append(Link(ia, ib, s, idx))
         self.links_2[f"{ia}|{ib}"] = idx
-
 
     def add_cell(self, k, x, y):
         assert self.cells_2.get(f"{x}|{y}") is None, self.cells_2
         idx = len(self.cells)
         self.cells.append(Cell(kinds[k], x, y))
         self.cells_2[f"{x}|{y}"] = idx
-
 
     def to_txt(self, mode):
         min_x = 0
@@ -59,18 +56,18 @@ class Thing:
             min_y = min(min_y, c.y)
             max_y = max(max_y, c.y)
         self.w = max_x - min_x + 2
-        self.h = max_y - min_y + 1 
+        self.h = max_y - min_y + 1
         lines = [[" " for _ in range(self.w)] for _ in range(self.h)]
         for i, c in enumerate(self.cells):
             try:
                 if mode == "kind":
                     lines[c.y - min_y][c.x - min_x] = c.k[0]
                     lines[c.y - min_y][c.x - min_x + 1] = c.k[1]
-                elif  mode == "idx":
+                elif mode == "idx":
                     idx_str = f"{i:02d}"
                     lines[c.y - min_y][c.x - min_x] = idx_str[0]
                     lines[c.y - min_y][c.x - min_x + 1] = idx_str[1]
-                else: 
+                else:
                     raise Exception("no implemented")
             except:
                 print(f"{c.x} | {min_x} | {self.w} | ")
@@ -83,31 +80,30 @@ class Thing:
                 raise
             for i, char in enumerate(l.s):
                 if l.s == "----":
-                    lines[c.y - min_y][c.x - min_x +i+2] = char
+                    lines[c.y - min_y][c.x - min_x + i + 2] = char
                 elif l.s == "/":
-                    lines[c.y - min_y - 1][c.x - min_x +i+2] = char
+                    lines[c.y - min_y - 1][c.x - min_x + i + 2] = char
                 elif l.s == "\\":
-                    lines[c.y - min_y + 1][c.x - min_x +i+2] = char
+                    lines[c.y - min_y + 1][c.x - min_x + i + 2] = char
                 else:
                     raise Exception("not implemented")
-        return "\n".join(["", ""]+["    " +"".join(line) for line in lines] + ["", ""])
-
+        return "\n".join(
+            ["", ""] + ["    " + "".join(line) for line in lines] + ["", ""]
+        )
 
     def add_right(self, idx, k):
         c0 = self.cells[idx]
         x = c0.x + 6
         y = c0.y
         self.add_cell(k, x, y)
-        self.add_link(idx, len(self.cells)-1, "----")
-        
-    
+        self.add_link(idx, len(self.cells) - 1, "----")
+
     def add_left(self, idx, k):
         c0 = self.cells[idx]
         x = c0.x - 6
         y = c0.y
         self.add_cell(k, x, y)
-        self.add_link(len(self.cells)-1, idx, "----")
-
+        self.add_link(len(self.cells) - 1, idx, "----")
 
     def add(self, ia, ib, k):
         ca = self.cells[ia]

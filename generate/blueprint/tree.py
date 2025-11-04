@@ -1,5 +1,6 @@
 from .thing import Thing
 
+
 def generate_blueprint_tree():
     tree = Thing("wood")
     tree.add_right(0, "wood")
