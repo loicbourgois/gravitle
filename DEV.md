@@ -25,6 +25,13 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 - https://en.wikipedia.org/wiki/Gravity_assist
 
 
+## wip - slingshot
+```sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+http://localhost:82/slingshot/
+```
+
+
 ## wip - webgpu
 ```sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
