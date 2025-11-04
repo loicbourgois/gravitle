@@ -1,15 +1,14 @@
-import os
 import math
-from .misc import read, write_force
+from ..misc import read, write_force
 import json
+from ..env import HOME
+from ..config import DIAM
 
-HOME = os.environ["HOME"]
-DIAM = 0.0125
 y_ratio = math.sqrt(3) / 2
 
 
 def blueprint():
-    for name in ["ship", "logo"]:
+    for name in ["ship", "logo", "random"]:
         path = "{HOME}/github.com/loicbourgois/gravitle/blueprint/{name}.{extension}"
         s = read(path.format(HOME=HOME, name=name, extension="txt"))
         col = 0

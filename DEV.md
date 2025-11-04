@@ -22,6 +22,7 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 ## Resources
 - https://nnethercote.github.io/perf-book/title-page.html
 - https://github.com/snapview/tokio-tungstenite
+- https://en.wikipedia.org/wiki/Gravity_assist
 
 
 ## wip - webgpu
@@ -32,6 +33,18 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
+- variable links
+- moddable core engine
+  - kinds as json
+- slingshot
+  3 body: home, moon, neighboor
+  - send from home to moon
+  - send from moon to home 
+  - send from home to neighboor using moon
+- generator: json to txt
+- generator: move from python to rust
+- autopilot
+- tree generator
 - multiplayer leaderboard
   - local server
     - ping

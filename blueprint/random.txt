@@ -1,0 +1,40 @@
+
+
+             bd                                                                                 
+            /  \                                                                                
+          aa----bd          bs                      aa----aa          aa----bd                  
+         /  \  /  \        /  \                       \  /  \        /  \  /                    
+       aa----bd----aa    bs----aa----bs    aa----aa    bs----bd    bs----aa                     
+            /  \  /  \     \  /  \  /     /  \  /     /  \  /  \  /  \  /                       
+          aa----aa----bs----bs----aa    aa----bd    aa----aa----bd----aa    aa----bs----aa      
+               /  \  /  \  /  \  /     /  \  /  \        /  \  /  \  /     /  \  /  \  /        
+             bd----aa----aa----bs    bd----aa----bs    bd----bs----bd----aa----bs----aa         
+                        /  \  /  \  /  \  /                    \  /  \  /  \  /  \              
+          bd----bs    aa----aa----bs----bd    bs    aa    bd    aa----bs----aa----bd            
+            \  /  \        /  \  /  \  /  \  /  \  /  \  /  \  /  \  /  \                       
+       bd----bs----bs    bs----aa----bs----bd----aa----aa----bs----bs----bs    bs----aa----aa   
+      /  \  /  \  /  \                 \  /  \  /  \  /  \  /  \  /  \        /  \  /  \  /  \  
+    bd----bs----aa----aa----bs----aa    aa----bd----cc----aa----bs----aa----bd----bs----aa----aa
+               /  \  /  \  /  \  /  \        /  \  /  \     \  /  \  /  \  /  \  /  \           
+       aa----bd----aa----bd----aa----aa----bd----aa----aa    aa    aa----bs----bs----bd         
+         \  /  \  /     /  \  /  \  /  \  /  \  /  \                 \  /  \     \  /  \        
+          aa----bd    bs----bs    bs----bs----bs----aa----bd    aa    bd----aa    aa----bd      
+                     /  \  /     /  \  /     /  \  /  \  /     /  \                             
+       aa----bd----bs----bd    bs----bd    aa----aa----bs----bs----aa----aa----aa----bs         
+         \  /  \  /  \  /     /  \  /  \        /  \  /  \  /  \  /  \  /  \  /  \  /           
+          bs----aa----aa    aa----bs----aa    aa----bd----bs----aa----bd----aa----aa            
+               /  \  /  \     \  /  \  /           /  \  /  \           \  /  \                 
+             aa----aa----bs    aa    bd    aa----bd----aa----aa    bs    aa----bd               
+               \  /  \  /  \              /  \  /  \  /  \        /  \     \  /                 
+                bd    aa----aa          bd----bd----aa----aa----bd----aa    aa    bd            
+                                                   /  \  /  \  /  \  /           /  \           
+                                     bd----bd----aa----aa----bs----bs----aa----aa----aa         
+                                       \  /  \  /  \  /  \  /  \  /  \  /  \  /  \  /           
+                                        aa----bd----bd    aa    bd----aa----aa----bd            
+                                          \  /  \              /  \  /  \     \  /              
+                                           aa----aa    bs----aa----bs----aa    bs               
+                                          /  \  /     /  \  /  \  /  \  /                       
+                                        aa----bs    aa----bd----aa    aa                        
+                                          \  /                                                  
+                                           aa                                                   
+
