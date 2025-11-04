@@ -23,15 +23,16 @@ pub struct Cell {
     // pub collision_response_count: u32,
     // pub activated: u32,
     // pub activated_previous: u32,
-    // pub kind: Kind,
+    pub kind: u32,
     // pub user_kind: UserKind,
     // pub padding: u32,
 }
 #[wasm_bindgen]
 impl Cell {
-    pub fn new(x: f32, y: f32) -> Cell {
+    pub fn new(x: f32, y: f32, kind: u32) -> Cell {
         Cell {
             p: Point::new(x, y),
+            kind,
         }
     }
 }

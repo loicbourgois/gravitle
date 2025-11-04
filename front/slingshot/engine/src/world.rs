@@ -15,9 +15,9 @@ impl World {
     pub fn new() -> World {
         World { cells: Vec::new() }
     }
-    pub fn add_cell(&mut self, x: f32, y: f32) -> usize {
+    pub fn add_cell(&mut self, kind: u32, x: f32, y: f32) -> usize {
         let idx = self.cells.len();
-        self.cells.push(Cell::new(x, y));
+        self.cells.push(Cell::new(x, y, kind));
         idx
     }
     pub fn cells(&self) -> *const Cell {

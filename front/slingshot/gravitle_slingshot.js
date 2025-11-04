@@ -93,9 +93,206 @@ function getDataViewMemory0() {
     return cachedDataViewMemory0;
 }
 
-export function setup() {
-    wasm.setup();
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
 }
+/**
+ * @returns {World}
+ */
+export function setup() {
+    const ret = wasm.setup();
+    return World.__wrap(ret);
+}
+
+const CellFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_cell_free(ptr >>> 0, 1));
+
+export class Cell {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Cell.prototype);
+        obj.__wbg_ptr = ptr;
+        CellFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        CellFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_cell_free(ptr, 0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get p() {
+        const ret = wasm.__wbg_get_cell_p(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set p(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_cell_p(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {number}
+     */
+    get kind() {
+        const ret = wasm.__wbg_get_cell_kind(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set kind(arg0) {
+        wasm.__wbg_set_cell_kind(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {number} kind
+     * @returns {Cell}
+     */
+    static new(x, y, kind) {
+        const ret = wasm.cell_new(x, y, kind);
+        return Cell.__wrap(ret);
+    }
+}
+if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
+
+const PointFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_point_free(ptr >>> 0, 1));
+
+export class Point {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Point.prototype);
+        obj.__wbg_ptr = ptr;
+        PointFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        PointFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_point_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get x() {
+        const ret = wasm.__wbg_get_point_x(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set x(arg0) {
+        wasm.__wbg_set_point_x(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get y() {
+        const ret = wasm.__wbg_get_point_y(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set y(arg0) {
+        wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @returns {Point}
+     */
+    static new(x, y) {
+        const ret = wasm.point_new(x, y);
+        return Point.__wrap(ret);
+    }
+}
+if (Symbol.dispose) Point.prototype[Symbol.dispose] = Point.prototype.free;
+
+const WorldFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_world_free(ptr >>> 0, 1));
+
+export class World {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(World.prototype);
+        obj.__wbg_ptr = ptr;
+        WorldFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WorldFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_world_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    cells_count() {
+        const ret = wasm.world_cells_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    cells() {
+        const ret = wasm.world_cells(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} kind
+     * @param {number} x
+     * @param {number} y
+     * @returns {number}
+     */
+    add_cell(kind, x, y) {
+        const ret = wasm.world_add_cell(this.__wbg_ptr, kind, x, y);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {World}
+     */
+    static new() {
+        const ret = wasm.world_new();
+        return World.__wrap(ret);
+    }
+}
+if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;
 
 const EXPECTED_RESPONSE_TYPES = new Set(['basic', 'cors', 'default']);
 
@@ -135,6 +332,9 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
     const imports = {};
     imports.wbg = {};
+    imports.wbg.__wbg___wbindgen_throw_b855445ff6a94295 = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
+    };
     imports.wbg.__wbg_error_7534b8e9a36f1ab4 = function(arg0, arg1) {
         let deferred0_0;
         let deferred0_1;
