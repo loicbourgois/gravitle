@@ -1,0 +1,6 @@
+# ln: launcher
+# st: steel
+            
+   ln
+  /  \
+st----st

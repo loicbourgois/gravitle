@@ -6,6 +6,7 @@ authors = ["Loïc Bourgois <loic@bourgois.pro>"]
 edition = "2024"
 repository = "loicbourgois"
 description = "gravitle-slingshot"
+license = "GPL-3.0"
 
 [lib]
 # https://doc.rust-lang.org/reference/linkage.html

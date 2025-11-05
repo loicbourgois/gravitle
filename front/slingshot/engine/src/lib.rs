@@ -1,4 +1,5 @@
 mod cell;
+mod material;
 mod point;
 mod utils;
 mod world;

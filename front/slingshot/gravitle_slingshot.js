@@ -132,6 +132,19 @@ export class Cell {
         wasm.__wbg_cell_free(ptr, 0);
     }
     /**
+     * @returns {number}
+     */
+    get diameter() {
+        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set diameter(arg0) {
+        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
+    }
+    /**
      * @returns {Point}
      */
     get p() {
@@ -149,28 +162,77 @@ export class Cell {
     /**
      * @returns {number}
      */
-    get kind() {
-        const ret = wasm.__wbg_get_cell_kind(this.__wbg_ptr);
+    get material_idx() {
+        const ret = wasm.__wbg_get_cell_material_idx(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**
      * @param {number} arg0
      */
-    set kind(arg0) {
-        wasm.__wbg_set_cell_kind(this.__wbg_ptr, arg0);
+    set material_idx(arg0) {
+        wasm.__wbg_set_cell_material_idx(this.__wbg_ptr, arg0);
     }
     /**
+     * @param {number} material_idx
      * @param {number} x
      * @param {number} y
-     * @param {number} kind
+     * @param {number} diameter
      * @returns {Cell}
      */
-    static new(x, y, kind) {
-        const ret = wasm.cell_new(x, y, kind);
+    static new(material_idx, x, y, diameter) {
+        const ret = wasm.cell_new(material_idx, x, y, diameter);
         return Cell.__wrap(ret);
     }
 }
 if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
+
+const MaterialFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_material_free(ptr >>> 0, 1));
+
+export class Material {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Material.prototype);
+        obj.__wbg_ptr = ptr;
+        MaterialFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        MaterialFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_material_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get density() {
+        const ret = wasm.__wbg_get_material_density(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set density(arg0) {
+        wasm.__wbg_set_material_density(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {Material}
+     */
+    static new() {
+        const ret = wasm.material_new();
+        return Material.__wrap(ret);
+    }
+}
+if (Symbol.dispose) Material.prototype[Symbol.dispose] = Material.prototype.free;
 
 const PointFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -201,14 +263,14 @@ export class Point {
      * @returns {number}
      */
     get x() {
-        const ret = wasm.__wbg_get_point_x(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_material_density(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} arg0
      */
     set x(arg0) {
-        wasm.__wbg_set_point_x(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_material_density(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
@@ -261,6 +323,17 @@ export class World {
         wasm.__wbg_world_free(ptr, 0);
     }
     /**
+     * @param {string} url
+     * @param {string} definition
+     */
+    add_material(url, definition) {
+        const ptr0 = passStringToWasm0(url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(definition, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.world_add_material(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+    }
+    /**
      * @returns {number}
      */
     cells_count() {
@@ -275,13 +348,16 @@ export class World {
         return ret >>> 0;
     }
     /**
-     * @param {number} kind
+     * @param {string} material_url
      * @param {number} x
      * @param {number} y
+     * @param {number} diameter
      * @returns {number}
      */
-    add_cell(kind, x, y) {
-        const ret = wasm.world_add_cell(this.__wbg_ptr, kind, x, y);
+    add_cell(material_url, x, y, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell(this.__wbg_ptr, ptr0, len0, x, y, diameter);
         return ret >>> 0;
     }
     /**
