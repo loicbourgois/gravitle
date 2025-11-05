@@ -1,6 +1,7 @@
 use crate::wasm_bindgen;
+use serde::Serialize;
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize)]
 #[repr(C)] // https://doc.rust-lang.org/nomicon/other-reprs.html#reprc
 pub struct Point {
     pub x: f32,

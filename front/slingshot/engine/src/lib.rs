@@ -1,8 +1,9 @@
+pub mod blueprint;
 mod cell;
 mod material;
 mod point;
 mod utils;
-mod world;
+pub mod world;
 use crate::utils::set_panic_hook;
 use crate::world::World;
 use wasm_bindgen::prelude::*;

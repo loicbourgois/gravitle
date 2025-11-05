@@ -1,3 +1,4 @@
+use crate::blueprint::Blueprint;
 use crate::cell::Cell;
 use crate::material::Material;
 use crate::wasm_bindgen;
@@ -41,11 +42,16 @@ impl World {
         let material: Material = match serde_json::from_str(definition) {
             Ok(m) => m,
             Err(e) => {
-                eprintln!("Failed to parse material JSON from {url}: {e}");
-                return;
+                panic!("Failed to parse material JSON from {url}: {e}");
             }
         };
         self.materials.push(material);
         self.materials_2.insert(url, idx);
+    }
+    pub fn add_from_blueprint(&mut self, blueprint_str: &str, x: f32, y: f32) {
+        let blueprint = Blueprint::new(blueprint_str);
+        for c in &blueprint.parts {
+            self.add_cell(&c.material_url, c.p.x + x, c.p.y + y, c.d);
+        }
     }
 }

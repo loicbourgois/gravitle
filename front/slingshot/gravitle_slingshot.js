@@ -92,18 +92,18 @@ function getDataViewMemory0() {
     }
     return cachedDataViewMemory0;
 }
-
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
-}
 /**
  * @returns {World}
  */
 export function setup() {
     const ret = wasm.setup();
     return World.__wrap(ret);
+}
+
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
 }
 
 const CellFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -263,14 +263,14 @@ export class Point {
      * @returns {number}
      */
     get x() {
-        const ret = wasm.__wbg_get_material_density(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} arg0
      */
     set x(arg0) {
-        wasm.__wbg_set_material_density(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
@@ -321,6 +321,16 @@ export class World {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_world_free(ptr, 0);
+    }
+    /**
+     * @param {string} blueprint_str
+     * @param {number} x
+     * @param {number} y
+     */
+    add_from_blueprint(blueprint_str, x, y) {
+        const ptr0 = passStringToWasm0(blueprint_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_from_blueprint(this.__wbg_ptr, ptr0, len0, x, y);
     }
     /**
      * @param {string} url
