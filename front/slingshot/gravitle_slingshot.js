@@ -92,18 +92,18 @@ function getDataViewMemory0() {
     }
     return cachedDataViewMemory0;
 }
+
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
+}
 /**
  * @returns {World}
  */
 export function setup() {
     const ret = wasm.setup();
     return World.__wrap(ret);
-}
-
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
 }
 
 const CellFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -132,19 +132,6 @@ export class Cell {
         wasm.__wbg_cell_free(ptr, 0);
     }
     /**
-     * @returns {number}
-     */
-    get diameter() {
-        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set diameter(arg0) {
-        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
-    }
-    /**
      * @returns {Point}
      */
     get p() {
@@ -162,6 +149,19 @@ export class Cell {
     /**
      * @returns {number}
      */
+    get diameter() {
+        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set diameter(arg0) {
+        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
     get material_idx() {
         const ret = wasm.__wbg_get_cell_material_idx(this.__wbg_ptr);
         return ret >>> 0;
@@ -171,6 +171,13 @@ export class Cell {
      */
     set material_idx(arg0) {
         wasm.__wbg_set_cell_material_idx(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.cell_size();
+        return ret >>> 0;
     }
     /**
      * @param {number} material_idx
@@ -186,19 +193,78 @@ export class Cell {
 }
 if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
 
+const ColorFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_color_free(ptr >>> 0, 1));
+
+export class Color {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Color.prototype);
+        obj.__wbg_ptr = ptr;
+        ColorFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        ColorFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_color_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get r() {
+        const ret = wasm.__wbg_get_color_r(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set r(arg0) {
+        wasm.__wbg_set_color_r(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get g() {
+        const ret = wasm.__wbg_get_color_g(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set g(arg0) {
+        wasm.__wbg_set_color_g(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get b() {
+        const ret = wasm.__wbg_get_color_b(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set b(arg0) {
+        wasm.__wbg_set_color_b(this.__wbg_ptr, arg0);
+    }
+}
+if (Symbol.dispose) Color.prototype[Symbol.dispose] = Color.prototype.free;
+
 const MaterialFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_material_free(ptr >>> 0, 1));
 
 export class Material {
-
-    static __wrap(ptr) {
-        ptr = ptr >>> 0;
-        const obj = Object.create(Material.prototype);
-        obj.__wbg_ptr = ptr;
-        MaterialFinalization.register(obj, obj.__wbg_ptr, obj);
-        return obj;
-    }
 
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -210,6 +276,21 @@ export class Material {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_material_free(ptr, 0);
+    }
+    /**
+     * @returns {Color}
+     */
+    get color() {
+        const ret = wasm.__wbg_get_material_color(this.__wbg_ptr);
+        return Color.__wrap(ret);
+    }
+    /**
+     * @param {Color} arg0
+     */
+    set color(arg0) {
+        _assertClass(arg0, Color);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_material_color(this.__wbg_ptr, ptr0);
     }
     /**
      * @returns {number}
@@ -225,11 +306,11 @@ export class Material {
         wasm.__wbg_set_material_density(this.__wbg_ptr, arg0);
     }
     /**
-     * @returns {Material}
+     * @returns {number}
      */
-    static new() {
-        const ret = wasm.material_new();
-        return Material.__wrap(ret);
+    static size() {
+        const ret = wasm.material_size();
+        return ret >>> 0;
     }
 }
 if (Symbol.dispose) Material.prototype[Symbol.dispose] = Material.prototype.free;
@@ -263,14 +344,14 @@ export class Point {
      * @returns {number}
      */
     get x() {
-        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_point_x(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} arg0
      */
     set x(arg0) {
-        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_point_x(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
@@ -346,6 +427,20 @@ export class World {
     /**
      * @returns {number}
      */
+    materials_count() {
+        const ret = wasm.world_materials_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    materials() {
+        const ret = wasm.world_materials(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
     cells_count() {
         const ret = wasm.world_cells_count(this.__wbg_ptr);
         return ret >>> 0;
@@ -369,6 +464,9 @@ export class World {
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.world_add_cell(this.__wbg_ptr, ptr0, len0, x, y, diameter);
         return ret >>> 0;
+    }
+    tick() {
+        wasm.world_tick(this.__wbg_ptr);
     }
     /**
      * @returns {World}

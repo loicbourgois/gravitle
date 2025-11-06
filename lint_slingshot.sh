@@ -12,4 +12,6 @@ cargo clippy --release \
     -A clippy::unnecessary_get_then_check\
     -A clippy::cast_precision_loss \
     -A clippy::too_many_lines \
-    -A clippy::missing_panics_doc
+    -A clippy::missing_panics_doc \
+    -A clippy::must_use_candidate
+echo "✅ lint_slingshot"

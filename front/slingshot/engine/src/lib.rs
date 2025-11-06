@@ -1,6 +1,8 @@
 pub mod blueprint;
 mod cell;
+mod color;
 mod material;
+mod material_definition;
 mod point;
 mod utils;
 pub mod world;

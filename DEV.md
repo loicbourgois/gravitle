@@ -27,7 +27,7 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
   - https://medium.com/@oemaxwell/rust-webassembly-performance-javascript-vs-wasm-bindgen-vs-raw-wasm-with-simd-687b1dc8127b
   - https://nickb.dev/blog/authoring-a-simd-enhanced-wasm-library-with-rust/
   - https://doc.rust-lang.org/core/arch/wasm32/index.html#simd
-
+  - https://news.ycombinator.com/item?id=45826348
 
 ## wip - slingshot
 ```sh

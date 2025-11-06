@@ -2,7 +2,7 @@
 set -e
 cd $HOME/github.com/loicbourgois/gravitle/front/slingshot/engine
 cargo fmt
-cargo test -- --nocapture
+cargo test --release --test '*' -- --nocapture
 wasm-pack build --target web
 source="$HOME/github.com/loicbourgois/gravitle/front/slingshot/engine/pkg/"
 dest="$HOME/github.com/loicbourgois/gravitle/front/slingshot/"

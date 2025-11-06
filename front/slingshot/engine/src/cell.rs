@@ -3,10 +3,10 @@ use crate::wasm_bindgen;
 #[wasm_bindgen]
 #[repr(C)] // https://doc.rust-lang.org/nomicon/other-reprs.html#reprc
 pub struct Cell {
-    // pub idx: u32,
-    pub diameter: f32,
     // position
     pub p: Point,
+    // pub idx: u32,
+    pub diameter: f32,
     // // previous position
     // pub pp: Point,
     // // new position
@@ -23,7 +23,7 @@ pub struct Cell {
     // pub collision_response_count: u32,
     // pub activated: u32,
     // pub activated_previous: u32,
-    pub material_idx: usize,
+    pub material_idx: u32,
     // pub user_kind: UserKind,
     // pub padding: u32,
 }
@@ -32,8 +32,11 @@ impl Cell {
     pub fn new(material_idx: usize, x: f32, y: f32, diameter: f32) -> Cell {
         Cell {
             p: Point::new(x, y),
-            material_idx,
+            material_idx: material_idx as u32,
             diameter,
         }
+    }
+    pub fn size() -> u32 {
+        size_of::<Cell>() as u32
     }
 }

@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["Loïc Bourgois <loic@bourgois.pro>"]
 # https://doc.rust-lang.org/edition-guide/rust-2024/index.html
 edition = "2024"
+license = "GPL-3.0"
 repository = "loicbourgois"
 description = "gravitle-slingshot"
-license = "GPL-3.0"
 
 [lib]
 # https://doc.rust-lang.org/reference/linkage.html
