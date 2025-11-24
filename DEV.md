@@ -29,9 +29,12 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
   - https://doc.rust-lang.org/core/arch/wasm32/index.html#simd
   - https://news.ycombinator.com/item?id=45826348
 
+
 ## wip - slingshot
 ```sh
+$HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
+vs $HOME/github.com/loicbourgois/gravitle/front/slingshot/index.js
 http://localhost:82/slingshot/
 ```
 

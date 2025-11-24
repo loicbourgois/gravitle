@@ -147,6 +147,92 @@ export class Cell {
         wasm.__wbg_set_cell_p(this.__wbg_ptr, ptr0);
     }
     /**
+     * @returns {Point}
+     */
+    get pp() {
+        const ret = wasm.__wbg_get_cell_pp(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set pp(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_cell_pp(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get ap() {
+        const ret = wasm.__wbg_get_cell_ap(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set ap(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_cell_ap(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get dp() {
+        const ret = wasm.__wbg_get_cell_dp(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set dp(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_cell_dp(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get dv() {
+        const ret = wasm.__wbg_get_cell_dv(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set dv(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_cell_dv(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {number}
+     */
+    get material_idx() {
+        const ret = wasm.__wbg_get_cell_material_idx(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set material_idx(arg0) {
+        wasm.__wbg_set_cell_material_idx(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get mass() {
+        const ret = wasm.__wbg_get_cell_mass(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set mass(arg0) {
+        wasm.__wbg_set_cell_mass(this.__wbg_ptr, arg0);
+    }
+    /**
      * @returns {number}
      */
     get diameter() {
@@ -162,15 +248,41 @@ export class Cell {
     /**
      * @returns {number}
      */
-    get material_idx() {
-        const ret = wasm.__wbg_get_cell_material_idx(this.__wbg_ptr);
+    get fixed() {
+        const ret = wasm.__wbg_get_cell_fixed(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**
      * @param {number} arg0
      */
-    set material_idx(arg0) {
-        wasm.__wbg_set_cell_material_idx(this.__wbg_ptr, arg0);
+    set fixed(arg0) {
+        wasm.__wbg_set_cell_fixed(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get collision_count() {
+        const ret = wasm.__wbg_get_cell_collision_count(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set collision_count(arg0) {
+        wasm.__wbg_set_cell_collision_count(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get padding() {
+        const ret = wasm.__wbg_get_cell_padding(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set padding(arg0) {
+        wasm.__wbg_set_cell_padding(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
@@ -367,6 +479,24 @@ export class Point {
         wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
     }
     /**
+     * @param {Point} b
+     * @returns {number}
+     */
+    distance(b) {
+        const ptr = this.__destroy_into_raw();
+        _assertClass(b, Point);
+        var ptr0 = b.__destroy_into_raw();
+        const ret = wasm.point_distance(ptr, ptr0);
+        return ret;
+    }
+    /**
+     * @returns {Point}
+     */
+    normalize() {
+        const ret = wasm.point_normalize(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
      * @param {number} x
      * @param {number} y
      * @returns {Point}
@@ -402,6 +532,97 @@ export class World {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_world_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdp() {
+        const ret = wasm.__wbg_get_world_rdp(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdp(arg0) {
+        wasm.__wbg_set_world_rdp(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdv() {
+        const ret = wasm.__wbg_get_world_rdv(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdv(arg0) {
+        wasm.__wbg_set_world_rdv(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get gravity() {
+        const ret = wasm.__wbg_get_world_gravity(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set gravity(arg0) {
+        wasm.__wbg_set_world_gravity(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get gravity_2() {
+        const ret = wasm.__wbg_get_world_gravity_2(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set gravity_2(arg0) {
+        wasm.__wbg_set_world_gravity_2(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get crdp() {
+        const ret = wasm.__wbg_get_world_crdp(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set crdp(arg0) {
+        wasm.__wbg_set_world_crdp(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get crdv() {
+        const ret = wasm.__wbg_get_world_crdv(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set crdv(arg0) {
+        wasm.__wbg_set_world_crdv(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdv_during_colision() {
+        const ret = wasm.__wbg_get_world_rdv_during_colision(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdv_during_colision(arg0) {
+        wasm.__wbg_set_world_rdv_during_colision(this.__wbg_ptr, arg0);
     }
     /**
      * @param {string} blueprint_str
@@ -464,6 +685,34 @@ export class World {
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.world_add_cell(this.__wbg_ptr, ptr0, len0, x, y, diameter);
         return ret >>> 0;
+    }
+    /**
+     * @param {number} idx
+     */
+    set_cell_fixed(idx) {
+        wasm.world_set_cell_fixed(this.__wbg_ptr, idx);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} diameter
+     */
+    set_cell_diameter(idx, diameter) {
+        wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
+    }
+    tick_05() {
+        wasm.world_tick_05(this.__wbg_ptr);
+    }
+    tick_04() {
+        wasm.world_tick_04(this.__wbg_ptr);
+    }
+    tick_03() {
+        wasm.world_tick_03(this.__wbg_ptr);
+    }
+    tick_02() {
+        wasm.world_tick_02(this.__wbg_ptr);
+    }
+    tick_01() {
+        wasm.world_tick_01(this.__wbg_ptr);
     }
     tick() {
         wasm.world_tick(this.__wbg_ptr);

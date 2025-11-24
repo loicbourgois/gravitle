@@ -1,7 +1,15 @@
 struct Cell {
-    p: vec2f,
-    diameter: f32,
-    material_idx: u32,
+     p: vec2f, // position
+     pp: vec2f, // previous position
+     ap: vec2f, // average position
+     dp: vec2f, // delta position
+     dv: vec2f, // delta velocity
+     material_idx: u32,
+     mass: f32,
+     diameter: f32,
+     fixed: u32,
+     collision_count: f32,
+     padding: u32,
 }
 struct Material {
     color: vec3f,
@@ -61,7 +69,7 @@ const disk_positions = array<vec2f, 48>(
     vec2f( 0.92387956,  -0.38268343),
     vec2f( 1,  0.00000017484555),
 );
-const ZOOM = 9;
+const ZOOM = 5;
 @group(0) @binding(0) var<storage, read> cells: array<Cell>;
 @group(0) @binding(1) var<storage, read> materials: array<Material>;
 @vertex fn vs_0(
@@ -72,7 +80,7 @@ const ZOOM = 9;
   let center = vec2f( 0.0,  0.0);
   var vsOut: VSOutput;
   vsOut.position = vec4f(
-    (disk_positions[vertexIndex]*particle.diameter*0.51 + particle.p - center )* ZOOM,
+    (disk_positions[vertexIndex]*particle.diameter*0.51 + particle.ap - center )* ZOOM,
     0.0, 1.0
   );
   let m = materials[particle.material_idx];

@@ -1,6 +1,8 @@
 import init, * as gravitle from "./gravitle_slingshot.js";
-import { fetch_as_text, fetch_as_json_string } from "./fetch.js";
 import { ViewWebGPU } from "./view_webgpu.js";
+import { setup_1 } from "./setup_1.js";
+import { setup_2 } from "./setup_2.js";
+import { setup_3 } from "./setup_3.js";
 
 const has_webgpu_support = async () => {
 	const adapter = await navigator.gpu?.requestAdapter();
@@ -26,17 +28,9 @@ function Game({ wasm_memory, wasm_engine, view }) {
 Game.prototype.setup = async function () {
 	await this.view.setup(this.wasm_engine);
 	const world = this.wasm_engine.setup();
-	for (const url of [
-		"/slingshot/material/steel.json",
-		"/slingshot/material/launcher.json",
-	]) {
-		world.add_material(url, await fetch_as_json_string(url));
-	}
-	world.add_from_blueprint(
-		await fetch_as_text("/slingshot/blueprint/slingshot/material.txt"),
-		0.0,
-		0.0,
-	);
+	setup_1(world)
+	// setup_2(world)
+	// setup_3(world)
 	this.worlds = [world];
 	return this;
 };
@@ -60,9 +54,10 @@ const get_avg_fps = (tick_starts) => {
 const perf_array_len = 100;
 Game.prototype.tick = function () {
 	const now_00 = performance.now();
-	this.worlds[0].tick();
+	for (let index = 0; index < 10; index++) {
+		this.worlds[0].tick();
+	}
 	this.logic_durations.push(performance.now() - now_00);
-
 	const now_01 = performance.now();
 	this.view.render(this.worlds, this.wasm_engine, this.wasm_memory);
 	this.render_durations.push(performance.now() - now_01);
@@ -72,6 +67,7 @@ Game.prototype.tick = function () {
 	const stats = get_stats(this.render_durations);
 	const stats_2 = get_stats(this.tick_durations);
 	const stats_3 = get_stats(this.stats_durations);
+	const stats_4 = get_stats(this.logic_durations);
 	document.getElementById("render_duration_avg").innerHTML =
 		stats.avg.toFixed(3);
 	document.getElementById("render_duration_p99").innerHTML =
@@ -84,6 +80,12 @@ Game.prototype.tick = function () {
 		stats_3.avg.toFixed(3);
 	document.getElementById("stats_duration_p99").innerHTML =
 		stats_3?.p99?.toFixed(3);
+	document.getElementById("logic_duration_avg").innerHTML =
+		stats_4.avg.toFixed(3);
+	document.getElementById("logic_duration_p99").innerHTML =
+		stats_4?.p99?.toFixed(3);
+	document.getElementById("frame_budget").innerHTML =
+		(stats_2?.avg / (1000/120)*100 )?.toFixed(0);
 	for (const x of [
 		this.render_durations,
 		this.tick_starts,

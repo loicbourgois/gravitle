@@ -4,14 +4,26 @@ use crate::color::Color;
 use crate::material::Material;
 use crate::material_definition::MaterialDefinition;
 use crate::material_definition::ValueOrReference;
+use crate::point::Point;
 use crate::wasm_bindgen;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[wasm_bindgen]
 pub struct World {
     cells: Vec<Cell>,
     materials: Vec<Material>,
     materials_2: HashMap<String, usize>,
+    zones: HashMap<(i32, i32), HashSet<usize>>,
+    pub rdp: f32,
+    pub rdv: f32,
+    zonesize: f32,
+    pairs: HashSet<(usize, usize)>,
+    pub gravity: f32,
+    pub gravity_2: f32,
+    pub crdp: f32,
+    pub crdv: f32,
+    pub rdv_during_colision: f32,
 }
 impl Default for World {
     fn default() -> Self {
@@ -25,13 +37,134 @@ impl World {
             cells: Vec::new(),
             materials: Vec::new(),
             materials_2: HashMap::new(),
+            zones: HashMap::new(),
+            gravity: 0.0,
+            crdv: 0.0,
+            crdp: 0.0,
+            rdv: 0.0,
+            rdp: 0.0,
+            gravity_2: 0.0,
+            rdv_during_colision: 0.0,
+            // spring: 0.1,
+            zonesize: 1.0,
+            pairs: HashSet::new(),
         }
     }
+    // file://./../../../chrono/engine/src/world.rs
+    // file://./../../../../../miniciv/src/world.rs
     pub fn tick(&mut self) {
-        TODO
-        for cell in &mut self.cells {
-            cell.p.x += 0.0001;
+        // for cell in &mut self.cells {
+        //     cell.p.x += 0.0001;
+        // }
+        self.tick_01();
+        self.tick_02();
+        self.tick_03();
+        self.tick_04();
+        self.tick_05();
+    }
+    pub fn tick_01(&mut self) {
+        self.zones.clear();
+        for (cell_idx, cell) in &mut self.cells.iter_mut().enumerate() {
+            cell.dp = (cell.p - cell.pp) * self.rdp;
+            cell.dv = (cell.p - cell.pp)
+                * (1.0 - self.rdv)
+                * (1.0 - self.rdv_during_colision * cell.collision_count);
+            cell.collision_count = 0.0;
+            let x1: i32 = ((cell.p.x - cell.diameter * 0.5) / self.zonesize).floor() as i32;
+            let x2: i32 = ((cell.p.x + cell.diameter * 0.5) / self.zonesize).ceil() as i32;
+            let y1: i32 = ((cell.p.y - cell.diameter * 0.5) / self.zonesize).floor() as i32;
+            let y2: i32 = ((cell.p.y + cell.diameter * 0.5) / self.zonesize).ceil() as i32;
+            for x in x1..=x2 {
+                for y in y1..=y2 {
+                    self.zones.entry((x, y)).or_default().insert(cell_idx);
+                }
+            }
         }
+    }
+    pub fn tick_02(&mut self) {
+        self.pairs.clear();
+        for zone in self.zones.values() {
+            let mut ids: Vec<usize> = zone.iter().copied().collect();
+            ids.sort_unstable();
+            for (idx, ia) in ids.iter().enumerate().take(ids.len() - 1) {
+                for ib in ids.iter().take(ids.len()).skip(idx + 1) {
+                    self.pairs.insert((*ia as usize, *ib as usize));
+                }
+            }
+        }
+    }
+    pub fn tick_03(&mut self) {
+        let cells_ptr = self.cells.as_mut_ptr();
+        let pairs_ = self.pairs.clone();
+        unsafe {
+            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            for pair in &pairs_ {
+                let ia = pair.0;
+                let ib = pair.1;
+                let ca = &mut cells_slice_a[ia];
+                let cb = &mut cells_slice_b[ib];
+                let dist = ca.p.distance(cb.p);
+                let diam_a_ratio = cb.diameter / ca.diameter;
+                let diam_b_ratio = ca.diameter / cb.diameter;
+                if dist < (ca.diameter + cb.diameter) * 0.5 {
+                    let n = (ca.p - cb.p).normalize();
+                    ca.dv += n * self.crdv * diam_a_ratio;
+                    cb.dv -= n * self.crdv * diam_b_ratio;
+                    ca.dp += n * self.crdp * diam_a_ratio;
+                    cb.dp -= n * self.crdp * diam_b_ratio;
+                    ca.collision_count += 1.0;
+                    cb.collision_count += 1.0;
+                } else {
+                    // pass
+                }
+            }
+        }
+    }
+    pub fn tick_04(&mut self) {
+        let cells_ptr = self.cells.as_mut_ptr();
+        unsafe {
+            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            for ia in 0..self.cells.len() {
+                for ib in ia + 1..self.cells.len() {
+                    if (ib <= ia) {
+                        panic!("zoop")
+                    }
+                    let ca = &mut cells_slice_a[ia];
+                    let cb = &mut cells_slice_b[ib];
+                    let ca_density = self.materials[ca.material_idx as usize].density;
+                    let cb_density = self.materials[cb.material_idx as usize].density;
+                    let ma = ca_density * ca.diameter * ca.diameter;
+                    let mb = cb_density * cb.diameter * cb.diameter;
+                    let dist = ca.p.distance(cb.p);
+                    let g = (ma * mb) / (dist * dist);
+                    let n = (ca.p - cb.p).normalize();
+                    ca.dv -= n * g * self.gravity_2;
+                    cb.dv += n * g * self.gravity_2;
+                }
+            }
+        }
+    }
+    pub fn tick_05(&mut self) {
+        let center = Point { x: 0.0, y: 0.0 };
+        for cell in &mut self.cells {
+            let gravity = (cell.p - center).normalize() * -self.gravity * cell.mass;
+            if (cell.fixed != 1) {
+                cell.p += cell.dp;
+            }
+            cell.pp = cell.p;
+            if (cell.fixed != 1) {
+                cell.p += gravity + cell.dv;
+            }
+            cell.ap = (cell.p + cell.pp) * 0.5;
+        }
+    }
+    pub fn set_cell_diameter(&mut self, idx: usize, diameter: f32) {
+        self.cells[idx].diameter = diameter;
+    }
+    pub fn set_cell_fixed(&mut self, idx: usize) {
+        self.cells[idx].fixed = 1;
     }
     pub fn add_cell(&mut self, material_url: &str, x: f32, y: f32, diameter: f32) -> usize {
         let idx = self.cells.len();
