@@ -17,18 +17,3 @@ pub struct MaterialDefinition {
     pub density: ValueOrReference,
     pub color: String,
 }
-
-// impl MaterialDefinition {
-//     pub fn as_material(&self, materials: ) -> Material {
-//         Material {
-//             density: match self.density {
-//                 ValueOrReference::value(v) => {
-//                     v
-//                 }
-//                 ValueOrReference::reference => {
-
-//                 }
-//             },
-//         }
-//     }
-// }

@@ -90,8 +90,8 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 		label: "shaders",
 		code: code,
 	});
-	this.buffer_cells = create_buffer(this.device, 1000, gravitle.Cell);
-	this.buffer_materials = create_buffer(this.device, 1000, gravitle.Material);
+	this.buffer_cells = create_buffer(this.device, 4000, gravitle.Cell);
+	this.buffer_materials = create_buffer(this.device, 4000, gravitle.Material);
 	this.steps = [
 		new_step({
 			label: "pipeline_0",

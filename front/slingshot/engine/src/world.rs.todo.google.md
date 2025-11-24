@@ -1,3 +1,24 @@
+To address the `TODO` in `add_cell_2`, we need to implement the geometric calculation for finding a circle tangent to two other circles.
+
+Here's the plan:
+1.  **Correct the function signature**: The return type should be `usize` (the index of the newly added cell), not `{`.
+2.  **Correct parameter usage**: `idx` in the original `TODO` should be `idx_1`.
+3.  **Geometric Calculation**:
+    *   Let the two existing cells be `c1` and `c2`, with centers `p1`, `p2` and radii `r1`, `r2`.
+    *   Let the new cell be `c3`, with center `p3` and radius `r3`.
+    *   For `c3` to be tangent to `c1`, the distance `p3` to `p1` must be `r1 + r3`.
+    *   For `c3` to be tangent to `c2`, the distance `p3` to `p2` must be `r2 + r3`.
+    *   This reduces to finding the intersection points of two "helper" circles:
+        *   Helper Circle 1: Center `p1`, Radius `R_A = r1 + r3`.
+        *   Helper Circle 2: Center `p2`, Radius `R_B = r2 + r3`.
+    *   We'll use the standard formula for circle-circle intersection to find the coordinates `(x, y)` for `p3`.
+4.  **Edge Cases**:
+    *   **Existing cells at the same location (`p1 == p2`)**: This is a degenerate case. If their radii are also the same (`r1 == r2`), there are infinite solutions (any point at `r1 + r3` distance from `p1`). We'll pick a canonical one (e.g., directly "above" `p1`). If radii differ, it's impossible.
+    *   **No real intersection points**: If the helper circles are too far apart or one is completely contained within the other without touching, there are no solutions. We'll `panic!` in such cases, as this indicates an impossible geometric configuration for the given inputs.
+    *   **Floating point precision**: Handle potential small negative values when calculating square roots near tangent points by clamping to zero.
+5.  **Choose one solution**: The intersection of two circles can yield zero, one (tangent), or two points. If two points are found, we'll pick one (e.g., the one with the positive perpendicular offset relative to the line connecting `p1` and `p2`).
+
+```rust
 use crate::blueprint::Blueprint;
 use crate::cell::Cell;
 use crate::color::Color;
@@ -5,7 +26,6 @@ use crate::material::Material;
 use crate::material_definition::MaterialDefinition;
 use crate::material_definition::ValueOrReference;
 use crate::point::Point;
-use crate::point::equilateral_third_point;
 use crate::utils::elapsed_secs_f32;
 use crate::utils::now;
 use crate::wasm_bindgen;
@@ -50,7 +70,7 @@ pub struct World {
     zones: HashMap<(i32, i32), HashSet<usize>>,
     pub rdp: f32,
     pub rdv: f32,
-    pub zonesize: f32,
+    zonesize: f32,
     pairs: HashSet<(usize, usize)>,
     pub gravity: f32,
     pub gravity_2: f32,
@@ -59,7 +79,6 @@ pub struct World {
     pub rdv_during_colision: f32,
     stats: HashMap<String, Stat>,
     pub perf_array_len: usize,
-    tick: usize,
 }
 impl Default for World {
     fn default() -> Self {
@@ -83,11 +102,10 @@ impl World {
             gravity_2: 0.0,
             rdv_during_colision: 0.0,
             // spring: 0.1,
-            zonesize: 0.02,
+            zonesize: 1.0,
             pairs: HashSet::new(),
-            perf_array_len: 500,
+            perf_array_len: 100,
             stats: HashMap::new(),
-            tick: 0,
         };
         w.add_stat("logic".to_string());
         w.add_stat("render".to_string());
@@ -122,7 +140,6 @@ impl World {
         let n = now();
         self.tick_06();
         self.add_duration("tick_06", elapsed_secs_f32(n));
-        self.tick += 1;
     }
     pub fn add_duration(&mut self, id: &str, value: f32) {
         self.stats.get_mut(id).unwrap().values.push(value);
@@ -140,10 +157,8 @@ impl World {
         self.stats[id].js
     }
     pub fn tick_06(&mut self) {
-        if self.tick % 20 == 0 {
-            for stat in self.stats.values_mut() {
-                stat.update(self.perf_array_len);
-            }
+        for stat in self.stats.values_mut() {
+            stat.update(self.perf_array_len);
         }
     }
     pub fn tick_01(&mut self) {
@@ -263,17 +278,82 @@ impl World {
         let y = c.p.y + c.diameter * 0.5 + diameter * 0.5;
         self.add_cell(material_url, x, y, diameter)
     }
+    /// Adds a new cell tangent to two existing cells.
+    ///
+    /// This function calculates the position (x, y) for a new cell (c3) such that it is
+    /// just touching two existing cells (c1 and c2). It solves a geometric problem
+    /// involving the intersection of two circles, where the centers of the circles are
+    /// the centers of c1 and c2, and their radii are (r1 + r3) and (r2 + r3) respectively
+    /// (r1, r2, r3 are the radii of c1, c2, and the new cell).
+    ///
+    /// If there are two possible tangent points, it picks one (the one corresponding to
+    /// the 'positive' perpendicular offset from the line connecting c1 and c2).
+    ///
+    /// # Panics
+    /// - If the two existing cells (c1 and c2) are at the same location but have
+    ///   different diameters, making a tangent placement impossible.
+    /// - If the geometry of the three circles makes it impossible to find a real point
+    ///   where the new cell can be tangent to both existing cells (e.g., the existing
+    ///   cells are too far apart, or one is completely contained within the required
+    ///   tangency radius of the other), considering floating point precision.
     pub fn add_cell_2(
-        &mut self,
-        material_url: &str,
-        idx_1: usize,
-        idx_2: usize,
-        diameter: f32,
+        &mut self, material_url: &str, idx_1: usize, idx_2: usize, diameter: f32
     ) -> usize {
         let c1 = &self.cells[idx_1];
         let c2 = &self.cells[idx_2];
-        let p = equilateral_third_point(c1.p, c2.p);
-        self.add_cell(material_url, p.x, p.y, diameter)
+
+        let p1 = c1.p;
+        let p2 = c2.p;
+        let r1 = c1.diameter * 0.5;
+        let r2 = c2.diameter * 0.5;
+        let r3 = diameter * 0.5;
+
+        let dist_p1_p2 = p1.distance(p2);
+
+        // Radii of the two helper circles whose intersection points are the centers of the new cell
+        let r_helper_1 = r1 + r3;
+        let r_helper_2 = r2 + r3;
+
+        // Handle degenerate case: p1 and p2 are the same point
+        if dist_p1_p2 < f32::EPSILON { // Use epsilon for float comparison
+            if (r1 - r2).abs() < f32::EPSILON {
+                // If r1 == r2, there are infinite solutions forming a circle around p1/p2.
+                // We choose one point, directly 'above' p1.
+                return self.add_cell(material_url, p1.x, p1.y + r_helper_1, diameter);
+            } else {
+                panic!("Cannot place new cell tangent to two cells at the same location with different radii.");
+            }
+        }
+
+        // Calculate x_prime, the distance along the line p1-p2 from p1 to the intersection chord.
+        // This is derived from the standard formula for circle-circle intersection.
+        let x_prime = (dist_p1_p2 * dist_p1_p2 + r_helper_1 * r_helper_1 - r_helper_2 * r_helper_2) / (2.0 * dist_p1_p2);
+
+        // Calculate y_prime_squared, the square of the perpendicular distance from the line p1-p2 to the intersection points.
+        let y_prime_squared = r_helper_1 * r_helper_1 - x_prime * x_prime;
+
+        // Check for impossible geometry (no real solutions)
+        // y_prime_squared might be slightly negative due to floating-point inaccuracies
+        // when circles are nearly tangent; we allow small negative values and clamp to 0.
+        if y_prime_squared < -f32::EPSILON * r_helper_1 * r_helper_1 {
+            panic!("Cannot place new cell tangent to existing cells: geometric impossibility (helper circles do not intersect).");
+        }
+        let y_prime = y_prime_squared.max(0.0).sqrt(); // Clamp to 0 before sqrt
+
+        // Vector from p1 to p2
+        let p1_to_p2 = p2 - p1;
+        let p1_to_p2_normalized = p1_to_p2.normalize();
+
+        // Point on the line p1-p2 at distance x_prime from p1
+        let point_on_line = p1 + p1_to_p2_normalized * x_prime;
+
+        // Perpendicular vector to p1_to_p2_normalized (rotated 90 degrees)
+        let p1_to_p2_perp = Point { x: -p1_to_p2_normalized.y, y: p1_to_p2_normalized.x };
+
+        // Choose one of the two possible intersection points (e.g., the one with positive y_prime component relative to the p1-p2 vector)
+        let p3 = point_on_line + p1_to_p2_perp * y_prime;
+
+        self.add_cell(material_url, p3.x, p3.y, diameter)
     }
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
@@ -317,3 +397,5 @@ impl World {
         }
     }
 }
+
+```

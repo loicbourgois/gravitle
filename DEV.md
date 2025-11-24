@@ -9,6 +9,13 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 ```
 
 
+## Tree
+```sh
+$HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
+http://localhost:82/tree/
+```
+
+
 ## Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
@@ -19,18 +26,7 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 ```
 
 
-## Resources
-- https://nnethercote.github.io/perf-book/title-page.html
-- https://github.com/snapview/tokio-tungstenite
-- https://en.wikipedia.org/wiki/Gravity_assist
-- simd
-  - https://medium.com/@oemaxwell/rust-webassembly-performance-javascript-vs-wasm-bindgen-vs-raw-wasm-with-simd-687b1dc8127b
-  - https://nickb.dev/blog/authoring-a-simd-enhanced-wasm-library-with-rust/
-  - https://doc.rust-lang.org/core/arch/wasm32/index.html#simd
-  - https://news.ycombinator.com/item?id=45826348
-
-
-## wip - slingshot
+## Slingshot
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
@@ -39,7 +35,7 @@ http://localhost:82/slingshot/
 ```
 
 
-## wip - webgpu
+## Webgpu
 ```sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82/?render=webgpu 
@@ -91,3 +87,14 @@ http://localhost:82/?render=webgpu
 - /mining: buggy booster flares if initial browser zoom != 100%
 - format .wgsl
   https://docs.rs/naga/latest/naga/
+
+
+## Resources
+- https://nnethercote.github.io/perf-book/title-page.html
+- https://github.com/snapview/tokio-tungstenite
+- https://en.wikipedia.org/wiki/Gravity_assist
+- simd
+  - https://medium.com/@oemaxwell/rust-webassembly-performance-javascript-vs-wasm-bindgen-vs-raw-wasm-with-simd-687b1dc8127b
+  - https://nickb.dev/blog/authoring-a-simd-enhanced-wasm-library-with-rust/
+  - https://doc.rust-lang.org/core/arch/wasm32/index.html#simd
+  - https://news.ycombinator.com/item?id=45826348
