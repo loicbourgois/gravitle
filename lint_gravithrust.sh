@@ -1,8 +1,5 @@
 #!/bin/sh
 set -e
-echo "# Lint - start"
-START_TIME=$SECONDS
-$HOME/github.com/loicbourgois/gravitle/lint_python.sh
 cd $HOME/github.com/loicbourgois/gravitle/gravithrust
 cargo clippy --release \
     -- \
@@ -23,17 +20,4 @@ cargo clippy --release \
     -A clippy::useless_format \
     -A dead_code \
     -A clippy::format_push_string 
-cd $HOME/github.com/loicbourgois/gravitle/front/chrono/engine
-cargo clippy --release \
-    -- \
-    -D warnings \
-    -D clippy::pedantic \
-    -A clippy::cast_precision_loss \
-    -A clippy::cast_possible_truncation \
-    -A clippy::similar_names \
-    -A clippy::module_name_repetitions \
-    -A unused_variables \
-    -A dead_code \
-    -A unused_imports
-ELAPSED_TIME=$(($SECONDS - $START_TIME))
-echo "# Lint - end - $ELAPSED_TIME s"
+echo "✅ lint_gravithrust"

@@ -1,0 +1,10 @@
+# ln: /slingshot/material/launcher.json
+# st: /slingshot/material/steel.json
+
+      
+       
+   st    
+  /  \   
+st----st----st
+  \  /  \  / 
+   st----st

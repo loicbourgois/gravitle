@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Gravitle - Slingshot</title>
+    <link rel="stylesheet" href="./index.css">
+  </head>
+  <body>
+    <div id="overlay">
+      <div class="spacer"></div>
+      <div>
+        <p>fps: <span id="fps"></span></p>
+        <p>render_duration_avg(ms): <span id="render_duration_avg"></span></p>
+        <p>render_duration_p99(ms): <span id="render_duration_p99"></span></p>
+        <p>logic_duration_avg(ms): <span id="logic_duration_avg"></span></p>
+        <p>logic_duration_p99(ms): <span id="logic_duration_p99"></span></p>
+        <p>stats_duration_avg(ms): <span id="stats_duration_avg"></span></p>
+        <p>stats_duration_p99(ms): <span id="stats_duration_p99"></span></p>
+        <p>tick_duration_avg(ms): <span id="tick_duration_avg"></span></p>
+        <p>tick_duration_p99(ms): <span id="tick_duration_p99"></span></p>
+        <p>frame_budget: <span id="frame_budget"></span>%</p>
+      </div>
+    </div>
+    <div id="content">
+      <div id="left"></div>
+      <div id="center">
+        <div id="top"></div>
+        <canvas id="canvas">
+        </canvas>
+        <div id="bottom"></div>
+      </div>
+      <div id="right"></div>
+    </div>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

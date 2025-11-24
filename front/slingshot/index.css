@@ -1,0 +1,82 @@
+:root {
+  --primary-color: #ff9;
+  --primary-color-low: #ff9d;
+  --background: #102;
+  --secondary-color: #fffd;
+}
+* {
+  font-family: monospace;
+  color: #0000;
+  margin: 0;
+  text-decoration: none;
+}
+a {
+  color: var(--secondary-color);
+}
+a:hover {
+  cursor: pointer;
+  color: var(--primary-color);
+}
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background: var(--background);
+}
+button{
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  background: none;
+}
+canvas {
+  image-rendering: pixelated;
+}
+span {
+  color: var(--secondary-color);
+}
+.spacer {
+  flex-grow: 1;
+}
+#left, #right, #top, #bottom {
+  flex-grow: 1;
+}
+#canvas {
+  height: min(100vh, 100vw);
+  width: min(100vh, 100vw);
+}
+#center {
+  height: 100vh;
+  width: min(100vh, 100vw);
+  display: flex;
+  flex-direction: column;
+}
+#content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+#fps {
+  text-align: right;
+}
+#overlay {
+  display: flex;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+}
+#overlay-left {
+  display: flex;
+  flex-direction: column;
+}
+#overlay-left a {
+  padding-top: 1rem;
+  padding-left: 1rem;
+}
+#overlay p {
+  color: var(--secondary-color);
+  padding: 1rem;
+}
+#overlay {
+  z-index: 2;
+}

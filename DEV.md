@@ -23,6 +23,20 @@ open http://localhost:82/?seed=efopiw-gakura&stars=1
 - https://nnethercote.github.io/perf-book/title-page.html
 - https://github.com/snapview/tokio-tungstenite
 - https://en.wikipedia.org/wiki/Gravity_assist
+- simd
+  - https://medium.com/@oemaxwell/rust-webassembly-performance-javascript-vs-wasm-bindgen-vs-raw-wasm-with-simd-687b1dc8127b
+  - https://nickb.dev/blog/authoring-a-simd-enhanced-wasm-library-with-rust/
+  - https://doc.rust-lang.org/core/arch/wasm32/index.html#simd
+  - https://news.ycombinator.com/item?id=45826348
+
+
+## wip - slingshot
+```sh
+$HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+vs $HOME/github.com/loicbourgois/gravitle/front/slingshot/index.js
+http://localhost:82/slingshot/
+```
 
 
 ## wip - webgpu
