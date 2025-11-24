@@ -88,7 +88,7 @@ impl World {
             ids.sort_unstable();
             for (idx, ia) in ids.iter().enumerate().take(ids.len() - 1) {
                 for ib in ids.iter().take(ids.len()).skip(idx + 1) {
-                    self.pairs.insert((*ia as usize, *ib as usize));
+                    self.pairs.insert((*ia, *ib));
                 }
             }
         }
@@ -126,13 +126,18 @@ impl World {
         unsafe {
             let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
             let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            for ia in 0..self.cells.len() {
-                for ib in ia + 1..self.cells.len() {
-                    if (ib <= ia) {
-                        panic!("zoop")
-                    }
-                    let ca = &mut cells_slice_a[ia];
-                    let cb = &mut cells_slice_b[ib];
+            for (ia, ca) in cells_slice_a.iter_mut().enumerate().take(self.cells.len()) {
+                // for ia in 0..self.cells.len() {
+                for (ib, cb) in cells_slice_b
+                    .iter_mut()
+                    .enumerate()
+                    .take(self.cells.len())
+                    .skip(ia + 1)
+                {
+                    // for ib in ia + 1..self.cells.len() {
+                    assert!(ia < ib);
+                    // let ca = &mut cells_slice_a[ia];
+                    // let cb = &mut cells_slice_b[ib];
                     let ca_density = self.materials[ca.material_idx as usize].density;
                     let cb_density = self.materials[cb.material_idx as usize].density;
                     let ma = ca_density * ca.diameter * ca.diameter;
@@ -150,11 +155,11 @@ impl World {
         let center = Point { x: 0.0, y: 0.0 };
         for cell in &mut self.cells {
             let gravity = (cell.p - center).normalize() * -self.gravity * cell.mass;
-            if (cell.fixed != 1) {
+            if cell.fixed != 1 {
                 cell.p += cell.dp;
             }
             cell.pp = cell.p;
-            if (cell.fixed != 1) {
+            if cell.fixed != 1 {
                 cell.p += gravity + cell.dv;
             }
             cell.ap = (cell.p + cell.pp) * 0.5;

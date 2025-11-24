@@ -26,7 +26,7 @@ impl Color {
                 let b = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
                 (r, g, b)
             }
-            _ => return Err(format!("Invalid hex color: {}", hex)),
+            _ => return Err(format!("Invalid hex color: {hex}")),
         };
         Ok(Color {
             r: r as f32 / 255.0,
