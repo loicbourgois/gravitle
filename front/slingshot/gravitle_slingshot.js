@@ -588,108 +588,19 @@ export class World {
         wasm.__wbg_world_free(ptr, 0);
     }
     /**
-     * @returns {number}
+     * @returns {WorldConfig}
      */
-    get rdp() {
-        const ret = wasm.__wbg_get_world_rdp(this.__wbg_ptr);
-        return ret;
+    get c() {
+        const ret = wasm.__wbg_get_world_c(this.__wbg_ptr);
+        return WorldConfig.__wrap(ret);
     }
     /**
-     * @param {number} arg0
+     * @param {WorldConfig} arg0
      */
-    set rdp(arg0) {
-        wasm.__wbg_set_world_rdp(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get rdv() {
-        const ret = wasm.__wbg_get_world_rdv(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set rdv(arg0) {
-        wasm.__wbg_set_world_rdv(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get zonesize() {
-        const ret = wasm.__wbg_get_world_zonesize(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set zonesize(arg0) {
-        wasm.__wbg_set_world_zonesize(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get gravity() {
-        const ret = wasm.__wbg_get_world_gravity(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set gravity(arg0) {
-        wasm.__wbg_set_world_gravity(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get gravity_2() {
-        const ret = wasm.__wbg_get_world_gravity_2(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set gravity_2(arg0) {
-        wasm.__wbg_set_world_gravity_2(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get crdp() {
-        const ret = wasm.__wbg_get_world_crdp(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set crdp(arg0) {
-        wasm.__wbg_set_world_crdp(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get crdv() {
-        const ret = wasm.__wbg_get_world_crdv(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set crdv(arg0) {
-        wasm.__wbg_set_world_crdv(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get rdv_during_colision() {
-        const ret = wasm.__wbg_get_world_rdv_during_colision(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set rdv_during_colision(arg0) {
-        wasm.__wbg_set_world_rdv_during_colision(this.__wbg_ptr, arg0);
+    set c(arg0) {
+        _assertClass(arg0, WorldConfig);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_world_c(this.__wbg_ptr, ptr0);
     }
     /**
      * @returns {number}
@@ -804,6 +715,9 @@ export class World {
     set_cell_diameter(idx, diameter) {
         wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
     }
+    tick_06() {
+        wasm.world_tick_06(this.__wbg_ptr);
+    }
     tick_05() {
         wasm.world_tick_05(this.__wbg_ptr);
     }
@@ -818,9 +732,6 @@ export class World {
     }
     tick_01() {
         wasm.world_tick_01(this.__wbg_ptr);
-    }
-    tick_06() {
-        wasm.world_tick_06(this.__wbg_ptr);
     }
     /**
      * @param {string} id
@@ -849,8 +760,47 @@ export class World {
         const len0 = WASM_VECTOR_LEN;
         wasm.world_add_duration(this.__wbg_ptr, ptr0, len0, value);
     }
+    tick_handle_events() {
+        wasm.world_tick_handle_events(this.__wbg_ptr);
+    }
     tick() {
         wasm.world_tick(this.__wbg_ptr);
+    }
+    /**
+     * @param {boolean} value
+     */
+    set_c2c_colision(value) {
+        wasm.world_set_c2c_colision(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {boolean} value
+     */
+    set_c2c_gravity(value) {
+        wasm.world_set_c2c_gravity(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_crdv(value) {
+        wasm.world_set_crdv(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_crdp(value) {
+        wasm.world_set_crdp(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_gravity(value) {
+        wasm.world_set_gravity(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_gravity_2(value) {
+        wasm.world_set_gravity_2(this.__wbg_ptr, value);
     }
     /**
      * @returns {World}
@@ -859,8 +809,184 @@ export class World {
         const ret = wasm.world_new();
         return World.__wrap(ret);
     }
+    /**
+     * @returns {number}
+     */
+    get_tick() {
+        const ret = wasm.world_get_tick(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} tick
+     * @param {string} func
+     * @param {number} cell_id
+     * @param {number} value
+     */
+    add_event(tick, func, cell_id, value) {
+        const ptr0 = passStringToWasm0(func, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_event(this.__wbg_ptr, tick, ptr0, len0, cell_id, value);
+    }
 }
 if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;
+
+const WorldConfigFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_worldconfig_free(ptr >>> 0, 1));
+
+export class WorldConfig {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(WorldConfig.prototype);
+        obj.__wbg_ptr = ptr;
+        WorldConfigFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WorldConfigFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_worldconfig_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdp() {
+        const ret = wasm.__wbg_get_statjs_avg(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdp(arg0) {
+        wasm.__wbg_set_statjs_avg(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdv() {
+        const ret = wasm.__wbg_get_statjs_p99(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdv(arg0) {
+        wasm.__wbg_set_statjs_p99(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get zonesize() {
+        const ret = wasm.__wbg_get_worldconfig_zonesize(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set zonesize(arg0) {
+        wasm.__wbg_set_worldconfig_zonesize(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get gravity() {
+        const ret = wasm.__wbg_get_worldconfig_gravity(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set gravity(arg0) {
+        wasm.__wbg_set_worldconfig_gravity(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get gravity_2() {
+        const ret = wasm.__wbg_get_worldconfig_gravity_2(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set gravity_2(arg0) {
+        wasm.__wbg_set_worldconfig_gravity_2(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get crdp() {
+        const ret = wasm.__wbg_get_worldconfig_crdp(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set crdp(arg0) {
+        wasm.__wbg_set_worldconfig_crdp(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get crdv() {
+        const ret = wasm.__wbg_get_worldconfig_crdv(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set crdv(arg0) {
+        wasm.__wbg_set_worldconfig_crdv(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get rdv_during_colision() {
+        const ret = wasm.__wbg_get_worldconfig_rdv_during_colision(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set rdv_during_colision(arg0) {
+        wasm.__wbg_set_worldconfig_rdv_during_colision(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {boolean}
+     */
+    get c2c_gravity() {
+        const ret = wasm.__wbg_get_worldconfig_c2c_gravity(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * @param {boolean} arg0
+     */
+    set c2c_gravity(arg0) {
+        wasm.__wbg_set_worldconfig_c2c_gravity(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {boolean}
+     */
+    get c2c_colision() {
+        const ret = wasm.__wbg_get_worldconfig_c2c_colision(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * @param {boolean} arg0
+     */
+    set c2c_colision(arg0) {
+        wasm.__wbg_set_worldconfig_c2c_colision(this.__wbg_ptr, arg0);
+    }
+}
+if (Symbol.dispose) WorldConfig.prototype[Symbol.dispose] = WorldConfig.prototype.free;
 
 const EXPECTED_RESPONSE_TYPES = new Set(['basic', 'cors', 'default']);
 

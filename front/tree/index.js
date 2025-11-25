@@ -39,7 +39,11 @@ const get_avg_fps = (tick_starts) => {
 };
 
 const as_frame_budget = (value) => {
-    const s = `${(value / (1000/120)*100 )?.toFixed(1)}`
+	return as_percent_str( value / (1000/120) )
+}
+
+const as_percent_str = (value) => {
+	const s = `${(value * 100 )?.toFixed(1)}`
     return s.padStart(4);
 }
 
@@ -53,6 +57,10 @@ Game.prototype.update_stats = function () {
 	document.getElementById("frame_budget_render").innerHTML = as_frame_budget(render.avg)
 	document.getElementById("frame_budget_stats").innerHTML = as_frame_budget(stats.avg)
 	document.getElementById("frame_budget_total").innerHTML = as_frame_budget(total.avg)
+	document.getElementById("cell_count").innerHTML = this.worlds[0].cells_count()
+	document.getElementById("buffer_cell_budget").innerHTML = as_percent_str(
+		this.worlds[0].cells_count()*this.wasm_engine.Cell.size()/this.view.buffer_cells.size
+	)
     for (let index = 1; index < 7; index++) {
         const a = `frame_budget_logic_0${index}`;
         const b = `tick_0${index}`;

@@ -1,8 +1,8 @@
 import init, * as gravitle from "./gravitle_slingshot.js";
 import { ViewWebGPU } from "./view_webgpu.js";
 import { setup_1 } from "./setup_1.js";
-import { setup_2 } from "./setup_2.js";
-import { setup_3 } from "./setup_3.js";
+// import { setup_2 } from "./setup_2.js";
+// import { setup_3 } from "./setup_3.js";
 
 const has_webgpu_support = async () => {
 	const adapter = await navigator.gpu?.requestAdapter();

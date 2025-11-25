@@ -79,30 +79,30 @@ impl SubAssign for Point {
     }
 }
 
-fn equilateral_third_points(a: Point, b: Point) -> (Point, Point) {
-    let vx = b.x - a.x;
-    let vy = b.y - a.y;
-    let angle = std::f32::consts::PI / 3.0; // 60 degrees
+// fn equilateral_third_points(a: Point, b: Point) -> (Point, Point) {
+//     let vx = b.x - a.x;
+//     let vy = b.y - a.y;
+//     let angle = std::f32::consts::PI / 3.0; // 60 degrees
 
-    // Rotate vector by +60 degrees
-    let x1 = vx * angle.cos() - vy * angle.sin();
-    let y1 = vx * angle.sin() + vy * angle.cos();
+//     // Rotate vector by +60 degrees
+//     let x1 = vx * angle.cos() - vy * angle.sin();
+//     let y1 = vx * angle.sin() + vy * angle.cos();
 
-    // Rotate vector by -60 degrees
-    let x2 = vx * angle.cos() + vy * angle.sin();
-    let y2 = -vx * angle.sin() + vy * angle.cos();
+//     // Rotate vector by -60 degrees
+//     let x2 = vx * angle.cos() + vy * angle.sin();
+//     let y2 = -vx * angle.sin() + vy * angle.cos();
 
-    let c1 = Point {
-        x: a.x + x1,
-        y: a.y + y1,
-    };
-    let c2 = Point {
-        x: a.x + x2,
-        y: a.y + y2,
-    };
+//     let c1 = Point {
+//         x: a.x + x1,
+//         y: a.y + y1,
+//     };
+//     let c2 = Point {
+//         x: a.x + x2,
+//         y: a.y + y2,
+//     };
 
-    (c1, c2)
-}
+//     (c1, c2)
+// }
 
 pub fn equilateral_third_point(a: Point, b: Point) -> Point {
     let vx = b.x - a.x;
@@ -111,9 +111,8 @@ pub fn equilateral_third_point(a: Point, b: Point) -> Point {
     // Rotate vector by +60 degrees
     let x1 = vx * angle.cos() - vy * angle.sin();
     let y1 = vx * angle.sin() + vy * angle.cos();
-    let c1 = Point {
+    Point {
         x: a.x + x1,
         y: a.y + y1,
-    };
-    c1
+    }
 }
