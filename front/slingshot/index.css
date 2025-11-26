@@ -75,8 +75,11 @@ span {
 }
 #overlay p {
   color: var(--secondary-color);
-  padding: 1rem;
+  padding-right: 1rem;
 }
 #overlay {
   z-index: 2;
+}
+.pre {
+  white-space: pre;
 }

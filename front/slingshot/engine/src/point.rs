@@ -29,6 +29,9 @@ impl Point {
     pub fn distance(self, b: Point) -> f32 {
         ((self.x - b.x).powf(2.0) + (self.y - b.y).powf(2.0)).sqrt()
     }
+    pub fn size() -> u32 {
+        size_of::<Point>() as u32
+    }
 }
 impl Sub for Point {
     type Output = Point;

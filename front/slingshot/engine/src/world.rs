@@ -83,6 +83,9 @@ pub struct World {
     pub collision_count: f32,
     pub pairs_count: usize,
     pub zones_count: usize,
+    positions: HashMap<usize, Vec<Point>>,
+    positions_2: Vec<Point>,
+    // positions_to_save: HashSet<usize>,
 }
 impl Default for World {
     fn default() -> Self {
@@ -132,6 +135,9 @@ impl World {
             collision_count: 0.0,
             pairs_count: 0,
             zones_count: 0,
+            // positions_to_save: HashSet::new(),
+            positions: HashMap::new(),
+            positions_2: Vec::new(),
         };
         w.add_stat("logic".to_string());
         w.add_stat("render".to_string());
@@ -145,7 +151,11 @@ impl World {
         w.add_stat("tick_06".to_string());
         w.add_stat("tick_events".to_string());
         w.add_stat("tick_links".to_string());
+        w.add_stat("save_positions".to_string());
         w
+    }
+    pub fn save_positions(&mut self, idx: usize) {
+        self.positions.insert(idx, Vec::new());
     }
     pub fn add_link(&mut self, a: usize, b: usize) {
         self.links.push(Link { a, b });
@@ -183,9 +193,17 @@ impl World {
     pub fn set_link_strength_dv(&mut self, value: f32) {
         self.c.link_strength_dv = value;
     }
+    pub fn tick_n(&mut self, n: usize) {
+        for _ in 0..n {
+            self.tick()
+        }
+    }
     // file://./../../../chrono/engine/src/world.rs
     // file://./../../../../../miniciv/src/world.rs
     pub fn tick(&mut self) {
+        let n = now();
+        self.tick_save_positions();
+        self.add_duration("save_positions", elapsed_secs_f32(n));
         let n = now();
         self.tick_events();
         self.add_duration("tick_events", elapsed_secs_f32(n));
@@ -211,6 +229,15 @@ impl World {
         self.tick_06();
         self.add_duration("tick_06", elapsed_secs_f32(n));
         self.tick += 1;
+    }
+    pub fn get_positions(&self, idx: usize) -> Vec<Point> {
+        self.positions[&idx].clone()
+    }
+    pub fn tick_save_positions(&mut self) {
+        for (k, v) in self.positions.iter_mut() {
+            v.push(self.cells[*k].p);
+            self.positions_2.push(self.cells[*k].p);
+        }
     }
     pub fn tick_links(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
@@ -442,6 +469,14 @@ impl World {
     pub fn cells_count(&self) -> u32 {
         self.cells.len() as u32
     }
+
+    pub fn positions(&self) -> *const Point {
+        self.positions_2.as_ptr()
+    }
+    pub fn positions_count(&self) -> u32 {
+        self.positions_2.len() as u32
+    }
+
     pub fn links_count(&self) -> u32 {
         self.links.len() as u32
     }

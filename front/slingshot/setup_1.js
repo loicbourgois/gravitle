@@ -1,15 +1,13 @@
 import { fetch_as_text, fetch_as_json_string } from "./fetch.js";
 const setup_1 = async (world) => {
-	world.set_gravity_2(0.00001)
+	world.set_gravity_2(0.00028)
 	world.set_crdp(0.00001)
 	world.set_crdv(0.00001)
 	world.set_c2c_gravity(true)
 	world.set_c2c_colision(true)
 	for (const url of [
 		"/slingshot/material/steel.json",
-		"/slingshot/material/launcher.json",
-		"/slingshot/material/ice.json",
-		"/slingshot/material/gold.json",
+		"/slingshot/material/light_gold.json",
 		"/slingshot/material/osmium.json",
 	]) {
 		world.add_material(url, await fetch_as_json_string(url));
@@ -20,7 +18,7 @@ const setup_1 = async (world) => {
 		0.0,
 	);
 	world.add_cell(
-		"/slingshot/material/gold.json",
+		"/slingshot/material/light_gold.json",
 		0.006, 0.011, 0.01
 	)
 	world.add_cell(
@@ -39,9 +37,8 @@ const setup_1 = async (world) => {
 	world.set_cell_fixed(3);
 	world.set_cell_fixed(4);
 	world.set_cell_fixed(5);
-	world.add_event(620, "set_cell_diameter", 0, 0.0105)
-	world.add_event(620, "set_cell_diameter", 2, 0.0113)
-	world.add_event(620, "set_cell_diameter", 3, 0.0102)
+	world.add_event(620, "set_cell_diameter", 0, 0.01143501)
+	world.add_event(620, "set_cell_diameter", 2, 0.0113010001)
 };
 export {
 	setup_1,

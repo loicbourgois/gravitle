@@ -11,6 +11,9 @@ struct Cell {
      collision_count: f32,
      padding: u32,
 }
+struct Position {
+     p: vec2f, // position
+}
 struct Material {
     color: vec3f,
     density: f32,
@@ -72,6 +75,7 @@ const disk_positions = array<vec2f, 48>(
 const ZOOM = 5;
 @group(0) @binding(0) var<storage, read> cells: array<Cell>;
 @group(0) @binding(1) var<storage, read> materials: array<Material>;
+@group(0) @binding(2) var<storage, read> positions: array<Position>;
 @vertex fn vs_0(
   @builtin(vertex_index) vertexIndex : u32,
   @builtin(instance_index) instanceIndex: u32,
@@ -90,5 +94,27 @@ const ZOOM = 5;
   return vsOut;
 }
 @fragment fn fs_0(vsOut: VSOutput) -> @location(0) vec4f {
+  return vsOut.color;
+}
+
+
+
+@vertex fn vs_1(
+  @builtin(vertex_index) vertexIndex : u32,
+  @builtin(instance_index) instanceIndex: u32,
+) -> VSOutput {
+  let position = positions[instanceIndex];
+  let center = vec2f( 0.0,  0.0);
+  var vsOut: VSOutput;
+  vsOut.position = vec4f(
+    (disk_positions[vertexIndex]*0.0002 + position.p - center )* ZOOM,
+    0.0, 1.0
+  );
+  vsOut.color = vec4f(
+    1.0, 1.0, 0.0, 1.0
+  );
+  return vsOut;
+}
+@fragment fn fs_1(vsOut: VSOutput) -> @location(0) vec4f {
   return vsOut.color;
 }

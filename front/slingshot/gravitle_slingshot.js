@@ -98,6 +98,17 @@ function _assertClass(instance, klass) {
         throw new Error(`expected instance of ${klass.name}`);
     }
 }
+
+function getArrayJsValueFromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    const mem = getDataViewMemory0();
+    const result = [];
+    for (let i = ptr; i < ptr + 4 * len; i += 4) {
+        result.push(wasm.__wbindgen_externrefs.get(mem.getUint32(i, true)));
+    }
+    wasm.__externref_drop_slice(ptr, len);
+    return result;
+}
 /**
  * @returns {World}
  */
@@ -479,6 +490,13 @@ export class Point {
         wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
     }
     /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.point_size();
+        return ret >>> 0;
+    }
+    /**
      * @param {Point} b
      * @returns {number}
      */
@@ -699,6 +717,20 @@ export class World {
     /**
      * @returns {number}
      */
+    positions_count() {
+        const ret = wasm.world_positions_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    positions() {
+        const ret = wasm.world_positions(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
     cells_count() {
         const ret = wasm.world_cells_count(this.__wbg_ptr);
         return ret >>> 0;
@@ -848,8 +880,27 @@ export class World {
     tick_links() {
         wasm.world_tick_links(this.__wbg_ptr);
     }
+    tick_save_positions() {
+        wasm.world_tick_save_positions(this.__wbg_ptr);
+    }
+    /**
+     * @param {number} idx
+     * @returns {Point[]}
+     */
+    get_positions(idx) {
+        const ret = wasm.world_get_positions(this.__wbg_ptr, idx);
+        var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
     tick() {
         wasm.world_tick(this.__wbg_ptr);
+    }
+    /**
+     * @param {number} n
+     */
+    tick_n(n) {
+        wasm.world_tick_n(this.__wbg_ptr, n);
     }
     /**
      * @param {number} value
@@ -923,6 +974,12 @@ export class World {
      */
     add_link(a, b) {
         wasm.world_add_link(this.__wbg_ptr, a, b);
+    }
+    /**
+     * @param {number} idx
+     */
+    save_positions(idx) {
+        wasm.world_save_positions(this.__wbg_ptr, idx);
     }
     /**
      * @returns {World}
@@ -1197,6 +1254,10 @@ function __wbg_get_imports() {
     };
     imports.wbg.__wbg_now_793306c526e2e3b6 = function() {
         const ret = Date.now();
+        return ret;
+    };
+    imports.wbg.__wbg_point_new = function(arg0) {
+        const ret = Point.__wrap(arg0);
         return ret;
     };
     imports.wbg.__wbg_stack_0ed75d68575b0f3c = function(arg0, arg1) {
