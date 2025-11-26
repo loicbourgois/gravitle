@@ -1,5 +1,5 @@
-import init, * as gravitle from "./gravitle_slingshot.js";
-import { ViewWebGPU } from "./view_webgpu.js";
+import init, * as gravitle from "../slingshot/gravitle_slingshot.js";
+import { ViewWebGPU } from "../slingshot/view_webgpu.js";
 import { setup_1 } from "./setup_1.js";
 
 const has_webgpu_support = async () => {
@@ -21,7 +21,7 @@ function Game({ wasm_memory, wasm_engine, view }) {
 	this.tick_durations = [];
 	this.stats_durations = [];
 	this.logic_durations = [];
-    this.tick_per_tack = 10
+    this.tick_per_tack = 1
 }
 
 Game.prototype.setup = async function () {

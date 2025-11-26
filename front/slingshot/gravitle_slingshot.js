@@ -616,6 +616,45 @@ export class World {
         wasm.__wbg_set_world_perf_array_len(this.__wbg_ptr, arg0);
     }
     /**
+     * @returns {number}
+     */
+    get collision_count() {
+        const ret = wasm.__wbg_get_world_collision_count(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set collision_count(arg0) {
+        wasm.__wbg_set_world_collision_count(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get pairs_count() {
+        const ret = wasm.__wbg_get_world_pairs_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set pairs_count(arg0) {
+        wasm.__wbg_set_world_pairs_count(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get zones_count() {
+        const ret = wasm.__wbg_get_world_zones_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set zones_count(arg0) {
+        wasm.__wbg_set_world_zones_count(this.__wbg_ptr, arg0);
+    }
+    /**
      * @param {string} blueprint_str
      * @param {number} x
      * @param {number} y
@@ -653,6 +692,13 @@ export class World {
     /**
      * @returns {number}
      */
+    links_count() {
+        const ret = wasm.world_links_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
     cells_count() {
         const ret = wasm.world_cells_count(this.__wbg_ptr);
         return ret >>> 0;
@@ -675,6 +721,42 @@ export class World {
         const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.world_add_cell_2(this.__wbg_ptr, ptr0, len0, idx_1, idx_2, diameter);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} material_url
+     * @param {number} idx
+     * @param {number} diameter
+     * @returns {number}
+     */
+    add_cell_left(material_url, idx, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell_left(this.__wbg_ptr, ptr0, len0, idx, diameter);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} material_url
+     * @param {number} idx
+     * @param {number} diameter
+     * @returns {number}
+     */
+    add_cell_right(material_url, idx, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell_right(this.__wbg_ptr, ptr0, len0, idx, diameter);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} material_url
+     * @param {number} idx
+     * @param {number} diameter
+     * @returns {number}
+     */
+    add_cell_down(material_url, idx, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell_down(this.__wbg_ptr, ptr0, len0, idx, diameter);
         return ret >>> 0;
     }
     /**
@@ -760,11 +842,26 @@ export class World {
         const len0 = WASM_VECTOR_LEN;
         wasm.world_add_duration(this.__wbg_ptr, ptr0, len0, value);
     }
-    tick_handle_events() {
-        wasm.world_tick_handle_events(this.__wbg_ptr);
+    tick_events() {
+        wasm.world_tick_events(this.__wbg_ptr);
+    }
+    tick_links() {
+        wasm.world_tick_links(this.__wbg_ptr);
     }
     tick() {
         wasm.world_tick(this.__wbg_ptr);
+    }
+    /**
+     * @param {number} value
+     */
+    set_link_strength_dv(value) {
+        wasm.world_set_link_strength_dv(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_link_strength_dp(value) {
+        wasm.world_set_link_strength_dp(this.__wbg_ptr, value);
     }
     /**
      * @param {boolean} value
@@ -793,6 +890,18 @@ export class World {
     /**
      * @param {number} value
      */
+    set_rdv(value) {
+        wasm.world_set_rdv(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_rdp(value) {
+        wasm.world_set_rdp(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
     set_gravity(value) {
         wasm.world_set_gravity(this.__wbg_ptr, value);
     }
@@ -801,6 +910,19 @@ export class World {
      */
     set_gravity_2(value) {
         wasm.world_set_gravity_2(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_zonesize(value) {
+        wasm.world_set_zonesize(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} a
+     * @param {number} b
+     */
+    add_link(a, b) {
+        wasm.world_add_link(this.__wbg_ptr, a, b);
     }
     /**
      * @returns {World}
@@ -984,6 +1106,32 @@ export class WorldConfig {
      */
     set c2c_colision(arg0) {
         wasm.__wbg_set_worldconfig_c2c_colision(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get link_strength_dp() {
+        const ret = wasm.__wbg_get_worldconfig_link_strength_dp(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set link_strength_dp(arg0) {
+        wasm.__wbg_set_worldconfig_link_strength_dp(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get link_strength_dv() {
+        const ret = wasm.__wbg_get_worldconfig_link_strength_dv(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set link_strength_dv(arg0) {
+        wasm.__wbg_set_worldconfig_link_strength_dv(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) WorldConfig.prototype[Symbol.dispose] = WorldConfig.prototype.free;

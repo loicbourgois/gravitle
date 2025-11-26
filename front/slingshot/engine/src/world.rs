@@ -1,6 +1,7 @@
 use crate::blueprint::Blueprint;
 use crate::cell::Cell;
 use crate::color::Color;
+use crate::link::Link;
 use crate::material::Material;
 use crate::material_definition::MaterialDefinition;
 use crate::material_definition::ValueOrReference;
@@ -25,6 +26,8 @@ pub struct WorldConfig {
     pub rdv_during_colision: f32,
     pub c2c_gravity: bool,
     pub c2c_colision: bool,
+    pub link_strength_dp: f32,
+    pub link_strength_dv: f32,
 }
 
 struct Stat {
@@ -67,6 +70,7 @@ pub struct Event {
 #[wasm_bindgen]
 pub struct World {
     cells: Vec<Cell>,
+    links: Vec<Link>,
     materials: Vec<Material>,
     materials_2: HashMap<String, usize>,
     zones: HashMap<(i32, i32), HashSet<usize>>,
@@ -76,6 +80,9 @@ pub struct World {
     pub perf_array_len: usize,
     tick: usize,
     events: HashMap<usize, Vec<Event>>,
+    pub collision_count: f32,
+    pub pairs_count: usize,
+    pub zones_count: usize,
 }
 impl Default for World {
     fn default() -> Self {
@@ -117,9 +124,14 @@ impl World {
                 zonesize: 1.0,
                 c2c_gravity: false,
                 c2c_colision: false,
-                // spring: 0.1,
+                link_strength_dp: 0.0,
+                link_strength_dv: 0.0,
             },
             events: HashMap::new(),
+            links: Vec::new(),
+            collision_count: 0.0,
+            pairs_count: 0,
+            zones_count: 0,
         };
         w.add_stat("logic".to_string());
         w.add_stat("render".to_string());
@@ -131,14 +143,27 @@ impl World {
         w.add_stat("tick_04".to_string());
         w.add_stat("tick_05".to_string());
         w.add_stat("tick_06".to_string());
-        w.add_stat("tick_handle_events".to_string());
+        w.add_stat("tick_events".to_string());
+        w.add_stat("tick_links".to_string());
         w
+    }
+    pub fn add_link(&mut self, a: usize, b: usize) {
+        self.links.push(Link { a, b });
+    }
+    pub fn set_zonesize(&mut self, value: f32) {
+        self.c.zonesize = value;
     }
     pub fn set_gravity_2(&mut self, value: f32) {
         self.c.gravity_2 = value;
     }
     pub fn set_gravity(&mut self, value: f32) {
         self.c.gravity = value;
+    }
+    pub fn set_rdp(&mut self, value: f32) {
+        self.c.rdp = value;
+    }
+    pub fn set_rdv(&mut self, value: f32) {
+        self.c.rdv = value;
     }
     pub fn set_crdp(&mut self, value: f32) {
         self.c.crdp = value;
@@ -152,12 +177,18 @@ impl World {
     pub fn set_c2c_colision(&mut self, value: bool) {
         self.c.c2c_colision = value;
     }
+    pub fn set_link_strength_dp(&mut self, value: f32) {
+        self.c.link_strength_dp = value;
+    }
+    pub fn set_link_strength_dv(&mut self, value: f32) {
+        self.c.link_strength_dv = value;
+    }
     // file://./../../../chrono/engine/src/world.rs
     // file://./../../../../../miniciv/src/world.rs
     pub fn tick(&mut self) {
         let n = now();
-        self.tick_handle_events();
-        self.add_duration("tick_handle_events", elapsed_secs_f32(n));
+        self.tick_events();
+        self.add_duration("tick_events", elapsed_secs_f32(n));
         let n = now();
         self.tick_01();
         self.add_duration("tick_01", elapsed_secs_f32(n));
@@ -171,6 +202,9 @@ impl World {
         self.tick_04();
         self.add_duration("tick_04", elapsed_secs_f32(n));
         let n = now();
+        self.tick_links();
+        self.add_duration("tick_links", elapsed_secs_f32(n));
+        let n = now();
         self.tick_05();
         self.add_duration("tick_05", elapsed_secs_f32(n));
         let n = now();
@@ -178,7 +212,32 @@ impl World {
         self.add_duration("tick_06", elapsed_secs_f32(n));
         self.tick += 1;
     }
-    pub fn tick_handle_events(&mut self) {
+    pub fn tick_links(&mut self) {
+        let cells_ptr = self.cells.as_mut_ptr();
+        let links = self.links.clone();
+        unsafe {
+            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            for l in links {
+                let ca = &mut cells_slice_a[l.a];
+                let cb = &mut cells_slice_b[l.b];
+                let d = ca.p.distance(cb.p);
+                let n = (ca.p - cb.p).normalize();
+                let ds = (ca.diameter + cb.diameter) * 0.5;
+                let factor_dp = (ds - d) * self.c.link_strength_dp;
+                ca.dp.x += n.x * factor_dp;
+                ca.dp.y += n.y * factor_dp;
+                cb.dp.x -= n.x * factor_dp;
+                cb.dp.y -= n.y * factor_dp;
+                let factor_dv = (ds - d) * self.c.link_strength_dv;
+                ca.dv.x += n.x * factor_dv;
+                ca.dv.y += n.y * factor_dv;
+                cb.dv.x -= n.x * factor_dv;
+                cb.dv.y -= n.y * factor_dv;
+            }
+        }
+    }
+    pub fn tick_events(&mut self) {
         let events: Vec<Event> = match self.events.get(&self.tick) {
             Some(events) => events.clone(),
             None => Vec::new(),
@@ -208,6 +267,7 @@ impl World {
         self.stats[id].js
     }
     pub fn tick_01(&mut self) {
+        self.zones_count = self.zones.len();
         self.zones.clear();
         let rdv_i = 1.0 - self.c.rdv;
         for cell in &mut self.cells.iter_mut() {
@@ -231,6 +291,7 @@ impl World {
         }
     }
     pub fn tick_02(&mut self) {
+        self.pairs_count = self.pairs.len();
         self.pairs.clear();
         if self.c.c2c_colision {
             for zone in self.zones.values() {
@@ -244,6 +305,7 @@ impl World {
             }
         }
     }
+    // collison
     pub fn tick_03(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         let pairs_ = self.pairs.clone();
@@ -272,6 +334,7 @@ impl World {
             }
         }
     }
+    // c2c_gravity
     pub fn tick_04(&mut self) {
         if self.c.c2c_gravity {
             let cells_ptr = self.cells.as_mut_ptr();
@@ -296,11 +359,6 @@ impl World {
                         let n = (ca.p - cb.p).normalize();
                         ca.dv -= n * g * self.c.gravity_2;
                         cb.dv += n * g * self.c.gravity_2;
-                        // ca.p += Point {
-                        //     x: 0.000001,
-                        //     y: 0.0,
-                        // };
-                        // log("test");
                     }
                 }
             }
@@ -308,6 +366,7 @@ impl World {
     }
     pub fn tick_05(&mut self) {
         let center = Point { x: 0.0, y: 0.0 };
+        self.collision_count = 0.0;
         for cell in &mut self.cells {
             let gravity = (cell.p - center).normalize() * -self.c.gravity * cell.mass;
             if cell.fixed != 1 {
@@ -316,14 +375,12 @@ impl World {
             cell.pp = cell.p;
             if cell.fixed != 1 {
                 cell.p += gravity + cell.dv;
-                // cell.p += Point {
-                //     x: 0.00000001,
-                //     y: 0.0,
-                // }
             }
             cell.ap = (cell.p + cell.pp) * 0.5;
+            self.collision_count += cell.collision_count;
         }
     }
+    // stats
     pub fn tick_06(&mut self) {
         if self.tick.is_multiple_of(20) {
             for stat in self.stats.values_mut() {
@@ -346,7 +403,25 @@ impl World {
     pub fn add_cell_up(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
         let c = &self.cells[idx];
         let x = c.p.x;
-        let y = c.p.y + c.diameter * 0.5 + diameter * 0.5;
+        let y = c.p.y + (c.diameter + diameter) * 0.5;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_down(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x;
+        let y = c.p.y - (c.diameter + diameter) * 0.5;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_right(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x + (c.diameter + diameter) * 0.5;
+        let y = c.p.y;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_left(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x - (c.diameter + diameter) * 0.5;
+        let y = c.p.y;
         self.add_cell(material_url, x, y, diameter)
     }
     pub fn add_cell_2(
@@ -366,6 +441,9 @@ impl World {
     }
     pub fn cells_count(&self) -> u32 {
         self.cells.len() as u32
+    }
+    pub fn links_count(&self) -> u32 {
+        self.links.len() as u32
     }
     pub fn materials(&self) -> *const Material {
         self.materials.as_ptr()
