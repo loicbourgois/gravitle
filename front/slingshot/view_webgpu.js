@@ -90,9 +90,6 @@ ViewWebGPU.prototype.set_zoom = function (zoom) {
 	this.zoom = zoom
 }
 
-const setup_uniform = () {
-
-}
 
 ViewWebGPU.prototype.setup_uniform = function () {
 	const uniformBufferSize =
