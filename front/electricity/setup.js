@@ -17,7 +17,7 @@ const setup = async (
 	}
 	world.add_cell(
 		"/slingshot/material/solar_panel.json",
-		0.0, 0.0, 0.01
+		0.0, 0.01, 0.01
 	)
 	world.add_cell(
 		"/slingshot/material/steel.json",
@@ -33,7 +33,7 @@ const setup = async (
 	)
 	world.add_cell(
 		"/slingshot/material/ion_thruster.json",
-		0.044, 0.0, 0.01
+		0.044, 0.01, 0.01
 	)
 	world.add_link(
 		0, 1

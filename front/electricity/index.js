@@ -14,7 +14,7 @@ const main = async () => {
 			world_1,
 		)
 		const view = new ViewWebGPU("canvas")
-		view.set_zoom(5.0)
+		view.set_zoom(10.0)
 		world_1.tick_n(1)
 		await view.setup(wasm_engine);
 		view.render_2(

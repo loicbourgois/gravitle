@@ -383,6 +383,33 @@ export class Color {
 }
 if (Symbol.dispose) Color.prototype[Symbol.dispose] = Color.prototype.free;
 
+const LinkFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_link_free(ptr >>> 0, 1));
+
+export class Link {
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        LinkFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_link_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.link_size();
+        return ret >>> 0;
+    }
+}
+if (Symbol.dispose) Link.prototype[Symbol.dispose] = Link.prototype.free;
+
 const MaterialFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_material_free(ptr >>> 0, 1));
@@ -710,13 +737,6 @@ export class World {
     /**
      * @returns {number}
      */
-    links_count() {
-        const ret = wasm.world_links_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
     positions_count() {
         const ret = wasm.world_positions_count(this.__wbg_ptr);
         return ret >>> 0;
@@ -726,6 +746,20 @@ export class World {
      */
     positions() {
         const ret = wasm.world_positions(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_count() {
+        const ret = wasm.world_links_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links() {
+        const ret = wasm.world_links(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**

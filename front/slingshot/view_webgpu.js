@@ -8,9 +8,11 @@ const bind_group_layout_entry = (idx) => {
 	};
 };
 
+
 const bind_group_entry = (idx, buffer) => {
 	return { binding: idx, resource: { buffer } };
 };
+
 
 const create_buffer = (device, count_max, struct) => {
 	return device.createBuffer({
@@ -19,59 +21,6 @@ const create_buffer = (device, count_max, struct) => {
 	});
 };
 
-const new_step = (x) => {
-	const r = {};
-	const bindGroupLayout = x.device.createBindGroupLayout({
-		entries: [
-			bind_group_layout_entry(0), 
-			bind_group_layout_entry(1),
-			bind_group_layout_entry(2),
-			{
-				binding: 3,
-				visibility: GPUShaderStage.VERTEX,
-				buffer: {
-					type: "uniform",
-				},
-			},
-		],
-	});
-	const pipelineLayout = x.device.createPipelineLayout({
-		bindGroupLayouts: [bindGroupLayout],
-	});
-	r.pipeline = x.device.createRenderPipeline({
-		label: x.label,
-		layout: pipelineLayout,
-		vertex: {
-			module: x.module,
-			entryPoint: x.vertex_entryPoint,
-		},
-		fragment: {
-			module: x.module,
-			entryPoint: x.fragment_entryPoint,
-			targets: [{ format: x.presentation_format }],
-		},
-		primitive: {
-			topology: "line-strip",
-			topology: "triangle-list",
-			cullMode: "back",
-		},
-		depthStencil: {
-			depthWriteEnabled: true,
-			depthCompare: "less",
-			format: "depth24plus",
-		},
-	});
-	r.bindGroup = x.device.createBindGroup({
-		layout: r.pipeline.getBindGroupLayout(0),
-		entries: [
-			bind_group_entry(0, x.buffer_cells),
-			bind_group_entry(1, x.buffer_materials),
-			bind_group_entry(2, x.buffer_positions),
-			bind_group_entry(3, x.buffer_uniform),
-		],
-	});
-	return r;
-};
 
 function ViewWebGPU(canvas_id) {
 	this.canvas = document.getElementById(canvas_id);
@@ -86,68 +35,147 @@ function ViewWebGPU(canvas_id) {
 	this.mouse = null;
 }
 
+
 ViewWebGPU.prototype.set_zoom = function (zoom) {
 	this.zoom = zoom
 }
 
 
-ViewWebGPU.prototype.setup_uniform = function () {
+ViewWebGPU.prototype.setup_uniform = function (binding) {
 	const uniformBufferSize =
-    	1 * 4; // 1 32bit floats
+    	1 * 4 // zoom: 32bit float
+		+ 1*4 // line_width: 32bit float
+	;
 	this.buffer_uniform = this.device.createBuffer({
 		size: uniformBufferSize,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	});
 	this.uniformValues = new Float32Array(uniformBufferSize / 4);
+	this.bind_group_layout_entries.push(
+		{
+			binding: binding,
+			visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+			buffer: {
+				type: "uniform",
+			},
+		}
+	)
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_uniform))
 }
+
+
+ViewWebGPU.prototype.setup_links = function (gravitle, binding) {
+	this.buffer_links = create_buffer(this.device, 100, gravitle.Link);
+	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_links))
+}
+
+
+ViewWebGPU.prototype.setup_cells = function (gravitle, binding) {
+	this.buffer_cells = create_buffer(this.device, 100000, gravitle.Cell);
+	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_cells))
+}
+
+
+ViewWebGPU.prototype.setup_positions = function (gravitle, binding) {
+	this.buffer_positions = create_buffer(this.device, 200000, gravitle.Point);
+	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_positions))
+}
+
+
+ViewWebGPU.prototype.setup_materials = function (gravitle, binding) {
+	this.buffer_materials = create_buffer(this.device, 40, gravitle.Material);
+	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_materials))
+}
+
+
+ViewWebGPU.prototype.add_new_step = function (x) {
+	const bindGroupLayout = this.device.createBindGroupLayout({
+		entries: this.bind_group_layout_entries,
+	});
+	const pipelineLayout = this.device.createPipelineLayout({
+		bindGroupLayouts: [bindGroupLayout],
+	});
+	const pipeline = this.device.createRenderPipeline({
+		label: x.label,
+		layout: pipelineLayout,
+		vertex: {
+			module: this.module,
+			entryPoint: x.vertex_entryPoint,
+		},
+		fragment: {
+			module: this.module,
+			entryPoint: x.fragment_entryPoint,
+			targets: [{ format: this.presentation_format }],
+		},
+		primitive: {
+			// topology: "line-strip",
+			topology: x.topology,
+			cullMode: "back",
+		},
+		depthStencil: {
+			depthWriteEnabled: true,
+			depthCompare: "less",
+			format: "depth24plus",
+		},
+	});
+	this.steps.push({
+		bindGroup: this.device.createBindGroup({
+			layout: pipeline.getBindGroupLayout(0),
+			entries: this.bind_group_entries,
+		}),
+		pipeline: pipeline,
+	})
+}
+
 
 ViewWebGPU.prototype.setup = async function (gravitle) {
 	this.resize();
+	this.steps = []
 	this.adapter = await navigator.gpu?.requestAdapter();
 	this.device = await this.adapter?.requestDevice();
-	const presentation_format = navigator.gpu.getPreferredCanvasFormat();
+	this.presentation_format = navigator.gpu.getPreferredCanvasFormat();
 	this.context.configure({
 		device: this.device,
-		format: presentation_format,
+		format: this.presentation_format,
 		alphaMode: "premultiplied",
 	});
 	const code = await (
 		await fetch(`/slingshot/webgpu/code.wgsl`, { cache: "no-store" })
 	).text();
-	const module = this.device.createShaderModule({
+	this.module = this.device.createShaderModule({
 		label: "shaders",
 		code: code,
 	});
-	this.setup_uniform()
-	this.buffer_cells = create_buffer(this.device, 100000, gravitle.Cell);
-	this.buffer_materials = create_buffer(this.device, 40, gravitle.Material);
-	this.buffer_positions = create_buffer(this.device, 200000, gravitle.Point);
-	this.steps = [
-		new_step({
-			label: "pipeline_1",
-			vertex_entryPoint: "vs_1",
-			fragment_entryPoint: "fs_1",
-			device: this.device,
-			module: module,
-			buffer_cells: this.buffer_cells,
-			buffer_materials: this.buffer_materials,
-			buffer_positions: this.buffer_positions,
-			buffer_uniform: this.buffer_uniform,
-			presentation_format: presentation_format,
-		}),
-		new_step({
-			label: "pipeline_0",
-			vertex_entryPoint: "vs_0",
-			fragment_entryPoint: "fs_0",
-			device: this.device,
-			module: module,
-			buffer_cells: this.buffer_cells,
-			buffer_materials: this.buffer_materials,
-			buffer_positions: this.buffer_positions,
-			buffer_uniform: this.buffer_uniform,
-			presentation_format: presentation_format,
-		}),
-	];
+	this.bind_group_entries = []
+	this.bind_group_layout_entries = []
+	this.setup_cells(gravitle, 0)
+	this.setup_materials(gravitle, 1)
+	this.setup_positions(gravitle, 2)
+	this.setup_uniform(3)
+	this.setup_links(gravitle, 4)
+	this.add_new_step({
+		label: "pipeline_1",
+		vertex_entryPoint: "vs_1",
+		fragment_entryPoint: "fs_1",
+		topology: "triangle-list",
+	})
+	this.add_new_step({
+		label: "pipeline_0",
+		vertex_entryPoint: "vs_0",
+		fragment_entryPoint: "fs_0",
+		topology: "triangle-list",
+	})
+	this.add_new_step({
+		label: "pipeline_2",
+		vertex_entryPoint: "vs_2",
+		fragment_entryPoint: "fs_2",
+		// topology: "line-list",
+		topology: "triangle-strip",
+	})
 	this.renderPassDescriptor = {
 		label: "renderPass",
 		colorAttachments: [
@@ -167,79 +195,12 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 };
 
 
-// ViewWebGPU.prototype.render = function (worlds, gravitle, memory) {
-// 	const canvas_texture = this.context.getCurrentTexture();
-// 	this.uniformValues.set([
-// 		this.zoom,
-// 	]);
-// 	this.renderPassDescriptor.colorAttachments[0].view =
-// 		canvas_texture.createView();
-// 	if (
-// 		!this.depthTexture ||
-// 		this.depthTexture.width !== canvas_texture.width ||
-// 		this.depthTexture.height !== canvas_texture.height
-// 	) {
-// 		if (this.depthTexture) {
-// 			this.depthTexture.destroy();
-// 		}
-// 		this.depthTexture = this.device.createTexture({
-// 			size: [canvas_texture.width, canvas_texture.height],
-// 			format: "depth24plus",
-// 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-// 		});
-// 	}
-// 	this.renderPassDescriptor.depthStencilAttachment.view =
-// 		this.depthTexture.createView();
-// 	// for (const _world of worlds) {
-// 		console.log(this.uniformValues)
-// 		this.device.queue.writeBuffer(this.buffer_uniform, 3, this.uniformValues);
-// 	// }
-// 	let countr = 0;
-// 	for (const world of worlds) {
-// 		this.device.queue.writeBuffer(
-// 			this.buffer_cells,
-// 			countr,
-// 			memory.buffer,
-// 			world.cells(),
-// 			world.cells_count() * gravitle.Cell.size(),
-// 		);
-// 		countr += world.cells_count() * gravitle.Cell.size();
-// 	}
-// 	let countr_2 = 0;
-// 	for (const world of worlds) {
-// 		this.device.queue.writeBuffer(
-// 			this.buffer_materials,
-// 			countr_2,
-// 			memory.buffer,
-// 			world.materials(),
-// 			world.materials_count() * gravitle.Material.size(),
-// 		);
-// 		countr_2 += world.materials_count() * gravitle.Material.size();
-// 	}
-// 	this.device.queue.submit([
-// 		(() => {
-// 			const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
-// 			const pass = encoder.beginRenderPass(this.renderPassDescriptor);
-// 			let step = this.steps[1]
-// 			pass.setPipeline(step.pipeline);
-// 			pass.setBindGroup(0, step.bindGroup);
-// 			pass.draw(
-// 				// edge per cell model
-// 				16 * 3,
-// 				// total cell count
-// 				worlds.reduce((sum, world) => sum + world.cells_count(), 0),
-// 			);
-// 			pass.end();
-// 			return encoder.finish();
-// 		})(),
-// 	]);
-// };
-
-
 ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 	const canvas_texture = this.context.getCurrentTexture();
+	const LINK_LINE_WIDTH = 0.005
 	this.uniformValues.set([
 		this.zoom,
+		LINK_LINE_WIDTH,
 	]);
 	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
 	this.renderPassDescriptor.colorAttachments[0].view =
@@ -282,7 +243,6 @@ ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 		);
 		countr_2 += world.materials_count() * gravitle.Material.size();
 	}
-
 	let countr_3 = 0;
 	for (const world of worlds) {
 		this.device.queue.writeBuffer(
@@ -295,34 +255,55 @@ ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 		countr_3 += world.positions_count() * gravitle.Point.size();
 	}
 
+	let countr_links = 0;
+	for (const world of worlds) {
+		this.device.queue.writeBuffer(
+			this.buffer_links,
+			countr_links,
+			memory.buffer,
+			world.links(), 
+			world.links_count() * gravitle.Link.size(), 
+		);
+		countr_links += world.links_count() * gravitle.Link.size();
+	}
+
 	this.device.queue.submit([
 		(() => {
 			const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
 			const pass = encoder.beginRenderPass(this.renderPassDescriptor);
-			let step = this.steps[0]
-			pass.setPipeline(step.pipeline);
-			pass.setBindGroup(0, step.bindGroup);
+			const step_positions = this.steps[0]
+			pass.setPipeline(step_positions.pipeline);
+			pass.setBindGroup(0, step_positions.bindGroup);
 			pass.draw(
 				// edge per cell model
 				16 * 3,
 				// total cell count
 				worlds.reduce((sum, world) => sum + world.positions_count(), 0),
 			);
-			step = this.steps[1]
-			pass.setPipeline(step.pipeline);
-			pass.setBindGroup(0, step.bindGroup);
+			const linksStep = this.steps[2];
+			pass.setPipeline(linksStep.pipeline);
+			pass.setBindGroup(0, linksStep.bindGroup);
+			pass.draw(
+				// 4 vertices for a quad (triangle-strip)
+				4,
+				// Total number of links
+				worlds.reduce((sum, world) => sum + world.links_count(), 0), 
+			);
+			const step_cells = this.steps[1]
+			pass.setPipeline(step_cells.pipeline);
+			pass.setBindGroup(0, step_cells.bindGroup);
 			pass.draw(
 				// edge per cell model
 				16 * 3,
 				// total cell count
 				worlds.reduce((sum, world) => sum + world.cells_count(), 0),
 			);
+
 			pass.end();
 			return encoder.finish();
 		})(),
 	]);
 };
-
 
 
 ViewWebGPU.prototype.resize = function () {
@@ -332,4 +313,8 @@ ViewWebGPU.prototype.resize = function () {
 	this.canvas.height = size;
 };
 
+
 export { ViewWebGPU };
+
+// TODO: draw links
+// links should be drawn using a segment like primitive, not triangles

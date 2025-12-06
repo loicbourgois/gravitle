@@ -157,7 +157,7 @@ impl World {
     pub fn save_positions(&mut self, idx: usize) {
         self.positions.insert(idx, Vec::new());
     }
-    pub fn add_link(&mut self, a: usize, b: usize) {
+    pub fn add_link(&mut self, a: u32, b: u32) {
         self.links.push(Link { a, b });
     }
     pub fn set_zonesize(&mut self, value: f32) {
@@ -246,8 +246,8 @@ impl World {
             let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
             let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
             for l in links {
-                let ca = &mut cells_slice_a[l.a];
-                let cb = &mut cells_slice_b[l.b];
+                let ca = &mut cells_slice_a[l.a as usize];
+                let cb = &mut cells_slice_b[l.b as usize];
                 let d = ca.p.distance(cb.p);
                 let n = (ca.p - cb.p).normalize();
                 let ds = (ca.diameter + cb.diameter) * 0.5;
@@ -470,6 +470,13 @@ impl World {
         self.cells.len() as u32
     }
 
+    pub fn links(&self) -> *const Link {
+        self.links.as_ptr()
+    }
+    pub fn links_count(&self) -> u32 {
+        self.links.len() as u32
+    }
+
     pub fn positions(&self) -> *const Point {
         self.positions_2.as_ptr()
     }
@@ -477,9 +484,6 @@ impl World {
         self.positions_2.len() as u32
     }
 
-    pub fn links_count(&self) -> u32 {
-        self.links.len() as u32
-    }
     pub fn materials(&self) -> *const Material {
         self.materials.as_ptr()
     }

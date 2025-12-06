@@ -9,6 +9,13 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 ```
 
 
+## Elec
+```sh
+$HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
+http://localhost:82/electricity/
+```
+
+
 ## Tree
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
