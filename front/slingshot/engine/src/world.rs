@@ -195,7 +195,7 @@ impl World {
     }
     pub fn tick_n(&mut self, n: usize) {
         for _ in 0..n {
-            self.tick()
+            self.tick();
         }
     }
     // file://./../../../chrono/engine/src/world.rs
@@ -234,7 +234,7 @@ impl World {
         self.positions[&idx].clone()
     }
     pub fn tick_save_positions(&mut self) {
-        for (k, v) in self.positions.iter_mut() {
+        for (k, v) in &mut self.positions {
             v.push(self.cells[*k].p);
             self.positions_2.push(self.cells[*k].p);
         }

@@ -30,9 +30,9 @@ js-sys = "*"
 [dev-dependencies]
 wasm-bindgen-test = "*"
 
-[profile.release]
-# https://doc.rust-lang.org/cargo/reference/profiles.html#opt-level
-opt-level = 3
+# [profile.release]
+# # https://doc.rust-lang.org/cargo/reference/profiles.html#opt-level
+# opt-level = 3
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }

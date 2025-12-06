@@ -3,11 +3,17 @@ import { ViewWebGPU } from "../slingshot/view_webgpu.js";
 import { setup_1 } from "./setup_1.js";
 
 const has_webgpu_support = async () => {
-	const adapter = await navigator.gpu?.requestAdapter();
-	const device = await adapter?.requestDevice();
-	if (device) {
-		return true;
-	} else {
+	try {
+		const adapter = await navigator.gpu?.requestAdapter();
+		const device = await adapter?.requestDevice();
+		if (device) {
+			console.log("aa")
+			return true;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		console.error(error)
 		return false;
 	}
 };
@@ -95,13 +101,16 @@ Game.prototype.start = function () {
 
 const main = async () => {
 	await init();
-	await has_webgpu_support();
-	(
-		await new Game({
-			wasm_memory: gravitle.initSync().memory,
-			wasm_engine: gravitle,
-			view: new ViewWebGPU("canvas"),
-		}).setup()
-	).start();
+	if (await has_webgpu_support()) {
+		(
+			await new Game({
+				wasm_memory: gravitle.initSync().memory,
+				wasm_engine: gravitle,
+				view: new ViewWebGPU("canvas"),
+			}).setup()
+		).start();
+	} else {
+		console.error("WebGPU not supported")
+	}
 };
 main();

@@ -26,6 +26,13 @@ const new_step = (x) => {
 			bind_group_layout_entry(0), 
 			bind_group_layout_entry(1),
 			bind_group_layout_entry(2),
+			{
+				binding: 3,
+				visibility: GPUShaderStage.VERTEX,
+				buffer: {
+					type: "uniform",
+				},
+			},
 		],
 	});
 	const pipelineLayout = x.device.createPipelineLayout({
@@ -60,6 +67,7 @@ const new_step = (x) => {
 			bind_group_entry(0, x.buffer_cells),
 			bind_group_entry(1, x.buffer_materials),
 			bind_group_entry(2, x.buffer_positions),
+			bind_group_entry(3, x.buffer_uniform),
 		],
 	});
 	return r;
@@ -74,8 +82,26 @@ function ViewWebGPU(canvas_id) {
 		x: 0.0,
 		y: 0.0,
 	};
-	this.zoom = 1;
+	this.zoom = 1.0;
 	this.mouse = null;
+}
+
+ViewWebGPU.prototype.set_zoom = function (zoom) {
+	this.zoom = zoom
+}
+
+const setup_uniform = () {
+
+}
+
+ViewWebGPU.prototype.setup_uniform = function () {
+	const uniformBufferSize =
+    	1 * 4; // 1 32bit floats
+	this.buffer_uniform = this.device.createBuffer({
+		size: uniformBufferSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	});
+	this.uniformValues = new Float32Array(uniformBufferSize / 4);
 }
 
 ViewWebGPU.prototype.setup = async function (gravitle) {
@@ -95,9 +121,10 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 		label: "shaders",
 		code: code,
 	});
+	this.setup_uniform()
 	this.buffer_cells = create_buffer(this.device, 100000, gravitle.Cell);
 	this.buffer_materials = create_buffer(this.device, 40, gravitle.Material);
-	this.buffer_positions = create_buffer(this.device, 50000, gravitle.Point);
+	this.buffer_positions = create_buffer(this.device, 200000, gravitle.Point);
 	this.steps = [
 		new_step({
 			label: "pipeline_1",
@@ -108,6 +135,7 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 			buffer_cells: this.buffer_cells,
 			buffer_materials: this.buffer_materials,
 			buffer_positions: this.buffer_positions,
+			buffer_uniform: this.buffer_uniform,
 			presentation_format: presentation_format,
 		}),
 		new_step({
@@ -119,6 +147,7 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 			buffer_cells: this.buffer_cells,
 			buffer_materials: this.buffer_materials,
 			buffer_positions: this.buffer_positions,
+			buffer_uniform: this.buffer_uniform,
 			presentation_format: presentation_format,
 		}),
 	];
@@ -138,73 +167,84 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 			depthStoreOp: "store",
 		},
 	};
-	console.log(`gravitle.Cell.size(): ${gravitle.Cell.size()}`);
 };
 
-ViewWebGPU.prototype.render = function (worlds, gravitle, memory) {
-	const canvas_texture = this.context.getCurrentTexture();
-	this.renderPassDescriptor.colorAttachments[0].view =
-		canvas_texture.createView();
-	if (
-		!this.depthTexture ||
-		this.depthTexture.width !== canvas_texture.width ||
-		this.depthTexture.height !== canvas_texture.height
-	) {
-		if (this.depthTexture) {
-			this.depthTexture.destroy();
-		}
-		this.depthTexture = this.device.createTexture({
-			size: [canvas_texture.width, canvas_texture.height],
-			format: "depth24plus",
-			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-		});
-	}
-	this.renderPassDescriptor.depthStencilAttachment.view =
-		this.depthTexture.createView();
-	let countr = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_cells,
-			countr,
-			memory.buffer,
-			world.cells(),
-			world.cells_count() * gravitle.Cell.size(),
-		);
-		countr += world.cells_count() * gravitle.Cell.size();
-	}
-	let countr_2 = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_materials,
-			countr_2,
-			memory.buffer,
-			world.materials(),
-			world.materials_count() * gravitle.Material.size(),
-		);
-		countr_2 += world.materials_count() * gravitle.Material.size();
-	}
-	this.device.queue.submit([
-		(() => {
-			const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
-			const pass = encoder.beginRenderPass(this.renderPassDescriptor);
-			let step = this.steps[1]
-			pass.setPipeline(step.pipeline);
-			pass.setBindGroup(0, step.bindGroup);
-			pass.draw(
-				// edge per cell model
-				16 * 3,
-				// total cell count
-				worlds.reduce((sum, world) => sum + world.cells_count(), 0),
-			);
-			pass.end();
-			return encoder.finish();
-		})(),
-	]);
-};
+
+// ViewWebGPU.prototype.render = function (worlds, gravitle, memory) {
+// 	const canvas_texture = this.context.getCurrentTexture();
+// 	this.uniformValues.set([
+// 		this.zoom,
+// 	]);
+// 	this.renderPassDescriptor.colorAttachments[0].view =
+// 		canvas_texture.createView();
+// 	if (
+// 		!this.depthTexture ||
+// 		this.depthTexture.width !== canvas_texture.width ||
+// 		this.depthTexture.height !== canvas_texture.height
+// 	) {
+// 		if (this.depthTexture) {
+// 			this.depthTexture.destroy();
+// 		}
+// 		this.depthTexture = this.device.createTexture({
+// 			size: [canvas_texture.width, canvas_texture.height],
+// 			format: "depth24plus",
+// 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+// 		});
+// 	}
+// 	this.renderPassDescriptor.depthStencilAttachment.view =
+// 		this.depthTexture.createView();
+// 	// for (const _world of worlds) {
+// 		console.log(this.uniformValues)
+// 		this.device.queue.writeBuffer(this.buffer_uniform, 3, this.uniformValues);
+// 	// }
+// 	let countr = 0;
+// 	for (const world of worlds) {
+// 		this.device.queue.writeBuffer(
+// 			this.buffer_cells,
+// 			countr,
+// 			memory.buffer,
+// 			world.cells(),
+// 			world.cells_count() * gravitle.Cell.size(),
+// 		);
+// 		countr += world.cells_count() * gravitle.Cell.size();
+// 	}
+// 	let countr_2 = 0;
+// 	for (const world of worlds) {
+// 		this.device.queue.writeBuffer(
+// 			this.buffer_materials,
+// 			countr_2,
+// 			memory.buffer,
+// 			world.materials(),
+// 			world.materials_count() * gravitle.Material.size(),
+// 		);
+// 		countr_2 += world.materials_count() * gravitle.Material.size();
+// 	}
+// 	this.device.queue.submit([
+// 		(() => {
+// 			const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
+// 			const pass = encoder.beginRenderPass(this.renderPassDescriptor);
+// 			let step = this.steps[1]
+// 			pass.setPipeline(step.pipeline);
+// 			pass.setBindGroup(0, step.bindGroup);
+// 			pass.draw(
+// 				// edge per cell model
+// 				16 * 3,
+// 				// total cell count
+// 				worlds.reduce((sum, world) => sum + world.cells_count(), 0),
+// 			);
+// 			pass.end();
+// 			return encoder.finish();
+// 		})(),
+// 	]);
+// };
 
 
 ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 	const canvas_texture = this.context.getCurrentTexture();
+	this.uniformValues.set([
+		this.zoom,
+	]);
+	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
 	this.renderPassDescriptor.colorAttachments[0].view =
 		canvas_texture.createView();
 	if (

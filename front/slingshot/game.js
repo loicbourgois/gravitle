@@ -41,20 +41,23 @@ Game.prototype.update_stats = function () {
 	document.getElementById("buffer_cell_budget").innerHTML = as_percent_str(
 		this.worlds[0].cells_count()*this.wasm_engine.Cell.size()/this.view.buffer_cells.size
 	)
-    for (let index = 1; index < 7; index++) {
-        const a = `frame_budget_logic_0${index}`;
-        const b = `tick_0${index}`;
-        document.getElementById(a).innerHTML = as_frame_budget(
-            this.worlds[0].get_stats(b).avg * 1000 * this.tick_per_tack
-        )
-    }
-	{
-        const b = 'tick_links';
-		const a = `frame_budget_${b}`;
-		document.getElementById(a).innerHTML = as_frame_budget(
-			this.worlds[0].get_stats(b).avg * 1000 * this.tick_per_tack
-		)
-	}
+	document.getElementById(`frame_budget_logic_01`).innerHTML = as_frame_budget(
+		this.worlds[0].get_stats(`tick_01`).avg * 1000 * this.tick_per_tack
+	)
+    // for (let index = 1; index < 1; index++) {
+    //     const a = `frame_budget_logic_0${index}`;
+    //     const b = `tick_0${index}`;
+    //     document.getElementById(a).innerHTML = as_frame_budget(
+    //         this.worlds[0].get_stats(b).avg * 1000 * this.tick_per_tack
+    //     )
+    // }
+	// {
+    //     const b = 'tick_links';
+	// 	const a = `frame_budget_${b}`;
+	// 	document.getElementById(a).innerHTML = as_frame_budget(
+	// 		this.worlds[0].get_stats(b).avg * 1000 * this.tick_per_tack
+	// 	)
+	// }
 }
 
 Game.prototype.tack = function () {
