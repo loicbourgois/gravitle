@@ -33,6 +33,7 @@ function ViewWebGPU(canvas_id) {
 	};
 	this.zoom = 1.0;
 	this.mouse = null;
+	this.link_line_width = 0.0005;
 }
 
 
@@ -43,14 +44,19 @@ ViewWebGPU.prototype.set_zoom = function (zoom) {
 
 ViewWebGPU.prototype.setup_uniform = function (binding) {
 	const uniformBufferSize =
-    	1 * 4 // zoom: 32bit float
-		+ 1*4 // line_width: 32bit float
+    	4 // zoom: f32
+		+ 4 // line_width: f32
+		+ 4 // line_width: u32
+		+ 4 // padding
 	;
 	this.buffer_uniform = this.device.createBuffer({
 		size: uniformBufferSize,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	});
-	this.uniformValues = new Float32Array(uniformBufferSize / 4);
+	this.uniformBufferArray = new ArrayBuffer(uniformBufferSize);
+	this.uniformValues = new DataView(this.uniformBufferArray);
+	// this.uniformValuesF32 = new Float32Array(this.uniformBufferArray);
+	// this.uniformValuesU32 = new Uint32Array(this.uniformBufferArray);
 	this.bind_group_layout_entries.push(
 		{
 			binding: binding,
@@ -65,7 +71,7 @@ ViewWebGPU.prototype.setup_uniform = function (binding) {
 
 
 ViewWebGPU.prototype.setup_links = function (gravitle, binding) {
-	this.buffer_links = create_buffer(this.device, 100, gravitle.Link);
+	this.buffer_links = create_buffer(this.device, 500000, gravitle.Link);
 	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
 	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_links))
 }
@@ -195,13 +201,31 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 };
 
 
+ViewWebGPU.prototype.render = function (worlds, gravitle, memory) {
+	this.render_2(worlds, gravitle, memory)
+}
+
+
+ViewWebGPU.prototype.update_uniforms = function (tick) {
+	const uniforms_html = document.getElementById("uniforms")
+	if (uniforms_html) {
+		uniforms_html.innerHTML = JSON.stringify( {
+			zoom: this.zoom,
+			link_line_width: this.link_line_width,
+			tick: tick,
+		}, null, 2)
+	}	
+	this.uniformValues.setFloat32(0, this.zoom, true); // offset 0: zoom (f32)
+	this.uniformValues.setFloat32(4, this.link_line_width, true); // offset 4: line_width (f32)
+	this.uniformValues.setUint32(8, tick, true); // offset 8: tick (u32)
+}
+
+
 ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 	const canvas_texture = this.context.getCurrentTexture();
-	const LINK_LINE_WIDTH = 0.005
-	this.uniformValues.set([
-		this.zoom,
-		LINK_LINE_WIDTH,
-	]);
+	this.update_uniforms(
+		this.tick || worlds[0].get_tick()
+	);
 	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
 	this.renderPassDescriptor.colorAttachments[0].view =
 		canvas_texture.createView();

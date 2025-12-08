@@ -25,7 +25,11 @@ const as_percent_str = (value) => {
 }
 
 const pad5 = (value) => {
-	return `${value}`.padStart(5);
+	return padn(value, 5)
+}
+
+const padn = (value, padding) => {
+	return `${value}`.padStart(padding);
 }
 
 export {
@@ -34,4 +38,5 @@ export {
     as_frame_budget,
     pad5,
     as_percent_str,
+	padn,
 }

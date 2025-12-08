@@ -1,5 +1,5 @@
 import { fetch_as_text, fetch_as_json_string } from "./fetch.js";
-const setup_1 = async (world) => {
+const setup = async (world) => {
 	world.set_gravity_2(0.00028)
 	world.set_crdp(0.00001)
 	world.set_crdv(0.00001)
@@ -41,5 +41,5 @@ const setup_1 = async (world) => {
 	world.add_event(620, "set_cell_diameter", 2, 0.0113010001)
 };
 export {
-	setup_1,
+	setup,
 }

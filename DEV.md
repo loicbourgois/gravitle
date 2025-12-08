@@ -13,6 +13,8 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 http://localhost:82/electricity/
+http://localhost:82/tree/
+http://localhost:82/slingshot/
 ```
 
 

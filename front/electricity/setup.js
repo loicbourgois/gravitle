@@ -5,8 +5,8 @@ const setup = async (
 	world.set_gravity_2(0.00028)
 	world.set_crdp(0.00001)
 	world.set_crdv(0.00001)
-	world.set_c2c_gravity(true)
-	world.set_c2c_colision(true)
+	// world.set_c2c_gravity(true)
+	// world.set_c2c_colision(true)
 	for (const url of [
 		"/slingshot/material/steel.json",
 		"/slingshot/material/lfp_battery.json",
@@ -17,23 +17,23 @@ const setup = async (
 	}
 	world.add_cell(
 		"/slingshot/material/solar_panel.json",
-		0.0, 0.01, 0.01
+		0.0-0.03, 0.01, 0.01
 	)
 	world.add_cell(
 		"/slingshot/material/steel.json",
-		0.011, 0.0, 0.01
+		0.011-0.03, 0.0, 0.01
 	)
 	world.add_cell(
 		"/slingshot/material/lfp_battery.json",
-		0.022, 0.0, 0.01
+		0.022-0.03, 0.0, 0.01
 	)
 	world.add_cell(
 		"/slingshot/material/steel.json",
-		0.033, 0.0, 0.01
+		0.033-0.03, 0.0, 0.01
 	)
 	world.add_cell(
 		"/slingshot/material/ion_thruster.json",
-		0.044, 0.01, 0.01
+		0.044-0.03, 0.01, 0.01
 	)
 	world.add_link(
 		0, 1
@@ -58,7 +58,7 @@ const setup = async (
 	// )
 	// world.con
 	world.set_cell_fixed(0);
-	world.set_cell_fixed(1);
+	world.set_cell_fixed(4);
 };
 export {
 	setup,

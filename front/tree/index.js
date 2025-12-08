@@ -102,11 +102,14 @@ Game.prototype.start = function () {
 const main = async () => {
 	await init();
 	if (await has_webgpu_support()) {
+		const view = new ViewWebGPU("canvas");
+		view.set_zoom(30);
+		view.link_line_width = 0.00005;
 		(
 			await new Game({
 				wasm_memory: gravitle.initSync().memory,
 				wasm_engine: gravitle,
-				view: new ViewWebGPU("canvas"),
+				view: view,
 			}).setup()
 		).start();
 	} else {

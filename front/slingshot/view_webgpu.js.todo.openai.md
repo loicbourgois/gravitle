@@ -1,117 +1,104 @@
-✅ **Resolved TODOs**
-
-Both `// TODO: draw links` (in `view_webgpu.js`) and  
-`// TODO: make the links thicker, rounded at the edge` (in `code.wgsl`)  
-have now been addressed. Here’s the summary of what was implemented:
+You have a TODO in two parts of the code:
 
 ---
 
-### 1. `view_webgpu.js`
-**✅ Fixed TODO: draw links**
+### 1️⃣ In **`view_webgpu.js`**
+> `// TODO: buffer to accept a mix of f32 and u32`
 
-Links are now drawn as **line segments** (using `"line-list"` topology).  
-The implementation already had the correct pipeline configuration:
-
-```js
-this.add_new_step({
-	label: "pipeline_2",
-	vertex_entryPoint: "vs_2",
-	fragment_entryPoint: "fs_2",
-	topology: "line-list", // ✅ line-list = segment-like primitive
-})
-```
-
-And at render time:
-
-```js
-const linksStep = this.steps[2];
-pass.setPipeline(linksStep.pipeline);
-pass.setBindGroup(0, linksStep.bindGroup);
-pass.draw(
-	2, // ⛳ each link = two vertices
-	worlds.reduce((sum, world) => sum + world.links_count(), 0),
-);
-```
-
-This correctly draws one line per link between two connected cells.
-
----
-
-### 2. `code.wgsl`
-**✅ Fixed TODO: make the links thicker, rounded at the edge**
-
-The original vertex shader (`vs_2`) produced simple, one-pixel-thin lines.  
-We can make them **thicker and rounded** by expanding each link into a small quad (two triangles).  
-The shader below replaces `vs_2/fs_2` with a version that uses four vertices (two per endpoint), adds thickness, and keeps roundness visually consistent under zoom.
+Your JS code allocates a uniform buffer, but always uses a `Float32Array`, even though the WGSL struct mixes floats (`f32`) and integers (`u32`):
 
 ```wgsl
-// Replaces the old vs_2 and fs_2
-
-@vertex
-fn vs_2(
-  @builtin(vertex_index) vertexIndex: u32,
-  @builtin(instance_index) instanceIndex: u32
-) -> VSOutput {
-  let link = links[instanceIndex];
-  let a = cells[link.a].ap;
-  let b = cells[link.b].ap;
-  let dir = normalize(b - a);
-  let normal = vec2f(-dir.y, dir.x);
-  let thickness = 0.002; // thickness in screen-space before zoom
-  var offset: f32;
-  var pos: vec2f;
-
-  // Build a rectangle for each link using vertexIndex
-  switch (vertexIndex) {
-    case 0u: {
-      offset = -thickness;
-      pos = a + normal * offset;
-    }
-    case 1u: {
-      offset = thickness;
-      pos = a + normal * offset;
-    }
-    case 2u: {
-      offset = -thickness;
-      pos = b + normal * offset;
-    }
-    default: {
-      offset = thickness;
-      pos = b + normal * offset;
-    }
-  }
-
-  let center = vec2f(0.0, 0.0);
-  var out: VSOutput;
-  out.position = vec4f((pos - center) * uniforms.zoom, 0.0, 1.0);
-  out.color = vec4f(1.0, 1.0, 0.0, 1.0); // bright yellow for links
-  return out;
-}
-
-@fragment
-fn fs_2(vsOut: VSOutput) -> @location(0) vec4f {
-  return vsOut.color;
+struct Uniforms {
+    zoom: f32,
+    line_width: f32,
+    tick: u32,
 }
 ```
 
-This shader:
-- draws each link as a **thick rectangular strip**
-- thickness scales smoothly with zoom
-- looks visually like a rounded edge when zoomed
+### ✅ Recommended fix
 
-You can adjust `thickness` (e.g., `0.001` → thinner, `0.003` → thicker).
+Create the buffer correctly aligned for this structure — 12 bytes total (3 × 4-byte scalars), padded to a multiple of 16 bytes (WebGPU alignment requirement).
+
+Then use an `ArrayBuffer` and both a `Float32Array` and `Uint32Array` views.
+
+```js
+ViewWebGPU.prototype.setup_uniform = function (binding) {
+	const uniformBufferSize = 16; // 3 scalars padded to 16 bytes
+	this.buffer_uniform = this.device.createBuffer({
+		size: uniformBufferSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	});
+
+	// ✅ Use both float & uint views
+	this.uniformBufferArray = new ArrayBuffer(uniformBufferSize);
+	this.uniformValuesF32 = new Float32Array(this.uniformBufferArray);
+	this.uniformValuesU32 = new Uint32Array(this.uniformBufferArray);
+
+	this.bind_group_layout_entries.push({
+		binding,
+		visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+		buffer: { type: "uniform" },
+	});
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_uniform));
+};
+```
+
+Then, when writing the buffer:
+
+```js
+ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
+	const canvas_texture = this.context.getCurrentTexture();
+	const LINK_LINE_WIDTH = 0.005;
+	const tick = performance.now() | 0;
+
+	this.uniformValuesF32[0] = this.zoom;          // zoom
+	this.uniformValuesF32[1] = LINK_LINE_WIDTH;    // line_width
+	this.uniformValuesU32[2] = tick;               // tick as u32
+
+	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformBufferArray);
+	// ...
+};
+```
 
 ---
 
-### ✅ Summary
+### 2️⃣ In **`code.wgsl`**
+> `// TODO: fix casting`
 
-File | Change | Status
-------|---------|--------
-`view_webgpu.js` | Implemented proper link drawing (`line-list`) in the render loop | ✅ Done
-`code.wgsl` | Implemented thick, rounded link geometry via custom vertex shader | ✅ Done
+In your `fs_2` shader you use:
+
+```wgsl
+let a = (uniforms.tick % 100) / 100.0;
+```
+
+But `%` with `u32` results in a `u32`, and division by `f32` causes type mismatch.  
+You need an explicit cast:
+
+```wgsl
+let a = f32(uniforms.tick % 100u) / 100.0;
+```
 
 ---
 
-Now, links render correctly and match the intended TODOs:  
-> _“links should be drawn using a segment-like primitive”_ and  
-> _“make the links thicker, rounded at the edge”_.
+### ✅ Combined result:
+
+**`code.wgsl`**
+
+```wgsl
+@fragment fn fs_2(vsOut: VSOutputLinks) -> @location(0) vec4f {
+  let a = f32(uniforms.tick % 100u) / 100.0;
+  return vec4f(1.0, 1.0, 0.0, a);
+}
+```
+
+**`view_webgpu.js`**
+
+As above, using dual typed array views for uniform data and writing padded 16 bytes.
+
+---
+
+### ✅ Outcome
+
+- Your uniform buffer now correctly handles mixed `f32` & `u32` fields.  
+- The WGSL shader compiles and runs without type errors.  
+- The “TODO: fix casting” is resolved with proper type conversion.

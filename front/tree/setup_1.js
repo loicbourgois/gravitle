@@ -27,16 +27,13 @@ const setup_1 = async (world) => {
 		)
 	}
 	const add = (ia, ib) => {
-		return world.add_cell_2(
+		const ic = world.add_cell_2(
 			W,
 			ia, ib, DIAM
 		)
-	}
-	const addf = (ia, ib) => {
-		return world.add_cell_2(
-			F,
-			ia, ib, DIAM
-		)
+		world.add_link(ia, ic)
+		world.add_link(ib, ic)
+		return ic
 	}
 	for (const url of [
 		W,
@@ -44,12 +41,16 @@ const setup_1 = async (world) => {
 	]) {
 		world.add_material(url, await fetch_as_json_string(url));
 	}
-	world.c.gravity_2 = 0.00001;
-	world.c.crdp = 0.00000001;
-	world.c.crdv = 0.00000001;
+	world.c.gravity_2 = 0.0000;
+	world.c.crdp = 0.0000000;
+	world.c.crdv = 0.0000000;
 	world.c.zonesize = DIAM * 2.0
-	const i0 = add_1(0, -0.05)
+	// world.set_c2c_gravity(true)
+	// world.set_c2c_colision(true)
+	// const i0 = add_1(0, -0.05)
+	const i0 = add_1(0, -0.0)
 	const i1 = add_up(0)
+	world.add_link(i0, i1)
 	const i2 = add(i0, i1)
 	const i3 = add(i2, i1)
 	const i4 = add(i1, i0)
@@ -122,9 +123,10 @@ const setup_1 = async (world) => {
 			}
 		}
 	}
-	const branch_size = 200
-	const trunk_size = 100
-	const branch_count = 30
+	const branch_size = 20
+	const trunk_size = 10
+	const branch_count = 7
+	const trunk_count = 5
 	for (let index = 0; index < branch_count; index++) {
 		const r1 = Math.random()
 		const r2 = gr(0.4, 1.0)
@@ -136,7 +138,7 @@ const setup_1 = async (world) => {
 		}
 		
 	}
-	for (let index = 0; index < 40; index++) {
+	for (let index = 0; index < trunk_count; index++) {
 		const r1 = Math.random()
 		const r2 = gr(0, 0.03)
 		if (r1 > 0.5) {
@@ -145,14 +147,6 @@ const setup_1 = async (world) => {
 			bot_right(trunk_size, r2)
 		}
 	}
-	// bot_left(trunk_size, 0)
-	// bot_left(trunk_size, 0.01)
-	// bot_left(trunk_size, 0.01)
-	// bot_right(trunk_size, 0)
-	// bot_right(trunk_size, 0.01)
-	// bot_right(trunk_size, 0.01)
-	// bot_right(trunk_size, 0.01)
-	// fix_cells(world)
 };
 export {
 	setup_1,

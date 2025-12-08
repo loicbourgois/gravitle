@@ -28,6 +28,7 @@ const main = async () => {
 			0.0112
 		)
 		const view = new ViewWebGPU("canvas")
+		view.set_zoom(5)
 		world_1.save_positions(6)
 		world_3.save_positions(6)
 		const aa = 10000

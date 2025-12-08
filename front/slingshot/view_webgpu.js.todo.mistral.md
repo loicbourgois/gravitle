@@ -1,193 +1,136 @@
-I'll address the TODOs in the code. There are two main TODOs to handle:
+I'll address the TODOs in the codebase. There are three main TODOs to handle:
 
-1. In `view_webgpu.js`: "draw links - links should be drawn using a segment like primitive, not triangles"
-2. In `code.wgsl`: "make the links thicker, rounded at the edge"
+1. In `view_webgpu.js`: Buffer to accept a mix of f32 and u32 in the uniform buffer
+2. In `view_webgpu.js`: Draw links using a segment-like primitive, not triangles
+3. In `code.wgsl`: Fix casting in the fragment shader for links
 
-Let's address both:
+Let's address them one by one:
 
-### 1. For view_webgpu.js:
-The TODO is already addressed in the current implementation. The links are drawn using a line-list topology in the third pipeline step (`pipeline_2`), which is the correct approach for drawing line segments.
+### 1. Uniform Buffer with Mixed Types
 
-### 2. For code.wgsl:
-The current link shader (`vs_2`/`fs_2`) draws simple thin lines. Let's modify it to draw thicker lines with rounded caps. Here's the improved version:
+The current implementation uses a Float32Array for the uniform buffer, but we need to support both f32 and u32 types. Here's the fix:
 
-```wgsl
-// Improved link shader with thickness and rounded caps
-@vertex fn vs_2(
-  @builtin(vertex_index) vertexIndex : u32,
-  @builtin(instance_index) instanceIndex: u32,
-) -> VSOutput {
-  let link = links[instanceIndex];
-  let cell_a = cells[link.a];
-  let cell_b = cells[link.b];
+```javascript
+ViewWebGPU.prototype.setup_uniform = function (binding) {
+    const uniformBufferSize =
+        4 // zoom: f32
+        + 4 // line_width: f32
+        + 4 // tick: u32
+    ;
+    this.buffer_uniform = this.device.createBuffer({
+        size: uniformBufferSize,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
 
-  let start_pos = cell_a.ap;
-  let end_pos = cell_b.ap;
-  let line_dir = end_pos - start_pos;
-  let line_length = length(line_dir);
+    // Create a buffer that can hold both f32 and u32 values
+    this.uniformValues = new ArrayBuffer(uniformBufferSize);
+    this.uniformF32 = new Float32Array(this.uniformValues);
+    this.uniformU32 = new Uint32Array(this.uniformValues);
 
-  // Normalize direction and create perpendicular vector
-  let dir = line_dir / max(line_length, 0.0001);
-  let perp = vec2f(-dir.y, dir.x);
-
-  // Line thickness (adjust as needed)
-  let thickness = 0.005 * uniforms.zoom;
-
-  // Determine position based on vertex index
-  var position_to_render: vec2f;
-
-  // For a line with rounded caps, we need 6 vertices:
-  // 0-1: line segment
-  // 2-3: start cap
-  // 4-5: end cap
-  switch(vertexIndex) {
-    case 0u: { // First vertex of line segment
-      position_to_render = start_pos + perp * thickness * 0.5;
-    }
-    case 1u: { // Second vertex of line segment
-      position_to_render = start_pos - perp * thickness * 0.5;
-    }
-    case 2u: { // Third vertex of line segment
-      position_to_render = end_pos + perp * thickness * 0.5;
-    }
-    case 3u: { // Fourth vertex of line segment
-      position_to_render = end_pos - perp * thickness * 0.5;
-    }
-    case 4u: { // Start cap center
-      position_to_render = start_pos;
-    }
-    case 5u: { // End cap center
-      position_to_render = end_pos;
-    }
-    default: {
-      position_to_render = start_pos;
-    }
-  }
-
-  let center = vec2f(0.0, 0.0);
-  var vsOut: VSOutput;
-  vsOut.position = vec4f(
-    (position_to_render - center) * uniforms.zoom,
-    0.0, 1.0
-  );
-
-  // Pass additional data for fragment shader
-  vsOut.color = vec4f(
-    dir.x, dir.y, line_length, float(vertexIndex)
-  );
-  return vsOut;
-}
-
-@fragment fn fs_2(vsIn: VSOutput) -> @location(0) vec4f {
-  // Extract data from color (used as a data channel)
-  let dir = vec2f(vsIn.color.r, vsIn.color.g);
-  let line_length = vsIn.color.b;
-  let vertexIndex = u32(vsIn.color.a);
-
-  // Line color (yellow)
-  let line_color = vec3f(1.0, 1.0, 0.0);
-
-  // For the line segment (vertices 0-3)
-  if (vertexIndex < 4u) {
-    return vec4f(line_color, 1.0);
-  }
-  // For the caps (vertices 4-5)
-  else {
-    // Calculate distance from cap center
-    let dist = length(vsIn.position.xy - vsIn.position.xy); // This needs proper calculation
-
-    // Simple rounded cap - just a circle at each end
-    // We need to calculate the actual distance from the cap center
-    let cap_radius = length(vsIn.position.xy - (vsIn.position.xy - dir * line_length * 0.5));
-
-    if (cap_radius <= 0.005 * uniforms.zoom) {
-      return vec4f(line_color, 1.0);
-    } else {
-      discard;
-    }
-  }
-
-  return vec4f(0.0, 0.0, 0.0, 1.0);
+    this.bind_group_layout_entries.push(
+        {
+            binding: binding,
+            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+            buffer: {
+                type: "uniform",
+            },
+        }
+    )
+    this.bind_group_entries.push(bind_group_entry(binding, this.buffer_uniform))
 }
 ```
 
-However, this approach has some limitations. For a more robust solution, we should modify the pipeline to use triangle strips for the links and update the draw call in the JavaScript code. Here's a better approach:
+And update the render method to use the appropriate typed arrays:
 
-1. First, update the pipeline creation in `view_webgpu.js`:
+```javascript
+ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
+    const canvas_texture = this.context.getCurrentTexture();
+    const LINK_LINE_WIDTH = 0.005
+    const tick = performance.now() / 16; // Approximate tick value
+
+    // Set values using the appropriate typed arrays
+    this.uniformF32[0] = this.zoom;       // zoom
+    this.uniformF32[1] = LINK_LINE_WIDTH; // line_width
+    this.uniformU32[2] = Math.floor(tick); // tick
+
+    this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
+    // ... rest of the method
+}
+```
+
+### 2. Draw Links with Line Primitive
+
+The current implementation uses triangle-strip to draw links as quads. Let's modify it to use line-list for a more accurate representation:
+
+First, update the `add_new_step` call for links:
 
 ```javascript
 this.add_new_step({
-  label: "pipeline_2",
-  vertex_entryPoint: "vs_2",
-  fragment_entryPoint: "fs_2",
-  topology: "triangle-strip",  // Changed from line-list to triangle-strip
+    label: "pipeline_2",
+    vertex_entryPoint: "vs_2",
+    fragment_entryPoint: "fs_2",
+    topology: "line-list", // Changed from triangle-strip to line-list
 })
 ```
 
-2. Then update the WGSL shader:
+Then update the vertex shader for links in `code.wgsl`:
 
 ```wgsl
-// Improved link shader with thickness
 @vertex fn vs_2(
   @builtin(vertex_index) vertexIndex : u32,
   @builtin(instance_index) instanceIndex: u32,
-) -> VSOutput {
+) -> VSOutputLinks {
   let link = links[instanceIndex];
   let cell_a = cells[link.a];
   let cell_b = cells[link.b];
+  let p1 = cell_a.ap;
+  let p2 = cell_b.ap;
 
-  let start_pos = cell_a.ap;
-  let end_pos = cell_b.ap;
-  let line_dir = end_pos - start_pos;
+  var vsOut: VSOutputLinks;
 
-  // Normalize direction and create perpendicular vector
-  let dir = normalize(line_dir);
-  let perp = vec2f(-dir.y, dir.x) * 0.0025 * uniforms.zoom; // Half thickness
-
-  // Determine position based on vertex index
-  var position_to_render: vec2f;
-  switch(vertexIndex) {
-    case 0u: { position_to_render = start_pos + perp; }
-    case 1u: { position_to_render = start_pos - perp; }
-    case 2u: { position_to_render = end_pos + perp; }
-    case 3u: { position_to_render = end_pos - perp; }
-    default: { position_to_render = start_pos; }
+  // For line-list, we just need to output the two endpoints
+  if (vertexIndex % 2 == 0) {
+    vsOut.position = vec4f(p1 * uniforms.zoom, 0.0, 1.0);
+  } else {
+    vsOut.position = vec4f(p2 * uniforms.zoom, 0.0, 1.0);
   }
 
-  let center = vec2f(0.0, 0.0);
-  var vsOut: VSOutput;
-  vsOut.position = vec4f(
-    (position_to_render - center) * uniforms.zoom,
-    0.0, 1.0
-  );
-
-  // Yellow color for links
-  vsOut.color = vec4f(1.0, 1.0, 0.0, 1.0);
   return vsOut;
-}
-
-@fragment fn fs_2(vsOut: VSOutput) -> @location(0) vec4f {
-  return vsOut.color;
 }
 ```
 
-3. Finally, update the draw call in `render_2` method:
+And update the draw call in the render method:
 
 ```javascript
-// Replace the links drawing part with:
 const linksStep = this.steps[2];
 pass.setPipeline(linksStep.pipeline);
 pass.setBindGroup(0, linksStep.bindGroup);
 pass.draw(
-  4, // 4 vertices per link (2 triangles forming a quad)
-  worlds.reduce((sum, world) => sum + world.links_count(), 0) // Total number of links
+    // 2 vertices per line
+    2,
+    // Total number of links
+    worlds.reduce((sum, world) => sum + world.links_count(), 0),
 );
 ```
 
-This solution:
-1. Draws each link as a quad (2 triangles) using triangle-strip topology
-2. Makes the links have a consistent thickness regardless of zoom level
-3. Is more efficient than the line-list approach with caps
-4. Maintains the same visual style as the rest of the application
+### 3. Fix Casting in Fragment Shader
 
-The links will now appear as thick, rectangular connections between cells, which is a good balance between visual quality and performance.
+The fragment shader for links has a casting issue. Here's the fix:
+
+```wgsl
+@fragment fn fs_2(vsOut: VSOutputLinks) -> @location(0) vec4f {
+  // Fixed casting by using f32() constructor
+  let a = f32(uniforms.tick % 100) / 100.0;
+  return vec4f(
+    1.0, 1.0, 0.0, a
+  );
+}
+```
+
+### Summary of Changes:
+
+1. Implemented a mixed-type uniform buffer using ArrayBuffer with Float32Array and Uint32Array views
+2. Changed link rendering from triangle-strip to line-list for more accurate representation
+3. Fixed the casting issue in the fragment shader by using the f32() constructor
+
+These changes should address all the TODOs in the codebase while maintaining the existing functionality.

@@ -83,3 +83,15 @@ span {
 .pre {
   white-space: pre;
 }
+#overlay-right {
+  background: #fff1;
+  padding: 1rem;
+}
+.slider-wrapper {
+  display: flex;
+}
+.slider-wrapper label {
+  margin-right: 1rem;
+  color: var(--secondary-color);
+  text-wrap: nowrap;
+}
