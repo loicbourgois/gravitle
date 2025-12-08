@@ -220,9 +220,14 @@ struct VSOutputLinks {
   let width = 0.1;
   let dist_direct = abs(vsOut.link_t - progress);
   let dist_wrap = abs(1.0 - vsOut.link_t + progress);
-  let dist_start = (vsOut.link_t + 1) % 1 + (1-progress);
-  let dist = min(dist_direct, min(dist_wrap, dist_start));
-  let intensity = smoothstep(width, 0.0, dist);
+  // var dist = min(dist_direct, min(dist_wrap, dist_3));
+  // dist = 0.05;
+  // let intensity = smoothstep(width, 0.0, dist);
+  let distance_to_start = (vsOut.link_t + 1) % 1 ;
+
+  let dist_3 = abs( distance_to_start - progress); 
+  
+  let intensity = dist_3;
   return vec4f(
     intensity, intensity, 0.0, intensity
   );
