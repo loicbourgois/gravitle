@@ -71,10 +71,20 @@ canvas {
 #fps {
   text-align: right;
 }
-#notice_text {
+#notice_text, #notice_text_2 {
   margin-top: 8rem;
   display: flex;
   width: 100vw;
+}
+#notice_text_2 span {
+  color: var(--primary-color-low);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  font-size: 1.6rem;
 }
 #notice_text span {
   color: var(--primary-color-low);
@@ -83,13 +93,18 @@ canvas {
   display: flex;
   flex-direction: column;
   text-align: center;
-  width: 10rem;
+  width: 20rem;
+  font-size: 1.6rem;
 }
 #overlay {
   display: flex;
   position: absolute;
   width: 100vw;
   height: 100vh;
+  background: #0006;
+}
+#overlay.light {
+  background: #0000;
 }
 #overlay-left {
   display: flex;

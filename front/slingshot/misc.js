@@ -1,4 +1,3 @@
-
 const has_webgpu_support = async () => {
 	const adapter = await navigator.gpu?.requestAdapter();
 	const device = await adapter?.requestDevice();
@@ -16,27 +15,27 @@ const get_avg_fps = (tick_starts) => {
 };
 
 const as_frame_budget = (value) => {
-	return as_percent_str( value / (1000/120) )
-}
+	return as_percent_str(value / (1000 / 120));
+};
 
 const as_percent_str = (value) => {
-	const s = `${(value * 100 )?.toFixed(1)}`
-    return s.padStart(4);
-}
+	const s = `${(value * 100)?.toFixed(1)}`;
+	return s.padStart(4);
+};
 
 const pad5 = (value) => {
-	return padn(value, 5)
-}
+	return padn(value, 5);
+};
 
 const padn = (value, padding) => {
 	return `${value}`.padStart(padding);
-}
+};
 
 export {
-    has_webgpu_support,
-    get_avg_fps,
-    as_frame_budget,
-    pad5,
-    as_percent_str,
+	has_webgpu_support,
+	get_avg_fps,
+	as_frame_budget,
+	pad5,
+	as_percent_str,
 	padn,
-}
+};

@@ -26,7 +26,7 @@ const main = async () => {
 	const stars_count = params.get("stars") ?? defaults.stars_count;
 	const seed_input =
 		params.get("seed") ?? new Date().toISOString().split("T")[0];
-		// params.get("seed") ?? new Date().toISOString();
+	// params.get("seed") ?? new Date().toISOString();
 	const ghost = params.get("ghost");
 	// TODO: webgpu as default once good enough
 	// const render_mode =
@@ -49,7 +49,7 @@ const main = async () => {
 	window.addEventListener("resize", function () {
 		view.resize();
 	});
-	console.log(seed_input)
+	console.log(seed_input);
 	new Game({
 		gravitle,
 		memory,

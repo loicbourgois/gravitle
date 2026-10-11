@@ -1,0 +1,10 @@
+# gr: /slingshot/material/granite.json
+      gr----gr----gr
+     /  \  /  \  /  \
+   gr----gr----gr----gr
+  /  \  /  \  /  \  /  \
+gr----gr----gr----gr----gr
+  \  /  \  /  \  /  \  /
+   gr----gr----gr----gr
+     \  /  \  /  \  /
+      gr----gr----gr
