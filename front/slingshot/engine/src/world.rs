@@ -1,77 +1,30 @@
 use crate::blueprint::Blueprint;
 use crate::cell::Cell;
 use crate::color::Color;
+use crate::event::Event;
 use crate::link::Link;
+use crate::log;
 use crate::material::Material;
+use crate::material::MaterialStorage;
 use crate::material_definition::MaterialDefinition;
 use crate::material_definition::ValueOrReference;
 use crate::point::Point;
 use crate::point::equilateral_third_point;
+use crate::stat::Stat;
+use crate::stat::StatJs;
 use crate::utils::elapsed_secs_f32;
 use crate::utils::now;
 use crate::wasm_bindgen;
+use crate::world_config::WorldConfig;
 use std::collections::HashMap;
 use std::collections::HashSet;
-
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct WorldConfig {
-    pub rdp: f32,
-    pub rdv: f32,
-    pub zonesize: f32,
-    pub gravity: f32,
-    pub gravity_2: f32,
-    pub crdp: f32,
-    pub crdv: f32,
-    pub rdv_during_colision: f32,
-    pub c2c_gravity: bool,
-    pub c2c_colision: bool,
-    pub link_strength_dp: f32,
-    pub link_strength_dv: f32,
-}
-
-struct Stat {
-    js: StatJs,
-    values: Vec<f32>,
-}
-
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct StatJs {
-    pub avg: f32,
-    pub p99: f32,
-}
-
-impl Stat {
-    fn update(&mut self, perf_array_len: usize) {
-        while self.values.len() > perf_array_len {
-            self.values.remove(0);
-        }
-        if self.values.is_empty() {
-            self.js.avg = 0.0;
-            self.js.p99 = 0.0;
-        } else {
-            let mut sorted: Vec<f32> = self.values.clone();
-            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-            let p99_index = ((sorted.len() as f32 - 1.0) * 0.99).floor() as usize;
-            self.js.avg = self.values.iter().sum::<f32>() / self.values.len() as f32;
-            self.js.p99 = *sorted.get(p99_index).unwrap_or(sorted.last().unwrap());
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Event {
-    func: String,
-    cell_id: usize,
-    value: f32,
-}
 
 #[wasm_bindgen]
 pub struct World {
     cells: Vec<Cell>,
     links: Vec<Link>,
     materials: Vec<Material>,
+    material_storages: Vec<MaterialStorage>,
     materials_2: HashMap<String, usize>,
     zones: HashMap<(i32, i32), HashSet<usize>>,
     pairs: HashSet<(usize, usize)>,
@@ -85,7 +38,8 @@ pub struct World {
     pub zones_count: usize,
     positions: HashMap<usize, Vec<Point>>,
     positions_2: Vec<Point>,
-    // positions_to_save: HashSet<usize>,
+    storage: Vec<u32>,
+    storage_2: HashMap<String, usize>,
 }
 impl Default for World {
     fn default() -> Self {
@@ -95,16 +49,18 @@ impl Default for World {
 
 #[wasm_bindgen]
 impl World {
-    pub fn add_event(&mut self, tick: usize, func: String, cell_id: usize, value: f32) {
-        let v = self.events.entry(tick).or_default();
-        v.push(Event {
-            func,
-            cell_id,
-            value,
-        });
-    }
-    pub fn get_tick(&self) -> usize {
-        self.tick
+    pub fn add_storage(&mut self, key: String) {
+        if self.storage_2.contains_key(&key) {
+            // Storage already exists, do nothing
+            return;
+        }
+        let idx = self.storage.len();
+        let mut v = Vec::new();
+        for _ in &self.cells {
+            v.push(0);
+        }
+        self.storage.append(&mut v);
+        self.storage_2.insert(key, idx);
     }
     pub fn new() -> World {
         let mut w = World {
@@ -135,9 +91,11 @@ impl World {
             collision_count: 0.0,
             pairs_count: 0,
             zones_count: 0,
-            // positions_to_save: HashSet::new(),
             positions: HashMap::new(),
             positions_2: Vec::new(),
+            storage: Vec::new(),
+            storage_2: HashMap::new(),
+            material_storages: Vec::new(),
         };
         w.add_stat("logic".to_string());
         w.add_stat("render".to_string());
@@ -151,8 +109,20 @@ impl World {
         w.add_stat("tick_06".to_string());
         w.add_stat("tick_events".to_string());
         w.add_stat("tick_links".to_string());
+        w.add_stat("tick_storage".to_string());
         w.add_stat("save_positions".to_string());
         w
+    }
+    pub fn add_event(&mut self, tick: usize, func: String, cell_id: usize, value: f32) {
+        let v = self.events.entry(tick).or_default();
+        v.push(Event {
+            func,
+            cell_id,
+            value,
+        });
+    }
+    pub fn get_tick(&self) -> usize {
+        self.tick
     }
     pub fn save_positions(&mut self, idx: usize) {
         self.positions.insert(idx, Vec::new());
@@ -228,7 +198,30 @@ impl World {
         let n = now();
         self.tick_06();
         self.add_duration("tick_06", elapsed_secs_f32(n));
+        let n = now();
+        self.tick_storage();
+        self.add_duration("tick_storage", elapsed_secs_f32(n));
         self.tick += 1;
+    }
+    pub fn tick_storage(&mut self) {
+        // production
+        for (k, s_idx) in &self.storage_2 {
+            for (c_idx, c) in self.cells.iter().enumerate() {
+                let m: &MaterialStorage = &self.material_storages[c.material_idx as usize];
+                let idx = self.cells.len() * s_idx + c_idx;
+                let value = self.storage[idx];
+                match m.production.get(k) {
+                    Some(production) => {
+                        let new_value_wanted: u32 = value + production;
+                        let ceiling: u32 = m.storage[k] as u32;
+                        let new_value_real: u32 = ceiling.min(new_value_wanted);
+                        self.storage[idx] = new_value_real;
+                    }
+                    None => {}
+                }
+            }
+        }
+        // transfer
     }
     pub fn get_positions(&self, idx: usize) -> Vec<Point> {
         self.positions[&idx].clone()
@@ -332,7 +325,7 @@ impl World {
             }
         }
     }
-    // collison
+    // collision
     pub fn tick_03(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         let pairs_ = self.pairs.clone();
@@ -490,6 +483,14 @@ impl World {
     pub fn materials_count(&self) -> u32 {
         self.materials.len() as u32
     }
+
+    pub fn storage(&self) -> *const u32 {
+        self.storage.as_ptr()
+    }
+    pub fn storage_count(&self) -> u32 {
+        self.storage.len() as u32
+    }
+
     pub fn add_material(&mut self, url: String, definition: &str) {
         let idx = self.materials.len();
         let material_definition: MaterialDefinition = match serde_json::from_str(definition) {
@@ -498,7 +499,10 @@ impl World {
                 panic!("Failed to parse material JSON from {url}: {e}");
             }
         };
-        self.materials.push(self.as_material(material_definition));
+        self.materials
+            .push(self.as_material(material_definition.clone()));
+        self.material_storages
+            .push(self.as_material_storage(material_definition));
         self.materials_2.insert(url, idx);
     }
     pub fn add_from_blueprint(&mut self, blueprint_str: &str, x: f32, y: f32) {
@@ -506,6 +510,14 @@ impl World {
         for c in &blueprint.parts {
             self.add_cell(&c.material_url, c.p.x + x, c.p.y + y, c.d);
         }
+    }
+    pub fn debug(&self) {
+        log("debug");
+        log(&format!("{:?}", self.material_storages));
+    }
+    pub fn debug_storage(&self) -> String {
+        // log(&format!("# {}\n", self.tick));
+        format!("{:?}", self.storage)
     }
 }
 
@@ -517,6 +529,18 @@ impl World {
                 ValueOrReference::Reference(url) => self.materials[self.materials_2[&url]].density,
             },
             color: Color::from_hex(&md.color).unwrap(),
+        }
+    }
+    pub fn as_material_storage(&self, md: MaterialDefinition) -> MaterialStorage {
+        MaterialStorage {
+            storage: match md.storage {
+                Some(x) => x.clone(),
+                None => HashMap::new(),
+            },
+            production: match md.production {
+                Some(x) => x.clone(),
+                None => HashMap::new(),
+            },
         }
     }
 }

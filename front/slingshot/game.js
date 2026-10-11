@@ -21,7 +21,7 @@ function Game({ wasm_memory, wasm_engine, view, setup }) {
 Game.prototype.setup = async function () {
 	await this.view.setup(this.wasm_engine);
 	const world = this.wasm_engine.setup();
-	this.level_setup(world)
+	await this.level_setup(world)
 	this.worlds = [world];
 	return this;
 };

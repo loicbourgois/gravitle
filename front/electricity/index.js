@@ -38,15 +38,27 @@ const main = async () => {
 		setup: setup,
 	}).setup();
 	setup_slider("tick", 0, 1000, 999)
+	setup_slider("zoom", 0, 40, 28)
 	const render_loop = () => {
-		view.tick = get_slider_value("tick");
 		game.render()
 		requestAnimationFrame(() => {
 			render_loop();
 		});
 	};
-	// render_loop()
+	const slider_loop = () => {
+		// view.tick = get_slider_value("tick")
+		view.set_zoom(get_slider_value("zoom"))
+		requestAnimationFrame(() => {
+			slider_loop();
+		});
+		document.getElementById("debug").innerHTML = game.worlds[0].debug_storage()
+	}
 	game.start()
+	slider_loop()
+	// render_loop()
+	// game.worlds[0].tick_n(1000)
+	// game.worlds[0].tick()
+	// game.worlds[0].tick()
 };
 
 

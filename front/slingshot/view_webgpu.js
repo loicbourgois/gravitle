@@ -98,6 +98,13 @@ ViewWebGPU.prototype.setup_materials = function (gravitle, binding) {
 }
 
 
+ViewWebGPU.prototype.setup_storage = function (gravitle, binding) {
+	this.buffer_storage = create_buffer(this.device, 20000, gravitle.U32);
+	this.bind_group_layout_entries.push(bind_group_layout_entry(binding))
+	this.bind_group_entries.push(bind_group_entry(binding, this.buffer_storage))
+}
+
+
 ViewWebGPU.prototype.add_new_step = function (x) {
 	const bindGroupLayout = this.device.createBindGroupLayout({
 		entries: this.bind_group_layout_entries,
@@ -109,16 +116,15 @@ ViewWebGPU.prototype.add_new_step = function (x) {
 		label: x.label,
 		layout: pipelineLayout,
 		vertex: {
-			module: this.module,
-			entryPoint: x.vertex_entryPoint,
+			module: x.module,
+			entryPoint: "vs",
 		},
 		fragment: {
-			module: this.module,
-			entryPoint: x.fragment_entryPoint,
+			module: x.module,
+			entryPoint: "fs",
 			targets: [{ format: this.presentation_format }],
 		},
 		primitive: {
-			// topology: "line-strip",
 			topology: x.topology,
 			cullMode: "back",
 		},
@@ -138,6 +144,36 @@ ViewWebGPU.prototype.add_new_step = function (x) {
 }
 
 
+const get_code = async (path_short) => {
+	const response = await fetch(`/slingshot/webgpu/${path_short}.wgsl`, { cache: "no-store" });
+	let code = await response.text();
+	const lines = code.split("\n");
+	const include_prefix = "// include file://./";
+	let final_lines = [];
+	for (const line of lines) {
+		if (line.trim().startsWith(include_prefix)) {
+			const include_name = line
+				.replace(include_prefix, "")
+				.replace(".wgsl", "")
+				.trim();
+			const include_code = await get_code(include_name);
+			final_lines.push(include_code);
+		} else {
+			final_lines.push(line);
+		}
+	}
+	return final_lines.join("\n");
+}
+
+
+ViewWebGPU.prototype.createShaderModule = async function (path_short) {
+	return this.device.createShaderModule({
+		label: "shaders",
+		code: await get_code(path_short),
+	})
+}
+
+
 ViewWebGPU.prototype.setup = async function (gravitle) {
 	this.resize();
 	this.steps = []
@@ -149,13 +185,6 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 		format: this.presentation_format,
 		alphaMode: "premultiplied",
 	});
-	const code = await (
-		await fetch(`/slingshot/webgpu/code.wgsl`, { cache: "no-store" })
-	).text();
-	this.module = this.device.createShaderModule({
-		label: "shaders",
-		code: code,
-	});
 	this.bind_group_entries = []
 	this.bind_group_layout_entries = []
 	this.setup_cells(gravitle, 0)
@@ -163,24 +192,21 @@ ViewWebGPU.prototype.setup = async function (gravitle) {
 	this.setup_positions(gravitle, 2)
 	this.setup_uniform(3)
 	this.setup_links(gravitle, 4)
+	this.setup_storage(gravitle, 5)
 	this.add_new_step({
-		label: "pipeline_1",
-		vertex_entryPoint: "vs_1",
-		fragment_entryPoint: "fs_1",
+		label: "pipeline_draw_positions",
 		topology: "triangle-list",
+		module: await this.createShaderModule("draw_positions"),
 	})
 	this.add_new_step({
-		label: "pipeline_0",
-		vertex_entryPoint: "vs_0",
-		fragment_entryPoint: "fs_0",
+		label: "pipeline_draw_cells",
 		topology: "triangle-list",
+		module: await this.createShaderModule("draw_cells"),
 	})
 	this.add_new_step({
-		label: "pipeline_2",
-		vertex_entryPoint: "vs_2",
-		fragment_entryPoint: "fs_2",
-		// topology: "line-list",
+		label: "pipeline_draw_electricity",
 		topology: "triangle-strip",
+		module: await this.createShaderModule("draw_electricity"),
 	})
 	this.renderPassDescriptor = {
 		label: "renderPass",
@@ -221,12 +247,32 @@ ViewWebGPU.prototype.update_uniforms = function (tick) {
 }
 
 
+ViewWebGPU.prototype.write_buffer = function ({
+	memory,
+	unit_size,
+	worlds,
+	struct,
+}) {
+	const pointer = struct
+	const counter = `${struct}_count`
+	const buffer = this[`buffer_${struct}`]
+	let countr = 0;
+	for (const world of worlds) {
+		let group_size = world[counter]() * unit_size
+		this.device.queue.writeBuffer(
+			buffer,
+			countr,
+			memory.buffer,
+			world[pointer](),
+			group_size,
+		);
+		countr += group_size;
+	}
+}
+
+
 ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 	const canvas_texture = this.context.getCurrentTexture();
-	this.update_uniforms(
-		this.tick || worlds[0].get_tick()
-	);
-	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
 	this.renderPassDescriptor.colorAttachments[0].view =
 		canvas_texture.createView();
 	if (
@@ -245,52 +291,40 @@ ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 	}
 	this.renderPassDescriptor.depthStencilAttachment.view =
 		this.depthTexture.createView();
-	let countr = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_cells,
-			countr,
-			memory.buffer,
-			world.cells(),
-			world.cells_count() * gravitle.Cell.size(),
-		);
-		countr += world.cells_count() * gravitle.Cell.size();
-	}
-	let countr_2 = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_materials,
-			countr_2,
-			memory.buffer,
-			world.materials(),
-			world.materials_count() * gravitle.Material.size(),
-		);
-		countr_2 += world.materials_count() * gravitle.Material.size();
-	}
-	let countr_3 = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_positions,
-			countr_3,
-			memory.buffer,
-			world.positions(),
-			world.positions_count() * gravitle.Point.size(),
-		);
-		countr_3 += world.positions_count() * gravitle.Point.size();
-	}
-
-	let countr_links = 0;
-	for (const world of worlds) {
-		this.device.queue.writeBuffer(
-			this.buffer_links,
-			countr_links,
-			memory.buffer,
-			world.links(), 
-			world.links_count() * gravitle.Link.size(), 
-		);
-		countr_links += world.links_count() * gravitle.Link.size();
-	}
-
+	this.update_uniforms(
+		this.tick || worlds[0].get_tick()
+	);
+	this.device.queue.writeBuffer(this.buffer_uniform, 0, this.uniformValues);
+	this.write_buffer({
+		memory: memory,
+		unit_size: gravitle.Cell.size(),
+		worlds: worlds,
+		struct: 'cells',
+	});
+	this.write_buffer({
+		memory: memory,
+		unit_size: gravitle.Material.size(),
+		worlds: worlds,
+		struct: 'materials',
+	});
+	this.write_buffer({
+		memory: memory,
+		unit_size: gravitle.Point.size(),
+		worlds: worlds,
+		struct: 'positions',
+	});
+	this.write_buffer({
+		memory: memory,
+		unit_size: gravitle.Link.size(),
+		worlds: worlds,
+		struct: 'links',
+	});
+	this.write_buffer({
+		memory: memory,
+		unit_size: gravitle.U32.size(),
+		worlds: worlds,
+		struct: 'storage',
+	});
 	this.device.queue.submit([
 		(() => {
 			const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
@@ -322,7 +356,6 @@ ViewWebGPU.prototype.render_2 = function (worlds, gravitle, memory) {
 				// total cell count
 				worlds.reduce((sum, world) => sum + world.cells_count(), 0),
 			);
-
 			pass.end();
 			return encoder.finish();
 		})(),
@@ -339,6 +372,3 @@ ViewWebGPU.prototype.resize = function () {
 
 
 export { ViewWebGPU };
-
-// TODO: draw links
-// links should be drawn using a segment like primitive, not triangles

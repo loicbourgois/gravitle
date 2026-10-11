@@ -607,6 +607,33 @@ export class StatJs {
 }
 if (Symbol.dispose) StatJs.prototype[Symbol.dispose] = StatJs.prototype.free;
 
+const U32Finalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_u32_free(ptr >>> 0, 1));
+
+export class U32 {
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        U32Finalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_u32_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.u32_size();
+        return ret >>> 0;
+    }
+}
+if (Symbol.dispose) U32.prototype[Symbol.dispose] = U32.prototype.free;
+
 const WorldFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_world_free(ptr >>> 0, 1));
@@ -700,6 +727,24 @@ export class World {
         wasm.__wbg_set_world_zones_count(this.__wbg_ptr, arg0);
     }
     /**
+     * @returns {string}
+     */
+    debug_storage() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.world_debug_storage(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    debug() {
+        wasm.world_debug(this.__wbg_ptr);
+    }
+    /**
      * @param {string} blueprint_str
      * @param {number} x
      * @param {number} y
@@ -719,6 +764,20 @@ export class World {
         const ptr1 = passStringToWasm0(definition, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len1 = WASM_VECTOR_LEN;
         wasm.world_add_material(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+    }
+    /**
+     * @returns {number}
+     */
+    storage_count() {
+        const ret = wasm.world_storage_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    storage() {
+        const ret = wasm.world_storage(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {number}
@@ -927,6 +986,9 @@ export class World {
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
     }
+    tick_storage() {
+        wasm.world_tick_storage(this.__wbg_ptr);
+    }
     tick() {
         wasm.world_tick(this.__wbg_ptr);
     }
@@ -1016,13 +1078,6 @@ export class World {
         wasm.world_save_positions(this.__wbg_ptr, idx);
     }
     /**
-     * @returns {World}
-     */
-    static new() {
-        const ret = wasm.world_new();
-        return World.__wrap(ret);
-    }
-    /**
      * @returns {number}
      */
     get_tick() {
@@ -1039,6 +1094,21 @@ export class World {
         const ptr0 = passStringToWasm0(func, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         wasm.world_add_event(this.__wbg_ptr, tick, ptr0, len0, cell_id, value);
+    }
+    /**
+     * @returns {World}
+     */
+    static new() {
+        const ret = wasm.world_new();
+        return World.__wrap(ret);
+    }
+    /**
+     * @param {string} key
+     */
+    add_storage(key) {
+        const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_storage(this.__wbg_ptr, ptr0, len0);
     }
 }
 if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;
@@ -1072,27 +1142,27 @@ export class WorldConfig {
      * @returns {number}
      */
     get rdp() {
-        const ret = wasm.__wbg_get_statjs_avg(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_worldconfig_rdp(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} arg0
      */
     set rdp(arg0) {
-        wasm.__wbg_set_statjs_avg(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_worldconfig_rdp(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
      */
     get rdv() {
-        const ret = wasm.__wbg_get_statjs_p99(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_worldconfig_rdv(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} arg0
      */
     set rdv(arg0) {
-        wasm.__wbg_set_statjs_p99(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_worldconfig_rdv(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}

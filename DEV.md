@@ -11,6 +11,8 @@ $HOME/github.com/loicbourgois/gravitle/all.sh
 
 ## Elec
 ```sh
+vs $HOME/github.com/loicbourgois/gravitle/front/electricity/setup.js
+vs $HOME/github.com/loicbourgois/gravitle/front/slingshot/engine/src/world.rs
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 http://localhost:82/electricity/
 http://localhost:82/tree/

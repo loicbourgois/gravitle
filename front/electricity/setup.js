@@ -12,6 +12,7 @@ const setup = async (
 		"/slingshot/material/lfp_battery.json",
 		"/slingshot/material/solar_panel.json",
 		"/slingshot/material/ion_thruster.json",
+		"/slingshot/material/solar_panel_with_lfp_battery.json",
 	]) {
 		world.add_material(url, await fetch_as_json_string(url));
 	}
@@ -35,6 +36,10 @@ const setup = async (
 		"/slingshot/material/ion_thruster.json",
 		0.044-0.03, 0.01, 0.01
 	)
+	world.add_cell(
+		"/slingshot/material/solar_panel_with_lfp_battery.json",
+		0.0-0.03, -0.01, 0.01
+	)
 	world.add_link(
 		0, 1
 	)
@@ -47,18 +52,10 @@ const setup = async (
 	world.add_link(
 		3, 4
 	)
-	// TODO: draw link
-	// world.add_container(
-	// 	cell_id=0,
-	// 	content=wasm_engine.Content.Fuel,
-	// )
-	// world.add_container(
-	// 	cell_id=0,
-	// 	content=wasm_engine.Content.Fuel,
-	// )
-	// world.con
 	world.set_cell_fixed(0);
 	world.set_cell_fixed(4);
+	world.add_storage("electricity")
+	world.debug();
 };
 export {
 	setup,
