@@ -19,5 +19,7 @@ cargo clippy --release \
     -A clippy::struct_field_names \
     -A clippy::useless_format \
     -A dead_code \
-    -A clippy::format_push_string 
+    -A clippy::format_push_string  \
+    -A clippy::ref_as_ptr \
+    -A clippy::collapsible_match
 echo "✅ lint_gravithrust"

@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-$HOME/github.com/loicbourgois/gravitle/lint.sh
+$HOME/github.com/loicbourgois/gravitle/lint_all.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
 $HOME/github.com/loicbourgois/gravitle/test.sh
 $HOME/github.com/loicbourgois/gravitle/bench.sh

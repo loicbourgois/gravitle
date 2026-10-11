@@ -296,13 +296,6 @@ export class Cell {
         wasm.__wbg_set_cell_padding(this.__wbg_ptr, arg0);
     }
     /**
-     * @returns {number}
-     */
-    static size() {
-        const ret = wasm.cell_size();
-        return ret >>> 0;
-    }
-    /**
      * @param {number} material_idx
      * @param {number} x
      * @param {number} y
@@ -312,6 +305,13 @@ export class Cell {
     static new(material_idx, x, y, diameter) {
         const ret = wasm.cell_new(material_idx, x, y, diameter);
         return Cell.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.cell_size();
+        return ret >>> 0;
     }
 }
 if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
@@ -517,6 +517,15 @@ export class Point {
         wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
     }
     /**
+     * @param {number} x
+     * @param {number} y
+     * @returns {Point}
+     */
+    static new(x, y) {
+        const ret = wasm.point_new(x, y);
+        return Point.__wrap(ret);
+    }
+    /**
      * @returns {number}
      */
     static size() {
@@ -539,15 +548,6 @@ export class Point {
      */
     normalize() {
         const ret = wasm.point_normalize(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {number} x
-     * @param {number} y
-     * @returns {Point}
-     */
-    static new(x, y) {
-        const ret = wasm.point_new(x, y);
         return Point.__wrap(ret);
     }
 }
@@ -727,32 +727,72 @@ export class World {
         wasm.__wbg_set_world_zones_count(this.__wbg_ptr, arg0);
     }
     /**
-     * @returns {string}
+     * @param {string} material_url
+     * @param {number} idx_1
+     * @param {number} idx_2
+     * @param {number} diameter
+     * @returns {number}
      */
-    debug_storage() {
-        let deferred1_0;
-        let deferred1_1;
-        try {
-            const ret = wasm.world_debug_storage(this.__wbg_ptr);
-            deferred1_0 = ret[0];
-            deferred1_1 = ret[1];
-            return getStringFromWasm0(ret[0], ret[1]);
-        } finally {
-            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-        }
+    add_cell_2(material_url, idx_1, idx_2, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell_2(this.__wbg_ptr, ptr0, len0, idx_1, idx_2, diameter);
+        return ret >>> 0;
     }
-    debug() {
-        wasm.world_debug(this.__wbg_ptr);
+    tick_links() {
+        wasm.world_tick_links(this.__wbg_ptr);
     }
     /**
-     * @param {string} blueprint_str
-     * @param {number} x
-     * @param {number} y
+     * @param {string} material_url
+     * @param {number} idx
+     * @param {number} diameter
+     * @returns {number}
      */
-    add_from_blueprint(blueprint_str, x, y) {
-        const ptr0 = passStringToWasm0(blueprint_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    add_cell_up(material_url, idx, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        wasm.world_add_from_blueprint(this.__wbg_ptr, ptr0, len0, x, y);
+        const ret = wasm.world_add_cell_up(this.__wbg_ptr, ptr0, len0, idx, diameter);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} key
+     */
+    add_storage(key) {
+        const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_storage(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * @returns {number}
+     */
+    cells_count() {
+        const ret = wasm.world_cells_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_count() {
+        const ret = wasm.world_links_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} value
+     */
+    set_gravity(value) {
+        wasm.world_set_gravity(this.__wbg_ptr, value);
+    }
+    tick_events() {
+        wasm.world_tick_events(this.__wbg_ptr);
+    }
+    /**
+     * @param {string} id
+     * @param {number} value
+     */
+    add_duration(id, value) {
+        const ptr0 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_duration(this.__wbg_ptr, ptr0, len0, value);
     }
     /**
      * @param {string} url
@@ -766,111 +806,13 @@ export class World {
         wasm.world_add_material(this.__wbg_ptr, ptr0, len0, ptr1, len1);
     }
     /**
-     * @returns {number}
+     * @param {number} value
      */
-    storage_count() {
-        const ret = wasm.world_storage_count(this.__wbg_ptr);
-        return ret >>> 0;
+    set_zonesize(value) {
+        wasm.world_set_zonesize(this.__wbg_ptr, value);
     }
-    /**
-     * @returns {number}
-     */
-    storage() {
-        const ret = wasm.world_storage(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    materials_count() {
-        const ret = wasm.world_materials_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    materials() {
-        const ret = wasm.world_materials(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    positions_count() {
-        const ret = wasm.world_positions_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    positions() {
-        const ret = wasm.world_positions(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    links_count() {
-        const ret = wasm.world_links_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    links() {
-        const ret = wasm.world_links(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    cells_count() {
-        const ret = wasm.world_cells_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    cells() {
-        const ret = wasm.world_cells(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {string} material_url
-     * @param {number} idx_1
-     * @param {number} idx_2
-     * @param {number} diameter
-     * @returns {number}
-     */
-    add_cell_2(material_url, idx_1, idx_2, diameter) {
-        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.world_add_cell_2(this.__wbg_ptr, ptr0, len0, idx_1, idx_2, diameter);
-        return ret >>> 0;
-    }
-    /**
-     * @param {string} material_url
-     * @param {number} idx
-     * @param {number} diameter
-     * @returns {number}
-     */
-    add_cell_left(material_url, idx, diameter) {
-        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.world_add_cell_left(this.__wbg_ptr, ptr0, len0, idx, diameter);
-        return ret >>> 0;
-    }
-    /**
-     * @param {string} material_url
-     * @param {number} idx
-     * @param {number} diameter
-     * @returns {number}
-     */
-    add_cell_right(material_url, idx, diameter) {
-        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.world_add_cell_right(this.__wbg_ptr, ptr0, len0, idx, diameter);
-        return ret >>> 0;
+    tick_storage() {
+        wasm.world_tick_storage(this.__wbg_ptr);
     }
     /**
      * @param {string} material_url
@@ -890,11 +832,201 @@ export class World {
      * @param {number} diameter
      * @returns {number}
      */
-    add_cell_up(material_url, idx, diameter) {
+    add_cell_left(material_url, idx, diameter) {
         const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.world_add_cell_up(this.__wbg_ptr, ptr0, len0, idx, diameter);
+        const ret = wasm.world_add_cell_left(this.__wbg_ptr, ptr0, len0, idx, diameter);
         return ret >>> 0;
+    }
+    /**
+     * @returns {string}
+     */
+    debug_storage() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.world_debug_storage(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @param {number} idx
+     * @returns {Point[]}
+     */
+    get_positions(idx) {
+        const ret = wasm.world_get_positions(this.__wbg_ptr, idx);
+        var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
+     * @param {number} value
+     */
+    set_gravity_2(value) {
+        wasm.world_set_gravity_2(this.__wbg_ptr, value);
+    }
+    /**
+     * @returns {number}
+     */
+    storage_count() {
+        const ret = wasm.world_storage_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} material_url
+     * @param {number} idx
+     * @param {number} diameter
+     * @returns {number}
+     */
+    add_cell_right(material_url, idx, diameter) {
+        const ptr0 = passStringToWasm0(material_url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_add_cell_right(this.__wbg_ptr, ptr0, len0, idx, diameter);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} idx
+     */
+    save_positions(idx) {
+        wasm.world_save_positions(this.__wbg_ptr, idx);
+    }
+    /**
+     * @param {number} idx
+     */
+    set_cell_fixed(idx) {
+        wasm.world_set_cell_fixed(this.__wbg_ptr, idx);
+    }
+    /**
+     * @returns {number}
+     */
+    materials_count() {
+        const ret = wasm.world_materials_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    positions_count() {
+        const ret = wasm.world_positions_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {boolean} value
+     */
+    set_c2c_gravity(value) {
+        wasm.world_set_c2c_gravity(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {boolean} value
+     */
+    set_c2c_colision(value) {
+        wasm.world_set_c2c_colision(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} diameter
+     */
+    set_cell_diameter(idx, diameter) {
+        wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
+    }
+    /**
+     * @param {string} blueprint_str
+     * @param {number} x
+     * @param {number} y
+     */
+    add_from_blueprint(blueprint_str, x, y) {
+        const ptr0 = passStringToWasm0(blueprint_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.world_add_from_blueprint(this.__wbg_ptr, ptr0, len0, x, y);
+    }
+    tick_save_positions() {
+        wasm.world_tick_save_positions(this.__wbg_ptr);
+    }
+    /**
+     * @param {number} value
+     */
+    set_link_strength_dp(value) {
+        wasm.world_set_link_strength_dp(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_link_strength_dv(value) {
+        wasm.world_set_link_strength_dv(this.__wbg_ptr, value);
+    }
+    /**
+     * @returns {World}
+     */
+    static new() {
+        const ret = wasm.world_new();
+        return World.__wrap(ret);
+    }
+    tick() {
+        wasm.world_tick(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    cells() {
+        const ret = wasm.world_cells(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    debug() {
+        wasm.world_debug(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    links() {
+        const ret = wasm.world_links(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} n
+     */
+    tick_n(n) {
+        wasm.world_tick_n(this.__wbg_ptr, n);
+    }
+    /**
+     * @param {number} value
+     */
+    set_rdp(value) {
+        wasm.world_set_rdp(this.__wbg_ptr, value);
+    }
+    /**
+     * @param {number} value
+     */
+    set_rdv(value) {
+        wasm.world_set_rdv(this.__wbg_ptr, value);
+    }
+    /**
+     * @returns {number}
+     */
+    storage() {
+        const ret = wasm.world_storage(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    tick_01() {
+        wasm.world_tick_01(this.__wbg_ptr);
+    }
+    tick_02() {
+        wasm.world_tick_02(this.__wbg_ptr);
+    }
+    tick_03() {
+        wasm.world_tick_03(this.__wbg_ptr);
+    }
+    tick_04() {
+        wasm.world_tick_04(this.__wbg_ptr);
+    }
+    tick_05() {
+        wasm.world_tick_05(this.__wbg_ptr);
+    }
+    tick_06() {
+        wasm.world_tick_06(this.__wbg_ptr);
     }
     /**
      * @param {string} material_url
@@ -910,45 +1042,11 @@ export class World {
         return ret >>> 0;
     }
     /**
-     * @param {number} idx
+     * @param {number} a
+     * @param {number} b
      */
-    set_cell_fixed(idx) {
-        wasm.world_set_cell_fixed(this.__wbg_ptr, idx);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} diameter
-     */
-    set_cell_diameter(idx, diameter) {
-        wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
-    }
-    tick_06() {
-        wasm.world_tick_06(this.__wbg_ptr);
-    }
-    tick_05() {
-        wasm.world_tick_05(this.__wbg_ptr);
-    }
-    tick_04() {
-        wasm.world_tick_04(this.__wbg_ptr);
-    }
-    tick_03() {
-        wasm.world_tick_03(this.__wbg_ptr);
-    }
-    tick_02() {
-        wasm.world_tick_02(this.__wbg_ptr);
-    }
-    tick_01() {
-        wasm.world_tick_01(this.__wbg_ptr);
-    }
-    /**
-     * @param {string} id
-     * @returns {StatJs}
-     */
-    get_stats(id) {
-        const ptr0 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.world_get_stats(this.__wbg_ptr, ptr0, len0);
-        return StatJs.__wrap(ret);
+    add_link(a, b) {
+        wasm.world_add_link(this.__wbg_ptr, a, b);
     }
     /**
      * @param {string} id
@@ -959,74 +1057,11 @@ export class World {
         wasm.world_add_stat(this.__wbg_ptr, ptr0, len0);
     }
     /**
-     * @param {string} id
-     * @param {number} value
+     * @returns {number}
      */
-    add_duration(id, value) {
-        const ptr0 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.world_add_duration(this.__wbg_ptr, ptr0, len0, value);
-    }
-    tick_events() {
-        wasm.world_tick_events(this.__wbg_ptr);
-    }
-    tick_links() {
-        wasm.world_tick_links(this.__wbg_ptr);
-    }
-    tick_save_positions() {
-        wasm.world_tick_save_positions(this.__wbg_ptr);
-    }
-    /**
-     * @param {number} idx
-     * @returns {Point[]}
-     */
-    get_positions(idx) {
-        const ret = wasm.world_get_positions(this.__wbg_ptr, idx);
-        var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
-        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v1;
-    }
-    tick_storage() {
-        wasm.world_tick_storage(this.__wbg_ptr);
-    }
-    tick() {
-        wasm.world_tick(this.__wbg_ptr);
-    }
-    /**
-     * @param {number} n
-     */
-    tick_n(n) {
-        wasm.world_tick_n(this.__wbg_ptr, n);
-    }
-    /**
-     * @param {number} value
-     */
-    set_link_strength_dv(value) {
-        wasm.world_set_link_strength_dv(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_link_strength_dp(value) {
-        wasm.world_set_link_strength_dp(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {boolean} value
-     */
-    set_c2c_colision(value) {
-        wasm.world_set_c2c_colision(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {boolean} value
-     */
-    set_c2c_gravity(value) {
-        wasm.world_set_c2c_gravity(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_crdv(value) {
-        wasm.world_set_crdv(this.__wbg_ptr, value);
+    get_tick() {
+        const ret = wasm.world_get_tick(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @param {number} value
@@ -1037,52 +1072,8 @@ export class World {
     /**
      * @param {number} value
      */
-    set_rdv(value) {
-        wasm.world_set_rdv(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_rdp(value) {
-        wasm.world_set_rdp(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_gravity(value) {
-        wasm.world_set_gravity(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_gravity_2(value) {
-        wasm.world_set_gravity_2(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} value
-     */
-    set_zonesize(value) {
-        wasm.world_set_zonesize(this.__wbg_ptr, value);
-    }
-    /**
-     * @param {number} a
-     * @param {number} b
-     */
-    add_link(a, b) {
-        wasm.world_add_link(this.__wbg_ptr, a, b);
-    }
-    /**
-     * @param {number} idx
-     */
-    save_positions(idx) {
-        wasm.world_save_positions(this.__wbg_ptr, idx);
-    }
-    /**
-     * @returns {number}
-     */
-    get_tick() {
-        const ret = wasm.world_get_tick(this.__wbg_ptr);
-        return ret >>> 0;
+    set_crdv(value) {
+        wasm.world_set_crdv(this.__wbg_ptr, value);
     }
     /**
      * @param {number} tick
@@ -1096,19 +1087,28 @@ export class World {
         wasm.world_add_event(this.__wbg_ptr, tick, ptr0, len0, cell_id, value);
     }
     /**
-     * @returns {World}
+     * @param {string} id
+     * @returns {StatJs}
      */
-    static new() {
-        const ret = wasm.world_new();
-        return World.__wrap(ret);
+    get_stats(id) {
+        const ptr0 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.world_get_stats(this.__wbg_ptr, ptr0, len0);
+        return StatJs.__wrap(ret);
     }
     /**
-     * @param {string} key
+     * @returns {number}
      */
-    add_storage(key) {
-        const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.world_add_storage(this.__wbg_ptr, ptr0, len0);
+    materials() {
+        const ret = wasm.world_materials(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    positions() {
+        const ret = wasm.world_positions(this.__wbg_ptr);
+        return ret >>> 0;
     }
 }
 if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;

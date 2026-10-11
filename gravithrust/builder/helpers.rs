@@ -48,7 +48,7 @@ pub fn kind_generated_js(kinds: &[&String]) -> Result<(), std::io::Error> {
             "__KINDS__",
             &kinds
                 .iter()
-                .map(|k| format!("{{label:'{k}'}},",))
+                .map(|k| format!("{{label:'{k}'}},"))
                 .collect::<Vec<_>>()
                 .join("\n  "),
         )

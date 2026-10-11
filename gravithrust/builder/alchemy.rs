@@ -66,7 +66,7 @@ pub fn alchemy_transfer(in_: &str, qks_by_k: &mut HashMap<String, BTreeSet<Strin
             qks_by_k.entry(k2.clone()).or_default().insert(qk.clone());
             [
                 format!("// {k}"),
-                format!("(Kind::{k1}, Kind::{k2}, QuantityKind::{qk}) => {{",),
+                format!("(Kind::{k1}, Kind::{k2}, QuantityKind::{qk}) => {{"),
                 format!("  {function_name}(p1, p2, pi1, pi2, QuantityKind::{qk});"),
                 format!("}}"),
             ]

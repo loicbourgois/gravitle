@@ -1,22 +1,43 @@
 # Gravitle
 
 
-## All
+## Development
 ```sh
-ls $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
-cat $HOME/github.com/loicbourgois/gravitle/all.sh | grep "\.sh" | wc -l
-$HOME/github.com/loicbourgois/gravitle/all.sh
+$HOME/github.com/loicbourgois/gravitle/generate.sh
+$HOME/github.com/loicbourgois/gravitle/build_chrono.sh
+$HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
+http://localhost:82
+http://localhost:82/?render=webgpu
+http://localhost:82/electricity/
+http://localhost:82/tree/
+http://localhost:82/slingshot/
+http://localhost:82/random/
+http://localhost:82/mining/
 ```
 
 
-## Elec
+## Release
+1. Run `$HOME/github.com/loicbourgois/gravitle/release.sh`
+2. Push
+3. Merge the PR via https://github.com/loicbourgois/gravitle/pulls
+4. Wait for action to complete at https://github.com/loicbourgois/gravitle/actions 
+5. Validate at https://gravitle.com
+
+
+## Misc
+```sh
+ls $HOME/github.com/loicbourgois/gravitle/*.sh | wc -l
+cat $HOME/github.com/loicbourgois/gravitle/release.sh | grep "\.sh" | wc -l
+```
+
+
+## Electricity
 ```sh
 vs $HOME/github.com/loicbourgois/gravitle/front/electricity/setup.js
 vs $HOME/github.com/loicbourgois/gravitle/front/slingshot/engine/src/world.rs
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 http://localhost:82/electricity/
-http://localhost:82/tree/
-http://localhost:82/slingshot/
 ```
 
 
