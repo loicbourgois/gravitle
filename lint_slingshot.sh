@@ -15,5 +15,9 @@ cargo clippy --release \
     -A clippy::missing_panics_doc \
     -A clippy::must_use_candidate \
     -A clippy::similar_names \
-    -A clippy::cast_lossless
+    -A clippy::cast_lossless \
+    -A clippy::cast_sign_loss \
+    -A clippy::same_item_push \
+    -A clippy::unnecessary_cast \
+    -A clippy::single_match
 echo "✅ lint_slingshot"

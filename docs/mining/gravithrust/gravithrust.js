@@ -50,12 +50,6 @@ function handleError(f, args) {
     }
 }
 
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
-}
-
 let WASM_VECTOR_LEN = 0;
 
 const cachedTextEncoder = new TextEncoder();
@@ -108,6 +102,12 @@ function passStringToWasm0(arg, malloc, realloc) {
 
     WASM_VECTOR_LEN = offset;
     return ptr;
+}
+
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
 }
 
 function isLikeNone(x) {
@@ -371,6 +371,271 @@ export class Gravithrust {
         wasm.__wbg_gravithrust_free(ptr, 0);
     }
     /**
+     * @param {number} sid
+     * @param {number} pid
+     */
+    set_anchor(sid, pid) {
+        wasm.gravithrust_set_anchor(this.__wbg_ptr, sid, pid);
+    }
+    /**
+     * @param {number} sid
+     * @param {number} pid
+     */
+    set_target(sid, pid) {
+        wasm.gravithrust_set_target(this.__wbg_ptr, sid, pid);
+    }
+    /**
+     * @returns {number}
+     */
+    ships_size() {
+        const ret = wasm.gravithrust_ships_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_count() {
+        const ret = wasm.gravithrust_links_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    ships_count() {
+        const ret = wasm.gravithrust_ships_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {string} kind
+     * @returns {number}
+     */
+    add_particle(x, y, kind) {
+        const ptr0 = passStringToWasm0(kind, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.gravithrust_add_particle(this.__wbg_ptr, x, y, ptr0, len0);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    link_js_size() {
+        const ret = wasm.gravithrust_link_js_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} yml_blueprint
+     * @param {number} x
+     * @param {number} y
+     * @returns {number}
+     */
+    add_structure(yml_blueprint, x, y) {
+        const ptr0 = passStringToWasm0(yml_blueprint, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.gravithrust_add_structure(this.__wbg_ptr, ptr0, len0, x, y);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    link_js_size_() {
+        const ret = wasm.gravithrust_link_js_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_js_size() {
+        const ret = wasm.gravithrust_links_js_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    particle_size() {
+        const ret = wasm.gravithrust_particle_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    particles_size() {
+        const ret = wasm.gravithrust_particles_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} pid
+     */
+    print_particle(pid) {
+        wasm.gravithrust_print_particle(this.__wbg_ptr, pid);
+    }
+    /**
+     * @returns {number}
+     */
+    particles_count() {
+        const ret = wasm.gravithrust_particles_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {Blueprint} blueprint
+     * @param {Vector} position
+     * @returns {number}
+     */
+    add_ship_internal(blueprint, position) {
+        _assertClass(blueprint, Blueprint);
+        _assertClass(position, Vector);
+        var ptr0 = position.__destroy_into_raw();
+        const ret = wasm.gravithrust_add_ship_internal(this.__wbg_ptr, blueprint.__wbg_ptr, ptr0);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} pid
+     * @returns {number}
+     */
+    get_particle_kind(pid) {
+        const ret = wasm.gravithrust_get_particle_kind(this.__wbg_ptr, pid);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    static ship_size_internal() {
+        const ret = wasm.gravithrust_ship_size_internal();
+        return ret >>> 0;
+    }
+    /**
+     * @param {Blueprint} blueprint
+     * @param {Vector} position
+     * @param {number | null} [sid]
+     * @returns {Uint32Array}
+     */
+    add_structure_internal(blueprint, position, sid) {
+        _assertClass(blueprint, Blueprint);
+        _assertClass(position, Vector);
+        var ptr0 = position.__destroy_into_raw();
+        const ret = wasm.gravithrust_add_structure_internal(this.__wbg_ptr, blueprint.__wbg_ptr, ptr0, isLikeNone(sid) ? 0x100000001 : (sid) >>> 0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @returns {number}
+     */
+    static particle_size_internal() {
+        const ret = wasm.gravithrust_particle_size_internal();
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    average_durations_count() {
+        const ret = wasm.gravithrust_average_durations_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    average_durations_pointer() {
+        const ret = wasm.gravithrust_average_durations_pointer(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    average_durations_size_full() {
+        const ret = wasm.gravithrust_average_durations_size_full(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    average_durations_size_unit() {
+        const ret = wasm.gravithrust_average_durations_size_unit(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} diameter
+     * @param {number} sub_steps
+     * @param {number} max_rotation_speed
+     * @param {number} grid_side
+     * @param {number} max_speed_at_target
+     * @param {number} forward_max_speed
+     * @param {number} forward_max_angle
+     * @param {number} slow_down_max_angle
+     * @param {number} slow_down_max_speed_to_target_ratio
+     * @param {number} booster_acceleration
+     * @returns {Gravithrust}
+     */
+    static new(diameter, sub_steps, max_rotation_speed, grid_side, max_speed_at_target, forward_max_speed, forward_max_angle, slow_down_max_angle, slow_down_max_speed_to_target_ratio, booster_acceleration) {
+        const ret = wasm.gravithrust_new(diameter, sub_steps, max_rotation_speed, grid_side, max_speed_at_target, forward_max_speed, forward_max_angle, slow_down_max_angle, slow_down_max_speed_to_target_ratio, booster_acceleration);
+        return Gravithrust.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    ships() {
+        const ret = wasm.gravithrust_ships(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {string}
+     */
+    ticks() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.gravithrust_ticks(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @param {number} sid
+     * @param {string} job_json
+     */
+    set_job(sid, job_json) {
+        const ptr0 = passStringToWasm0(job_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.gravithrust_set_job(this.__wbg_ptr, sid, ptr0, len0);
+    }
+    /**
+     * @param {string} yml_blueprint
+     * @param {number} x
+     * @param {number} y
+     * @returns {number}
+     */
+    add_ship(yml_blueprint, x, y) {
+        const ptr0 = passStringToWasm0(yml_blueprint, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.gravithrust_add_ship(this.__wbg_ptr, ptr0, len0, x, y);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_js() {
+        const ret = wasm.gravithrust_links_js(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    particles() {
+        const ret = wasm.gravithrust_particles(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    ship_size() {
+        const ret = wasm.gravithrust_ship_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @returns {number}
      */
     get diameter() {
@@ -527,271 +792,6 @@ export class Gravithrust {
         _assertClass(arg0, Duration);
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_gravithrust_avg_duration(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @param {number} diameter
-     * @param {number} sub_steps
-     * @param {number} max_rotation_speed
-     * @param {number} grid_side
-     * @param {number} max_speed_at_target
-     * @param {number} forward_max_speed
-     * @param {number} forward_max_angle
-     * @param {number} slow_down_max_angle
-     * @param {number} slow_down_max_speed_to_target_ratio
-     * @param {number} booster_acceleration
-     * @returns {Gravithrust}
-     */
-    static new(diameter, sub_steps, max_rotation_speed, grid_side, max_speed_at_target, forward_max_speed, forward_max_angle, slow_down_max_angle, slow_down_max_speed_to_target_ratio, booster_acceleration) {
-        const ret = wasm.gravithrust_new(diameter, sub_steps, max_rotation_speed, grid_side, max_speed_at_target, forward_max_speed, forward_max_angle, slow_down_max_angle, slow_down_max_speed_to_target_ratio, booster_acceleration);
-        return Gravithrust.__wrap(ret);
-    }
-    /**
-     * @param {number} pid
-     */
-    print_particle(pid) {
-        wasm.gravithrust_print_particle(this.__wbg_ptr, pid);
-    }
-    /**
-     * @param {number} pid
-     * @returns {number}
-     */
-    get_particle_kind(pid) {
-        const ret = wasm.gravithrust_get_particle_kind(this.__wbg_ptr, pid);
-        return ret >>> 0;
-    }
-    /**
-     * @param {string} yml_blueprint
-     * @param {number} x
-     * @param {number} y
-     * @returns {number}
-     */
-    add_ship(yml_blueprint, x, y) {
-        const ptr0 = passStringToWasm0(yml_blueprint, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.gravithrust_add_ship(this.__wbg_ptr, ptr0, len0, x, y);
-        return ret >>> 0;
-    }
-    /**
-     * @param {string} yml_blueprint
-     * @param {number} x
-     * @param {number} y
-     * @returns {number}
-     */
-    add_structure(yml_blueprint, x, y) {
-        const ptr0 = passStringToWasm0(yml_blueprint, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.gravithrust_add_structure(this.__wbg_ptr, ptr0, len0, x, y);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} x
-     * @param {number} y
-     * @param {string} kind
-     * @returns {number}
-     */
-    add_particle(x, y, kind) {
-        const ptr0 = passStringToWasm0(kind, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.gravithrust_add_particle(this.__wbg_ptr, x, y, ptr0, len0);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} sid
-     * @param {number} pid
-     */
-    set_anchor(sid, pid) {
-        wasm.gravithrust_set_anchor(this.__wbg_ptr, sid, pid);
-    }
-    /**
-     * @param {number} sid
-     * @param {number} pid
-     */
-    set_target(sid, pid) {
-        wasm.gravithrust_set_target(this.__wbg_ptr, sid, pid);
-    }
-    /**
-     * @param {Blueprint} blueprint
-     * @param {Vector} position
-     * @param {number | null} [sid]
-     * @returns {Uint32Array}
-     */
-    add_structure_internal(blueprint, position, sid) {
-        _assertClass(blueprint, Blueprint);
-        _assertClass(position, Vector);
-        var ptr0 = position.__destroy_into_raw();
-        const ret = wasm.gravithrust_add_structure_internal(this.__wbg_ptr, blueprint.__wbg_ptr, ptr0, isLikeNone(sid) ? 0x100000001 : (sid) >>> 0);
-        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v2;
-    }
-    /**
-     * @param {Blueprint} blueprint
-     * @param {Vector} position
-     * @returns {number}
-     */
-    add_ship_internal(blueprint, position) {
-        _assertClass(blueprint, Blueprint);
-        _assertClass(position, Vector);
-        var ptr0 = position.__destroy_into_raw();
-        const ret = wasm.gravithrust_add_ship_internal(this.__wbg_ptr, blueprint.__wbg_ptr, ptr0);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    particles_size() {
-        const ret = wasm.gravithrust_particles_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    particle_size() {
-        const ret = wasm.gravithrust_particle_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    static particle_size_internal() {
-        const ret = wasm.gravithrust_particle_size_internal();
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    particles_count() {
-        const ret = wasm.gravithrust_particles_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    particles() {
-        const ret = wasm.gravithrust_particles(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    ships_size() {
-        const ret = wasm.gravithrust_ships_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    ship_size() {
-        const ret = wasm.gravithrust_ship_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    static ship_size_internal() {
-        const ret = wasm.gravithrust_ship_size_internal();
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    ships_count() {
-        const ret = wasm.gravithrust_ships_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    ships() {
-        const ret = wasm.gravithrust_ships(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    link_js_size() {
-        const ret = wasm.gravithrust_link_js_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    link_js_size_() {
-        const ret = wasm.gravithrust_link_js_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    links_js() {
-        const ret = wasm.gravithrust_links_js(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    links_count() {
-        const ret = wasm.gravithrust_links_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    links_js_size() {
-        const ret = wasm.gravithrust_links_js_size(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    average_durations_pointer() {
-        const ret = wasm.gravithrust_average_durations_pointer(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    average_durations_size_unit() {
-        const ret = wasm.gravithrust_average_durations_size_unit(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    average_durations_size_full() {
-        const ret = wasm.gravithrust_average_durations_size_full(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {number}
-     */
-    average_durations_count() {
-        const ret = wasm.gravithrust_average_durations_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @returns {string}
-     */
-    ticks() {
-        let deferred1_0;
-        let deferred1_1;
-        try {
-            const ret = wasm.gravithrust_ticks(this.__wbg_ptr);
-            deferred1_0 = ret[0];
-            deferred1_1 = ret[1];
-            return getStringFromWasm0(ret[0], ret[1]);
-        } finally {
-            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-        }
-    }
-    /**
-     * @param {number} sid
-     * @param {string} job_json
-     */
-    set_job(sid, job_json) {
-        const ptr0 = passStringToWasm0(job_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.gravithrust_set_job(this.__wbg_ptr, sid, ptr0, len0);
     }
 }
 if (Symbol.dispose) Gravithrust.prototype[Symbol.dispose] = Gravithrust.prototype.free;

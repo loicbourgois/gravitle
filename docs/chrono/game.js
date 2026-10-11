@@ -1,4 +1,4 @@
-import { cyrb128, random_seed } from "./random.js";
+import { cyrb128, random_seed, sfc32 } from "./random.js";
 import { json_to_short, short_to_json } from "./misc.js";
 import { game_setup } from "./game_setup.js";
 import { Audio } from "./sound.js";
@@ -27,6 +27,18 @@ function Game({
 	this.ghosts = [];
 	this.audio = null;
 	this.seed = cyrb128(seed_input);
+	console.log(`seed_input: ${seed_input}`);
+	console.log(`seed: ${this.seed}`);
+	let sfc32_ = sfc32(this.seed[0], this.seed[1], this.seed[2], this.seed[3]);
+	let r1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[parseInt(sfc32_() * 26 * 100) % 26];
+	let r2 = "0123456789"[parseInt(sfc32_() * 10 * 100) % 10];
+	let r3 = "0123456789"[parseInt(sfc32_() * 10 * 100) % 10];
+	let r4 = "0123456789"[parseInt(sfc32_() * 10 * 100) % 10];
+	console.log(r1, r2, r3, r4);
+	try {
+		document.getElementById("notice_text_2_inner_2").innerHTML =
+			`Sector ${r1}${r2}${r3}-${r4} needs your help.`;
+	} catch {}
 	this.seed_input = seed_input;
 	this.last_frame = null;
 	this.tick_starts = [];
@@ -73,6 +85,10 @@ function Game({
 			}
 			this.started = true;
 			document.getElementById("notice_text").classList.add("hide");
+			try {
+				document.getElementById("notice_text_2").classList.add("hide");
+			} catch {}
+			document.getElementById("overlay").classList.add("light");
 		}
 		if (e.key == "e" && !this.trying_again) {
 			this.trying_again = true;

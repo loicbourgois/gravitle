@@ -14,17 +14,6 @@ pub struct Cell {
     pub fixed: u32,
     pub collision_count: f32,
     pub padding: u32,
-    // // direction in which the cell points
-    // // away from neighbours (tbc)
-    // pub direction: Point,
-    // pub link_response: Point,
-    // pub collision_response: Point,
-    // pub collision_response_count: u32,
-    // pub activated: u32,
-    // pub activated_previous: u32,
-    // pub user_kind: UserKind,
-    // pub idx: u32,
-    // pub np: Point,// new position
 }
 #[wasm_bindgen]
 impl Cell {

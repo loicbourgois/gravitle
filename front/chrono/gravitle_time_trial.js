@@ -133,16 +133,15 @@ function passArray32ToWasm0(arg, malloc) {
 	return ptr;
 }
 
+export function setup() {
+	wasm.setup();
+}
+
 function _assertClass(instance, klass) {
 	if (!(instance instanceof klass)) {
 		throw new Error(`expected instance of ${klass.name}`);
 	}
 }
-
-export function setup() {
-	wasm.setup();
-}
-
 /**
  * @param {Point} a
  * @param {Point} b
@@ -443,13 +442,6 @@ export class Cell {
 		wasm.cell_set_position(this.__wbg_ptr, x, y);
 	}
 	/**
-	 * @returns {number}
-	 */
-	static size() {
-		const ret = wasm.cell_size();
-		return ret >>> 0;
-	}
-	/**
 	 * @param {number} idx
 	 * @param {number} diameter
 	 * @param {Kind} kind
@@ -459,6 +451,13 @@ export class Cell {
 	static new(idx, diameter, kind, user_kind) {
 		const ret = wasm.cell_new(idx, diameter, kind, user_kind);
 		return Cell.__wrap(ret);
+	}
+	/**
+	 * @returns {number}
+	 */
+	static size() {
+		const ret = wasm.cell_size();
+		return ret >>> 0;
 	}
 }
 if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
@@ -554,13 +553,6 @@ export class Link {
 		wasm.__wbg_set_link_bu(this.__wbg_ptr, arg0);
 	}
 	/**
-	 * @returns {number}
-	 */
-	static size() {
-		const ret = wasm.link_size();
-		return ret >>> 0;
-	}
-	/**
 	 * @param {number} idx
 	 * @param {number} a
 	 * @param {number} b
@@ -569,6 +561,13 @@ export class Link {
 	static new(idx, a, b) {
 		const ret = wasm.link_new(idx, a, b);
 		return Link.__wrap(ret);
+	}
+	/**
+	 * @returns {number}
+	 */
+	static size() {
+		const ret = wasm.link_size();
+		return ret >>> 0;
 	}
 }
 if (Symbol.dispose) Link.prototype[Symbol.dispose] = Link.prototype.free;
@@ -625,22 +624,11 @@ export class Point {
 		wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
 	}
 	/**
-	 * @param {number} x
-	 * @param {number} y
 	 * @returns {Point}
 	 */
-	static new(x, y) {
-		const ret = wasm.point_new(x, y);
-		return Point.__wrap(ret);
-	}
-	reset() {
-		wasm.point_reset(this.__wbg_ptr);
-	}
-	/**
-	 * @returns {Point}
-	 */
-	normalize() {
-		const ret = wasm.point_normalize(this.__wbg_ptr);
+	normalized() {
+		const ptr = this.__destroy_into_raw();
+		const ret = wasm.point_normalized(ptr);
 		return Point.__wrap(ret);
 	}
 	/**
@@ -652,22 +640,13 @@ export class Point {
 		return Point.__wrap(ret);
 	}
 	/**
-	 * @returns {Point}
-	 */
-	normalized() {
-		const ptr = this.__destroy_into_raw();
-		const ret = wasm.point_normalized(ptr);
-		return Point.__wrap(ret);
-	}
-	/**
-	 * @param {Point} b
+	 * @param {number} x
+	 * @param {number} y
 	 * @returns {number}
 	 */
-	distance(b) {
+	distance_squared(x, y) {
 		const ptr = this.__destroy_into_raw();
-		_assertClass(b, Point);
-		var ptr0 = b.__destroy_into_raw();
-		const ret = wasm.point_distance(ptr, ptr0);
+		const ret = wasm.point_distance_squared(ptr, x, y);
 		return ret;
 	}
 	/**
@@ -684,12 +663,14 @@ export class Point {
 	/**
 	 * @param {number} x
 	 * @param {number} y
-	 * @returns {number}
+	 * @returns {Point}
 	 */
-	distance_squared(x, y) {
-		const ptr = this.__destroy_into_raw();
-		const ret = wasm.point_distance_squared(ptr, x, y);
-		return ret;
+	static new(x, y) {
+		const ret = wasm.point_new(x, y);
+		return Point.__wrap(ret);
+	}
+	reset() {
+		wasm.point_reset(this.__wbg_ptr);
 	}
 	/**
 	 * @returns {number}
@@ -698,6 +679,24 @@ export class Point {
 		const ptr = this.__destroy_into_raw();
 		const ret = wasm.point_length(ptr);
 		return ret;
+	}
+	/**
+	 * @param {Point} b
+	 * @returns {number}
+	 */
+	distance(b) {
+		const ptr = this.__destroy_into_raw();
+		_assertClass(b, Point);
+		var ptr0 = b.__destroy_into_raw();
+		const ret = wasm.point_distance(ptr, ptr0);
+		return ret;
+	}
+	/**
+	 * @returns {Point}
+	 */
+	normalize() {
+		const ret = wasm.point_normalize(this.__wbg_ptr);
+		return Point.__wrap(ret);
 	}
 }
 if (Symbol.dispose) Point.prototype[Symbol.dispose] = Point.prototype.free;
@@ -820,9 +819,18 @@ export class World {
 	/**
 	 * @returns {number}
 	 */
-	links() {
-		const ret = wasm.world_links(this.__wbg_ptr);
+	cells_count() {
+		const ret = wasm.world_cells_count(this.__wbg_ptr);
 		return ret >>> 0;
+	}
+	/**
+	 * @param {number} aidx
+	 * @param {number} bidx
+	 * @returns {boolean}
+	 */
+	link_exists(aidx, bidx) {
+		const ret = wasm.world_link_exists(this.__wbg_ptr, aidx, bidx);
+		return ret !== 0;
 	}
 	/**
 	 * @returns {number}
@@ -830,43 +838,6 @@ export class World {
 	links_count() {
 		const ret = wasm.world_links_count(this.__wbg_ptr);
 		return ret >>> 0;
-	}
-	/**
-	 * @param {number} a
-	 * @param {number} b
-	 * @returns {number}
-	 */
-	add_link(a, b) {
-		const ret = wasm.world_add_link(this.__wbg_ptr, a, b);
-		return ret >>> 0;
-	}
-	/**
-	 * @returns {number}
-	 */
-	cells_count() {
-		const ret = wasm.world_cells_count(this.__wbg_ptr);
-		return ret >>> 0;
-	}
-	/**
-	 * @returns {number}
-	 */
-	cells() {
-		const ret = wasm.world_cells(this.__wbg_ptr);
-		return ret >>> 0;
-	}
-	/**
-	 * @param {number} idx
-	 * @param {number} diameter
-	 */
-	set_cell_diameter(idx, diameter) {
-		wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
-	}
-	/**
-	 * @param {number} idx
-	 * @param {number} y
-	 */
-	set_cell_dp_y(idx, y) {
-		wasm.world_set_cell_dp_y(this.__wbg_ptr, idx, y);
 	}
 	/**
 	 * @param {number} idx
@@ -879,22 +850,15 @@ export class World {
 	 * @param {number} idx
 	 * @param {number} y
 	 */
-	set_cell_direction_y(idx, y) {
-		wasm.world_set_cell_direction_y(this.__wbg_ptr, idx, y);
+	set_cell_dp_y(idx, y) {
+		wasm.world_set_cell_dp_y(this.__wbg_ptr, idx, y);
 	}
 	/**
 	 * @param {number} idx
-	 * @param {number} x
+	 * @param {Kind} kind
 	 */
-	set_cell_direction_x(idx, x) {
-		wasm.world_set_cell_direction_x(this.__wbg_ptr, idx, x);
-	}
-	/**
-	 * @param {number} idx
-	 * @param {number} y
-	 */
-	set_cell_np_y(idx, y) {
-		wasm.world_set_cell_np_y(this.__wbg_ptr, idx, y);
+	set_cell_kind(idx, kind) {
+		wasm.world_set_cell_kind(this.__wbg_ptr, idx, kind);
 	}
 	/**
 	 * @param {number} idx
@@ -907,8 +871,8 @@ export class World {
 	 * @param {number} idx
 	 * @param {number} y
 	 */
-	set_cell_pp_y(idx, y) {
-		wasm.world_set_cell_pp_y(this.__wbg_ptr, idx, y);
+	set_cell_np_y(idx, y) {
+		wasm.world_set_cell_np_y(this.__wbg_ptr, idx, y);
 	}
 	/**
 	 * @param {number} idx
@@ -921,8 +885,22 @@ export class World {
 	 * @param {number} idx
 	 * @param {number} y
 	 */
-	set_cell_position_y(idx, y) {
-		wasm.world_set_cell_position_y(this.__wbg_ptr, idx, y);
+	set_cell_pp_y(idx, y) {
+		wasm.world_set_cell_pp_y(this.__wbg_ptr, idx, y);
+	}
+	/**
+	 * @param {number} idx
+	 * @param {number} diameter
+	 */
+	set_cell_diameter(idx, diameter) {
+		wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
+	}
+	/**
+	 * @param {number} idx
+	 * @param {number} activated
+	 */
+	set_cell_activated(idx, activated) {
+		wasm.world_set_cell_activated(this.__wbg_ptr, idx, activated);
 	}
 	/**
 	 * @param {number} idx
@@ -933,10 +911,39 @@ export class World {
 	}
 	/**
 	 * @param {number} idx
-	 * @param {Kind} kind
+	 * @param {number} y
 	 */
-	set_cell_kind(idx, kind) {
-		wasm.world_set_cell_kind(this.__wbg_ptr, idx, kind);
+	set_cell_position_y(idx, y) {
+		wasm.world_set_cell_position_y(this.__wbg_ptr, idx, y);
+	}
+	/**
+	 * @param {number} idx
+	 * @param {number} x
+	 */
+	set_cell_direction_x(idx, x) {
+		wasm.world_set_cell_direction_x(this.__wbg_ptr, idx, x);
+	}
+	/**
+	 * @param {number} idx
+	 * @param {number} y
+	 */
+	set_cell_direction_y(idx, y) {
+		wasm.world_set_cell_direction_y(this.__wbg_ptr, idx, y);
+	}
+	/**
+	 * @returns {string}
+	 */
+	get_activation_events() {
+		let deferred1_0;
+		let deferred1_1;
+		try {
+			const ret = wasm.world_get_activation_events(this.__wbg_ptr);
+			deferred1_0 = ret[0];
+			deferred1_1 = ret[1];
+			return getStringFromWasm0(ret[0], ret[1]);
+		} finally {
+			wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+		}
 	}
 	/**
 	 * @param {number} idx
@@ -945,11 +952,43 @@ export class World {
 		wasm.world_switch_cell_activated(this.__wbg_ptr, idx);
 	}
 	/**
-	 * @param {number} idx
-	 * @param {number} activated
+	 * @returns {World}
 	 */
-	set_cell_activated(idx, activated) {
-		wasm.world_set_cell_activated(this.__wbg_ptr, idx, activated);
+	static new() {
+		const ret = wasm.world_new();
+		return World.__wrap(ret);
+	}
+	/**
+	 * @returns {number}
+	 */
+	cells() {
+		const ret = wasm.world_cells(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @returns {number}
+	 */
+	links() {
+		const ret = wasm.world_links(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @param {Uint32Array} seed
+	 * @param {number} asteroid_count
+	 * @param {number} star_count
+	 * @param {UserKind} user_kind
+	 */
+	setup(seed, asteroid_count, star_count, user_kind) {
+		const ptr0 = passArray32ToWasm0(seed, wasm.__wbindgen_malloc);
+		const len0 = WASM_VECTOR_LEN;
+		wasm.world_setup(
+			this.__wbg_ptr,
+			ptr0,
+			len0,
+			asteroid_count,
+			star_count,
+			user_kind,
+		);
 	}
 	/**
 	 * @param {number} x
@@ -971,68 +1010,28 @@ export class World {
 		return ret >>> 0;
 	}
 	/**
-	 * @returns {string}
+	 * @param {number} a
+	 * @param {number} b
+	 * @returns {number}
 	 */
-	get_activation_events() {
-		let deferred1_0;
-		let deferred1_1;
-		try {
-			const ret = wasm.world_get_activation_events(this.__wbg_ptr);
-			deferred1_0 = ret[0];
-			deferred1_1 = ret[1];
-			return getStringFromWasm0(ret[0], ret[1]);
-		} finally {
-			wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-		}
-	}
-	update_04() {
-		wasm.world_update_04(this.__wbg_ptr);
-	}
-	update_03() {
-		wasm.world_update_03(this.__wbg_ptr);
-	}
-	update_02() {
-		wasm.world_update_02(this.__wbg_ptr);
-	}
-	update_01() {
-		wasm.world_update_01(this.__wbg_ptr);
+	add_link(a, b) {
+		const ret = wasm.world_add_link(this.__wbg_ptr, a, b);
+		return ret >>> 0;
 	}
 	run_step() {
 		wasm.world_run_step(this.__wbg_ptr);
 	}
-	/**
-	 * @param {number} aidx
-	 * @param {number} bidx
-	 * @returns {boolean}
-	 */
-	link_exists(aidx, bidx) {
-		const ret = wasm.world_link_exists(this.__wbg_ptr, aidx, bidx);
-		return ret !== 0;
+	update_01() {
+		wasm.world_update_01(this.__wbg_ptr);
 	}
-	/**
-	 * @param {Uint32Array} seed
-	 * @param {number} asteroid_count
-	 * @param {number} star_count
-	 * @param {UserKind} user_kind
-	 */
-	setup(seed, asteroid_count, star_count, user_kind) {
-		const ptr0 = passArray32ToWasm0(seed, wasm.__wbindgen_malloc);
-		const len0 = WASM_VECTOR_LEN;
-		wasm.world_setup(
-			this.__wbg_ptr,
-			ptr0,
-			len0,
-			asteroid_count,
-			star_count,
-			user_kind,
-		);
+	update_02() {
+		wasm.world_update_02(this.__wbg_ptr);
 	}
-	/**
-	 * @returns {World}
-	 */
-	static new() {
-		const ret = wasm.world_new();
-		return World.__wrap(ret);
+	update_03() {
+		wasm.world_update_03(this.__wbg_ptr);
+	}
+	update_04() {
+		wasm.world_update_04(this.__wbg_ptr);
 	}
 }
 if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;

@@ -1,0 +1,10 @@
+{
+  "density": 8.05,
+  "color": "#333",
+  "storage": {
+    "electricity": 100
+  },
+  "production": {
+    "electricity": 1
+  }
+}

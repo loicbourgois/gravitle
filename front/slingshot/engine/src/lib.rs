@@ -1,11 +1,16 @@
 pub mod blueprint;
 mod cell;
 mod color;
+mod event;
+mod link;
 mod material;
 mod material_definition;
 mod point;
+mod stat;
+mod u32;
 mod utils;
 pub mod world;
+mod world_config;
 use crate::utils::set_panic_hook;
 use crate::world::World;
 use wasm_bindgen::prelude::*;

@@ -11,5 +11,6 @@ cargo clippy --release \
     -A clippy::module_name_repetitions \
     -A unused_variables \
     -A dead_code \
-    -A unused_imports
+    -A unused_imports \
+    -A clippy::unnecessary_unwrap
 echo "✅ lint_chrono"

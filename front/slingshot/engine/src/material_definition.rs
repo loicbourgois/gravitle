@@ -1,34 +1,17 @@
 use serde::Deserialize;
+use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum ValueOrReference {
     Value(f32),
     Reference(String),
 }
 
-// example:
-// {
-//     "density": 1.750,
-//     "color": "#888"
-// }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct MaterialDefinition {
     pub density: ValueOrReference,
     pub color: String,
+    pub storage: Option<HashMap<String, u32>>,
+    pub production: Option<HashMap<String, u32>>,
 }
-
-// impl MaterialDefinition {
-//     pub fn as_material(&self, materials: ) -> Material {
-//         Material {
-//             density: match self.density {
-//                 ValueOrReference::value(v) => {
-//                     v
-//                 }
-//                 ValueOrReference::reference => {
-
-//                 }
-//             },
-//         }
-//     }
-// }

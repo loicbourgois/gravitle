@@ -1,98 +1,331 @@
 use crate::blueprint::Blueprint;
 use crate::cell::Cell;
 use crate::color::Color;
+use crate::event::Event;
+use crate::link::Link;
+use crate::log;
 use crate::material::Material;
+use crate::material::MaterialStorage;
 use crate::material_definition::MaterialDefinition;
 use crate::material_definition::ValueOrReference;
 use crate::point::Point;
+use crate::point::equilateral_third_point;
+use crate::stat::Stat;
+use crate::stat::StatJs;
+use crate::utils::elapsed_secs_f32;
+use crate::utils::now;
 use crate::wasm_bindgen;
+use crate::world_config::WorldConfig;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[wasm_bindgen]
 pub struct World {
     cells: Vec<Cell>,
+    links: Vec<Link>,
     materials: Vec<Material>,
+    material_storages: Vec<MaterialStorage>,
     materials_2: HashMap<String, usize>,
     zones: HashMap<(i32, i32), HashSet<usize>>,
-    pub rdp: f32,
-    pub rdv: f32,
-    zonesize: f32,
     pairs: HashSet<(usize, usize)>,
-    pub gravity: f32,
-    pub gravity_2: f32,
-    pub crdp: f32,
-    pub crdv: f32,
-    pub rdv_during_colision: f32,
+    pub c: WorldConfig,
+    stats: HashMap<String, Stat>,
+    pub perf_array_len: usize,
+    tick: usize,
+    events: HashMap<usize, Vec<Event>>,
+    pub collision_count: f32,
+    pub pairs_count: usize,
+    pub zones_count: usize,
+    positions: HashMap<usize, Vec<Point>>,
+    positions_2: Vec<Point>,
+    storage: Vec<u32>,
+    storage_2: HashMap<String, usize>,
 }
 impl Default for World {
     fn default() -> Self {
         Self::new()
     }
 }
+
 #[wasm_bindgen]
 impl World {
+    pub fn add_storage(&mut self, key: String) {
+        if self.storage_2.contains_key(&key) {
+            // Storage already exists, do nothing
+            return;
+        }
+        let idx = self.storage.len();
+        let mut v = Vec::new();
+        for _ in &self.cells {
+            v.push(0);
+        }
+        self.storage.append(&mut v);
+        self.storage_2.insert(key, idx);
+    }
     pub fn new() -> World {
-        World {
+        let mut w = World {
             cells: Vec::new(),
             materials: Vec::new(),
             materials_2: HashMap::new(),
             zones: HashMap::new(),
-            gravity: 0.0,
-            crdv: 0.0,
-            crdp: 0.0,
-            rdv: 0.0,
-            rdp: 0.0,
-            gravity_2: 0.0,
-            rdv_during_colision: 0.0,
-            // spring: 0.1,
-            zonesize: 1.0,
             pairs: HashSet::new(),
+            perf_array_len: 500,
+            stats: HashMap::new(),
+            tick: 0,
+            c: WorldConfig {
+                gravity: 0.0,
+                crdv: 0.0,
+                crdp: 0.0,
+                rdv: 0.0,
+                rdp: 0.0,
+                gravity_2: 0.0,
+                rdv_during_colision: 0.0,
+                zonesize: 1.0,
+                c2c_gravity: false,
+                c2c_colision: false,
+                link_strength_dp: 0.0,
+                link_strength_dv: 0.0,
+            },
+            events: HashMap::new(),
+            links: Vec::new(),
+            collision_count: 0.0,
+            pairs_count: 0,
+            zones_count: 0,
+            positions: HashMap::new(),
+            positions_2: Vec::new(),
+            storage: Vec::new(),
+            storage_2: HashMap::new(),
+            material_storages: Vec::new(),
+        };
+        w.add_stat("logic".to_string());
+        w.add_stat("render".to_string());
+        w.add_stat("stats".to_string());
+        w.add_stat("tick".to_string());
+        w.add_stat("tick_01".to_string());
+        w.add_stat("tick_02".to_string());
+        w.add_stat("tick_03".to_string());
+        w.add_stat("tick_04".to_string());
+        w.add_stat("tick_05".to_string());
+        w.add_stat("tick_06".to_string());
+        w.add_stat("tick_events".to_string());
+        w.add_stat("tick_links".to_string());
+        w.add_stat("tick_storage".to_string());
+        w.add_stat("save_positions".to_string());
+        w
+    }
+    pub fn add_event(&mut self, tick: usize, func: String, cell_id: usize, value: f32) {
+        let v = self.events.entry(tick).or_default();
+        v.push(Event {
+            func,
+            cell_id,
+            value,
+        });
+    }
+    pub fn get_tick(&self) -> usize {
+        self.tick
+    }
+    pub fn save_positions(&mut self, idx: usize) {
+        self.positions.insert(idx, Vec::new());
+    }
+    pub fn add_link(&mut self, a: u32, b: u32) {
+        self.links.push(Link { a, b });
+    }
+    pub fn set_zonesize(&mut self, value: f32) {
+        self.c.zonesize = value;
+    }
+    pub fn set_gravity_2(&mut self, value: f32) {
+        self.c.gravity_2 = value;
+    }
+    pub fn set_gravity(&mut self, value: f32) {
+        self.c.gravity = value;
+    }
+    pub fn set_rdp(&mut self, value: f32) {
+        self.c.rdp = value;
+    }
+    pub fn set_rdv(&mut self, value: f32) {
+        self.c.rdv = value;
+    }
+    pub fn set_crdp(&mut self, value: f32) {
+        self.c.crdp = value;
+    }
+    pub fn set_crdv(&mut self, value: f32) {
+        self.c.crdv = value;
+    }
+    pub fn set_c2c_gravity(&mut self, value: bool) {
+        self.c.c2c_gravity = value;
+    }
+    pub fn set_c2c_colision(&mut self, value: bool) {
+        self.c.c2c_colision = value;
+    }
+    pub fn set_link_strength_dp(&mut self, value: f32) {
+        self.c.link_strength_dp = value;
+    }
+    pub fn set_link_strength_dv(&mut self, value: f32) {
+        self.c.link_strength_dv = value;
+    }
+    pub fn tick_n(&mut self, n: usize) {
+        for _ in 0..n {
+            self.tick();
         }
     }
     // file://./../../../chrono/engine/src/world.rs
     // file://./../../../../../miniciv/src/world.rs
     pub fn tick(&mut self) {
-        // for cell in &mut self.cells {
-        //     cell.p.x += 0.0001;
-        // }
+        let n = now();
+        self.tick_save_positions();
+        self.add_duration("save_positions", elapsed_secs_f32(n));
+        let n = now();
+        self.tick_events();
+        self.add_duration("tick_events", elapsed_secs_f32(n));
+        let n = now();
         self.tick_01();
+        self.add_duration("tick_01", elapsed_secs_f32(n));
+        let n = now();
         self.tick_02();
+        self.add_duration("tick_02", elapsed_secs_f32(n));
+        let n = now();
         self.tick_03();
+        self.add_duration("tick_03", elapsed_secs_f32(n));
+        let n = now();
         self.tick_04();
+        self.add_duration("tick_04", elapsed_secs_f32(n));
+        let n = now();
+        self.tick_links();
+        self.add_duration("tick_links", elapsed_secs_f32(n));
+        let n = now();
         self.tick_05();
+        self.add_duration("tick_05", elapsed_secs_f32(n));
+        let n = now();
+        self.tick_06();
+        self.add_duration("tick_06", elapsed_secs_f32(n));
+        let n = now();
+        self.tick_storage();
+        self.add_duration("tick_storage", elapsed_secs_f32(n));
+        self.tick += 1;
+    }
+    pub fn tick_storage(&mut self) {
+        // production
+        for (k, s_idx) in &self.storage_2 {
+            for (c_idx, c) in self.cells.iter().enumerate() {
+                let m: &MaterialStorage = &self.material_storages[c.material_idx as usize];
+                let idx = self.cells.len() * s_idx + c_idx;
+                let value = self.storage[idx];
+                match m.production.get(k) {
+                    Some(production) => {
+                        let new_value_wanted: u32 = value + production;
+                        let ceiling: u32 = m.storage[k] as u32;
+                        let new_value_real: u32 = ceiling.min(new_value_wanted);
+                        self.storage[idx] = new_value_real;
+                    }
+                    None => {}
+                }
+            }
+        }
+        // transfer
+    }
+    pub fn get_positions(&self, idx: usize) -> Vec<Point> {
+        self.positions[&idx].clone()
+    }
+    pub fn tick_save_positions(&mut self) {
+        for (k, v) in &mut self.positions {
+            v.push(self.cells[*k].p);
+            self.positions_2.push(self.cells[*k].p);
+        }
+    }
+    pub fn tick_links(&mut self) {
+        let cells_ptr = self.cells.as_mut_ptr();
+        let links = self.links.clone();
+        unsafe {
+            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            for l in links {
+                let ca = &mut cells_slice_a[l.a as usize];
+                let cb = &mut cells_slice_b[l.b as usize];
+                let d = ca.p.distance(cb.p);
+                let n = (ca.p - cb.p).normalize();
+                let ds = (ca.diameter + cb.diameter) * 0.5;
+                let factor_dp = (ds - d) * self.c.link_strength_dp;
+                ca.dp.x += n.x * factor_dp;
+                ca.dp.y += n.y * factor_dp;
+                cb.dp.x -= n.x * factor_dp;
+                cb.dp.y -= n.y * factor_dp;
+                let factor_dv = (ds - d) * self.c.link_strength_dv;
+                ca.dv.x += n.x * factor_dv;
+                ca.dv.y += n.y * factor_dv;
+                cb.dv.x -= n.x * factor_dv;
+                cb.dv.y -= n.y * factor_dv;
+            }
+        }
+    }
+    pub fn tick_events(&mut self) {
+        let events: Vec<Event> = match self.events.get(&self.tick) {
+            Some(events) => events.clone(),
+            None => Vec::new(),
+        };
+        for e in events {
+            match e.func.as_str() {
+                "set_cell_diameter" => {
+                    self.set_cell_diameter(e.cell_id, e.value);
+                }
+                _ => panic!("invalid event: {}", e.func),
+            }
+        }
+    }
+    pub fn add_duration(&mut self, id: &str, value: f32) {
+        self.stats.get_mut(id).unwrap().values.push(value);
+    }
+    pub fn add_stat(&mut self, id: String) {
+        self.stats.insert(
+            id,
+            Stat {
+                values: Vec::new(),
+                js: StatJs { p99: 0.0, avg: 0.0 },
+            },
+        );
+    }
+    pub fn get_stats(&self, id: &str) -> StatJs {
+        self.stats[id].js
     }
     pub fn tick_01(&mut self) {
+        self.zones_count = self.zones.len();
         self.zones.clear();
-        for (cell_idx, cell) in &mut self.cells.iter_mut().enumerate() {
-            cell.dp = (cell.p - cell.pp) * self.rdp;
-            cell.dv = (cell.p - cell.pp)
-                * (1.0 - self.rdv)
-                * (1.0 - self.rdv_during_colision * cell.collision_count);
+        let rdv_i = 1.0 - self.c.rdv;
+        for cell in &mut self.cells.iter_mut() {
+            let dp = cell.p - cell.pp;
+            cell.dp = dp * self.c.rdp;
+            cell.dv = dp * rdv_i * (1.0 - self.c.rdv_during_colision * cell.collision_count);
             cell.collision_count = 0.0;
-            let x1: i32 = ((cell.p.x - cell.diameter * 0.5) / self.zonesize).floor() as i32;
-            let x2: i32 = ((cell.p.x + cell.diameter * 0.5) / self.zonesize).ceil() as i32;
-            let y1: i32 = ((cell.p.y - cell.diameter * 0.5) / self.zonesize).floor() as i32;
-            let y2: i32 = ((cell.p.y + cell.diameter * 0.5) / self.zonesize).ceil() as i32;
-            for x in x1..=x2 {
-                for y in y1..=y2 {
-                    self.zones.entry((x, y)).or_default().insert(cell_idx);
+        }
+        if self.c.c2c_colision {
+            for (cell_idx, cell) in &mut self.cells.iter_mut().enumerate() {
+                let x1: i32 = ((cell.p.x - cell.diameter * 0.5) / self.c.zonesize).floor() as i32;
+                let x2: i32 = ((cell.p.x + cell.diameter * 0.5) / self.c.zonesize).ceil() as i32;
+                let y1: i32 = ((cell.p.y - cell.diameter * 0.5) / self.c.zonesize).floor() as i32;
+                let y2: i32 = ((cell.p.y + cell.diameter * 0.5) / self.c.zonesize).ceil() as i32;
+                for x in x1..=x2 {
+                    for y in y1..=y2 {
+                        self.zones.entry((x, y)).or_default().insert(cell_idx);
+                    }
                 }
             }
         }
     }
     pub fn tick_02(&mut self) {
+        self.pairs_count = self.pairs.len();
         self.pairs.clear();
-        for zone in self.zones.values() {
-            let mut ids: Vec<usize> = zone.iter().copied().collect();
-            ids.sort_unstable();
-            for (idx, ia) in ids.iter().enumerate().take(ids.len() - 1) {
-                for ib in ids.iter().take(ids.len()).skip(idx + 1) {
-                    self.pairs.insert((*ia, *ib));
+        if self.c.c2c_colision {
+            for zone in self.zones.values() {
+                let mut ids: Vec<usize> = zone.iter().copied().collect();
+                ids.sort_unstable();
+                for (idx, ia) in ids.iter().enumerate().take(ids.len() - 1) {
+                    for ib in ids.iter().take(ids.len()).skip(idx + 1) {
+                        self.pairs.insert((*ia, *ib));
+                    }
                 }
             }
         }
     }
+    // collision
     pub fn tick_03(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         let pairs_ = self.pairs.clone();
@@ -109,10 +342,10 @@ impl World {
                 let diam_b_ratio = ca.diameter / cb.diameter;
                 if dist < (ca.diameter + cb.diameter) * 0.5 {
                     let n = (ca.p - cb.p).normalize();
-                    ca.dv += n * self.crdv * diam_a_ratio;
-                    cb.dv -= n * self.crdv * diam_b_ratio;
-                    ca.dp += n * self.crdp * diam_a_ratio;
-                    cb.dp -= n * self.crdp * diam_b_ratio;
+                    ca.dv += n * self.c.crdv * diam_a_ratio;
+                    cb.dv -= n * self.c.crdv * diam_b_ratio;
+                    ca.dp += n * self.c.crdp * diam_a_ratio;
+                    cb.dp -= n * self.c.crdp * diam_b_ratio;
                     ca.collision_count += 1.0;
                     cb.collision_count += 1.0;
                 } else {
@@ -121,40 +354,41 @@ impl World {
             }
         }
     }
+    // c2c_gravity
     pub fn tick_04(&mut self) {
-        let cells_ptr = self.cells.as_mut_ptr();
-        unsafe {
-            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            for (ia, ca) in cells_slice_a.iter_mut().enumerate().take(self.cells.len()) {
-                // for ia in 0..self.cells.len() {
-                for (ib, cb) in cells_slice_b
-                    .iter_mut()
-                    .enumerate()
-                    .take(self.cells.len())
-                    .skip(ia + 1)
-                {
-                    // for ib in ia + 1..self.cells.len() {
-                    assert!(ia < ib);
-                    // let ca = &mut cells_slice_a[ia];
-                    // let cb = &mut cells_slice_b[ib];
-                    let ca_density = self.materials[ca.material_idx as usize].density;
-                    let cb_density = self.materials[cb.material_idx as usize].density;
-                    let ma = ca_density * ca.diameter * ca.diameter;
-                    let mb = cb_density * cb.diameter * cb.diameter;
-                    let dist = ca.p.distance(cb.p);
-                    let g = (ma * mb) / (dist * dist);
-                    let n = (ca.p - cb.p).normalize();
-                    ca.dv -= n * g * self.gravity_2;
-                    cb.dv += n * g * self.gravity_2;
+        if self.c.c2c_gravity {
+            let cells_ptr = self.cells.as_mut_ptr();
+            let cells_len = self.cells.len();
+            unsafe {
+                let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, cells_len);
+                let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, cells_len);
+                for (ia, ca) in cells_slice_a.iter_mut().enumerate().take(cells_len) {
+                    for (ib, cb) in cells_slice_b
+                        .iter_mut()
+                        .enumerate()
+                        .take(cells_len)
+                        .skip(ia + 1)
+                    {
+                        assert!(ia < ib);
+                        let ca_density = self.materials[ca.material_idx as usize].density;
+                        let cb_density = self.materials[cb.material_idx as usize].density;
+                        let ma = ca_density * ca.diameter * ca.diameter;
+                        let mb = cb_density * cb.diameter * cb.diameter;
+                        let dist = ca.p.distance(cb.p);
+                        let g = (ma * mb) / (dist * dist);
+                        let n = (ca.p - cb.p).normalize();
+                        ca.dv -= n * g * self.c.gravity_2;
+                        cb.dv += n * g * self.c.gravity_2;
+                    }
                 }
             }
         }
     }
     pub fn tick_05(&mut self) {
         let center = Point { x: 0.0, y: 0.0 };
+        self.collision_count = 0.0;
         for cell in &mut self.cells {
-            let gravity = (cell.p - center).normalize() * -self.gravity * cell.mass;
+            let gravity = (cell.p - center).normalize() * -self.c.gravity * cell.mass;
             if cell.fixed != 1 {
                 cell.p += cell.dp;
             }
@@ -163,6 +397,15 @@ impl World {
                 cell.p += gravity + cell.dv;
             }
             cell.ap = (cell.p + cell.pp) * 0.5;
+            self.collision_count += cell.collision_count;
+        }
+    }
+    // stats
+    pub fn tick_06(&mut self) {
+        if self.tick.is_multiple_of(20) {
+            for stat in self.stats.values_mut() {
+                stat.update(self.perf_array_len);
+            }
         }
     }
     pub fn set_cell_diameter(&mut self, idx: usize, diameter: f32) {
@@ -177,18 +420,77 @@ impl World {
             .push(Cell::new(self.materials_2[material_url], x, y, diameter));
         idx
     }
+    pub fn add_cell_up(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x;
+        let y = c.p.y + (c.diameter + diameter) * 0.5;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_down(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x;
+        let y = c.p.y - (c.diameter + diameter) * 0.5;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_right(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x + (c.diameter + diameter) * 0.5;
+        let y = c.p.y;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_left(&mut self, material_url: &str, idx: usize, diameter: f32) -> usize {
+        let c = &self.cells[idx];
+        let x = c.p.x - (c.diameter + diameter) * 0.5;
+        let y = c.p.y;
+        self.add_cell(material_url, x, y, diameter)
+    }
+    pub fn add_cell_2(
+        &mut self,
+        material_url: &str,
+        idx_1: usize,
+        idx_2: usize,
+        diameter: f32,
+    ) -> usize {
+        let c1 = &self.cells[idx_1];
+        let c2 = &self.cells[idx_2];
+        let p = equilateral_third_point(c1.p, c2.p);
+        self.add_cell(material_url, p.x, p.y, diameter)
+    }
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
     }
     pub fn cells_count(&self) -> u32 {
         self.cells.len() as u32
     }
+
+    pub fn links(&self) -> *const Link {
+        self.links.as_ptr()
+    }
+    pub fn links_count(&self) -> u32 {
+        self.links.len() as u32
+    }
+
+    pub fn positions(&self) -> *const Point {
+        self.positions_2.as_ptr()
+    }
+    pub fn positions_count(&self) -> u32 {
+        self.positions_2.len() as u32
+    }
+
     pub fn materials(&self) -> *const Material {
         self.materials.as_ptr()
     }
     pub fn materials_count(&self) -> u32 {
         self.materials.len() as u32
     }
+
+    pub fn storage(&self) -> *const u32 {
+        self.storage.as_ptr()
+    }
+    pub fn storage_count(&self) -> u32 {
+        self.storage.len() as u32
+    }
+
     pub fn add_material(&mut self, url: String, definition: &str) {
         let idx = self.materials.len();
         let material_definition: MaterialDefinition = match serde_json::from_str(definition) {
@@ -197,7 +499,10 @@ impl World {
                 panic!("Failed to parse material JSON from {url}: {e}");
             }
         };
-        self.materials.push(self.as_material(material_definition));
+        self.materials
+            .push(self.as_material(material_definition.clone()));
+        self.material_storages
+            .push(self.as_material_storage(material_definition));
         self.materials_2.insert(url, idx);
     }
     pub fn add_from_blueprint(&mut self, blueprint_str: &str, x: f32, y: f32) {
@@ -205,6 +510,14 @@ impl World {
         for c in &blueprint.parts {
             self.add_cell(&c.material_url, c.p.x + x, c.p.y + y, c.d);
         }
+    }
+    pub fn debug(&self) {
+        log("debug");
+        log(&format!("{:?}", self.material_storages));
+    }
+    pub fn debug_storage(&self) -> String {
+        // log(&format!("# {}\n", self.tick));
+        format!("{:?}", self.storage)
     }
 }
 
@@ -216,6 +529,18 @@ impl World {
                 ValueOrReference::Reference(url) => self.materials[self.materials_2[&url]].density,
             },
             color: Color::from_hex(&md.color).unwrap(),
+        }
+    }
+    pub fn as_material_storage(&self, md: MaterialDefinition) -> MaterialStorage {
+        MaterialStorage {
+            storage: match md.storage {
+                Some(x) => x.clone(),
+                None => HashMap::new(),
+            },
+            production: match md.production {
+                Some(x) => x.clone(),
+                None => HashMap::new(),
+            },
         }
     }
 }

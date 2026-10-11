@@ -11,14 +11,27 @@ struct Cell {
      collision_count: f32,
      padding: u32,
 }
+
+
+struct Position {
+     p: vec2f, // position
+}
+
+
+struct Link {
+  // reference to first cell
+  a: u32,
+  // reference to second cell
+  b: u32,
+}
+
+
 struct Material {
     color: vec3f,
     density: f32,
 }
-struct VSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) color: vec4f,
-}
+
+
 const disk_positions = array<vec2f, 48>(
     vec2f( 0,  0),
     vec2f( 1,  0),
@@ -69,26 +82,53 @@ const disk_positions = array<vec2f, 48>(
     vec2f( 0.92387956,  -0.38268343),
     vec2f( 1,  0.00000017484555),
 );
-const ZOOM = 5;
+
+
+struct Uniforms {
+    zoom: f32,
+    line_width: f32,
+    tick: u32,
+}
+
+
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) color: vec4f,
+}
+
+
+struct VSOutputLinks {
+  @builtin(position) position: vec4f,
+  @location(0) link_t: f32,
+}
+
+
 @group(0) @binding(0) var<storage, read> cells: array<Cell>;
 @group(0) @binding(1) var<storage, read> materials: array<Material>;
-@vertex fn vs_0(
+@group(0) @binding(2) var<storage, read> positions: array<Position>;
+@group(0) @binding(3) var<uniform> uniforms: Uniforms;
+@group(0) @binding(4) var<storage, read> links: array<Link>;
+
+
+@vertex fn vs(
   @builtin(vertex_index) vertexIndex : u32,
   @builtin(instance_index) instanceIndex: u32,
 ) -> VSOutput {
-  let particle = cells[instanceIndex];
+  let position = positions[instanceIndex];
   let center = vec2f( 0.0,  0.0);
   var vsOut: VSOutput;
   vsOut.position = vec4f(
-    (disk_positions[vertexIndex]*particle.diameter*0.51 + particle.ap - center )* ZOOM,
+    (disk_positions[vertexIndex]*0.0002 + position.p - center ) 
+      * uniforms.zoom,
     0.0, 1.0
   );
-  let m = materials[particle.material_idx];
   vsOut.color = vec4f(
-    m.color.r, m.color.g, m.color.b, 1.0
+    1.0, 1.0, 0.0, 1.0
   );
   return vsOut;
 }
-@fragment fn fs_0(vsOut: VSOutput) -> @location(0) vec4f {
+
+
+@fragment fn fs(vsOut: VSOutput) -> @location(0) vec4f {
   return vsOut.color;
 }
