@@ -66,6 +66,7 @@ const get_booster_v2 = (audio_context) => {
 	return g;
 };
 
+
 const get_booster_v3 = (audio_context) => {
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
 	const g = get_gain(audio_context, 0.0);
@@ -92,6 +93,7 @@ const get_booster_v3 = (audio_context) => {
 
 
 const get_booster_v4 = (audio_context) => {
+	// Same as v2
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
 	const g = get_gain(audio_context, 0.0);
 	const gu = get_gain(audio_context, 0.5);
@@ -138,7 +140,7 @@ Audio.prototype.setup = async function (booster_ids) {
 	// const ids = [13, 14]
 	this.cells = [];
 	for (const id of booster_ids) {
-		const node = get_booster_v4(audio_context);
+		const node = get_booster_v3(audio_context);
 		this.cells[id] = {
 			activated: false,
 			node: node,
