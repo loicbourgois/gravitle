@@ -90,6 +90,32 @@ const get_booster_v3 = (audio_context) => {
 	return g;
 };
 
+
+const get_booster_v4 = (audio_context) => {
+	const noise = new AudioWorkletNode(audio_context, "noise-generator");
+	const g = get_gain(audio_context, 0.0);
+	const gu = get_gain(audio_context, 0.5);
+	const h1 = get_filter(audio_context, "highpass", 51.69);
+	const l1 = get_filter(audio_context, "lowpass", 198.93);
+	const l2 = get_filter(audio_context, "lowpass", 218.77);
+	const l3 = get_filter(audio_context, "lowpass", 209.50);
+	const g5 = get_gain(audio_context, 4.76);
+	const g3 = get_gain(audio_context, 10.53);
+	const h2 = get_filter(audio_context, "highpass", 130.72);
+	noise.connect(h1);
+	h1.connect(l1);
+	l1.connect(l2);
+	l2.connect(l3);
+	l3.connect(g3);
+	l2.connect(g5);
+	g5.connect(h2);
+	g3.connect(h2);
+	h2.connect(gu);
+	gu.connect(g);
+	return g;
+};
+
+
 function Audio() {}
 Audio.prototype.setup = async function (booster_ids) {
 	const audio_context = new AudioContext();
@@ -112,7 +138,7 @@ Audio.prototype.setup = async function (booster_ids) {
 	// const ids = [13, 14]
 	this.cells = [];
 	for (const id of booster_ids) {
-		const node = get_booster_v3(audio_context);
+		const node = get_booster_v4(audio_context);
 		this.cells[id] = {
 			activated: false,
 			node: node,
