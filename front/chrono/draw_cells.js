@@ -6,6 +6,7 @@ import {
 	multiply_vector,
 	del_vector,
 	add_vectors,
+	rotate_around,
 } from "./math.js";
 import { link_color_priority, get_color } from "./colors.js";
 import { kind } from "./kind.js";
@@ -27,7 +28,9 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	);
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if (cell.kind == 6) {
+		// Put in here so that other player ghost
+		// lighted star show up in green.
+		if (cell.kind == kind.LIGHTED) {
 			const p3 = cell.ap;
 			const d3 = cell.diameter;
 			view.draw_disk_multi(
@@ -36,11 +39,28 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 				d3,
 				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
+			let m = 0.5
+			let m2 = (m + 1.0)*0.6
+			let p_dot = {
+				x: p3.x + d3 * m2,
+				y: p3.y,
+			}
+			let c = 10
+			for (let index = 0; index < c; index++) {
+				const angle_degree = index * 360/c;
+				const p_dot_ = rotate_around(p_dot, p3, angle_degree)
+				view.draw_disk_multi(
+					p_dot_.x,
+					p_dot_.y,
+					d3 * m,
+					get_color(cell.kind, cell.activated, 0, player_kind),
+				);
+			}
 		}
 	}
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if (cell.kind == 1) {
+		if (cell.kind == kind.BOOSTER) {
 			if (cell.activated) {
 				const p = add_vectors(
 					cell.ap,
@@ -122,10 +142,10 @@ const draw_cells = (gravitle, world, memory, view) => {
 	);
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if (cell.kind == 2) {
+		if (cell.kind == kind.CORE) {
 			view.center.x = cell.ap.x + cell.dp.x * 20;
 			view.center.y = cell.ap.y + cell.dp.y * 20;
-		} else if (cell.kind == 5) {
+		} else if (cell.kind == kind.UNLIGHTED) {
 			const p3 = cell.ap;
 			const d3 = cell.diameter;
 			view.draw_disk_multi(
@@ -134,21 +154,34 @@ const draw_cells = (gravitle, world, memory, view) => {
 				d3,
 				get_color(cell.kind, cell.activated, 0, player_kind),
 			);
+			let m = 0.25
+			let m2 = (m + 1.0)*0.5
+			let p_dot = {
+				x: p3.x + d3 * m2,
+				y: p3.y,
+			}
+			let c = 30
+			for (let index = 0; index < c; index++) {
+				const angle_degree = index * 360/c;
+				const p_dot_ = rotate_around(p_dot, p3, angle_degree)
+				view.draw_disk_multi(
+					p_dot_.x,
+					p_dot_.y,
+					d3 * m,
+					get_color(cell.kind, cell.activated, 0, player_kind),
+				);
+			}
+		} else {
+			// pass
 		}
-		// console.log(view.center)
-		// document.getElementById("debug_center").innerHTML = `${view.center.x.toFixed(2)} | ${view.center.y.toFixed(2)}`
 	}
 	draw_ship_only(gravitle, world, memory, view, "m");
 	for (let i = 0; i < world.cells_count(); i++) {
 		const cell = get_cell(cells_view, cell_size, i);
-		if (cell.kind == 4) {
+		if (cell.kind == kind.ASTEROID) {
 			const c3 = get_color(cell.kind, cell.activated, 0, player_kind);
 			view.draw_disk_multi(cell.ap.x, cell.ap.y, cell.diameter, c3);
 		}
 	}
-	// const p3 = cell.ap;
-	// 		const d3 = cell.diameter;
-	// 		const c3 = "#f0f";
-	// 		view.draw_disk_multi(p3.x, p3.y, d3, c3);
 };
 export { draw_cells, draw_ship_only };

@@ -9,3 +9,4 @@ cli/target
 data
 **/__pycache__/
 __pycache__
+**.todo.**.llm.md

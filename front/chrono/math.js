@@ -1,3 +1,16 @@
+const rotate_around = (a, b, angle_degrees) => {
+	const angle = (angle_degrees * Math.PI) / 180;
+	const cos = Math.cos(angle);
+	const sin = Math.sin(angle);
+	const dx = a.x - b.x;
+	const dy = a.y - b.y;
+	return {
+		x: b.x + dx * cos - dy * sin,
+		y: b.y + dx * sin + dy * cos,
+	};
+};
+
+
 const add_vectors = (a, b) => {
 	return {
 		x: a.x + b.x,
@@ -106,4 +119,5 @@ export {
 	multiply_vector,
 	del_vector,
 	add_vectors,
+	rotate_around,
 };
