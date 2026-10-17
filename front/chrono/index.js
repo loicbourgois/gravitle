@@ -27,6 +27,13 @@ const main = async () => {
 	const seed_input =
 		params.get("seed") ?? new Date().toISOString().split("T")[0];
 	const ghost = params.get("ghost");
+	if (params.get("debug") === "true") {
+		document.querySelector("#debug")?.classList.add("visible");
+	}
+
+	// TODO: if params.get("debug") == "true": #debug { display: not(none);
+
+
 	// TODO: webgpu as default once good enough
 	// const render_mode =
 	// 	params.get("render") ??

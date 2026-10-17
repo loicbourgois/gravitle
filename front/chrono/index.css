@@ -251,3 +251,9 @@ canvas {
   text-align:left;
   padding-left: 1rem;
 }
+#debug {
+  display: none;
+}
+#debug.visible {
+  display: block;
+}
