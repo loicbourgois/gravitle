@@ -3,7 +3,7 @@ use crate::link::Link;
 use crate::math::Cri;
 use crate::math::collision_response;
 use crate::math::delta;
-use crate::math::wrap_around;
+use crate::math::wrap_around_v2;
 use crate::point::Point;
 use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
@@ -50,14 +50,20 @@ pub struct World {
     pub victory_end: Option<u32>,
     pub move_start: Option<u32>,
     activation_events: HashMap<u32, Vec<ActivationEvent>>,
+    // 
+    grid: Vec<HashSet<usize>>,
 }
 impl Default for World {
     fn default() -> Self {
         Self::new()
     }
 }
+
+
 #[wasm_bindgen]
 impl World {
+    
+    
     pub fn new() -> World {
         World {
             cells: Vec::new(),
@@ -72,6 +78,8 @@ impl World {
             activation_events: HashMap::new(),
         }
     }
+
+
     pub fn setup(
         &mut self,
         seed: &[u32],
@@ -81,7 +89,7 @@ impl World {
     ) {
         let mut sfc32 = Sfc32::new(seed);
         for _ in 0..asteroid_count {
-            let diameter = 0.05;
+            let diameter = 0.025;
             let mut iterations = 0;
             loop {
                 iterations += 1;
@@ -90,7 +98,7 @@ impl World {
                 let y = sfc32.next_f32();
                 let mut ok = true;
                 for cell in &self.cells {
-                    let wa = wrap_around(cell.p, Point { x, y });
+                    let wa = wrap_around_v2(cell.p, Point { x, y });
                     let diams = cell.diameter + diameter * 1.5;
                     let colliding = wa.d_sqrd < diams * diams;
                     if colliding {
@@ -99,7 +107,11 @@ impl World {
                     }
                 }
                 if ok {
-                    self.add_cell(x, y, diameter, Kind::Asteroid, user_kind);
+                    for _ in 0..16 {
+                        let x2 = x + (sfc32.next_f32()-0.5) * diameter * 1.0;
+                        let y2 = y + (sfc32.next_f32()-0.5) * diameter * 1.0;
+                        self.add_cell(x2, y2, diameter, Kind::Asteroid, user_kind);
+                    }
                     break;
                 }
             }
@@ -115,7 +127,7 @@ impl World {
                 let y = sfc32.next_f32();
                 let mut ok = true;
                 for cell in &self.cells {
-                    let wa = wrap_around(cell.p, Point { x, y });
+                    let wa = wrap_around_v2(cell.p, Point { x, y });
                     let diams = cell.diameter * 0.5 + diameter * 5.0;
                     let colliding = wa.d_sqrd < diams * diams;
                     if colliding {
@@ -148,6 +160,10 @@ impl World {
         self.update_04();
         self.step += 1;
     }
+    
+
+    /// Calculate each cell's link-based direction and displacement, apply active
+    /// booster thrust, record activation changes, and reset response accumulators.
     pub fn update_01(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         unsafe {
@@ -157,12 +173,12 @@ impl World {
                 for l in &self.links {
                     if l.a == ca.idx {
                         let cb = &self.cells[l.bu];
-                        let wa = wrap_around(ca.p, cb.p);
+                        let wa = wrap_around_v2(ca.p, cb.p);
                         ca.direction += delta(wa.b, wa.a);
                     }
                     if l.b == ca.idx {
                         let cb = &self.cells[l.au];
-                        let wa = wrap_around(ca.p, cb.p);
+                        let wa = wrap_around_v2(ca.p, cb.p);
                         ca.direction += delta(wa.b, wa.a);
                     }
                 }
@@ -199,6 +215,10 @@ impl World {
             }
         }
     }
+
+
+    /// Check predicted cell positions for collisions, accumulate collision
+    /// responses, and light stars touched by ship cells.
     pub fn update_02(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         unsafe {
@@ -207,7 +227,7 @@ impl World {
             for ia in 0..cells_slice_a.len() - 1 {
                 for (ib, cb) in cells_slice_b.iter_mut().enumerate().skip(ia + 1) {
                     let ca = &mut cells_slice_a[ia];
-                    let wa = wrap_around(ca.np, cb.np);
+                    let wa = wrap_around_v2(ca.np, cb.np);
                     let cria = Cri {
                         np: Point {
                             x: wa.a.x,
@@ -258,6 +278,9 @@ impl World {
             }
         }
     }
+
+
+    /// Accumulate position corrections that keep linked cells together.
     pub fn update_03(&mut self) {
         let cells_ptr = self.cells.as_mut_ptr();
         unsafe {
@@ -266,7 +289,7 @@ impl World {
             for l in &self.links {
                 let ca = &mut cells_slice_a[l.a as usize];
                 let cb = &mut cells_slice_b[l.b as usize];
-                let wa = wrap_around(ca.np, cb.np);
+                let wa = wrap_around_v2(ca.np, cb.np);
                 let d = (wa.d_sqrd).sqrt();
                 let n = delta(wa.a, wa.b).normalize_2(d);
                 let ds = (ca.diameter + cb.diameter) * 0.5;
@@ -278,6 +301,10 @@ impl World {
             }
         }
     }
+
+
+    /// Apply accumulated responses, advance movable cells, and record victory
+    /// when all stars are lighted after movement has begun.
     pub fn update_04(&mut self) {
         let mut c_unlighted = 0;
         for p in &mut self.cells {
@@ -308,11 +335,15 @@ impl World {
             self.victory = 1;
         }
     }
+
+
     pub fn get_activation_events(&self) -> String {
         serde_json::to_string(&self.activation_events)
             .unwrap_or_else(|_| "Error serializing activation_events to JSON".to_string())
     }
-    // Cell
+
+
+    // Cells management
     pub fn add_cell(
         &mut self,
         x: f32,
@@ -376,7 +407,9 @@ impl World {
     pub fn cells_count(&self) -> u32 {
         self.cells.len() as u32
     }
-    // Link
+
+
+    // Links management
     pub fn add_link(&mut self, a: u32, b: u32) -> u32 {
         let l = self.links.len();
         let l_u32 = l as u32;

@@ -11,6 +11,41 @@ import {
 import { link_color_priority, get_color } from "./colors.js";
 import { kind } from "./kind.js";
 
+
+const COUNT = 6
+const SIZE = 1
+const SPACE_1 = 0.2
+const SPACE_2 = 0.3
+
+
+const draw_star = (view, cell, player_kind, space) => {
+	const p3 = cell.ap;
+	const d3 = cell.diameter;
+	view.draw_disk_multi(
+		p3.x,
+		p3.y,
+		d3,
+		get_color(cell.kind, cell.activated, 0, player_kind),
+	);
+	let m = SIZE
+	let m2 = (m + 1.0)*space
+	let p_dot = {
+		x: p3.x + d3 * m2,
+		y: p3.y,
+	}
+	for (let index = 0; index < COUNT; index++) {
+		const angle_degree = index * 360/COUNT;
+		const p_dot_ = rotate_around(p_dot, p3, angle_degree)
+		view.draw_disk_multi(
+			p_dot_.x,
+			p_dot_.y,
+			d3 * m,
+			get_color(cell.kind, cell.activated, 0, player_kind),
+		);
+	}
+}
+
+
 const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	const cells_ptr = world.cells();
 	const cell_size = gravitle.Cell.size();
@@ -31,31 +66,7 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 		// Put in here so that other player ghost
 		// lighted star show up in green.
 		if (cell.kind == kind.LIGHTED) {
-			const p3 = cell.ap;
-			const d3 = cell.diameter;
-			view.draw_disk_multi(
-				p3.x,
-				p3.y,
-				d3,
-				get_color(cell.kind, cell.activated, 0, player_kind),
-			);
-			let m = 0.5
-			let m2 = (m + 1.0)*0.6
-			let p_dot = {
-				x: p3.x + d3 * m2,
-				y: p3.y,
-			}
-			let c = 10
-			for (let index = 0; index < c; index++) {
-				const angle_degree = index * 360/c;
-				const p_dot_ = rotate_around(p_dot, p3, angle_degree)
-				view.draw_disk_multi(
-					p_dot_.x,
-					p_dot_.y,
-					d3 * m,
-					get_color(cell.kind, cell.activated, 0, player_kind),
-				);
-			}
+			draw_star(view, cell, player_kind, SPACE_2)
 		}
 	}
 	for (let i = 0; i < world.cells_count(); i++) {
@@ -146,31 +157,7 @@ const draw_cells = (gravitle, world, memory, view) => {
 			view.center.x = cell.ap.x + cell.dp.x * 20;
 			view.center.y = cell.ap.y + cell.dp.y * 20;
 		} else if (cell.kind == kind.UNLIGHTED) {
-			const p3 = cell.ap;
-			const d3 = cell.diameter;
-			view.draw_disk_multi(
-				p3.x,
-				p3.y,
-				d3,
-				get_color(cell.kind, cell.activated, 0, player_kind),
-			);
-			let m = 0.25
-			let m2 = (m + 1.0)*0.5
-			let p_dot = {
-				x: p3.x + d3 * m2,
-				y: p3.y,
-			}
-			let c = 30
-			for (let index = 0; index < c; index++) {
-				const angle_degree = index * 360/c;
-				const p_dot_ = rotate_around(p_dot, p3, angle_degree)
-				view.draw_disk_multi(
-					p_dot_.x,
-					p_dot_.y,
-					d3 * m,
-					get_color(cell.kind, cell.activated, 0, player_kind),
-				);
-			}
+			draw_star(view, cell, player_kind, SPACE_1)
 		} else {
 			// pass
 		}

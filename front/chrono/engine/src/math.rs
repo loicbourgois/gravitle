@@ -58,8 +58,44 @@ pub fn distance_sqrd(a: Point, b: Point) -> f32 {
     dp.x * dp.x + dp.y * dp.y
 }
 
+/// Facilitates going "around" the map by handling toroidal boundary conditions.
+///
+/// The map is a square of size 1.0. When a cell goes beyond the boundaries:
+/// - 1.1 wraps to 0.1
+/// - -0.1 wraps to 0.9
+///
+/// This function calculates the shortest distance between two points on a unit torus.
+/// It returns the original point `a`, the periodic image of point `b` that is
+/// closest to `a`, and the squared distance between these two points.
+/// Each axis is handled independently, allowing paths to cross one or both boundaries.
+///
+/// Resources
+/// - https://en.wikipedia.org/wiki/Toroidal_graph
 #[wasm_bindgen]
-pub fn wrap_around(a: Point, b: Point) -> WrapAroundResult {
+pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
+    // Map size
+    let m: f32 = 1.0;
+    // Calculate the shortest differences in each dimension considering wrap-around
+    let dx = (b.x - a.x + m / 2.0).rem_euclid(m) - m / 2.0;
+    let dy = (b.y - a.y + m / 2.0).rem_euclid(m) - m / 2.0;
+    let d_sqrd = dx * dx + dy * dy;
+    // Return 'a' as-is and 'b' as the nearest periodic image relative to 'a'
+    WrapAroundResult {
+        a,
+        b: Point {
+            x: a.x + dx,
+            y: a.y + dy,
+        },
+        d_sqrd,
+    }
+}
+
+
+// Known edge case: a = (0.20, 0.20), b = (0.85, 0.85).
+// This implementation returns d_sqrd = 0.845 instead of the shortest
+// toroidal distance squared, 0.245. Use wrap_around_v2 for correct results.
+#[wasm_bindgen]
+pub fn wrap_around_v1(a: Point, b: Point) -> WrapAroundResult {
     let o25 = 0.25;
     let o5 = 0.5;
     let m = 1.0;
