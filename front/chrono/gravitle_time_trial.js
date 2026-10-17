@@ -124,19 +124,6 @@ export function setup() {
 }
 
 /**
- * Facilitates going "around" the map by handling toroidal boundary conditions.
- *
- * The map is a square of size 1.0. When a particle goes beyond the boundaries:
- * - 1.1 wraps to 0.1
- * - -0.1 wraps to 0.9
- *
- * This function calculates the shortest distance between two points on a unit torus.
- * It returns the original point `a`, the periodic image of point `b` that is
- * closest to `a`, and the squared distance between these two points.
- * Each axis is handled independently, allowing paths to cross one or both boundaries.
- *
- * Resources
- * - <https://en.wikipedia.org/wiki/Toroidal_graph>
  * @param {Point} a
  * @param {Point} b
  * @returns {WrapAroundResult}
@@ -804,12 +791,12 @@ export class World {
         wasm.__wbg_set_world_move_start(this.__wbg_ptr, isLikeNone(arg0) ? 0x100000001 : (arg0) >>> 0);
     }
     /**
-     * @param {number} aidx
-     * @param {number} bidx
+     * @param {number} a
+     * @param {number} b
      * @returns {boolean}
      */
-    link_exists(aidx, bidx) {
-        const ret = wasm.world_link_exists(this.__wbg_ptr, aidx, bidx);
+    link_exists(a, b) {
+        const ret = wasm.world_link_exists(this.__wbg_ptr, a, b);
         return ret !== 0;
     }
     /**
@@ -1001,10 +988,6 @@ export class World {
         const ret = wasm.world_particles(this.__wbg_ptr);
         return ret >>> 0;
     }
-    /**
-     * Calculate each particle's link-based direction and displacement, apply active
-     * booster thrust, record activation changes, and reset response accumulators.
-     */
     update_01() {
         wasm.world_update_01(this.__wbg_ptr);
     }

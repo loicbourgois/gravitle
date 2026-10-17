@@ -10,3 +10,8 @@ data
 **/__pycache__/
 __pycache__
 **.todo.**.llm.md
+front/chrono/review/*
+!front/chrono/review
+!front/chrono/review/optimize_1.yml
+!front/chrono/review/optimize_2.yml
+!front/chrono/review/optimize.sh

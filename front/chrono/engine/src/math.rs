@@ -14,37 +14,50 @@ pub struct Cri {
     pub np: Point,
 }
 
-pub fn distance(a: Point, b: Point) -> f32 {
-    distance_sqrd(a, b).sqrt()
-}
+// pub fn distance(a: Point, b: Point) -> f32 {
+//     distance_sqrd(a, b).sqrt()
+// }
 
 pub fn dot(a: Point, b: Point) -> f32 {
     a.x * b.x + a.y * b.y
 }
 
-pub fn collision_response(p1: &Cri, p2: &Cri) -> Point {
-    // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
-    let delta_velocity = Point {
-        x: p1.dp.x - p2.dp.x,
-        y: p1.dp.y - p2.dp.y,
-    };
-    let delta_position = Point {
-        x: p1.np.x - p2.np.x,
-        y: p1.np.y - p2.np.y,
-    };
-    let mass_1 = 1.0;
-    let mass_2 = 1.0;
-    let mass_factor = 2.0 * mass_2 / (mass_2 + mass_1);
-    let dot_vp = dot(delta_velocity, delta_position);
-    let distance_ = distance(Point { x: 0.0, y: 0.0 }, delta_position);
-    let distance_squared = distance_ * distance_;
-    let factor = mass_factor * dot_vp / distance_squared;
-    // return acceleration
-    Point {
-        x: delta_position.x * factor,
-        y: delta_position.y * factor,
+
+pub fn collision_response_v2(p1: &Cri, p2: &Cri) -> Point {
+    let dv = delta(p2.dp, p1.dp);
+    let dp = delta(p2.np, p1.np);
+    let distance_squared = dot(dp, dp);
+    if distance_squared == 0.0 {
+        return Point { x: 0.0, y: 0.0 };
     }
+    let factor = dot(dv, dp) / distance_squared;
+    Point { x: dp.x * factor, y: dp.y * factor }
 }
+
+
+// pub fn collision_response_v1(p1: &Cri, p2: &Cri) -> Point {
+//     // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+//     let delta_velocity = Point {
+//         x: p1.dp.x - p2.dp.x,
+//         y: p1.dp.y - p2.dp.y,
+//     };
+//     let delta_position = Point {
+//         x: p1.np.x - p2.np.x,
+//         y: p1.np.y - p2.np.y,
+//     };
+//     let mass_1 = 1.0;
+//     let mass_2 = 1.0;
+//     let mass_factor = 2.0 * mass_2 / (mass_2 + mass_1);
+//     let dot_vp = dot(delta_velocity, delta_position);
+//     let distance_ = distance(Point { x: 0.0, y: 0.0 }, delta_position);
+//     let distance_squared = distance_ * distance_;
+//     let factor = mass_factor * dot_vp / distance_squared;
+//     // return acceleration
+//     Point {
+//         x: delta_position.x * factor,
+//         y: delta_position.y * factor,
+//     }
+// }
 
 pub fn delta(a: Point, b: Point) -> Point {
     Point {
@@ -71,6 +84,19 @@ pub fn distance_sqrd(a: Point, b: Point) -> f32 {
 ///
 /// Resources
 /// - <https://en.wikipedia.org/wiki/Toroidal_graph>
+#[inline]
+pub fn wrap_around_v3(a: Point, b: Point) -> WrapAroundResult {
+    let mut dx = b.x - a.x;
+    let mut dy = b.y - a.y;
+    if dx > 0.5 { dx -= 1.0 } else if dx < -0.5 { dx += 1.0 }
+    if dy > 0.5 { dy -= 1.0 } else if dy < -0.5 { dy += 1.0 }
+    WrapAroundResult {
+        a,
+        b: Point { x: a.x + dx, y: a.y + dy },
+        d_sqrd: dx * dx + dy * dy,
+    }
+}
+
 #[wasm_bindgen]
 pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
     // Map size
