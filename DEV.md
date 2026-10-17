@@ -5,6 +5,10 @@
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
+http://localhost:82/?debug=true
+
+
+$HOME/github.com/loicbourgois/gravitle/lint.sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82
@@ -75,6 +79,7 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
+- bug: share link: after actiavedt once, does not reset
 - variable links
 - moddable core engine
   - kinds as json

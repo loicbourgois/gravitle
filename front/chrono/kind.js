@@ -5,6 +5,7 @@ const kind = {
 	ASTEROID: 4,
 	UNLIGHTED: 5,
 	LIGHTED: 6,
+	HEADLIGHT: 7,
 };
 
 export { kind };

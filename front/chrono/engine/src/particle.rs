@@ -4,7 +4,7 @@ use crate::world::Kind;
 use crate::world::UserKind;
 #[wasm_bindgen]
 #[repr(C)]
-pub struct Cell {
+pub struct Particle {
     pub idx: u32,
     pub diameter: f32,
     // position
@@ -15,7 +15,7 @@ pub struct Cell {
     pub np: Point,
     // delta position
     pub dp: Point,
-    // direction in which the cell points
+    // direction in which the particle points
     // away from neighbours (tbc)
     pub direction: Point,
     // delta velocity
@@ -30,9 +30,9 @@ pub struct Cell {
     pub padding: u32,
 }
 #[wasm_bindgen]
-impl Cell {
-    pub fn new(idx: u32, diameter: f32, kind: Kind, user_kind: UserKind) -> Cell {
-        Cell {
+impl Particle {
+    pub fn new(idx: u32, diameter: f32, kind: Kind, user_kind: UserKind) -> Particle {
+        Particle {
             idx,
             diameter,
             p: Point::new(0.0, 0.0),
@@ -52,7 +52,7 @@ impl Cell {
         }
     }
     pub fn size() -> u32 {
-        size_of::<Cell>() as u32
+        size_of::<Particle>() as u32
     }
     pub fn set_position(&mut self, x: f32, y: f32) {
         self.p.x = x;

@@ -1,4 +1,5 @@
 #!/bin/sh
+# $HOME/github.com/loicbourgois/gravitle/generate.sh
 set -e
 # docker-compose \
 #   --file $HOME/github.com/loicbourgois/gravitle/docker-compose.yml \
