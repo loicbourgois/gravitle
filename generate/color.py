@@ -75,12 +75,19 @@ color = {
             },
         },
     },
+    kind.HEADLIGHT: {
+        0: {
+            0: {
+                m: "#ffae",
+            },
+        },
+    },
 }
 
 
 def colors_generated_js():
     lines = [
-        "// Generated from gravitle/generate/main.py",
+        "// Generated from file://./../../../gravitle/generate/color.py",
         'import { kind } from "./kind.js";',
         "const colors_generated = {",
     ]

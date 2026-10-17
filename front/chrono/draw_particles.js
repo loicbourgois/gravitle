@@ -105,7 +105,7 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	}
 	for (let i = 0; i < world.particles_count(); i++) {
 		const particle = get_particle(particles_view, particle_size, i);
-		if ([kind.ARMOR, kind.CORE].includes(particle.kind)) {
+		if ([kind.ARMOR, kind.CORE, kind.HEADLIGHT].includes(particle.kind)) {
 			const p3 = particle.ap;
 			const d3 = particle.diameter;
 			view.draw_disk_multi(
@@ -116,25 +116,69 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 			);
 		}
 	}
-	for (let color_id_1 of [1, 2, 0]) {
+	for (const link_kind of [
+		kind.CORE,
+		kind.HEADLIGHT,
+		kind.ARMOR,
+		kind.BOOSTER,
+	]) {
 		for (let i = 0; i < world.links_count(); i++) {
 			const l = get_link(links_view, link_size, i);
 			const p1 = get_particle(particles_view, particle_size, l.a);
 			const p2 = get_particle(particles_view, particle_size, l.b);
-			const kind =
+			const kind_ =
 				link_color_priority[p1.kind] < link_color_priority[p2.kind]
 					? p1.kind
 					: p2.kind;
-			if (color_id_1 == kind) {
+			if (link_kind === kind_) {
 				const wa = wrap_around(p1.ap, p2.ap);
 				const delt = multiply_vector(delta(wa.a, wa.b), 0.5);
-				const color = get_color(kind, 0, 0, player_kind);
+				let color = get_color(kind_, 0, 0, player_kind);
+				if (kind_==kind.HEADLIGHT) {
+					// color = get_color(kind.ARMOR, 0, 0, player_kind);
+					// color = "#ffa";
+				}
 				const aa = 0.75;
 				const pos1 = add_vectors(p1.p, delt);
 				const pos2 = del_vector(p2.p, delt);
-				view.draw_disk_multi(pos1.x, pos1.y, p1.diameter * aa, color);
-				view.draw_disk_multi(pos2.x, pos2.y, p2.diameter * aa, color);
+				if (kind_==kind.HEADLIGHT) {
+					view.draw_disk_multi(pos1.x, pos1.y, p1.diameter * aa, color);
+					view.draw_disk_multi(pos2.x, pos2.y, p2.diameter * aa, color);
+				} else {
+					view.draw_disk_multi(pos1.x, pos1.y, p1.diameter * aa, color);
+					view.draw_disk_multi(pos2.x, pos2.y, p2.diameter * aa, color);
+				}
 			}
+		}
+	}
+	for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+		if (particle.kind === kind.HEADLIGHT) {
+			draw_front_light(view, particle);
+		}
+	}
+};
+
+const draw_front_light = (view, particle) => {
+	const { x, y } = particle.direction;
+	const length = Math.hypot(x, y);
+	if (length === 0) return;
+
+	const forward = { x: x / length, y: y / length };
+	const side = { x: -forward.y, y: forward.x };
+	const beam_length = particle.diameter * 18;
+	const steps = 16;
+	const rays = 1;
+	for (let step = 0; step < steps; step++) {
+		const distance = step * particle.diameter;
+		for (let ray = 0; ray < rays; ray++) {
+			view.draw_disk_multi(
+				particle.ap.x + forward.x * distance,
+				particle.ap.y + forward.y * distance,
+				particle.diameter*step,
+				"#f801",
+				// "#f801",
+			);
 		}
 	}
 };

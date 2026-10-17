@@ -5,6 +5,7 @@ const link_color_priority = {
 	[kind.CORE]: 0,
 	[kind.ARMOR]: 1,
 	[kind.BOOSTER]: 2,
+	[kind.HEADLIGHT]: 3,
 };
 
 // m: me: player's ship

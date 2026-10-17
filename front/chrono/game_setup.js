@@ -3,6 +3,7 @@ function game_setup() {
 		armor: this.gravitle.Kind.Armor,
 		booster: this.gravitle.Kind.Booster,
 		core: this.gravitle.Kind.Core,
+		headlight: this.gravitle.Kind.Headlight,
 	};
 	for (let idx = 0; idx < this.worlds.length; idx++) {
 		const world = this.worlds[idx];

@@ -23,6 +23,7 @@ pub enum Kind {
     Asteroid = 4,
     Unlighted = 5,
     Lighted = 6,
+    Headlight = 7,
 }
 
 #[wasm_bindgen]

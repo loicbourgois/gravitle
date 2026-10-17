@@ -11,6 +11,7 @@ function View2d(id) {
 	this.mouse = null;
 	this.resize();
 	this.background = "#102";
+	// this.background = "#201130";
 }
 
 View2d.prototype.set_backgound = function (color) {

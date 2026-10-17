@@ -8,3 +8,4 @@ class kind(Enum):
     ASTEROID = 4
     UNLIGHTED = 5
     LIGHTED = 6
+    HEADLIGHT = 7

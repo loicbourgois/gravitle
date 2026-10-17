@@ -7,6 +7,7 @@ const KIND_CORE = 2;
 const KIND_ASTEROID = 4;
 const KIND_UNLIGHTED = 5;
 const KIND_LIGHTED = 6;
+const KIND_HEADLIGHT = 7;
 struct Cell {
     idx: u32,
     diameter: f32,
@@ -115,6 +116,9 @@ switch particle.user_kind {
         vsOut.color = vec4f(0.4, 0.4, 0.24, 0.4);
       }
       case KIND_LIGHTED: {
+        vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
+      }
+      case KIND_HEADLIGHT: {
         vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
       }
   default:{}

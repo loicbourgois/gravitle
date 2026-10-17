@@ -20,6 +20,9 @@ switch particle.user_kind {
       case KIND_LIGHTED: {
         vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
       }
+      case KIND_HEADLIGHT: {
+        vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
+      }
   default:{}
     }
   }
