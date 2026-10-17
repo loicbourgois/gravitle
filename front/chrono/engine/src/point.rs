@@ -21,7 +21,7 @@ impl Point {
         self.y = 0.0;
     }
     pub fn normalize(&mut self) -> Point {
-        self.normalize_2((self.x*self.x + self.y*self.y).sqrt())
+        self.normalize_2((self.x * self.x + self.y * self.y).sqrt())
     }
     pub fn normalize_2(&mut self, length: f32) -> Point {
         if length != 0.0 {
@@ -31,7 +31,7 @@ impl Point {
         *self
     }
     pub fn normalized(self) -> Point {
-        let length = (self.x*self.x + self.y*self.y).sqrt();
+        let length = (self.x * self.x + self.y * self.y).sqrt();
         Point {
             x: self.x / length,
             y: self.y / length,
@@ -47,7 +47,7 @@ impl Point {
         (self.x - x).powf(2.0) + (self.y - y).powf(2.0)
     }
     pub fn length(self) -> f32 {
-        (self.x*self.x + self.y*self.y).sqrt()
+        (self.x * self.x + self.y * self.y).sqrt()
     }
 }
 impl Sub for Point {

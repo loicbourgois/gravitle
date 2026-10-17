@@ -11,12 +11,10 @@ import {
 import { link_color_priority, get_color } from "./colors.js";
 import { kind } from "./kind.js";
 
-
-const COUNT = 6
-const SIZE = 1
-const SPACE_1 = 0.2
-const SPACE_2 = 0.3
-
+const COUNT = 6;
+const SIZE = 1;
+const SPACE_1 = 0.2;
+const SPACE_2 = 0.3;
 
 const draw_star = (view, particle, player_kind, space) => {
 	const p3 = particle.ap;
@@ -27,15 +25,15 @@ const draw_star = (view, particle, player_kind, space) => {
 		d3,
 		get_color(particle.kind, particle.activated, 0, player_kind),
 	);
-	let m = SIZE
-	let m2 = (m + 1.0)*space
+	let m = SIZE;
+	let m2 = (m + 1.0) * space;
 	let p_dot = {
 		x: p3.x + d3 * m2,
 		y: p3.y,
-	}
+	};
 	for (let index = 0; index < COUNT; index++) {
-		const angle_degree = index * 360/COUNT;
-		const p_dot_ = rotate_around(p_dot, p3, angle_degree)
+		const angle_degree = (index * 360) / COUNT;
+		const p_dot_ = rotate_around(p_dot, p3, angle_degree);
 		view.draw_disk_multi(
 			p_dot_.x,
 			p_dot_.y,
@@ -43,8 +41,7 @@ const draw_star = (view, particle, player_kind, space) => {
 			get_color(particle.kind, particle.activated, 0, player_kind),
 		);
 	}
-}
-
+};
 
 const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	const particles_ptr = world.particles();
@@ -66,7 +63,7 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 		// Put in here so that other player ghost
 		// lighted star show up in green.
 		if (particle.kind == kind.LIGHTED) {
-			draw_star(view, particle, player_kind, SPACE_2)
+			draw_star(view, particle, player_kind, SPACE_2);
 		}
 	}
 	for (let i = 0; i < world.particles_count(); i++) {
@@ -157,7 +154,7 @@ const draw_particles = (gravitle, world, memory, view) => {
 			view.center.x = particle.ap.x + particle.dp.x * 20;
 			view.center.y = particle.ap.y + particle.dp.y * 20;
 		} else if (particle.kind == kind.UNLIGHTED) {
-			draw_star(view, particle, player_kind, SPACE_1)
+			draw_star(view, particle, player_kind, SPACE_1);
 		} else {
 			// pass
 		}

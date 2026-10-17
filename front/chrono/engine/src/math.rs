@@ -22,7 +22,6 @@ pub fn dot(a: Point, b: Point) -> f32 {
     a.x * b.x + a.y * b.y
 }
 
-
 pub fn collision_response_v2(p1: &Cri, p2: &Cri) -> Point {
     let dv = delta(p2.dp, p1.dp);
     let dp = delta(p2.np, p1.np);
@@ -31,9 +30,11 @@ pub fn collision_response_v2(p1: &Cri, p2: &Cri) -> Point {
         return Point { x: 0.0, y: 0.0 };
     }
     let factor = dot(dv, dp) / distance_squared;
-    Point { x: dp.x * factor, y: dp.y * factor }
+    Point {
+        x: dp.x * factor,
+        y: dp.y * factor,
+    }
 }
-
 
 // pub fn collision_response_v1(p1: &Cri, p2: &Cri) -> Point {
 //     // https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
@@ -85,14 +86,30 @@ pub fn distance_sqrd(a: Point, b: Point) -> f32 {
 /// Resources
 /// - <https://en.wikipedia.org/wiki/Toroidal_graph>
 #[inline]
+fn wrap_delta(mut d: f32) -> f32 {
+    // Fast path for common case
+    if d > 0.5 {
+        d -= 1.0;
+    } else if d < -0.5 {
+        d += 1.0;
+    }
+    // Fallback for large differences (predicted positions can be unwrapped)
+    if !(-0.5..=0.5).contains(&d) {
+        d = (d + 0.5).rem_euclid(1.0) - 0.5;
+    }
+    d
+}
+
+#[inline]
 pub fn wrap_around_v3(a: Point, b: Point) -> WrapAroundResult {
-    let mut dx = b.x - a.x;
-    let mut dy = b.y - a.y;
-    if dx > 0.5 { dx -= 1.0 } else if dx < -0.5 { dx += 1.0 }
-    if dy > 0.5 { dy -= 1.0 } else if dy < -0.5 { dy += 1.0 }
+    let dx = wrap_delta(b.x - a.x);
+    let dy = wrap_delta(b.y - a.y);
     WrapAroundResult {
         a,
-        b: Point { x: a.x + dx, y: a.y + dy },
+        b: Point {
+            x: a.x + dx,
+            y: a.y + dy,
+        },
         d_sqrd: dx * dx + dy * dy,
     }
 }
@@ -115,7 +132,6 @@ pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
         d_sqrd,
     }
 }
-
 
 // Known edge case: a = (0.20, 0.20), b = (0.85, 0.85).
 // This implementation returns d_sqrd = 0.845 instead of the shortest

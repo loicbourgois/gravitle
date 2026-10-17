@@ -217,7 +217,11 @@ const test = (gravitle, memory) => {
 	}
 	if (errors.length) {
 		console.log(`gravitle.Particle.size(): ${gravitle.Particle.size()}`);
-		for (let i = 0; i < world.particles_count() * gravitle.Particle.size(); i++) {
+		for (
+			let i = 0;
+			i < world.particles_count() * gravitle.Particle.size();
+			i++
+		) {
 			try {
 				console.log(
 					i,

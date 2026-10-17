@@ -10,7 +10,6 @@ const rotate_around = (a, b, angle_degrees) => {
 	};
 };
 
-
 const add_vectors = (a, b) => {
 	return {
 		x: a.x + b.x,

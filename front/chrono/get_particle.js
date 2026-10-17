@@ -34,9 +34,15 @@ const get_particle = (particles_view, particle_size, idx) => {
 			x: particles_view.getFloat32(idx * particle_size + 64, true),
 			y: particles_view.getFloat32(idx * particle_size + 68, true),
 		},
-		collision_response_count: particles_view.getUint32(idx * particle_size + 72, true),
+		collision_response_count: particles_view.getUint32(
+			idx * particle_size + 72,
+			true,
+		),
 		activated: particles_view.getUint32(idx * particle_size + 76, true),
-		activated_previous: particles_view.getUint32(idx * particle_size + 80, true),
+		activated_previous: particles_view.getUint32(
+			idx * particle_size + 80,
+			true,
+		),
 		kind: particles_view.getUint32(idx * particle_size + 84, true),
 		user_kind: particles_view.getUint32(idx * particle_size + 88, true),
 	};

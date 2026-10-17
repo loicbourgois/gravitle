@@ -1,16 +1,15 @@
-use crate::particle::Particle;
 use crate::link::Link;
 use crate::math::Cri;
 use crate::math::collision_response_v2;
 use crate::math::delta;
 use crate::math::wrap_around_v3;
+use crate::particle::Particle;
 use crate::point::Point;
 use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
-
 
 const LINK_STRENGH: f32 = 0.2;
 
@@ -54,8 +53,8 @@ pub struct World {
     pub move_start: Option<u32>,
     activation_events: HashMap<u32, Vec<ActivationEvent>>,
     // How many cell per side we have
-    // resolution = 10 
-    // -> grid of 10x10 
+    // resolution = 10
+    // -> grid of 10x10
     // -> each grid cell is 0.1 x 0.1 in size
     grid_resolution: usize,
     // Stores particles indexes
@@ -66,7 +65,7 @@ pub struct World {
     // Used during collision detection
     // Built from the grid
     // Left idx must always be less than right idx: we don't want
-    // to double process a pair. 
+    // to double process a pair.
     pairs: Vec<(usize, usize)>,
     // canonical (min,max) for O(1) link_exists
     link_set: HashSet<(usize, usize)>,
@@ -76,7 +75,6 @@ impl Default for World {
         Self::new()
     }
 }
-
 
 #[inline]
 fn pair_mut(particles: &mut [Particle], a: usize, b: usize) -> (&mut Particle, &mut Particle) {
@@ -90,11 +88,8 @@ fn pair_mut(particles: &mut [Particle], a: usize, b: usize) -> (&mut Particle, &
     }
 }
 
-
 #[wasm_bindgen]
 impl World {
-    
-    
     pub fn new() -> World {
         let grid_resolution = 10;
         World {
@@ -108,13 +103,14 @@ impl World {
             victory_end: None,
             victory_fuel_used: None,
             activation_events: HashMap::new(),
-            grid_resolution ,
-            grid: (0..grid_resolution*grid_resolution).map(|_| Vec::new()).collect(),
+            grid_resolution,
+            grid: (0..grid_resolution * grid_resolution)
+                .map(|_| Vec::new())
+                .collect(),
             pairs: Vec::new(),
             link_set: HashSet::new(),
         }
     }
-
 
     pub fn setup(
         &mut self,
@@ -144,8 +140,8 @@ impl World {
                 }
                 if ok {
                     for _ in 0..16 {
-                        let x2 = x + (sfc32.next_f32()-0.5) * diameter * 1.0;
-                        let y2 = y + (sfc32.next_f32()-0.5) * diameter * 1.0;
+                        let x2 = x + (sfc32.next_f32() - 0.5) * diameter * 1.0;
+                        let y2 = y + (sfc32.next_f32() - 0.5) * diameter * 1.0;
                         self.add_particle(x2, y2, diameter, Kind::Asteroid, user_kind);
                     }
                     break;
@@ -179,12 +175,10 @@ impl World {
         }
     }
 
-
     pub fn link_exists(&self, a: usize, b: usize) -> bool {
         let (lo, hi) = if a < b { (a, b) } else { (b, a) };
         self.link_set.contains(&(lo, hi))
     }
-
 
     pub fn run_step(&mut self) {
         self.update_01();
@@ -196,12 +190,11 @@ impl World {
         self.step += 1;
     }
 
-
     fn update_grid(&mut self) {
         for cell in &mut self.grid {
             cell.clear();
         }
-        let resolution = self.grid_resolution as isize;
+        let resolution: isize = self.grid_resolution.cast_signed();
         let cell_size = 1.0 / self.grid_resolution as f32;
         for (index, particle) in self.particles.iter().enumerate() {
             let radius = particle.diameter * 0.5;
@@ -219,7 +212,6 @@ impl World {
         }
     }
 
-
     fn update_pairs(&mut self) {
         self.pairs.clear();
         for cell in &mut self.grid {
@@ -236,8 +228,7 @@ impl World {
                         | (Kind::Asteroid, Kind::Unlighted)
                         | (Kind::Unlighted, Kind::Asteroid)
                         | (Kind::Asteroid, Kind::Lighted)
-                        | (Kind::Lighted, Kind::Asteroid) 
-                        => {}
+                        | (Kind::Lighted, Kind::Asteroid) => {}
                         _ => {
                             self.pairs.push((a, b));
                         }
@@ -289,111 +280,119 @@ impl World {
                 self.activation_events
                     .entry(step)
                     .or_default()
-                    .push(ActivationEvent { c: p.idx, a: p.activated });
+                    .push(ActivationEvent {
+                        c: p.idx,
+                        a: p.activated,
+                    });
             }
             p.activated_previous = p.activated;
         }
     }
 
-
     /// Check predicted particle positions for collisions, accumulate collision
     /// responses, and light stars touched by ship particles.
     pub fn update_02(&mut self) {
-    for &(ia, ib) in &self.pairs {
-        // Query link_set before borrowing particles
-        let linked = self.link_exists(ia, ib);
-        let (ca, cb) = pair_mut(&mut self.particles, ia, ib);
+        for &(ia, ib) in &self.pairs {
+            // Query link_set before borrowing particles
+            let linked = self.link_exists(ia, ib);
+            let (ca, cb) = pair_mut(&mut self.particles, ia, ib);
 
-        let wa = wrap_around_v3(ca.np, cb.np);
-        let diams = (ca.diameter + cb.diameter) * 0.5;
-        let colliding = wa.d_sqrd < diams * diams;
+            let wa = wrap_around_v3(ca.np, cb.np);
+            let diams = (ca.diameter + cb.diameter) * 0.5;
+            let colliding = wa.d_sqrd < diams * diams;
 
-        if colliding {
-            // Physical collision response
-            if !matches!(ca.kind, Kind::Unlighted | Kind::Lighted)
-                && !matches!(cb.kind, Kind::Unlighted | Kind::Lighted)
-            {
-                let cria = Cri { np: wa.a, dp: ca.dp };
-                let crib = Cri { np: wa.b, dp: cb.dp };
-                let mut cr = collision_response_v2(&cria, &crib);
-                if linked {
-                    cr.x *= 0.5;
-                    cr.y *= 0.5;
+            if colliding {
+                // Physical collision response
+                if !matches!(ca.kind, Kind::Unlighted | Kind::Lighted)
+                    && !matches!(cb.kind, Kind::Unlighted | Kind::Lighted)
+                {
+                    let cria = Cri {
+                        np: wa.a,
+                        dp: ca.dp,
+                    };
+                    let crib = Cri {
+                        np: wa.b,
+                        dp: cb.dp,
+                    };
+                    let mut cr = collision_response_v2(&cria, &crib);
+                    if linked {
+                        cr.x *= 0.5;
+                        cr.y *= 0.5;
+                    }
+                    ca.collision_response.x -= cr.x;
+                    ca.collision_response.y -= cr.y;
+                    ca.collision_response_count += 1;
+                    cb.collision_response.x += cr.x;
+                    cb.collision_response.y += cr.y;
+                    cb.collision_response_count += 1;
                 }
-                ca.collision_response.x -= cr.x;
-                ca.collision_response.y -= cr.y;
-                ca.collision_response_count += 1;
-                cb.collision_response.x += cr.x;
-                cb.collision_response.y += cr.y;
-                cb.collision_response_count += 1;
-            }
-            // Star lighting
-            if ca.kind == Kind::Unlighted && matches!(cb.kind, Kind::Armor | Kind::Booster | Kind::Core) {
-                ca.kind = Kind::Lighted;
-            }
-            if cb.kind == Kind::Unlighted && matches!(ca.kind, Kind::Armor | Kind::Booster | Kind::Core) {
-                cb.kind = Kind::Lighted;
+                // Star lighting
+                if ca.kind == Kind::Unlighted
+                    && matches!(cb.kind, Kind::Armor | Kind::Booster | Kind::Core)
+                {
+                    ca.kind = Kind::Lighted;
+                }
+                if cb.kind == Kind::Unlighted
+                    && matches!(ca.kind, Kind::Armor | Kind::Booster | Kind::Core)
+                {
+                    cb.kind = Kind::Lighted;
+                }
             }
         }
     }
-}
-
 
     /// Accumulate position corrections that keep linked particles together.
     pub fn update_03(&mut self) {
-    for l in &self.links {
-        let (ca, cb) = pair_mut(&mut self.particles, l.a as usize, l.b as usize);
-        let wa = wrap_around_v3(ca.np, cb.np);
-        let d = wa.d_sqrd.sqrt();
-        let n = delta(wa.a, wa.b).normalize_2(d);
-        let ds = (ca.diameter + cb.diameter) * 0.5;
-        let factor = (ds - d) * LINK_STRENGH;
-        ca.link_response.x -= n.x * factor * 0.5;
-        ca.link_response.y -= n.y * factor * 0.5;
-        cb.link_response.x += n.x * factor * 0.5;
-        cb.link_response.y += n.y * factor * 0.5;
+        for l in &self.links {
+            let (ca, cb) = pair_mut(&mut self.particles, l.a as usize, l.b as usize);
+            let wa = wrap_around_v3(ca.np, cb.np);
+            let d = wa.d_sqrd.sqrt();
+            let n = delta(wa.a, wa.b).normalize_2(d);
+            let ds = (ca.diameter + cb.diameter) * 0.5;
+            let factor = (ds - d) * LINK_STRENGH;
+            ca.link_response.x -= n.x * factor * 0.5;
+            ca.link_response.y -= n.y * factor * 0.5;
+            cb.link_response.x += n.x * factor * 0.5;
+            cb.link_response.y += n.y * factor * 0.5;
+        }
     }
-}
-
 
     /// Apply accumulated responses, advance movable particles, and record victory
     /// when all stars are lighted after movement has begun.
     pub fn update_04(&mut self) {
-    let mut c_unlighted = 0;
-    for p in &mut self.particles {
-        if p.kind == Kind::Unlighted {
-            c_unlighted += 1;
-        }
-        // Always apply responses (they're zeroed in update_01 if unused)
-        if p.collision_response_count > 0 {
-            let inv = 1.0 / p.collision_response_count as f32;
-            p.collision_response.x *= inv;
-            p.collision_response.y *= inv;
-        }
-        p.np.x += p.collision_response.x + p.link_response.x;
-        p.np.y += p.collision_response.y + p.link_response.y;
+        let mut c_unlighted = 0;
+        for p in &mut self.particles {
+            if p.kind == Kind::Unlighted {
+                c_unlighted += 1;
+            }
+            // Always apply responses (they're zeroed in update_01 if unused)
+            if p.collision_response_count > 0 {
+                let inv = 1.0 / p.collision_response_count as f32;
+                p.collision_response.x *= inv;
+                p.collision_response.y *= inv;
+            }
+            p.np.x += p.collision_response.x + p.link_response.x;
+            p.np.y += p.collision_response.y + p.link_response.y;
 
-        if !matches!(p.kind, Kind::Asteroid | Kind::Unlighted | Kind::Lighted) {
-            p.p.x = p.np.x.rem_euclid(1.0);
-            p.p.y = p.np.y.rem_euclid(1.0);
-            p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x;
-            p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y;
+            if !matches!(p.kind, Kind::Asteroid | Kind::Unlighted | Kind::Lighted) {
+                p.p.x = p.np.x.rem_euclid(1.0);
+                p.p.y = p.np.y.rem_euclid(1.0);
+                p.pp.x = p.p.x - p.dp.x - p.collision_response.x - p.link_response.x;
+                p.pp.y = p.p.y - p.dp.y - p.collision_response.y - p.link_response.y;
+            }
+        }
+        if c_unlighted == 0 && self.victory != 1 && self.move_start.is_some() {
+            self.victory_end = Some(self.step);
+            self.victory_duration = Some(self.step - self.move_start.unwrap());
+            self.victory_fuel_used = Some(self.fuel_used);
+            self.victory = 1;
         }
     }
-    if c_unlighted == 0 && self.victory != 1 && self.move_start.is_some() {
-        self.victory_end = Some(self.step);
-        self.victory_duration = Some(self.step - self.move_start.unwrap());
-        self.victory_fuel_used = Some(self.fuel_used);
-        self.victory = 1;
-    }
-}
-
 
     pub fn get_activation_events(&self) -> String {
         serde_json::to_string(&self.activation_events)
             .unwrap_or_else(|_| "Error serializing activation_events to JSON".to_string())
     }
-
 
     // Particles management
     pub fn add_particle(
@@ -406,7 +405,8 @@ impl World {
     ) -> u32 {
         let l = self.particles.len();
         let l_u32 = l as u32;
-        self.particles.push(Particle::new(l_u32, diameter, kind, user_kind));
+        self.particles
+            .push(Particle::new(l_u32, diameter, kind, user_kind));
         let particle = &mut self.particles[l];
         particle.set_position(x, y);
         l_u32
@@ -460,7 +460,6 @@ impl World {
         self.particles.len() as u32
     }
 
-
     // Links management
     pub fn add_link(&mut self, a: u32, b: u32) -> u32 {
         let l = self.links.len();
@@ -476,7 +475,6 @@ impl World {
     pub fn links(&self) -> *const Link {
         self.links.as_ptr()
     }
-
 
     // Pairs
     pub fn pairs_count(&self) -> u32 {

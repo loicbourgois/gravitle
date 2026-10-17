@@ -279,7 +279,7 @@ Game.prototype.tick = function () {
 			"physic: " + debug_durations_engine.toFixed(1) + "ms";
 		document.getElementById("debug_durations_draw").innerHTML =
 			"render: " + debug_durations_draw.toFixed(1) + "ms";
-		document.getElementById("debug_pairs").innerHTML = 
+		document.getElementById("debug_pairs").innerHTML =
 			"pairs: " + this.worlds[0].pairs_count();
 	} catch (error) {
 		// pass

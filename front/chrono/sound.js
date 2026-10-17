@@ -66,7 +66,6 @@ const get_booster_v2 = (audio_context) => {
 	return g;
 };
 
-
 const get_booster_v3 = (audio_context) => {
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
 	const g = get_gain(audio_context, 0.0);
@@ -91,7 +90,6 @@ const get_booster_v3 = (audio_context) => {
 	return g;
 };
 
-
 const get_booster_v4 = (audio_context) => {
 	// Same as v2
 	const noise = new AudioWorkletNode(audio_context, "noise-generator");
@@ -100,7 +98,7 @@ const get_booster_v4 = (audio_context) => {
 	const h1 = get_filter(audio_context, "highpass", 51.69);
 	const l1 = get_filter(audio_context, "lowpass", 198.93);
 	const l2 = get_filter(audio_context, "lowpass", 218.77);
-	const l3 = get_filter(audio_context, "lowpass", 209.50);
+	const l3 = get_filter(audio_context, "lowpass", 209.5);
 	const g5 = get_gain(audio_context, 4.76);
 	const g3 = get_gain(audio_context, 10.53);
 	const h2 = get_filter(audio_context, "highpass", 130.72);
@@ -116,7 +114,6 @@ const get_booster_v4 = (audio_context) => {
 	gu.connect(g);
 	return g;
 };
-
 
 function Audio() {}
 Audio.prototype.setup = async function (booster_ids) {
