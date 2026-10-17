@@ -11,8 +11,8 @@ const colors_generated = {
 		},
 	},
 	[kind.CORE]: { 0: { 0: { m: "#ffa", g: "#885", o: "#885" } } },
-	[kind.ASTEROID]: { 0: { 0: { m: "#b60" } } },
-	[kind.UNLIGHTED]: { 0: { 0: { m: "#ff93" } } },
-	[kind.LIGHTED]: { 0: { 0: { m: "#ffad", g: "#0000", o: "#4f44" } } },
+	[kind.ASTEROID]: { 0: { 0: { m: "#844d" } } },
+	[kind.UNLIGHTED]: { 0: { 0: { m: "#ff96" } } },
+	[kind.LIGHTED]: { 0: { 0: { m: "#ffae", g: "#0000", o: "#4f46" } } },
 };
 export { colors_generated };

@@ -10,11 +10,11 @@ const link_color_priority = {
 // m: me: player's ship
 // g: ghost: player's ghosts
 // o: other_ghost: shared ghost
-const get_color = (cell_kind, activation, layer, player_kind) => {
+const get_color = (particle_kind, activation, layer, player_kind) => {
 	try {
-		return colors_generated[cell_kind][activation][layer][player_kind];
+		return colors_generated[particle_kind][activation][layer][player_kind];
 	} catch (error) {
-		console.log(cell_kind, activation, layer, player_kind);
+		console.log(particle_kind, activation, layer, player_kind);
 		throw error;
 	}
 };

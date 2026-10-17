@@ -16,7 +16,7 @@ function game_setup() {
 		}
 		// add ship
 		for (const e of this.ship.parts) {
-			world.add_cell(e.p.x, e.p.y, e.d, kinds[e.kind], user_kind);
+			world.add_particle(e.p.x, e.p.y, e.d, kinds[e.kind], user_kind);
 		}
 		for (const l of this.ship.links) {
 			world.add_link(l.a, l.b);
