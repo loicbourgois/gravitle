@@ -60,8 +60,8 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	);
 	for (let i = 0; i < world.particles_count(); i++) {
 		const particle = get_particle(particles_view, particle_size, i);
-		// Put in here so that other player ghost
-		// lighted star show up in green.
+		// Put in here so that the other player ghost
+		// lighted stars show up in green.
 		if (particle.kind == kind.LIGHTED) {
 			draw_star(view, particle, player_kind, SPACE_2);
 		}

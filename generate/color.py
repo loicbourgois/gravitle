@@ -55,23 +55,23 @@ color = {
     kind.ASTEROID: {
         0: {
             0: {
-                m: "#b60",
+                m: "#844d",
             },
         },
     },
     kind.UNLIGHTED: {
         0: {
             0: {
-                m: "#ff93",
+                m: "#ff96",
             },
         },
     },
     kind.LIGHTED: {
         0: {
             0: {
-                m: "#ffad",
+                m: "#ffae",
                 g: "#0000",
-                o: "#4f44",
+                o: "#4f46",
             },
         },
     },
