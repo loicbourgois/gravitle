@@ -8,6 +8,6 @@ const colors_generated = {
 [kind.ASTEROID]: {0: {0: {'m': '#102'}}},
 [kind.UNLIGHTED]: {0: {0: {'m': '#aaaa'}}},
 [kind.LIGHTED]: {0: {0: {'m': '#ffae', 'g': '#0000', 'o': '#4f46'}}},
-[kind.HEADLIGHT]: {0: {0: {'m': '#aaf'}}},
+[kind.HEADLIGHT]: {0: {0: {'m': '#aaf', 'g': '#558'}}},
 }
 export {colors_generated}

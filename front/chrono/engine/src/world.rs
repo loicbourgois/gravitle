@@ -121,18 +121,47 @@ impl World {
         user_kind: UserKind,
     ) {
         let mut sfc32 = Sfc32::new(seed);
-        for _ in 0..asteroid_count {
-            let diameter = 0.025;
+
+        for _ in 0..star_count {
+            let diameter = 0.015;
             let mut iterations = 0;
             loop {
                 iterations += 1;
-                assert!(iterations < 100, "too many iterations");
+                assert!(iterations < 200, "too many iterations");
                 let x = sfc32.next_f32();
                 let y = sfc32.next_f32();
                 let mut ok = true;
                 for particle in &self.particles {
                     let wa = wrap_around_v3(particle.p, Point { x, y });
-                    let diams = particle.diameter + diameter * 1.5;
+                    let diams = particle.diameter * 0.5 + diameter * 10.0;
+                    let colliding = wa.d_sqrd < diams * diams;
+                    if colliding {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    self.add_particle(x, y, diameter, Kind::Unlighted, user_kind);
+                    break;
+                }
+            }
+        }
+
+        for _ in 0..asteroid_count {
+            let diameter = 0.025;
+            let mut iterations = 0;
+            loop {
+                iterations += 1;
+                if iterations > 100 {
+                    break
+                }
+                // assert!(iterations < 100, "too many iterations");
+                let x = sfc32.next_f32();
+                let y = sfc32.next_f32();
+                let mut ok = true;
+                for particle in &self.particles {
+                    let wa = wrap_around_v3(particle.p, Point { x, y });
+                    let diams = particle.diameter + diameter * 2.5;
                     let colliding = wa.d_sqrd < diams * diams;
                     if colliding {
                         ok = false;
@@ -150,30 +179,7 @@ impl World {
             }
         }
 
-        for _ in 0..star_count {
-            let diameter = 0.015;
-            let mut iterations = 0;
-            loop {
-                iterations += 1;
-                assert!(iterations < 200, "too many iterations");
-                let x = sfc32.next_f32();
-                let y = sfc32.next_f32();
-                let mut ok = true;
-                for particle in &self.particles {
-                    let wa = wrap_around_v3(particle.p, Point { x, y });
-                    let diams = particle.diameter * 0.5 + diameter * 5.0;
-                    let colliding = wa.d_sqrd < diams * diams;
-                    if colliding {
-                        ok = false;
-                        break;
-                    }
-                }
-                if ok {
-                    self.add_particle(x, y, diameter, Kind::Unlighted, user_kind);
-                    break;
-                }
-            }
-        }
+        
     }
 
     pub fn link_exists(&self, a: usize, b: usize) -> bool {
@@ -329,12 +335,12 @@ impl World {
                 }
                 // Star lighting
                 if ca.kind == Kind::Unlighted
-                    && matches!(cb.kind, Kind::Armor | Kind::Booster | Kind::Core)
+                    && matches!(cb.kind, Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight )
                 {
                     ca.kind = Kind::Lighted;
                 }
                 if cb.kind == Kind::Unlighted
-                    && matches!(ca.kind, Kind::Armor | Kind::Booster | Kind::Core)
+                    && matches!(ca.kind, Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight)
                 {
                     cb.kind = Kind::Lighted;
                 }

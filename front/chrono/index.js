@@ -60,7 +60,7 @@ const main = async () => {
 		ghost,
 		view,
 		ship,
-		asteroid_count: 20,
+		asteroid_count: 32,
 	});
 };
 window.onload = () => {
