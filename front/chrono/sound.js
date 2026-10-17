@@ -138,10 +138,10 @@ Audio.prototype.setup = async function (booster_ids) {
 	this.transition = 0.5;
 	this.release = 0.125;
 	// const ids = [13, 14]
-	this.cells = [];
+	this.particles = [];
 	for (const id of booster_ids) {
 		const node = get_booster_v3(audio_context);
-		this.cells[id] = {
+		this.particles[id] = {
 			activated: false,
 			node: node,
 		};
@@ -150,7 +150,7 @@ Audio.prototype.setup = async function (booster_ids) {
 };
 Audio.prototype.activate = function (idx) {
 	try {
-		const c = this.cells[idx];
+		const c = this.particles[idx];
 		if (!c.activated) {
 			c.activated = true;
 			const now = this.audio_context.currentTime + 0.001;
@@ -167,7 +167,7 @@ Audio.prototype.activate = function (idx) {
 };
 Audio.prototype.deactivate = function (idx) {
 	try {
-		const c = this.cells[idx];
+		const c = this.particles[idx];
 		c.node.gain.cancelScheduledValues(0);
 		const now = this.audio_context.currentTime;
 		for (let i = 0; i < this.cc; i++) {

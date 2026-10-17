@@ -126,7 +126,7 @@ export function setup() {
 /**
  * Facilitates going "around" the map by handling toroidal boundary conditions.
  *
- * The map is a square of size 1.0. When a cell goes beyond the boundaries:
+ * The map is a square of size 1.0. When a particle goes beyond the boundaries:
  * - 1.1 wraps to 0.1
  * - -0.1 wraps to 0.9
  *
@@ -136,7 +136,7 @@ export function setup() {
  * Each axis is handled independently, allowing paths to cross one or both boundaries.
  *
  * Resources
- * - https://en.wikipedia.org/wiki/Toroidal_graph
+ * - <https://en.wikipedia.org/wiki/Toroidal_graph>
  * @param {Point} a
  * @param {Point} b
  * @returns {WrapAroundResult}
@@ -183,283 +183,6 @@ export const UserKind = Object.freeze({
     Ghost: 2, "2": "Ghost",
     Other: 3, "3": "Other",
 });
-
-const CellFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => {}, unregister: () => {} }
-    : new FinalizationRegistry(ptr => wasm.__wbg_cell_free(ptr >>> 0, 1));
-
-export class Cell {
-
-    static __wrap(ptr) {
-        ptr = ptr >>> 0;
-        const obj = Object.create(Cell.prototype);
-        obj.__wbg_ptr = ptr;
-        CellFinalization.register(obj, obj.__wbg_ptr, obj);
-        return obj;
-    }
-
-    __destroy_into_raw() {
-        const ptr = this.__wbg_ptr;
-        this.__wbg_ptr = 0;
-        CellFinalization.unregister(this);
-        return ptr;
-    }
-
-    free() {
-        const ptr = this.__destroy_into_raw();
-        wasm.__wbg_cell_free(ptr, 0);
-    }
-    /**
-     * @returns {number}
-     */
-    get idx() {
-        const ret = wasm.__wbg_get_cell_idx(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set idx(arg0) {
-        wasm.__wbg_set_cell_idx(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get diameter() {
-        const ret = wasm.__wbg_get_cell_diameter(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set diameter(arg0) {
-        wasm.__wbg_set_cell_diameter(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get p() {
-        const ret = wasm.__wbg_get_cell_p(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set p(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_p(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get pp() {
-        const ret = wasm.__wbg_get_cell_pp(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set pp(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_pp(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get np() {
-        const ret = wasm.__wbg_get_cell_np(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set np(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_np(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get dp() {
-        const ret = wasm.__wbg_get_cell_dp(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set dp(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_dp(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get direction() {
-        const ret = wasm.__wbg_get_cell_direction(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set direction(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_direction(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get dv() {
-        const ret = wasm.__wbg_get_cell_dv(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set dv(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_dv(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get link_response() {
-        const ret = wasm.__wbg_get_cell_link_response(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set link_response(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_link_response(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {Point}
-     */
-    get collision_response() {
-        const ret = wasm.__wbg_get_cell_collision_response(this.__wbg_ptr);
-        return Point.__wrap(ret);
-    }
-    /**
-     * @param {Point} arg0
-     */
-    set collision_response(arg0) {
-        _assertClass(arg0, Point);
-        var ptr0 = arg0.__destroy_into_raw();
-        wasm.__wbg_set_cell_collision_response(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @returns {number}
-     */
-    get collision_response_count() {
-        const ret = wasm.__wbg_get_cell_collision_response_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set collision_response_count(arg0) {
-        wasm.__wbg_set_cell_collision_response_count(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get activated() {
-        const ret = wasm.__wbg_get_cell_activated(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set activated(arg0) {
-        wasm.__wbg_set_cell_activated(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get activated_previous() {
-        const ret = wasm.__wbg_get_cell_activated_previous(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set activated_previous(arg0) {
-        wasm.__wbg_set_cell_activated_previous(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {Kind}
-     */
-    get kind() {
-        const ret = wasm.__wbg_get_cell_kind(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {Kind} arg0
-     */
-    set kind(arg0) {
-        wasm.__wbg_set_cell_kind(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {UserKind}
-     */
-    get user_kind() {
-        const ret = wasm.__wbg_get_cell_user_kind(this.__wbg_ptr);
-        return ret;
-    }
-    /**
-     * @param {UserKind} arg0
-     */
-    set user_kind(arg0) {
-        wasm.__wbg_set_cell_user_kind(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @returns {number}
-     */
-    get padding() {
-        const ret = wasm.__wbg_get_cell_padding(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * @param {number} arg0
-     */
-    set padding(arg0) {
-        wasm.__wbg_set_cell_padding(this.__wbg_ptr, arg0);
-    }
-    /**
-     * @param {number} x
-     * @param {number} y
-     */
-    set_position(x, y) {
-        wasm.cell_set_position(this.__wbg_ptr, x, y);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} diameter
-     * @param {Kind} kind
-     * @param {UserKind} user_kind
-     * @returns {Cell}
-     */
-    static new(idx, diameter, kind, user_kind) {
-        const ret = wasm.cell_new(idx, diameter, kind, user_kind);
-        return Cell.__wrap(ret);
-    }
-    /**
-     * @returns {number}
-     */
-    static size() {
-        const ret = wasm.cell_size();
-        return ret >>> 0;
-    }
-}
-if (Symbol.dispose) Cell.prototype[Symbol.dispose] = Cell.prototype.free;
 
 const LinkFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -570,6 +293,283 @@ export class Link {
     }
 }
 if (Symbol.dispose) Link.prototype[Symbol.dispose] = Link.prototype.free;
+
+const ParticleFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_particle_free(ptr >>> 0, 1));
+
+export class Particle {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Particle.prototype);
+        obj.__wbg_ptr = ptr;
+        ParticleFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        ParticleFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_particle_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get idx() {
+        const ret = wasm.__wbg_get_particle_idx(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set idx(arg0) {
+        wasm.__wbg_set_particle_idx(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get diameter() {
+        const ret = wasm.__wbg_get_particle_diameter(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set diameter(arg0) {
+        wasm.__wbg_set_particle_diameter(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get p() {
+        const ret = wasm.__wbg_get_particle_p(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set p(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_p(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get pp() {
+        const ret = wasm.__wbg_get_particle_pp(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set pp(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_pp(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get np() {
+        const ret = wasm.__wbg_get_particle_np(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set np(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_np(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get dp() {
+        const ret = wasm.__wbg_get_particle_dp(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set dp(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_dp(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get direction() {
+        const ret = wasm.__wbg_get_particle_direction(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set direction(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_direction(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get dv() {
+        const ret = wasm.__wbg_get_particle_dv(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set dv(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_dv(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get link_response() {
+        const ret = wasm.__wbg_get_particle_link_response(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set link_response(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_link_response(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {Point}
+     */
+    get collision_response() {
+        const ret = wasm.__wbg_get_particle_collision_response(this.__wbg_ptr);
+        return Point.__wrap(ret);
+    }
+    /**
+     * @param {Point} arg0
+     */
+    set collision_response(arg0) {
+        _assertClass(arg0, Point);
+        var ptr0 = arg0.__destroy_into_raw();
+        wasm.__wbg_set_particle_collision_response(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @returns {number}
+     */
+    get collision_response_count() {
+        const ret = wasm.__wbg_get_particle_collision_response_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set collision_response_count(arg0) {
+        wasm.__wbg_set_particle_collision_response_count(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get activated() {
+        const ret = wasm.__wbg_get_particle_activated(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set activated(arg0) {
+        wasm.__wbg_set_particle_activated(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get activated_previous() {
+        const ret = wasm.__wbg_get_particle_activated_previous(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set activated_previous(arg0) {
+        wasm.__wbg_set_particle_activated_previous(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {Kind}
+     */
+    get kind() {
+        const ret = wasm.__wbg_get_particle_kind(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {Kind} arg0
+     */
+    set kind(arg0) {
+        wasm.__wbg_set_particle_kind(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {UserKind}
+     */
+    get user_kind() {
+        const ret = wasm.__wbg_get_particle_user_kind(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {UserKind} arg0
+     */
+    set user_kind(arg0) {
+        wasm.__wbg_set_particle_user_kind(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @returns {number}
+     */
+    get padding() {
+        const ret = wasm.__wbg_get_particle_padding(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set padding(arg0) {
+        wasm.__wbg_set_particle_padding(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    set_position(x, y) {
+        wasm.particle_set_position(this.__wbg_ptr, x, y);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} diameter
+     * @param {Kind} kind
+     * @param {UserKind} user_kind
+     * @returns {Particle}
+     */
+    static new(idx, diameter, kind, user_kind) {
+        const ret = wasm.particle_new(idx, diameter, kind, user_kind);
+        return Particle.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    static size() {
+        const ret = wasm.particle_size();
+        return ret >>> 0;
+    }
+}
+if (Symbol.dispose) Particle.prototype[Symbol.dispose] = Particle.prototype.free;
 
 const PointFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -804,13 +804,6 @@ export class World {
         wasm.__wbg_set_world_move_start(this.__wbg_ptr, isLikeNone(arg0) ? 0x100000001 : (arg0) >>> 0);
     }
     /**
-     * @returns {number}
-     */
-    cells_count() {
-        const ret = wasm.world_cells_count(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
      * @param {number} aidx
      * @param {number} bidx
      * @returns {boolean}
@@ -827,95 +820,79 @@ export class World {
         return ret >>> 0;
     }
     /**
+     * @returns {number}
+     */
+    pairs_count() {
+        const ret = wasm.world_pairs_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {number} diameter
+     * @param {Kind} kind
+     * @param {UserKind} user_kind
+     * @returns {number}
+     */
+    add_particle(x, y, diameter, kind, user_kind) {
+        const ret = wasm.world_add_particle(this.__wbg_ptr, x, y, diameter, kind, user_kind);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    particles_count() {
+        const ret = wasm.world_particles_count(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @param {number} idx
      * @param {number} x
      */
-    set_cell_dp_x(idx, x) {
-        wasm.world_set_cell_dp_x(this.__wbg_ptr, idx, x);
+    set_particle_dp_x(idx, x) {
+        wasm.world_set_particle_dp_x(this.__wbg_ptr, idx, x);
     }
     /**
      * @param {number} idx
      * @param {number} y
      */
-    set_cell_dp_y(idx, y) {
-        wasm.world_set_cell_dp_y(this.__wbg_ptr, idx, y);
+    set_particle_dp_y(idx, y) {
+        wasm.world_set_particle_dp_y(this.__wbg_ptr, idx, y);
     }
     /**
      * @param {number} idx
      * @param {Kind} kind
      */
-    set_cell_kind(idx, kind) {
-        wasm.world_set_cell_kind(this.__wbg_ptr, idx, kind);
+    set_particle_kind(idx, kind) {
+        wasm.world_set_particle_kind(this.__wbg_ptr, idx, kind);
     }
     /**
      * @param {number} idx
      * @param {number} x
      */
-    set_cell_np_x(idx, x) {
-        wasm.world_set_cell_np_x(this.__wbg_ptr, idx, x);
+    set_particle_np_x(idx, x) {
+        wasm.world_set_particle_np_x(this.__wbg_ptr, idx, x);
     }
     /**
      * @param {number} idx
      * @param {number} y
      */
-    set_cell_np_y(idx, y) {
-        wasm.world_set_cell_np_y(this.__wbg_ptr, idx, y);
+    set_particle_np_y(idx, y) {
+        wasm.world_set_particle_np_y(this.__wbg_ptr, idx, y);
     }
     /**
      * @param {number} idx
      * @param {number} x
      */
-    set_cell_pp_x(idx, x) {
-        wasm.world_set_cell_pp_x(this.__wbg_ptr, idx, x);
+    set_particle_pp_x(idx, x) {
+        wasm.world_set_particle_pp_x(this.__wbg_ptr, idx, x);
     }
     /**
      * @param {number} idx
      * @param {number} y
      */
-    set_cell_pp_y(idx, y) {
-        wasm.world_set_cell_pp_y(this.__wbg_ptr, idx, y);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} diameter
-     */
-    set_cell_diameter(idx, diameter) {
-        wasm.world_set_cell_diameter(this.__wbg_ptr, idx, diameter);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} activated
-     */
-    set_cell_activated(idx, activated) {
-        wasm.world_set_cell_activated(this.__wbg_ptr, idx, activated);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} x
-     */
-    set_cell_position_x(idx, x) {
-        wasm.world_set_cell_position_x(this.__wbg_ptr, idx, x);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} y
-     */
-    set_cell_position_y(idx, y) {
-        wasm.world_set_cell_position_y(this.__wbg_ptr, idx, y);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} x
-     */
-    set_cell_direction_x(idx, x) {
-        wasm.world_set_cell_direction_x(this.__wbg_ptr, idx, x);
-    }
-    /**
-     * @param {number} idx
-     * @param {number} y
-     */
-    set_cell_direction_y(idx, y) {
-        wasm.world_set_cell_direction_y(this.__wbg_ptr, idx, y);
+    set_particle_pp_y(idx, y) {
+        wasm.world_set_particle_pp_y(this.__wbg_ptr, idx, y);
     }
     /**
      * @returns {string}
@@ -934,9 +911,51 @@ export class World {
     }
     /**
      * @param {number} idx
+     * @param {number} diameter
      */
-    switch_cell_activated(idx) {
-        wasm.world_switch_cell_activated(this.__wbg_ptr, idx);
+    set_particle_diameter(idx, diameter) {
+        wasm.world_set_particle_diameter(this.__wbg_ptr, idx, diameter);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} activated
+     */
+    set_particle_activated(idx, activated) {
+        wasm.world_set_particle_activated(this.__wbg_ptr, idx, activated);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} x
+     */
+    set_particle_position_x(idx, x) {
+        wasm.world_set_particle_position_x(this.__wbg_ptr, idx, x);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} y
+     */
+    set_particle_position_y(idx, y) {
+        wasm.world_set_particle_position_y(this.__wbg_ptr, idx, y);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} x
+     */
+    set_particle_direction_x(idx, x) {
+        wasm.world_set_particle_direction_x(this.__wbg_ptr, idx, x);
+    }
+    /**
+     * @param {number} idx
+     * @param {number} y
+     */
+    set_particle_direction_y(idx, y) {
+        wasm.world_set_particle_direction_y(this.__wbg_ptr, idx, y);
+    }
+    /**
+     * @param {number} idx
+     */
+    switch_particle_activated(idx) {
+        wasm.world_switch_particle_activated(this.__wbg_ptr, idx);
     }
     /**
      * @returns {World}
@@ -944,13 +963,6 @@ export class World {
     static new() {
         const ret = wasm.world_new();
         return World.__wrap(ret);
-    }
-    /**
-     * @returns {number}
-     */
-    cells() {
-        const ret = wasm.world_cells(this.__wbg_ptr);
-        return ret >>> 0;
     }
     /**
      * @returns {number}
@@ -971,18 +983,6 @@ export class World {
         wasm.world_setup(this.__wbg_ptr, ptr0, len0, asteroid_count, star_count, user_kind);
     }
     /**
-     * @param {number} x
-     * @param {number} y
-     * @param {number} diameter
-     * @param {Kind} kind
-     * @param {UserKind} user_kind
-     * @returns {number}
-     */
-    add_cell(x, y, diameter, kind, user_kind) {
-        const ret = wasm.world_add_cell(this.__wbg_ptr, x, y, diameter, kind, user_kind);
-        return ret >>> 0;
-    }
-    /**
      * @param {number} a
      * @param {number} b
      * @returns {number}
@@ -995,27 +995,34 @@ export class World {
         wasm.world_run_step(this.__wbg_ptr);
     }
     /**
-     * Calculate each cell's link-based direction and displacement, apply active
+     * @returns {number}
+     */
+    particles() {
+        const ret = wasm.world_particles(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Calculate each particle's link-based direction and displacement, apply active
      * booster thrust, record activation changes, and reset response accumulators.
      */
     update_01() {
         wasm.world_update_01(this.__wbg_ptr);
     }
     /**
-     * Check predicted cell positions for collisions, accumulate collision
-     * responses, and light stars touched by ship cells.
+     * Check predicted particle positions for collisions, accumulate collision
+     * responses, and light stars touched by ship particles.
      */
     update_02() {
         wasm.world_update_02(this.__wbg_ptr);
     }
     /**
-     * Accumulate position corrections that keep linked cells together.
+     * Accumulate position corrections that keep linked particles together.
      */
     update_03() {
         wasm.world_update_03(this.__wbg_ptr);
     }
     /**
-     * Apply accumulated responses, advance movable cells, and record victory
+     * Apply accumulated responses, advance movable particles, and record victory
      * when all stars are lighted after movement has begun.
      */
     update_04() {

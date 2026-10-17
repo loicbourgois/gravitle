@@ -80,7 +80,7 @@ function Game({
 		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
-				this.worlds[0].set_cell_activated(idx, 1);
+				this.worlds[0].set_particle_activated(idx, 1);
 				this.audio.activate(idx);
 			}
 			this.started = true;
@@ -105,7 +105,7 @@ function Game({
 	document.addEventListener("keyup", (e) => {
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
-				this.worlds[0].set_cell_activated(idx, 0);
+				this.worlds[0].set_particle_activated(idx, 0);
 				this.audio.deactivate(idx);
 			}
 		}
@@ -188,13 +188,13 @@ Game.prototype.tick = function () {
 			const world = this.worlds[i];
 			const ghost = this.ghosts[i - 1].o;
 			const es = ghost[world.step];
-			if (es != null && world.step > this.switch_cell_limit) {
+			if (es != null && world.step > this.switch_particle_limit) {
 				for (const e of es) {
-					world.switch_cell_activated(e.c);
+					world.switch_particle_activated(e.c);
 				}
 			}
 		}
-		this.switch_cell_limit = this.worlds[0].step;
+		this.switch_particle_limit = this.worlds[0].step;
 		if (this.started) {
 			for (const world of this.worlds) {
 				world.run_step();
@@ -276,10 +276,14 @@ Game.prototype.tick = function () {
 		this.debug_durations.draw.length;
 	try {
 		document.getElementById("debug_durations_engine").innerHTML =
-			debug_durations_engine.toFixed(5);
+			"physic: " + debug_durations_engine.toFixed(1) + "ms";
 		document.getElementById("debug_durations_draw").innerHTML =
-			debug_durations_draw.toFixed(5);
-	} catch (error) {}
+			"render: " + debug_durations_draw.toFixed(1) + "ms";
+		document.getElementById("debug_pairs").innerHTML = 
+			"pairs: " + this.worlds[0].pairs_count();
+	} catch (error) {
+		// pass
+	}
 	requestAnimationFrame(() => {
 		this.tick();
 	});
@@ -288,7 +292,7 @@ Game.prototype.setup = game_setup;
 Game.prototype.restart = function () {
 	this.victory_celebrated = false;
 	this.started = false;
-	this.switch_cell_limit = -1;
+	this.switch_particle_limit = -1;
 	this.worlds = [this.gravitle.World.new()];
 	for (const _ghost of this.ghosts) {
 		this.worlds.push(this.gravitle.World.new());

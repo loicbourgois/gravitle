@@ -5,6 +5,7 @@
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
+$HOME/github.com/loicbourgois/gravitle/lint.sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82

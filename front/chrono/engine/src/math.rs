@@ -60,7 +60,7 @@ pub fn distance_sqrd(a: Point, b: Point) -> f32 {
 
 /// Facilitates going "around" the map by handling toroidal boundary conditions.
 ///
-/// The map is a square of size 1.0. When a cell goes beyond the boundaries:
+/// The map is a square of size 1.0. When a particle goes beyond the boundaries:
 /// - 1.1 wraps to 0.1
 /// - -0.1 wraps to 0.9
 ///
@@ -70,7 +70,7 @@ pub fn distance_sqrd(a: Point, b: Point) -> f32 {
 /// Each axis is handled independently, allowing paths to cross one or both boundaries.
 ///
 /// Resources
-/// - https://en.wikipedia.org/wiki/Toroidal_graph
+/// - <https://en.wikipedia.org/wiki/Toroidal_graph>
 #[wasm_bindgen]
 pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
     // Map size

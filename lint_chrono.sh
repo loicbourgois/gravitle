@@ -1,4 +1,5 @@
 #!/bin/sh
+# $HOME/github.com/loicbourgois/gravitle/lint_chrono.sh
 set -e
 cd $HOME/github.com/loicbourgois/gravitle/front/chrono/engine
 cargo clippy --release \

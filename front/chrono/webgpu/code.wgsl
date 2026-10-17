@@ -7,7 +7,7 @@ const KIND_CORE = 2;
 const KIND_ASTEROID = 4;
 const KIND_UNLIGHTED = 5;
 const KIND_LIGHTED = 6;
-struct Cell {
+struct Particle {
     idx: u32,
     diameter: f32,
     p: vec2f,
@@ -82,7 +82,7 @@ const disk_positions = array<vec2f, 48>(
 );
 
 const ZOOM = 1.5;
-@group(0) @binding(0) var<storage, read> particles: array<Cell>;
+@group(0) @binding(0) var<storage, read> particles: array<Particle>;
 @vertex fn vs_0(
   @builtin(vertex_index) vertexIndex : u32,
   @builtin(instance_index) instanceIndex: u32,

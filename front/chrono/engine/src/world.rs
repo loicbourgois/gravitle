@@ -1,4 +1,5 @@
-use crate::cell::Cell;
+// TODO: optimize
+use crate::particle::Particle;
 use crate::link::Link;
 use crate::math::Cri;
 use crate::math::collision_response;
@@ -9,6 +10,9 @@ use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::collections::HashSet;
+
+
 const LINK_STRENGH: f32 = 0.2;
 
 #[wasm_bindgen]
@@ -40,7 +44,7 @@ struct ActivationEvent {
 
 #[wasm_bindgen]
 pub struct World {
-    cells: Vec<Cell>,
+    particles: Vec<Particle>,
     links: Vec<Link>,
     pub victory: u8,
     pub step: u32,
@@ -50,8 +54,21 @@ pub struct World {
     pub victory_end: Option<u32>,
     pub move_start: Option<u32>,
     activation_events: HashMap<u32, Vec<ActivationEvent>>,
-    // 
+    // How many cell per side we have
+    // resolution = 10 
+    // -> grid of 10x10 
+    // -> each grid cell is 0.1 x 0.1 in size
+    grid_resolution: usize,
+    // Stores particles indexes
+    // Used for colisions detection
+    // The goal is to reduce the number of checks needed.
     grid: Vec<HashSet<usize>>,
+    // Potential collision pairs
+    // Used during collision detection
+    // Built from the grid
+    // Left idx must always be less than right idx: we don't want
+    // to double process a pair. 
+    pairs: HashSet<(usize, usize)>,
 }
 impl Default for World {
     fn default() -> Self {
@@ -65,8 +82,9 @@ impl World {
     
     
     pub fn new() -> World {
+        let grid_resolution = 10;
         World {
-            cells: Vec::new(),
+            particles: Vec::new(),
             links: Vec::new(),
             step: 0,
             victory: 0,
@@ -76,6 +94,9 @@ impl World {
             victory_end: None,
             victory_fuel_used: None,
             activation_events: HashMap::new(),
+            grid_resolution ,
+            grid: (0..grid_resolution*grid_resolution).map(|_| HashSet::new()).collect(),
+            pairs: HashSet::new(),
         }
     }
 
@@ -97,9 +118,9 @@ impl World {
                 let x = sfc32.next_f32();
                 let y = sfc32.next_f32();
                 let mut ok = true;
-                for cell in &self.cells {
-                    let wa = wrap_around_v2(cell.p, Point { x, y });
-                    let diams = cell.diameter + diameter * 1.5;
+                for particle in &self.particles {
+                    let wa = wrap_around_v2(particle.p, Point { x, y });
+                    let diams = particle.diameter + diameter * 1.5;
                     let colliding = wa.d_sqrd < diams * diams;
                     if colliding {
                         ok = false;
@@ -110,7 +131,7 @@ impl World {
                     for _ in 0..16 {
                         let x2 = x + (sfc32.next_f32()-0.5) * diameter * 1.0;
                         let y2 = y + (sfc32.next_f32()-0.5) * diameter * 1.0;
-                        self.add_cell(x2, y2, diameter, Kind::Asteroid, user_kind);
+                        self.add_particle(x2, y2, diameter, Kind::Asteroid, user_kind);
                     }
                     break;
                 }
@@ -126,9 +147,9 @@ impl World {
                 let x = sfc32.next_f32();
                 let y = sfc32.next_f32();
                 let mut ok = true;
-                for cell in &self.cells {
-                    let wa = wrap_around_v2(cell.p, Point { x, y });
-                    let diams = cell.diameter * 0.5 + diameter * 5.0;
+                for particle in &self.particles {
+                    let wa = wrap_around_v2(particle.p, Point { x, y });
+                    let diams = particle.diameter * 0.5 + diameter * 5.0;
                     let colliding = wa.d_sqrd < diams * diams;
                     if colliding {
                         ok = false;
@@ -136,7 +157,7 @@ impl World {
                     }
                 }
                 if ok {
-                    self.add_cell(x, y, diameter, Kind::Unlighted, user_kind);
+                    self.add_particle(x, y, diameter, Kind::Unlighted, user_kind);
                     break;
                 }
             }
@@ -153,31 +174,87 @@ impl World {
         }
         false
     }
+
+
     pub fn run_step(&mut self) {
         self.update_01();
+        self.update_grid();
+        self.update_pairs();
         self.update_02();
         self.update_03();
         self.update_04();
         self.step += 1;
     }
+
+
+    fn update_grid(&mut self) {
+        for cell in &mut self.grid {
+            cell.clear();
+        }
+        let resolution = self.grid_resolution as isize;
+        let cell_size = 1.0 / self.grid_resolution as f32;
+        for (index, particle) in self.particles.iter().enumerate() {
+            let radius = particle.diameter * 0.5;
+            let x_min = ((particle.np.x - radius) / cell_size).floor() as isize;
+            let x_max = ((particle.np.x + radius) / cell_size).floor() as isize;
+            let y_min = ((particle.np.y - radius) / cell_size).floor() as isize;
+            let y_max = ((particle.np.y + radius) / cell_size).floor() as isize;
+            for y in y_min..=y_max {
+                for x in x_min..=x_max {
+                    let cell_x = x.rem_euclid(resolution) as usize;
+                    let cell_y = y.rem_euclid(resolution) as usize;
+                    self.grid[cell_y * self.grid_resolution + cell_x].insert(index);
+                }
+            }
+        }
+    }
+
+
+    fn update_pairs(&mut self) {
+        self.pairs.clear();
+        for cell in &self.grid {
+            let mut indices: Vec<_> = cell.iter().copied().collect();
+            indices.sort_unstable();
+            for (position, &a) in indices.iter().enumerate() {
+                for &b in &indices[position + 1..] {
+                    let pa = &self.particles[a];
+                    let pb = &self.particles[b];
+                    match (pa.kind, pb.kind) {
+                        (Kind::Asteroid, Kind::Asteroid)
+                        | (Kind::Unlighted, Kind::Unlighted)
+                        | (Kind::Lighted, Kind::Lighted)
+                        | (Kind::Asteroid, Kind::Unlighted)
+                        | (Kind::Unlighted, Kind::Asteroid)
+                        | (Kind::Asteroid, Kind::Lighted)
+                        | (Kind::Lighted, Kind::Asteroid) 
+                        => {}
+                        _ => {
+                            self.pairs.insert((a, b));
+                        }
+                    }
+                }
+            }
+        }
+    }
     
 
-    /// Calculate each cell's link-based direction and displacement, apply active
+    /// Calculate each particle's link-based direction and displacement, apply active
     /// booster thrust, record activation changes, and reset response accumulators.
     pub fn update_01(&mut self) {
-        let cells_ptr = self.cells.as_mut_ptr();
+        let particles_ptr = self.particles.as_mut_ptr();
+        // We must use unsafe for conccurent access to `particles`.
         unsafe {
-            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            for ca in cells_slice_a {
+            let particles_slice_a = std::slice::from_raw_parts_mut(particles_ptr, self.particles.len());
+            for ca in particles_slice_a {
                 ca.direction.reset();
                 for l in &self.links {
                     if l.a == ca.idx {
-                        let cb = &self.cells[l.bu];
+                        let cb = &self.particles[l.bu];
                         let wa = wrap_around_v2(ca.p, cb.p);
                         ca.direction += delta(wa.b, wa.a);
                     }
                     if l.b == ca.idx {
-                        let cb = &self.cells[l.au];
+                        let cb = &self.particles[l.au];
                         let wa = wrap_around_v2(ca.p, cb.p);
                         ca.direction += delta(wa.b, wa.a);
                     }
@@ -217,78 +294,77 @@ impl World {
     }
 
 
-    /// Check predicted cell positions for collisions, accumulate collision
-    /// responses, and light stars touched by ship cells.
+    /// Check predicted particle positions for collisions, accumulate collision
+    /// responses, and light stars touched by ship particles.
     pub fn update_02(&mut self) {
-        let cells_ptr = self.cells.as_mut_ptr();
+        let particles_ptr = self.particles.as_mut_ptr();
         unsafe {
-            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            for ia in 0..cells_slice_a.len() - 1 {
-                for (ib, cb) in cells_slice_b.iter_mut().enumerate().skip(ia + 1) {
-                    let ca = &mut cells_slice_a[ia];
-                    let wa = wrap_around_v2(ca.np, cb.np);
-                    let cria = Cri {
-                        np: Point {
-                            x: wa.a.x,
-                            y: wa.a.y,
-                        },
-                        dp: ca.dp,
-                    };
-                    let crib = Cri {
-                        np: Point {
-                            x: wa.b.x,
-                            y: wa.b.y,
-                        },
-                        dp: cb.dp,
-                    };
-                    let diams = (ca.diameter + cb.diameter) * 0.5;
-                    let colliding = wa.d_sqrd < diams * diams;
-                    if colliding
-                        && ca.kind != Kind::Unlighted
-                        && ca.kind != Kind::Lighted
-                        && cb.kind != Kind::Unlighted
-                        && cb.kind != Kind::Lighted
-                    {
-                        let mut cr = collision_response(&cria, &crib);
-                        if self.link_exists(ia, ib) {
-                            cr.x *= 0.5;
-                            cr.y *= 0.5;
-                        }
-                        ca.collision_response.x -= cr.x;
-                        ca.collision_response.y -= cr.y;
-                        ca.collision_response_count += 1;
-                        cb.collision_response.x += cr.x;
-                        cb.collision_response.y += cr.y;
-                        cb.collision_response_count += 1;
+            let particles_slice_a = std::slice::from_raw_parts_mut(particles_ptr, self.particles.len());
+            let particles_slice_b = std::slice::from_raw_parts_mut(particles_ptr, self.particles.len());
+            for &(ia, ib) in &self.pairs {
+                let ca = &mut particles_slice_a[ia];
+                let cb = &mut particles_slice_b[ib];
+                let wa = wrap_around_v2(ca.np, cb.np);
+                let cria = Cri {
+                    np: Point {
+                        x: wa.a.x,
+                        y: wa.a.y,
+                    },
+                    dp: ca.dp,
+                };
+                let crib = Cri {
+                    np: Point {
+                        x: wa.b.x,
+                        y: wa.b.y,
+                    },
+                    dp: cb.dp,
+                };
+                let diams = (ca.diameter + cb.diameter) * 0.5;
+                let colliding = wa.d_sqrd < diams * diams;
+                if colliding
+                    && ca.kind != Kind::Unlighted
+                    && ca.kind != Kind::Lighted
+                    && cb.kind != Kind::Unlighted
+                    && cb.kind != Kind::Lighted
+                {
+                    let mut cr = collision_response(&cria, &crib);
+                    if self.link_exists(ia, ib) {
+                        cr.x *= 0.5;
+                        cr.y *= 0.5;
                     }
-                    if colliding
-                        && ca.kind == Kind::Unlighted
-                        && [Kind::Armor, Kind::Booster, Kind::Core].contains(&cb.kind)
-                    {
-                        ca.kind = Kind::Lighted;
-                    }
-                    if colliding
-                        && cb.kind == Kind::Unlighted
-                        && [Kind::Armor, Kind::Booster, Kind::Core].contains(&ca.kind)
-                    {
-                        cb.kind = Kind::Lighted;
-                    }
+                    ca.collision_response.x -= cr.x;
+                    ca.collision_response.y -= cr.y;
+                    ca.collision_response_count += 1;
+                    cb.collision_response.x += cr.x;
+                    cb.collision_response.y += cr.y;
+                    cb.collision_response_count += 1;
+                }
+                if colliding
+                    && ca.kind == Kind::Unlighted
+                    && [Kind::Armor, Kind::Booster, Kind::Core].contains(&cb.kind)
+                {
+                    ca.kind = Kind::Lighted;
+                }
+                if colliding
+                    && cb.kind == Kind::Unlighted
+                    && [Kind::Armor, Kind::Booster, Kind::Core].contains(&ca.kind)
+                {
+                    cb.kind = Kind::Lighted;
                 }
             }
         }
     }
 
 
-    /// Accumulate position corrections that keep linked cells together.
+    /// Accumulate position corrections that keep linked particles together.
     pub fn update_03(&mut self) {
-        let cells_ptr = self.cells.as_mut_ptr();
+        let particles_ptr = self.particles.as_mut_ptr();
         unsafe {
-            let cells_slice_a = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
-            let cells_slice_b = std::slice::from_raw_parts_mut(cells_ptr, self.cells.len());
+            let particles_slice_a = std::slice::from_raw_parts_mut(particles_ptr, self.particles.len());
+            let particles_slice_b = std::slice::from_raw_parts_mut(particles_ptr, self.particles.len());
             for l in &self.links {
-                let ca = &mut cells_slice_a[l.a as usize];
-                let cb = &mut cells_slice_b[l.b as usize];
+                let ca = &mut particles_slice_a[l.a as usize];
+                let cb = &mut particles_slice_b[l.b as usize];
                 let wa = wrap_around_v2(ca.np, cb.np);
                 let d = (wa.d_sqrd).sqrt();
                 let n = delta(wa.a, wa.b).normalize_2(d);
@@ -303,11 +379,11 @@ impl World {
     }
 
 
-    /// Apply accumulated responses, advance movable cells, and record victory
+    /// Apply accumulated responses, advance movable particles, and record victory
     /// when all stars are lighted after movement has begun.
     pub fn update_04(&mut self) {
         let mut c_unlighted = 0;
-        for p in &mut self.cells {
+        for p in &mut self.particles {
             if p.kind == Kind::Unlighted {
                 c_unlighted += 1;
             }
@@ -343,8 +419,8 @@ impl World {
     }
 
 
-    // Cells management
-    pub fn add_cell(
+    // Particles management
+    pub fn add_particle(
         &mut self,
         x: f32,
         y: f32,
@@ -352,60 +428,60 @@ impl World {
         kind: Kind,
         user_kind: UserKind,
     ) -> u32 {
-        let l = self.cells.len();
+        let l = self.particles.len();
         let l_u32 = l as u32;
-        self.cells.push(Cell::new(l_u32, diameter, kind, user_kind));
-        let cell = &mut self.cells[l];
-        cell.set_position(x, y);
+        self.particles.push(Particle::new(l_u32, diameter, kind, user_kind));
+        let particle = &mut self.particles[l];
+        particle.set_position(x, y);
         l_u32
     }
-    pub fn set_cell_activated(&mut self, idx: u32, activated: u32) {
-        self.cells[idx as usize].activated = activated;
+    pub fn set_particle_activated(&mut self, idx: u32, activated: u32) {
+        self.particles[idx as usize].activated = activated;
     }
-    pub fn switch_cell_activated(&mut self, idx: u32) {
-        self.cells[idx as usize].activated = (self.cells[idx as usize].activated + 1) % 2;
+    pub fn switch_particle_activated(&mut self, idx: u32) {
+        self.particles[idx as usize].activated = (self.particles[idx as usize].activated + 1) % 2;
     }
-    pub fn set_cell_kind(&mut self, idx: u32, kind: Kind) {
-        self.cells[idx as usize].kind = kind;
+    pub fn set_particle_kind(&mut self, idx: u32, kind: Kind) {
+        self.particles[idx as usize].kind = kind;
     }
-    pub fn set_cell_position_x(&mut self, idx: u32, x: f32) {
-        self.cells[idx as usize].p.x = x;
+    pub fn set_particle_position_x(&mut self, idx: u32, x: f32) {
+        self.particles[idx as usize].p.x = x;
     }
-    pub fn set_cell_position_y(&mut self, idx: u32, y: f32) {
-        self.cells[idx as usize].p.y = y;
+    pub fn set_particle_position_y(&mut self, idx: u32, y: f32) {
+        self.particles[idx as usize].p.y = y;
     }
-    pub fn set_cell_pp_x(&mut self, idx: u32, x: f32) {
-        self.cells[idx as usize].pp.x = x;
+    pub fn set_particle_pp_x(&mut self, idx: u32, x: f32) {
+        self.particles[idx as usize].pp.x = x;
     }
-    pub fn set_cell_pp_y(&mut self, idx: u32, y: f32) {
-        self.cells[idx as usize].pp.y = y;
+    pub fn set_particle_pp_y(&mut self, idx: u32, y: f32) {
+        self.particles[idx as usize].pp.y = y;
     }
-    pub fn set_cell_np_x(&mut self, idx: u32, x: f32) {
-        self.cells[idx as usize].np.x = x;
+    pub fn set_particle_np_x(&mut self, idx: u32, x: f32) {
+        self.particles[idx as usize].np.x = x;
     }
-    pub fn set_cell_np_y(&mut self, idx: u32, y: f32) {
-        self.cells[idx as usize].np.y = y;
+    pub fn set_particle_np_y(&mut self, idx: u32, y: f32) {
+        self.particles[idx as usize].np.y = y;
     }
-    pub fn set_cell_direction_x(&mut self, idx: u32, x: f32) {
-        self.cells[idx as usize].direction.x = x;
+    pub fn set_particle_direction_x(&mut self, idx: u32, x: f32) {
+        self.particles[idx as usize].direction.x = x;
     }
-    pub fn set_cell_direction_y(&mut self, idx: u32, y: f32) {
-        self.cells[idx as usize].direction.y = y;
+    pub fn set_particle_direction_y(&mut self, idx: u32, y: f32) {
+        self.particles[idx as usize].direction.y = y;
     }
-    pub fn set_cell_dp_x(&mut self, idx: u32, x: f32) {
-        self.cells[idx as usize].dp.x = x;
+    pub fn set_particle_dp_x(&mut self, idx: u32, x: f32) {
+        self.particles[idx as usize].dp.x = x;
     }
-    pub fn set_cell_dp_y(&mut self, idx: u32, y: f32) {
-        self.cells[idx as usize].dp.y = y;
+    pub fn set_particle_dp_y(&mut self, idx: u32, y: f32) {
+        self.particles[idx as usize].dp.y = y;
     }
-    pub fn set_cell_diameter(&mut self, idx: u32, diameter: f32) {
-        self.cells[idx as usize].diameter = diameter;
+    pub fn set_particle_diameter(&mut self, idx: u32, diameter: f32) {
+        self.particles[idx as usize].diameter = diameter;
     }
-    pub fn cells(&self) -> *const Cell {
-        self.cells.as_ptr()
+    pub fn particles(&self) -> *const Particle {
+        self.particles.as_ptr()
     }
-    pub fn cells_count(&self) -> u32 {
-        self.cells.len() as u32
+    pub fn particles_count(&self) -> u32 {
+        self.particles.len() as u32
     }
 
 
@@ -421,5 +497,11 @@ impl World {
     }
     pub fn links(&self) -> *const Link {
         self.links.as_ptr()
+    }
+
+
+    // Pairs
+    pub fn pairs_count(&self) -> u32 {
+        self.pairs.len() as u32
     }
 }
