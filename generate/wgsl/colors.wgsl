@@ -21,7 +21,7 @@ switch particle.user_kind {
         vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
       }
       case KIND_HEADLIGHT: {
-        vsOut.color = vec4f(0.9333333333333333, 0.9333333333333333, 0.6222222222222222, 0.9333333333333333);
+        vsOut.color = vec4f(0.6666666666666666, 0.6666666666666666, 1.0, 1.0);
       }
   default:{}
     }
@@ -40,6 +40,9 @@ switch particle.user_kind {
       case KIND_LIGHTED: {
         vsOut.color = vec4f(0.0, 0.0, 0.0, 0.0);
       }
+      case KIND_HEADLIGHT: {
+        vsOut.color = vec4f(0.3333333333333333, 0.3333333333333333, 0.5333333333333333, 1.0);
+      }
   default:{}
     }
   }
@@ -56,6 +59,9 @@ switch particle.user_kind {
       }
       case KIND_LIGHTED: {
         vsOut.color = vec4f(0.10666666666666667, 0.4, 0.10666666666666667, 0.4);
+      }
+      case KIND_HEADLIGHT: {
+        vsOut.color = vec4f(0.3333333333333333, 0.5333333333333333, 0.3333333333333333, 1.0);
       }
   default:{}
     }

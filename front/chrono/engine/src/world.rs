@@ -153,7 +153,7 @@ impl World {
             loop {
                 iterations += 1;
                 if iterations > 100 {
-                    break
+                    break;
                 }
                 // assert!(iterations < 100, "too many iterations");
                 let x = sfc32.next_f32();
@@ -178,8 +178,6 @@ impl World {
                 }
             }
         }
-
-        
     }
 
     pub fn link_exists(&self, a: usize, b: usize) -> bool {
@@ -335,12 +333,18 @@ impl World {
                 }
                 // Star lighting
                 if ca.kind == Kind::Unlighted
-                    && matches!(cb.kind, Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight )
+                    && matches!(
+                        cb.kind,
+                        Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight
+                    )
                 {
                     ca.kind = Kind::Lighted;
                 }
                 if cb.kind == Kind::Unlighted
-                    && matches!(ca.kind, Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight)
+                    && matches!(
+                        ca.kind,
+                        Kind::Armor | Kind::Booster | Kind::Core | Kind::Headlight
+                    )
                 {
                     cb.kind = Kind::Lighted;
                 }

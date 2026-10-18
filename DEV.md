@@ -4,11 +4,16 @@
 ## Development
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
+$HOME/github.com/loicbourgois/gravitle/format.sh
+$HOME/github.com/loicbourgois/gravitle/lint_all.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
 http://localhost:82/?debug=true
+http://localhost:82/?debug=true&darkmode=true
+http://localhost:82/?debug=true&randomseed=true&stars=1
+http://localhost:82/?debug=true&seed=fonecu-gaxisi&stars=1
+http://localhost:82/?debug=true&seed=0.6137747297407333&stars=1
 
 
-$HOME/github.com/loicbourgois/gravitle/lint.sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82
@@ -79,7 +84,6 @@ http://localhost:82/?render=webgpu
 
 
 ## Todo
-- bug: share link: after actiavedt once, does not reset
 - variable links
 - moddable core engine
   - kinds as json

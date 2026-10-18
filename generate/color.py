@@ -78,7 +78,9 @@ color = {
     kind.HEADLIGHT: {
         0: {
             0: {
-                m: "#ffae",
+                m: "#aaf",
+                g: "#558",
+                o: "#585",
             },
         },
     },

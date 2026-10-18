@@ -150,21 +150,37 @@ canvas {
 }
 
 
-#vic_text button {
+.vic_text button {
   flex-direction: column;
   display: flex;
 }
-
-#vic_text button:hover {
+.vic_text button:hover {
   color: var(--primary-color);
 }
-
-#vic_text button * {
+.vic_text button * {
     color: var(--primary-color-low);
 }
-#vic_text button:hover * {
+.vic_text button:hover * {
     color: var(--primary-color);
 }
+.vic_text * {
+  pointer-events: all;
+}
+.vic_text {
+  display: flex;
+  justify-content: center;
+}
+.vic_text button {
+  width: 15rem;
+}
+#vic_text {
+  margin-bottom: 10vh;
+}
+#vic_text_2 {
+  margin-bottom: 10vh;
+}
+
+
 
 .vt, .direction {
   margin-bottom: 0.5rem;
@@ -179,15 +195,15 @@ canvas {
   height: 100vh;
   display: flex;
 }
-#vic_text * {
-  pointer-events: all;
-}
 #victory p {
   color: #ff90;
 }
 #victory_main {
-  margin-top: 10vh;
-  margin-bottom: auto;
+  /* margin-top: 10vh; */
+  /* margin-bottom: auto; */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 #victory.yes {
   background-color: #fff1;
@@ -201,14 +217,6 @@ canvas {
   width: 0;
   flex-grow: 1;
 }
-#vic_text {
-  display: flex;
-  justify-content: center;
-  /* margin-top: 4rem; */
-}
-#vic_text button {
-  width: 15rem;
-}
 /* #victory.yes #victory_duration_1 {
   font-size: 2rem;
 } */
@@ -219,7 +227,7 @@ canvas {
   width: 100vw;
 }
 #durations {
-  margin-top: 5rem;
+  margin-top: 15vh;
 }
 #fuel_used {
   margin-top: 5rem;
