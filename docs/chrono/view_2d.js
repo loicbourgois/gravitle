@@ -1,6 +1,6 @@
 import { draw_particles, draw_ship_only } from "./draw_particles.js";
 
-function View2d(id) {
+function View2d(id, darkmode) {
 	this.canvas = document.getElementById(id);
 	this.context = canvas.getContext("2d");
 	this.center = {
@@ -11,6 +11,8 @@ function View2d(id) {
 	this.mouse = null;
 	this.resize();
 	this.background = "#102";
+	this.darkmode = darkmode;
+	// this.background = "#201130";
 }
 
 View2d.prototype.set_backgound = function (color) {

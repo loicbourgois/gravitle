@@ -1,7 +1,7 @@
 # Gravitle
 
 
-## Development
+## Development - Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
 $HOME/github.com/loicbourgois/gravitle/format.sh
@@ -10,10 +10,13 @@ $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
 http://localhost:82/?debug=true
 http://localhost:82/?debug=true&darkmode=true
 http://localhost:82/?debug=true&randomseed=true&stars=1
-http://localhost:82/?debug=true&seed=fonecu-gaxisi&stars=1
 http://localhost:82/?debug=true&seed=0.6137747297407333&stars=1
+http://localhost:82/?debug=true&seed=fonecu-gaxisi&stars=1
+```
 
 
+## Development - Other
+```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82
@@ -29,9 +32,9 @@ http://localhost:82/mining/
 ## Release
 1. Run `$HOME/github.com/loicbourgois/gravitle/release.sh`
 2. Push
-3. Merge the PR via https://github.com/loicbourgois/gravitle/pulls
+3. Merge PR via https://github.com/loicbourgois/gravitle/pulls
 4. Wait for action to complete at https://github.com/loicbourgois/gravitle/actions 
-5. Validate at https://gravitle.com
+5. Validate https://gravitle.com
 
 
 ## Misc
@@ -54,16 +57,6 @@ http://localhost:82/electricity/
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 http://localhost:82/tree/
-```
-
-
-## Chrono
-```sh
-$HOME/github.com/loicbourgois/gravitle/generate.sh
-$HOME/github.com/loicbourgois/gravitle/build_chrono.sh
-$HOME/github.com/loicbourgois/gravitle/front.sh
-open http://localhost:82
-open http://localhost:82/?seed=efopiw-gakura&stars=1
 ```
 
 

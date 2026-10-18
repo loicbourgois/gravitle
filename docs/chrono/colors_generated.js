@@ -1,4 +1,4 @@
-// Generated from gravitle/generate/main.py
+// Generated from file://./../../../gravitle/generate/color.py
 import { kind } from "./kind.js";
 const colors_generated = {
 	[kind.ARMOR]: { 0: { 0: { m: "#aaf", g: "#558", o: "#585" } } },
@@ -14,5 +14,6 @@ const colors_generated = {
 	[kind.ASTEROID]: { 0: { 0: { m: "#844d" } } },
 	[kind.UNLIGHTED]: { 0: { 0: { m: "#ff96" } } },
 	[kind.LIGHTED]: { 0: { 0: { m: "#ffae", g: "#0000", o: "#4f46" } } },
+	[kind.HEADLIGHT]: { 0: { 0: { m: "#aaf", g: "#558", o: "#585" } } },
 };
 export { colors_generated };

@@ -172,7 +172,7 @@ export function wrap_around_v1(a, b) {
 }
 
 /**
- * @enum {0 | 1 | 2 | 4 | 5 | 6}
+ * @enum {0 | 1 | 2 | 4 | 5 | 6 | 7}
  */
 export const Kind = Object.freeze({
 	Armor: 0,
@@ -187,6 +187,8 @@ export const Kind = Object.freeze({
 	5: "Unlighted",
 	Lighted: 6,
 	6: "Lighted",
+	Headlight: 7,
+	7: "Headlight",
 });
 /**
  * @enum {1 | 2 | 3}
