@@ -1,10 +1,36 @@
 # Gravitle
 
 
-## Development
+## Development - Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh
+$HOME/github.com/loicbourgois/gravitle/format.sh
+$HOME/github.com/loicbourgois/gravitle/lint_all.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
+http://localhost:82/?debug=true
+http://localhost:82/?debug=true&darkmode=true
+http://localhost:82/?debug=true&randomseed=true&stars=1
+http://localhost:82/?debug=true&seed=0.6137747297407333&stars=1
+http://localhost:82/?debug=true&seed=fonecu-gaxisi&stars=1
+```
+
+
+## Release
+1. Run `$HOME/github.com/loicbourgois/gravitle/release.sh`
+2. Push
+3. Merge PR via https://github.com/loicbourgois/gravitle/pulls
+4. Wait for action to complete at https://github.com/loicbourgois/gravitle/actions 
+5. Validate https://gravitle.com
+
+
+## Review
+```sh
+$HOME/github.com/loicbourgois/gravitle/front/chrono/review/optimize.sh
+```
+
+
+## Development - Other
+```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82
@@ -15,14 +41,6 @@ http://localhost:82/slingshot/
 http://localhost:82/random/
 http://localhost:82/mining/
 ```
-
-
-## Release
-1. Run `$HOME/github.com/loicbourgois/gravitle/release.sh`
-2. Push
-3. Merge the PR via https://github.com/loicbourgois/gravitle/pulls
-4. Wait for action to complete at https://github.com/loicbourgois/gravitle/actions 
-5. Validate at https://gravitle.com
 
 
 ## Misc
@@ -48,16 +66,6 @@ http://localhost:82/tree/
 ```
 
 
-## Chrono
-```sh
-$HOME/github.com/loicbourgois/gravitle/generate.sh
-$HOME/github.com/loicbourgois/gravitle/build_chrono.sh
-$HOME/github.com/loicbourgois/gravitle/front.sh
-open http://localhost:82
-open http://localhost:82/?seed=efopiw-gakura&stars=1
-```
-
-
 ## Slingshot
 ```sh
 $HOME/github.com/loicbourgois/gravitle/build_slingshot.sh
@@ -74,8 +82,19 @@ http://localhost:82/?render=webgpu
 ```
 
 
+## Minning
+```sh
+http://localhost:82/mining/
+```
+
+
 ## Todo
-- variable links
+- multiplayer leaderboard
+  - local server
+    - ping
+    - validate user play
+    - store play
+  - deploy
 - moddable core engine
   - kinds as json
 - slingshot
@@ -87,12 +106,6 @@ http://localhost:82/?render=webgpu
 - generator: move from python to rust
 - autopilot
 - tree generator
-- multiplayer leaderboard
-  - local server
-    - ping
-    - validate user play
-    - store play
-  - deploy
 - improve render performance using webgpu
   - increase poly count for cells drawing, especially asteroids
     this should be generated
@@ -100,19 +113,13 @@ http://localhost:82/?render=webgpu
   - draw links
   - track ship to always center the view on it
   - handle wrap around drawing
-- asteroids as clumps of smaller cells
 - different ships
   - create blueprint
   - add url param for self and for ghost
 - better name than "chrono"
   - light up
-- intro text for chrono
-  - 2 different messages
-    - initial: tasked with relighting the stars 
-    - welcome back captain ... 
 - star lighting up sound
 - notice color
-- asteroids color
 - settings
   - sound
 - 60 fps test

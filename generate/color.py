@@ -55,23 +55,32 @@ color = {
     kind.ASTEROID: {
         0: {
             0: {
-                m: "#b60",
+                m: "#844d",
             },
         },
     },
     kind.UNLIGHTED: {
         0: {
             0: {
-                m: "#ff93",
+                m: "#ff96",
             },
         },
     },
     kind.LIGHTED: {
         0: {
             0: {
-                m: "#ffad",
+                m: "#ffae",
                 g: "#0000",
-                o: "#4f44",
+                o: "#4f46",
+            },
+        },
+    },
+    kind.HEADLIGHT: {
+        0: {
+            0: {
+                m: "#aaf",
+                g: "#558",
+                o: "#585",
             },
         },
     },
@@ -80,7 +89,7 @@ color = {
 
 def colors_generated_js():
     lines = [
-        "// Generated from gravitle/generate/main.py",
+        "// Generated from file://./../../../gravitle/generate/color.py",
         'import { kind } from "./kind.js";',
         "const colors_generated = {",
     ]

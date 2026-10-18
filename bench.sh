@@ -11,7 +11,7 @@ if [[ "$batt" == *"Now drawing from 'Battery Power'"* ]]; then
 fi
 pmset -g batt > $HOME/github.com/loicbourgois/gravitle/gravithrust/bench_setup.txt
 cargo +nightly bench --features bench 2>&1 | tee $HOME/github.com/loicbourgois/gravitle/gravithrust/bench.txt
-git diff --word-diff \
+GIT_PAGER=cat git diff --word-diff \
     $HOME/github.com/loicbourgois/gravitle/gravithrust/bench_setup.txt \
     $HOME/github.com/loicbourgois/gravitle/gravithrust/bench.txt
 ELAPSED_TIME=$(($SECONDS - $START_TIME))

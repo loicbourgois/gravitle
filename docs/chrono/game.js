@@ -80,7 +80,7 @@ function Game({
 		}
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
-				this.worlds[0].set_cell_activated(idx, 1);
+				this.worlds[0].set_particle_activated(idx, 1);
 				this.audio.activate(idx);
 			}
 			this.started = true;
@@ -90,30 +90,40 @@ function Game({
 			} catch {}
 			document.getElementById("overlay").classList.add("light");
 		}
-		if (e.key == "e" && !this.trying_again) {
+		if (e.key == "a" && !this.trying_again) {
 			this.trying_again = true;
 			this.try_again();
 		}
-		if (e.key == "r" && !this.trying_again && this.victory_celebrated) {
+		if (e.key == "c" && !this.trying_again && this.victory_celebrated) {
 			this.sharing = true;
 			this.share();
 		}
 		if (e.key == " " && !this.trying_again && this.victory_celebrated) {
 			this.new_level();
 		}
+		if (e.key == "m" && !this.switching_mode && this.victory_celebrated) {
+			this.switching_mode = true;
+			this.view.darkmode = !this.view.darkmode;
+			const url = new URL(window.location.href);
+			url.searchParams.set("darkmode", String(this.view.darkmode));
+			window.history.replaceState(null, "", url);
+		}
 	});
 	document.addEventListener("keyup", (e) => {
 		if (this.key_bindings.get(e.key)) {
 			for (let idx of this.key_bindings.get(e.key)) {
-				this.worlds[0].set_cell_activated(idx, 0);
+				this.worlds[0].set_particle_activated(idx, 0);
 				this.audio.deactivate(idx);
 			}
 		}
-		if (e.key == "e") {
+		if (e.key == "a") {
 			this.trying_again = false;
 		}
-		if (e.key == "r") {
+		if (e.key == "c") {
 			this.sharing = false;
+		}
+		if (e.key == "m") {
+			this.switching_mode = false;
 		}
 	});
 	document.getElementById("share").addEventListener("click", () => {
@@ -140,6 +150,7 @@ Game.prototype.share = function () {
 	const url2 = new URL(url.origin + url.pathname);
 	url2.searchParams.append("seed", this.seed_input);
 	url2.searchParams.append("stars", this.stars_count);
+	url2.searchParams.append("darkmode", String(this.view.darkmode));
 	this.ghost_to_share = json_to_short(
 		JSON.parse(this.worlds[0].get_activation_events()),
 	);
@@ -159,6 +170,7 @@ Game.prototype.celebrate_victory = function () {
 	this.victory_celebrated = 1;
 	document.getElementById("victory").classList.add("yes");
 	document.getElementById("vic_text").classList.remove("hide");
+	document.getElementById("vic_text_2").classList.remove("hide");
 	this.ghost_to_share = json_to_short(
 		JSON.parse(this.worlds[0].get_activation_events()),
 	);
@@ -188,13 +200,13 @@ Game.prototype.tick = function () {
 			const world = this.worlds[i];
 			const ghost = this.ghosts[i - 1].o;
 			const es = ghost[world.step];
-			if (es != null && world.step > this.switch_cell_limit) {
+			if (es != null && world.step > this.switch_particle_limit) {
 				for (const e of es) {
-					world.switch_cell_activated(e.c);
+					world.switch_particle_activated(e.c);
 				}
 			}
 		}
-		this.switch_cell_limit = this.worlds[0].step;
+		this.switch_particle_limit = this.worlds[0].step;
 		if (this.started) {
 			for (const world of this.worlds) {
 				world.run_step();
@@ -237,7 +249,6 @@ Game.prototype.tick = function () {
 			durations_left_str;
 		document.getElementById("victory_duration_higher").innerHTML =
 			durations_right_str;
-		//
 		const fuel_useds = [];
 		for (const world of this.worlds) {
 			if (world.victory_end) {
@@ -276,19 +287,26 @@ Game.prototype.tick = function () {
 		this.debug_durations.draw.length;
 	try {
 		document.getElementById("debug_durations_engine").innerHTML =
-			debug_durations_engine.toFixed(5);
+			"physic: " + debug_durations_engine.toFixed(1) + "ms";
 		document.getElementById("debug_durations_draw").innerHTML =
-			debug_durations_draw.toFixed(5);
-	} catch (error) {}
+			"render: " + debug_durations_draw.toFixed(1) + "ms";
+		document.getElementById("debug_pairs").innerHTML =
+			"pairs: " + this.worlds[0].pairs_count();
+	} catch (error) {
+		// pass
+	}
 	requestAnimationFrame(() => {
 		this.tick();
 	});
 };
 Game.prototype.setup = game_setup;
 Game.prototype.restart = function () {
+	this.sharing = false;
+	document.getElementById("share_1").classList.remove("hide");
+	document.getElementById("share_2").classList.add("hide");
 	this.victory_celebrated = false;
 	this.started = false;
-	this.switch_cell_limit = -1;
+	this.switch_particle_limit = -1;
 	this.worlds = [this.gravitle.World.new()];
 	for (const _ghost of this.ghosts) {
 		this.worlds.push(this.gravitle.World.new());
@@ -303,6 +321,7 @@ Game.prototype.try_again = function () {
 	this.ghost_to_share = null;
 	document.getElementById("victory").classList.remove("yes");
 	document.getElementById("vic_text").classList.add("hide");
+	document.getElementById("vic_text_2").classList.add("hide");
 	this.restart();
 };
 export { Game };

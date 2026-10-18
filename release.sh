@@ -11,5 +11,5 @@ $HOME/github.com/loicbourgois/gravitle/predeploy.sh
 $HOME/github.com/loicbourgois/gravitle/front.sh &
 $HOME/github.com/loicbourgois/gravitle/front_deployed.sh &
 sleep 1
-open "http://localhost:82/?seed=efopiw-gakura&stars=1"
-open "http://localhost:81/?seed=efopiw-gakura&stars=1"
+open "http://localhost:82/?debug=true&seed=0.6137747297407333&stars=1"
+open "http://localhost:81/?seed=0.6137747297407333&stars=1"

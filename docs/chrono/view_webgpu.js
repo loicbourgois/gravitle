@@ -47,7 +47,7 @@ const new_step = (x) => {
 	});
 	r.bindGroup = x.device.createBindGroup({
 		layout: r.pipeline.getBindGroupLayout(0),
-		entries: [{ binding: 0, resource: { buffer: x.buffer_cells } }],
+		entries: [{ binding: 0, resource: { buffer: x.buffer_particles } }],
 	});
 	return r;
 };
@@ -82,10 +82,10 @@ ViewWebGPU.prototype.setup = async function (gravitle, memory) {
 		label: "shaders",
 		code: code,
 	});
-	const cells_count_max = 1000;
-	const buffer_cells_size = gravitle.Cell.size() * cells_count_max;
-	this.buffer_cells = this.device.createBuffer({
-		size: buffer_cells_size,
+	const particles_count_max = 1000;
+	const buffer_particles_size = gravitle.Particle.size() * particles_count_max;
+	this.buffer_particles = this.device.createBuffer({
+		size: buffer_particles_size,
 		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 	});
 	this.steps = [
@@ -95,7 +95,7 @@ ViewWebGPU.prototype.setup = async function (gravitle, memory) {
 			fragment_entryPoint: "fs_0",
 			device: this.device,
 			module: module,
-			buffer_cells: this.buffer_cells,
+			buffer_particles: this.buffer_particles,
 			presentation_format: presentation_format,
 		}),
 	];
@@ -120,7 +120,7 @@ ViewWebGPU.prototype.setup = async function (gravitle, memory) {
 			depthStoreOp: "store",
 		},
 	};
-	console.log(gravitle.Cell.size());
+	console.log(gravitle.Particle.size());
 };
 
 ViewWebGPU.prototype.render = function (worlds, ghosts, gravitle, memory) {
@@ -153,7 +153,7 @@ ViewWebGPU.prototype.render = function (worlds, ghosts, gravitle, memory) {
 
 	let total_count = 0;
 	for (const world of worlds) {
-		total_count += world.cells_count();
+		total_count += world.particles_count();
 	}
 	const encoder = this.device.createCommandEncoder({ label: "encoder 1" });
 	const pass = encoder.beginRenderPass(this.renderPassDescriptor);
@@ -167,13 +167,13 @@ ViewWebGPU.prototype.render = function (worlds, ghosts, gravitle, memory) {
 	let countr = 0;
 	for (const world of worlds) {
 		this.device.queue.writeBuffer(
-			this.buffer_cells,
+			this.buffer_particles,
 			countr,
 			memory.buffer,
-			world.cells(),
-			world.cells_count() * gravitle.Cell.size(),
+			world.particles(),
+			world.particles_count() * gravitle.Particle.size(),
 		);
-		countr += world.cells_count() * gravitle.Cell.size();
+		countr += world.particles_count() * gravitle.Particle.size();
 	}
 	this.device.queue.submit([job1]);
 };
