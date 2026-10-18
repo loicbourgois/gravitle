@@ -3,7 +3,8 @@ command: s review $HOME/github.com/loicbourgois/gravitle/front/chrono/review/opt
 
 models:
   # https://openrouter.ai/openai/gpt-6.1-sol
-  - openai/gpt-6.1-sol
+  # - openai/gpt-6.1-sol
+  - openai/gpt-6-luna-pro
   - mistralai/mistral-large-4-0
   - deepseek/deepseek-v4.1-flash
 
@@ -18,4 +19,7 @@ files:
 
 rules:
   - file path relative to review/optimize_1.yml
-  - optimize performances of the engine
+  - | 
+    optimize performances of the engine
+    focus on CPU usage
+    we don't care about memory

@@ -70,6 +70,10 @@ pub struct World {
     pairs: Vec<(usize, usize)>,
     // canonical (min,max) for O(1) link_exists
     link_set: HashSet<(usize, usize)>,
+    // Debug counters
+    pub count_pairs: usize,
+    pub count_colliding: usize,
+    pub count_colliding_physics: usize,
 }
 impl Default for World {
     fn default() -> Self {
@@ -110,6 +114,9 @@ impl World {
                 .collect(),
             pairs: Vec::new(),
             link_set: HashSet::new(),
+            count_pairs: 0,
+            count_colliding: 0,
+            count_colliding_physics: 0,
         }
     }
 
@@ -195,22 +202,24 @@ impl World {
         self.step += 1;
     }
 
+    /// We assume that all particles are small enough.
+    /// They do not wrap around, and cannot span the same cell multiple times.
     fn update_grid(&mut self) {
         for cell in &mut self.grid {
             cell.clear();
         }
-        let resolution: isize = self.grid_resolution.cast_signed();
-        let cell_size = 1.0 / self.grid_resolution as f32;
+        let gri: isize = self.grid_resolution.cast_signed();
+        let grf: f32 = self.grid_resolution as f32;
         for (index, particle) in self.particles.iter().enumerate() {
             let radius = particle.diameter * 0.5;
-            let x_min = ((particle.np.x - radius) / cell_size).floor() as isize;
-            let x_max = ((particle.np.x + radius) / cell_size).floor() as isize;
-            let y_min = ((particle.np.y - radius) / cell_size).floor() as isize;
-            let y_max = ((particle.np.y + radius) / cell_size).floor() as isize;
+            let x_min = ((particle.np.x - radius) * grf).floor() as isize;
+            let x_max = ((particle.np.x + radius) * grf).floor() as isize;
+            let y_min = ((particle.np.y - radius) * grf).floor() as isize;
+            let y_max = ((particle.np.y + radius) * grf).floor() as isize;
             for y in y_min..=y_max {
                 for x in x_min..=x_max {
-                    let cell_x = x.rem_euclid(resolution) as usize;
-                    let cell_y = y.rem_euclid(resolution) as usize;
+                    let cell_x = x.rem_euclid(gri) as usize;
+                    let cell_y = y.rem_euclid(gri) as usize;
                     self.grid[cell_y * self.grid_resolution + cell_x].push(index);
                 }
             }
@@ -297,29 +306,33 @@ impl World {
     /// Check predicted particle positions for collisions, accumulate collision
     /// responses, and light stars touched by ship particles.
     pub fn update_02(&mut self) {
+        self.count_pairs = 0;
+        self.count_colliding = 0;
+        self.count_colliding_physics = 0;
         for &(ia, ib) in &self.pairs {
-            // Query link_set before borrowing particles
+            self.count_pairs += 1;
             let linked = self.link_exists(ia, ib);
             let (ca, cb) = pair_mut(&mut self.particles, ia, ib);
-
             let wa = wrap_around_v3(ca.np, cb.np);
             let diams = (ca.diameter + cb.diameter) * 0.5;
             let colliding = wa.d_sqrd < diams * diams;
-
             if colliding {
+                self.count_colliding += 1;
                 // Physical collision response
                 if !matches!(ca.kind, Kind::Unlighted | Kind::Lighted)
                     && !matches!(cb.kind, Kind::Unlighted | Kind::Lighted)
                 {
-                    let cria = Cri {
-                        np: wa.a,
-                        dp: ca.dp,
-                    };
-                    let crib = Cri {
-                        np: wa.b,
-                        dp: cb.dp,
-                    };
-                    let mut cr = collision_response_v2(&cria, &crib);
+                    self.count_colliding_physics += 1;
+                    let mut cr = collision_response_v2(
+                        &Cri {
+                            np: wa.a,
+                            dp: ca.dp,
+                        },
+                        &Cri {
+                            np: wa.b,
+                            dp: cb.dp,
+                        },
+                    );
                     if linked {
                         cr.x *= 0.5;
                         cr.y *= 0.5;

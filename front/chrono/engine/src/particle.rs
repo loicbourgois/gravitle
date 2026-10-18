@@ -19,6 +19,8 @@ pub struct Particle {
     // away from neighbours (tbc)
     pub direction: Point,
     // delta velocity
+    // Not used currently, but kept for potential future usage.
+    // We might add logic or graphics on top of it.
     pub dv: Point,
     pub link_response: Point,
     pub collision_response: Point,
@@ -27,6 +29,7 @@ pub struct Particle {
     pub activated_previous: u32,
     pub kind: Kind,
     pub user_kind: UserKind,
+    // For wasm
     pub padding: u32,
 }
 #[wasm_bindgen]

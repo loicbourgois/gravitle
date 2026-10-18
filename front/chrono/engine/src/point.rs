@@ -38,13 +38,19 @@ impl Point {
         }
     }
     pub fn distance(self, b: Point) -> f32 {
-        ((self.x - b.x).powf(2.0) + (self.y - b.y).powf(2.0)).sqrt()
+        let dx = self.x - b.x;
+        let dy = self.y - b.y;
+        (dx * dx + dy * dy).sqrt()
     }
     pub fn distance_squared_2(self, b: Point) -> f32 {
-        (self.x - b.x).powf(2.0) + (self.y - b.y).powf(2.0)
+        let dx = self.x - b.x;
+        let dy = self.y - b.y;
+        dx * dx + dy * dy
     }
     pub fn distance_squared(self, x: f32, y: f32) -> f32 {
-        (self.x - x).powf(2.0) + (self.y - y).powf(2.0)
+        let dx = self.x - x;
+        let dy = self.y - y;
+        dx * dx + dy * dy
     }
     pub fn length(self) -> f32 {
         (self.x * self.x + self.y * self.y).sqrt()
