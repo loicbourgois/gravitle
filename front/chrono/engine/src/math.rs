@@ -67,10 +67,10 @@ pub fn delta(a: Point, b: Point) -> Point {
     }
 }
 
-pub fn distance_sqrd(a: Point, b: Point) -> f32 {
-    let dp = delta(a, b);
-    dp.x * dp.x + dp.y * dp.y
-}
+// pub fn distance_sqrd(a: Point, b: Point) -> f32 {
+//     let dp = delta(a, b);
+//     dp.x * dp.x + dp.y * dp.y
+// }
 
 /// Facilitates going "around" the map by handling toroidal boundary conditions.
 ///
@@ -114,75 +114,73 @@ pub fn wrap_around_v3(a: Point, b: Point) -> WrapAroundResult {
     }
 }
 
-#[wasm_bindgen]
-pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
-    // Map size
-    let m: f32 = 1.0;
-    // Calculate the shortest differences in each dimension considering wrap-around
-    let dx = (b.x - a.x + m / 2.0).rem_euclid(m) - m / 2.0;
-    let dy = (b.y - a.y + m / 2.0).rem_euclid(m) - m / 2.0;
-    let d_sqrd = dx * dx + dy * dy;
-    // Return 'a' as-is and 'b' as the nearest periodic image relative to 'a'
-    WrapAroundResult {
-        a,
-        b: Point {
-            x: a.x + dx,
-            y: a.y + dy,
-        },
-        d_sqrd,
-    }
-}
+// pub fn wrap_around_v2(a: Point, b: Point) -> WrapAroundResult {
+//     // Map size
+//     let m: f32 = 1.0;
+//     // Calculate the shortest differences in each dimension considering wrap-around
+//     let dx = (b.x - a.x + m / 2.0).rem_euclid(m) - m / 2.0;
+//     let dy = (b.y - a.y + m / 2.0).rem_euclid(m) - m / 2.0;
+//     let d_sqrd = dx * dx + dy * dy;
+//     // Return 'a' as-is and 'b' as the nearest periodic image relative to 'a'
+//     WrapAroundResult {
+//         a,
+//         b: Point {
+//             x: a.x + dx,
+//             y: a.y + dy,
+//         },
+//         d_sqrd,
+//     }
+// }
 
 // Known edge case: a = (0.20, 0.20), b = (0.85, 0.85).
 // This implementation returns d_sqrd = 0.845 instead of the shortest
 // toroidal distance squared, 0.245. Use wrap_around_v2 for correct results.
-#[wasm_bindgen]
-pub fn wrap_around_v1(a: Point, b: Point) -> WrapAroundResult {
-    let o25 = 0.25;
-    let o5 = 0.5;
-    let m = 1.0;
-    let m25 = o25 + m;
-    let m5 = o5 + m;
-    let a2 = Point {
-        x: (a.x + m25) % m,
-        y: (a.y + m25) % m,
-    };
-    let b2 = Point {
-        x: (b.x + m25) % m,
-        y: (b.y + m25) % m,
-    };
-    let a3 = Point {
-        x: (a.x + m5) % m,
-        y: (a.y + m5) % m,
-    };
-    let b3 = Point {
-        x: (b.x + m5) % m,
-        y: (b.y + m5) % m,
-    };
-    let d1 = distance_sqrd(a, b);
-    let d2 = distance_sqrd(a2, b2);
-    let d3 = distance_sqrd(a3, b3);
-    if d1 < d2 {
-        if d1 < d3 {
-            WrapAroundResult { a, b, d_sqrd: d1 }
-        } else {
-            WrapAroundResult {
-                a: a3,
-                b: b3,
-                d_sqrd: d3,
-            }
-        }
-    } else if d2 < d3 {
-        WrapAroundResult {
-            a: a2,
-            b: b2,
-            d_sqrd: d2,
-        }
-    } else {
-        WrapAroundResult {
-            a: a3,
-            b: b3,
-            d_sqrd: d3,
-        }
-    }
-}
+// fn wrap_around_v1(a: Point, b: Point) -> WrapAroundResult {
+//     let o25 = 0.25;
+//     let o5 = 0.5;
+//     let m = 1.0;
+//     let m25 = o25 + m;
+//     let m5 = o5 + m;
+//     let a2 = Point {
+//         x: (a.x + m25) % m,
+//         y: (a.y + m25) % m,
+//     };
+//     let b2 = Point {
+//         x: (b.x + m25) % m,
+//         y: (b.y + m25) % m,
+//     };
+//     let a3 = Point {
+//         x: (a.x + m5) % m,
+//         y: (a.y + m5) % m,
+//     };
+//     let b3 = Point {
+//         x: (b.x + m5) % m,
+//         y: (b.y + m5) % m,
+//     };
+//     let d1 = distance_sqrd(a, b);
+//     let d2 = distance_sqrd(a2, b2);
+//     let d3 = distance_sqrd(a3, b3);
+//     if d1 < d2 {
+//         if d1 < d3 {
+//             WrapAroundResult { a, b, d_sqrd: d1 }
+//         } else {
+//             WrapAroundResult {
+//                 a: a3,
+//                 b: b3,
+//                 d_sqrd: d3,
+//             }
+//         }
+//     } else if d2 < d3 {
+//         WrapAroundResult {
+//             a: a2,
+//             b: b2,
+//             d_sqrd: d2,
+//         }
+//     } else {
+//         WrapAroundResult {
+//             a: a3,
+//             b: b3,
+//             d_sqrd: d3,
+//         }
+//     }
+// }

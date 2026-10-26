@@ -1,3 +1,4 @@
+mod kind;
 mod link;
 mod math;
 mod particle;

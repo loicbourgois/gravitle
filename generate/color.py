@@ -62,7 +62,7 @@ color = {
     kind.UNLIGHTED: {
         0: {
             0: {
-                m: "#ff96",
+                m: "#bbbb",
             },
         },
     },

@@ -13,9 +13,8 @@ import { kind } from "./kind.js";
 
 const COUNT = 6;
 const SIZE = 1;
-const SPACE_1 = 0.2;
+const SPACE_1 = 0.175;
 const SPACE_2 = 0.3;
-const DARK_MODE = false;
 
 const draw_star = (view, particle, player_kind, space) => {
 	const p3 = particle.ap;
@@ -63,8 +62,20 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 		const particle = get_particle(particles_view, particle_size, i);
 		// Put in here so that the other player ghost
 		// lighted stars show up in green.
+
 		if (particle.kind == kind.LIGHTED) {
 			draw_star(view, particle, player_kind, SPACE_2);
+
+			if (player_kind == "m") {
+				for (let i2 = 0; i2 < 16; i2++) {
+					view.draw_disk_multi(
+						particle.ap.x,
+						particle.ap.y,
+						particle.diameter * i2 * 2,
+						"#ffff0004",
+					);
+				}
+			}
 		}
 	}
 	for (let i = 0; i < world.particles_count(); i++) {
@@ -151,14 +162,17 @@ const draw_ship_only = (gravitle, world, memory, view, player_kind = "g") => {
 	if (view.darkmode) {
 		for (let i = 0; i < world.particles_count(); i++) {
 			const particle = get_particle(particles_view, particle_size, i);
-			if (particle.kind === kind.HEADLIGHT) {
-				draw_front_light(view, particle);
+			if (particle.kind === kind.HEADLIGHT && player_kind == "m") {
+				draw_front_light(view, particle, "#ff880010");
+			}
+			if (particle.kind === kind.HEADLIGHT && player_kind == "g") {
+				draw_front_light(view, particle, "#ff880001");
 			}
 		}
 	}
 };
 
-const draw_front_light = (view, particle) => {
+const draw_front_light = (view, particle, color) => {
 	const { x, y } = particle.direction;
 	const length = Math.hypot(x, y);
 	if (length === 0) return;
@@ -170,7 +184,7 @@ const draw_front_light = (view, particle) => {
 			particle.ap.x + forward.x * distance,
 			particle.ap.y + forward.y * distance,
 			particle.diameter * step,
-			"#f801",
+			color,
 		);
 	}
 };

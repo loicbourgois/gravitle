@@ -46,6 +46,11 @@ function Game({
 		engine: [],
 		draw: [],
 	};
+	this.debug_counts = {
+		pairs: [],
+		colliding: [],
+		colliding_physics: [],
+	};
 	if (this.ghost) {
 		this.ghosto = short_to_json(this.ghost);
 	}
@@ -143,6 +148,7 @@ Game.prototype.new_level = function () {
 	const url2 = new URL(url.origin + url.pathname);
 	url2.searchParams.append("seed", random_seed());
 	url2.searchParams.append("stars", this.stars_count);
+	url2.searchParams.append("darkmode", String(this.view.darkmode));
 	window.location.href = url2;
 };
 Game.prototype.share = function () {
@@ -188,8 +194,10 @@ Game.prototype.tick = function () {
 	document.getElementById("fps").innerHTML = Math.round(fps);
 	const elapsed = now - this.last_frame;
 	let steps = 2;
+	let budget = 1000 / 120;
 	if (elapsed > 15 && this.last_frame != null) {
 		steps = 4;
+		budget = 1000 / 60;
 	}
 	this.last_frame = now;
 	this.debug_durations.engine.push({
@@ -224,6 +232,7 @@ Game.prototype.tick = function () {
 	this.view.render(this.worlds, this.ghosts, this.gravitle, this.memory);
 	this.debug_durations.draw.at(-1).duration =
 		performance.now() - this.debug_durations.draw.at(-1).start;
+
 	if (this.victory_celebrated) {
 		const durations = [];
 		for (const world of this.worlds) {
@@ -273,32 +282,83 @@ Game.prototype.tick = function () {
 		document.getElementById("fuel_used_higher").innerHTML =
 			fuel_useds_right_str;
 	}
+
+	// Debug push
+	this.debug_counts.pairs.push(this.worlds[0].count_pairs);
+	this.debug_counts.colliding.push(this.worlds[0].count_colliding);
+	this.debug_counts.colliding_physics.push(
+		this.worlds[0].count_colliding_physics,
+	);
+
+	// Debug shift
 	while (this.debug_durations.engine.length > 200) {
 		this.debug_durations.engine.shift();
 	}
 	while (this.debug_durations.draw.length > 200) {
 		this.debug_durations.draw.shift();
 	}
+	while (this.debug_counts.pairs.length > 200) {
+		this.debug_counts.pairs.shift();
+	}
+	while (this.debug_counts.colliding.length > 200) {
+		this.debug_counts.colliding.shift();
+	}
+	while (this.debug_counts.colliding_physics.length > 200) {
+		this.debug_counts.colliding_physics.shift();
+	}
+
+	// Debug avg
 	const debug_durations_engine =
 		this.debug_durations.engine.reduce((sum, obj) => sum + obj.duration, 0) /
 		this.debug_durations.engine.length;
 	const debug_durations_draw =
 		this.debug_durations.draw.reduce((sum, obj) => sum + obj.duration, 0) /
 		this.debug_durations.draw.length;
+
+	const frame_percent_budget =
+		((debug_durations_engine + debug_durations_draw) / budget) * 100;
+
+	const debug_counts_pairs =
+		this.debug_counts.pairs.reduce((sum, obj) => sum + obj, 0) /
+		this.debug_counts.pairs.length;
+	const debug_counts_colliding =
+		this.debug_counts.colliding.reduce((sum, obj) => sum + obj, 0) /
+		this.debug_counts.colliding.length;
+	const debug_counts_colliding_physics =
+		this.debug_counts.colliding_physics.reduce((sum, obj) => sum + obj, 0) /
+		this.debug_counts.colliding_physics.length;
+
+	// Debug print
 	try {
+		document.getElementById("frame_percent_budget").innerHTML =
+			"frame budget: " + parseInt(frame_percent_budget) + "%";
+
 		document.getElementById("debug_durations_engine").innerHTML =
 			"physic: " + debug_durations_engine.toFixed(1) + "ms";
 		document.getElementById("debug_durations_draw").innerHTML =
 			"render: " + debug_durations_draw.toFixed(1) + "ms";
 		document.getElementById("debug_pairs").innerHTML =
 			"pairs: " + this.worlds[0].pairs_count();
+
+		document.getElementById("debug_counts_pairs").innerHTML =
+			"pairs: " + parseInt(debug_counts_pairs);
+		document.getElementById("debug_counts_colliding").innerHTML =
+			"colliding: " + parseInt(debug_counts_colliding);
+		document.getElementById("debug_counts_colliding_physics").innerHTML =
+			"colliding_physics: " + parseInt(debug_counts_colliding_physics);
+
+		document.getElementById("debug_elapsed").innerHTML =
+			"elapsed: " + parseInt(elapsed) + "ms";
 	} catch (error) {
 		// pass
 	}
+
+	// Next
 	requestAnimationFrame(() => {
 		this.tick();
 	});
 };
+
 Game.prototype.setup = game_setup;
 Game.prototype.restart = function () {
 	this.sharing = false;

@@ -1,0 +1,17 @@
+command: s todo $HOME/github.com/loicbourgois/gravitle/front/spiral/wip.yml
+
+
+models:
+  - openai/gpt-6-luna
+  # - mistralai/mistral-large-4-0
+  - mistralai/devstral-2512
+
+
+files:
+  - file://./index.css
+  - file://./index.html
+  - file://./index.js
+
+
+rules:
+  - keep code tidy

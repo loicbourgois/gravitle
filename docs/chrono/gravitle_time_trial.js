@@ -133,44 +133,15 @@ function passArray32ToWasm0(arg, malloc) {
 	return ptr;
 }
 
+export function setup() {
+	wasm.setup();
+}
+
 function _assertClass(instance, klass) {
 	if (!(instance instanceof klass)) {
 		throw new Error(`expected instance of ${klass.name}`);
 	}
 }
-
-export function setup() {
-	wasm.setup();
-}
-
-/**
- * @param {Point} a
- * @param {Point} b
- * @returns {WrapAroundResult}
- */
-export function wrap_around_v2(a, b) {
-	_assertClass(a, Point);
-	var ptr0 = a.__destroy_into_raw();
-	_assertClass(b, Point);
-	var ptr1 = b.__destroy_into_raw();
-	const ret = wasm.wrap_around_v2(ptr0, ptr1);
-	return WrapAroundResult.__wrap(ret);
-}
-
-/**
- * @param {Point} a
- * @param {Point} b
- * @returns {WrapAroundResult}
- */
-export function wrap_around_v1(a, b) {
-	_assertClass(a, Point);
-	var ptr0 = a.__destroy_into_raw();
-	_assertClass(b, Point);
-	var ptr1 = b.__destroy_into_raw();
-	const ret = wasm.wrap_around_v1(ptr0, ptr1);
-	return WrapAroundResult.__wrap(ret);
-}
-
 /**
  * @enum {0 | 1 | 2 | 4 | 5 | 6 | 7}
  */
@@ -837,6 +808,45 @@ export class World {
 		);
 	}
 	/**
+	 * @returns {number}
+	 */
+	get count_pairs() {
+		const ret = wasm.__wbg_get_world_count_pairs(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @param {number} arg0
+	 */
+	set count_pairs(arg0) {
+		wasm.__wbg_set_world_count_pairs(this.__wbg_ptr, arg0);
+	}
+	/**
+	 * @returns {number}
+	 */
+	get count_colliding() {
+		const ret = wasm.__wbg_get_world_count_colliding(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @param {number} arg0
+	 */
+	set count_colliding(arg0) {
+		wasm.__wbg_set_world_count_colliding(this.__wbg_ptr, arg0);
+	}
+	/**
+	 * @returns {number}
+	 */
+	get count_colliding_physics() {
+		const ret = wasm.__wbg_get_world_count_colliding_physics(this.__wbg_ptr);
+		return ret >>> 0;
+	}
+	/**
+	 * @param {number} arg0
+	 */
+	set count_colliding_physics(arg0) {
+		wasm.__wbg_set_world_count_colliding_physics(this.__wbg_ptr, arg0);
+	}
+	/**
 	 * @param {number} a
 	 * @param {number} b
 	 * @returns {boolean}
@@ -1082,14 +1092,6 @@ const WrapAroundResultFinalization =
 			);
 
 export class WrapAroundResult {
-	static __wrap(ptr) {
-		ptr = ptr >>> 0;
-		const obj = Object.create(WrapAroundResult.prototype);
-		obj.__wbg_ptr = ptr;
-		WrapAroundResultFinalization.register(obj, obj.__wbg_ptr, obj);
-		return obj;
-	}
-
 	__destroy_into_raw() {
 		const ptr = this.__wbg_ptr;
 		this.__wbg_ptr = 0;

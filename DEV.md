@@ -7,6 +7,7 @@ $HOME/github.com/loicbourgois/gravitle/generate.sh
 $HOME/github.com/loicbourgois/gravitle/format.sh
 $HOME/github.com/loicbourgois/gravitle/lint_all.sh
 $HOME/github.com/loicbourgois/gravitle/build_chrono.sh
+$HOME/github.com/loicbourgois/gravitle/front.sh
 http://localhost:82/?debug=true
 http://localhost:82/?debug=true&darkmode=true
 http://localhost:82/?debug=true&randomseed=true&stars=1

@@ -18,3 +18,7 @@ front/chrono/review/*
 !front/chrono/review/logic_1.yml
 !front/chrono/review/logic.sh
 docs/chrono/review/
+
+**.yml.prompt.md			
+**.yml.response.**.md
+front/spiral/wip.yml.prompt.md

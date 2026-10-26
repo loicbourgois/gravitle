@@ -148,6 +148,7 @@ Game.prototype.new_level = function () {
 	const url2 = new URL(url.origin + url.pathname);
 	url2.searchParams.append("seed", random_seed());
 	url2.searchParams.append("stars", this.stars_count);
+	url2.searchParams.append("darkmode", String(this.view.darkmode));
 	window.location.href = url2;
 };
 Game.prototype.share = function () {

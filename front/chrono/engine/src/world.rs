@@ -1,3 +1,4 @@
+use crate::kind::Kind;
 use crate::link::Link;
 use crate::math::Cri;
 use crate::math::collision_response_v2;
@@ -11,20 +12,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-const LINK_STRENGH: f32 = 0.2;
-
-#[wasm_bindgen]
-#[repr(u32)]
-#[derive(PartialEq, Copy, Clone)]
-pub enum Kind {
-    Armor = 0,
-    Booster = 1,
-    Core = 2,
-    Asteroid = 4,
-    Unlighted = 5,
-    Lighted = 6,
-    Headlight = 7,
-}
+const LINK_STRENGTH: f32 = 0.2;
 
 #[wasm_bindgen]
 #[repr(u32)]
@@ -53,28 +41,32 @@ pub struct World {
     pub victory_end: Option<u32>,
     pub move_start: Option<u32>,
     activation_events: HashMap<u32, Vec<ActivationEvent>>,
+
     // How many cell per side we have
-    // resolution = 10
-    // -> grid of 10x10
-    // -> each grid cell is 0.1 x 0.1 in size
+    // Grid dimensions: of grid_resolution x grid_resolution
     grid_resolution: usize,
+
     // Stores particles indexes
     // Used for colisions detection
     // The goal is to reduce the number of checks needed.
     grid: Vec<Vec<usize>>,
+
     // Potential collision pairs
     // Used during collision detection
     // Built from the grid
     // Left idx must always be less than right idx: we don't want
     // to double process a pair.
     pairs: Vec<(usize, usize)>,
+
     // canonical (min,max) for O(1) link_exists
     link_set: HashSet<(usize, usize)>,
+
     // Debug counters
     pub count_pairs: usize,
     pub count_colliding: usize,
     pub count_colliding_physics: usize,
 }
+
 impl Default for World {
     fn default() -> Self {
         Self::new()
@@ -373,7 +365,7 @@ impl World {
             let d = wa.d_sqrd.sqrt();
             let n = delta(wa.a, wa.b).normalize_2(d);
             let ds = (ca.diameter + cb.diameter) * 0.5;
-            let factor = (ds - d) * LINK_STRENGH;
+            let factor = (ds - d) * LINK_STRENGTH;
             ca.link_response.x -= n.x * factor * 0.5;
             ca.link_response.y -= n.y * factor * 0.5;
             cb.link_response.x += n.x * factor * 0.5;

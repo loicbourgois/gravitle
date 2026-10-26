@@ -20,6 +20,7 @@ files:
 rules:
   - file path relative to review/logic_1.yml
   - | 
-    focus on overall logic
+    focus on overall game logic
     are there gaps ?
     is there undefined behaviour ? 
+  - we don't care about panics and out of bound issues

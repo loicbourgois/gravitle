@@ -1,27 +1,39 @@
+use crate::kind::Kind;
 use crate::point::Point;
 use crate::wasm_bindgen;
-use crate::world::Kind;
 use crate::world::UserKind;
+
 #[wasm_bindgen]
 #[repr(C)]
 pub struct Particle {
     pub idx: u32,
+
     pub diameter: f32,
+
     // position
     pub p: Point,
+
     // previous position
     pub pp: Point,
+
     // new position
     pub np: Point,
-    // delta position
+
+    // Delta Position
+    // Delta position must not be wrapped around the edge of the world.
+    // We want the full delta
+    // If a perticle accelerates faster than 1 side / tick, we must have dp > 1.0.
     pub dp: Point,
+
     // direction in which the particle points
     // away from neighbours (tbc)
     pub direction: Point,
+
     // delta velocity
     // Not used currently, but kept for potential future usage.
     // We might add logic or graphics on top of it.
     pub dv: Point,
+
     pub link_response: Point,
     pub collision_response: Point,
     pub collision_response_count: u32,
@@ -29,9 +41,11 @@ pub struct Particle {
     pub activated_previous: u32,
     pub kind: Kind,
     pub user_kind: UserKind,
+
     // For wasm
     pub padding: u32,
 }
+
 #[wasm_bindgen]
 impl Particle {
     pub fn new(idx: u32, diameter: f32, kind: Kind, user_kind: UserKind) -> Particle {
