@@ -1,4 +1,4 @@
-command: s todo $HOME/github.com/loicbourgois/gravitle/front/spiral/wip.yml
+command: s todo $HOME/github.com/loicbourgois/gravitle/front/moon/wip.yml
 
 
 models:
@@ -8,8 +8,8 @@ models:
 
 
 files:
-  - file://./index.css
-  - file://./index.html
+  # - file://./index.css
+  # - file://./index.html
   - file://./index.js
 
 
