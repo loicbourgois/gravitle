@@ -1,3 +1,9 @@
+mod utils;
+mod point;
+mod particle;
+mod kind;
+mod world;
+mod link;
 use crate::utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
