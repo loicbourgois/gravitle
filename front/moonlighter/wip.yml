@@ -1,4 +1,4 @@
-command: s todo $HOME/github.com/loicbourgois/gravitle/front/moon/wip.yml
+command: l todo $HOME/github.com/loicbourgois/gravitle/front/moon/wip.yml
 
 
 models:

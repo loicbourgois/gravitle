@@ -1,3 +1,46 @@
+# General Context
+
+You are improving the codebase.
+Your role is to address any TODO left in the code.
+Only write down the actual changes, with some context around.
+Do not format as a git diff.
+Answer as a markdown document:
+
+
+## Output
+````
+# Reasoning
+<thorough reasoning>
+
+
+# Updates
+
+
+## <path #1>
+
+
+### <change #1>
+```<language>
+<code>
+```
+
+
+### <change #2>
+```<language>
+<code>
+```
+
+````
+
+
+# Specific Rules
+- keep code tidy
+
+
+# Files
+## file://./index.js
+
+```javascript
 import { draw } from "./draw.js";
 import { setup } from "./setup.js";
 import { TIME_MODE } from "./consts.js";
@@ -31,29 +74,35 @@ const step = (ctx) => {
             }
         }
     }
+    // Each particle visits all links that contain its index, so every
+    // undirected link is considered from both endpoints: once as (a, b)
+    // and once as (b, a). A pair is therefore processed twice, not once.
     // The pressure comparison permits transfer only from the lower-
     // pressure endpoint to the higher-pressure endpoint, so the reverse
     // visit cannot transfer in the opposite direction during this step.
-    const pairs = new Set();
-    for (const link of data.links) {
-        const a = Math.min(link.a, link.b);
-        const b = Math.max(link.a, link.b);
-        pairs.add([a,b]);
-        pairs.add([b,a]);
-    }
-    for (const pair of pairs) {
-        const [ia, ib] = pair;
+
+    // TODO: update code to 
+    //  1 - list all pairs 
+    //  2 - sort pairs, with a < b always
+    //  3 - process each pair only once 
+
+    for (let ia = 0; ia < data.particles.length; ia++) {
         const pa = data.particles[ia];
-        const pb = data.particles[ib];
-        let r = 1.0;
-        if (
-            pa.pressure < pb.pressure
-            && pb.q.MOON > 0
-            && pa.q.MOON < pa.c.MOON
-            && r > Math.random()
-        ) {
-            pa.q_delta.MOON += 1;
-            pb.q_delta.MOON -= 1;
+        const linkedIndices = data.links
+            .filter((link) => link.a === ia || link.b === ia)
+            .map((link) => link.a === ia ? link.b : link.a);
+        for (const ib of linkedIndices) {
+            const pb = data.particles[ib];
+            let r = 1.0
+            if (
+                pa.pressure < pb.pressure
+                && pb.q.MOON  > 0
+                && pa.q.MOON  < pa.c.MOON
+                && r > Math.random()
+            ) {
+                pa.q_delta.MOON += 1;
+                pb.q_delta.MOON -= 1;
+            }
         }
     }
     for (const particle of data.particles) {
@@ -111,11 +160,9 @@ const main = async () => {
             x: x,
             y: y,
             kind: kind,
-            // Quantity: current quantity stored
             q: {
                 MOON: q_m,
             },
-            // Capacity: maximum quantity that can be stored
             c: {
                 MOON: capacity_m,
             }
@@ -135,3 +182,5 @@ const main = async () => {
 window.onload = () => {
 	main();
 };
+```
+

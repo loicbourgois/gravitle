@@ -1,4 +1,4 @@
-command: s review $HOME/github.com/loicbourgois/gravitle/front/chrono/review/optimize_2.yml
+command: l review $HOME/github.com/loicbourgois/gravitle/front/chrono/review/optimize_2.yml
 
 
 models:
