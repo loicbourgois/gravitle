@@ -35,6 +35,18 @@ pub struct Particle {
     pub collision_response_count: u32,
     pub kind: Kind,
 
+    // pr:  pressure
+    // prn: pressure new
+    pub pr: i32,
+    pub prn: i32,
+
+    // c:  capacity
+    // q:  quantity
+    // qd: quantity delta
+    pub moon_c: i32,
+    pub moon_q: i32,
+    pub moon_qd: i32,
+
     // For wasm
     pub padding: u32,
 }
@@ -55,6 +67,19 @@ impl Particle {
             collision_response: Point::new(0.0, 0.0),
             collision_response_count: 0,
             link_response: Point::new(0.0, 0.0),
+            pr: 0,
+            prn: 0,
+            moon_c: match kind {
+                Kind::Moon => 10000,
+                Kind::Tank => 100,
+                Kind::Pipe | Kind::Filter => 10,
+                Kind::Pump => 0,
+            },
+            moon_q: match kind {
+                Kind::Moon => 10000,
+                _ => 0,
+            },
+            moon_qd: 0,
             padding: 0,
         };
         p.set_position(x, y);

@@ -1,16 +1,22 @@
-command: l todo $HOME/github.com/loicbourgois/gravitle/front/moon/wip.yml
+command: l todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/wip.yml
 
 
 models:
-  - openai/gpt-6-luna
+  # - openai/gpt-6-luna
+  - openai/gpt-6.1-sol
   # - mistralai/mistral-large-4-0
-  - mistralai/devstral-2512
+  # - mistralai/devstral-2512
 
 
 files:
   # - file://./index.css
   # - file://./index.html
-  - file://./index.js
+  # - file://./index.js
+  - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs
+  - file://./../../../gravitle/front/moonlighter/index.js
+  - file://./../../../gravitle/front/moonlighter/consts.js
 
 
 rules:

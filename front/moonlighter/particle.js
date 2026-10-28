@@ -39,6 +39,11 @@ const get_particle = (particles_view, particle_size, idx) => {
 			true,
 		),
 		kind: particles_view.getUint32(idx * particle_size + 76, true),
+		pr: particles_view.getInt32(idx * particle_size + 80, true),
+		prd: particles_view.getInt32(idx * particle_size + 84, true),
+		moon_c: particles_view.getInt32(idx * particle_size + 88, true),
+		moon_q: particles_view.getInt32(idx * particle_size + 92, true),
+		moon_qd: particles_view.getInt32(idx * particle_size + 96, true),
 	};
 	particle.ap = {
 		x: (particle.p.x + particle.pp.x) * 0.5,

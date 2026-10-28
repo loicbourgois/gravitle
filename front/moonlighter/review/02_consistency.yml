@@ -1,0 +1,15 @@
+command: l review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/02_consistency.yml
+
+
+models:
+  - mistralai/devstral-2512
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/particle.js
+
+
+rules:
+  - keep code tidy
+  - review for consistency

@@ -2,12 +2,17 @@ use crate::link::Link;
 use crate::particle::Particle;
 use crate::kind::Kind;
 use crate::wasm_bindgen;
+use crate::sfc32::Sfc32;
+use std::collections::HashSet;
+
+const FILTER_PASS_PROBABILITY: f32 = 0.01;
 
 #[wasm_bindgen]
 pub struct World {
     particles: Vec<Particle>,
     links: Vec<Link>,
     pub step: u32,
+    rng: Sfc32,
 }
 
 impl Default for World {
@@ -23,8 +28,71 @@ impl World {
             particles: Vec::new(),
             links: Vec::new(),
             step: 0,
+            rng: crate::sfc32::Sfc32::new(&[0, 0, 0, 0]),
         }
     }
+
+
+    pub fn tick(&mut self) {
+        self.step = self.step.wrapping_add(1);
+        for particle in &mut self.particles {
+            particle.moon_qd = 0;
+            particle.prn = 0;
+        }
+
+        // The pressure comparison permits transfer only from the lower-
+        // pressure endpoint to the higher-pressure endpoint, so the reverse
+        // visit cannot transfer in the opposite direction during this step.
+        let mut pairs: HashSet<(usize, usize)> = HashSet::new();
+        for link in &self.links {
+            let a = link.a as usize;
+            let b = link.b as usize;
+            pairs.insert((a, b));
+            pairs.insert((b, a));
+        }
+
+
+        for &(a, b) in &pairs {
+            if self.particles[a ].kind == Kind::Pump {
+                self.particles[a ].prn = -6;
+            }
+            else {
+                let pressure = self.particles[b ].pr.saturating_add(1);
+                self.particles[a ].prn = self.particles[a ].prn.min(pressure);
+            }
+        }
+
+
+        for (a, b) in pairs {
+            let source = &self.particles[a];
+            let destination = &self.particles[b ];
+
+            if source.kind == Kind::Filter
+                || destination.pr >= source.pr
+                || source.moon_q <= 0
+                || source.moon_q + source.moon_qd <= 0
+                || destination.moon_q >= destination.moon_c
+                || destination.moon_q + destination.moon_qd >= destination.moon_c
+            {
+                continue;
+            }
+
+            if destination.kind == Kind::Filter
+                && self.rng.next_f32() >= FILTER_PASS_PROBABILITY
+            {
+                continue;
+            }
+
+            self.particles[a ].moon_qd -= 1;
+            self.particles[b ].moon_qd += 1;
+        }
+
+        for particle in &mut self.particles {
+            particle.pr = particle.prn;
+            particle.moon_q += particle.moon_qd;
+        }
+    }
+
 
     pub fn add_particle(&mut self, x: f32, y: f32, k: Kind) {
         let index = self.particles.len() as u32;

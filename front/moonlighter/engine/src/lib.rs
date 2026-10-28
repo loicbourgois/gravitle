@@ -4,6 +4,7 @@ mod particle;
 mod kind;
 mod world;
 mod link;
+mod sfc32;
 use crate::utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]

@@ -22,3 +22,6 @@ docs/chrono/review/
 **.yml.prompt.md			
 **.yml.response.**.md
 front/moon/wip.yml.prompt.md
+
+
+**/**.yml.prompt.md

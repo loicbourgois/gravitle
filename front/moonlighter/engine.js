@@ -168,6 +168,27 @@ export class Particle {
         return Point.__wrap(ret);
     }
     /**
+     * @returns {number}
+     */
+    get moon_c() {
+        const ret = wasm.__wbg_get_particle_moon_c(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get moon_q() {
+        const ret = wasm.__wbg_get_particle_moon_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get moon_qd() {
+        const ret = wasm.__wbg_get_particle_moon_qd(this.__wbg_ptr);
+        return ret;
+    }
+    /**
      * @returns {Point}
      */
     get np() {
@@ -194,6 +215,20 @@ export class Particle {
     get pp() {
         const ret = wasm.__wbg_get_particle_pp(this.__wbg_ptr);
         return Point.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    get pr() {
+        const ret = wasm.__wbg_get_particle_pr(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get prn() {
+        const ret = wasm.__wbg_get_particle_prn(this.__wbg_ptr);
+        return ret;
     }
     /**
      * @param {number} idx
@@ -286,6 +321,24 @@ export class Particle {
         wasm.__wbg_set_particle_link_response(this.__wbg_ptr, ptr0);
     }
     /**
+     * @param {number} arg0
+     */
+    set moon_c(arg0) {
+        wasm.__wbg_set_particle_moon_c(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set moon_q(arg0) {
+        wasm.__wbg_set_particle_moon_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set moon_qd(arg0) {
+        wasm.__wbg_set_particle_moon_qd(this.__wbg_ptr, arg0);
+    }
+    /**
      * @param {Point} arg0
      */
     set np(arg0) {
@@ -314,6 +367,18 @@ export class Particle {
         _assertClass(arg0, Point);
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_pp(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set pr(arg0) {
+        wasm.__wbg_set_particle_pr(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set prn(arg0) {
+        wasm.__wbg_set_particle_prn(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Particle.prototype[Symbol.dispose] = Particle.prototype.free;
@@ -518,6 +583,9 @@ export class World {
     particles_count() {
         const ret = wasm.world_particles_count(this.__wbg_ptr);
         return ret >>> 0;
+    }
+    tick() {
+        wasm.world_tick(this.__wbg_ptr);
     }
 }
 if (Symbol.dispose) World.prototype[Symbol.dispose] = World.prototype.free;
