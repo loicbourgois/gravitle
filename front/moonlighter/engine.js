@@ -470,12 +470,33 @@ export class World {
         wasm.__wbg_set_world_step(this.__wbg_ptr, arg0);
     }
     /**
+     * @param {number} a
+     * @param {number} b
+     */
+    add_link(a, b) {
+        wasm.world_add_link(this.__wbg_ptr, a, b);
+    }
+    /**
      * @param {number} x
      * @param {number} y
      * @param {Kind} k
      */
     add_particle(x, y, k) {
         wasm.world_add_particle(this.__wbg_ptr, x, y, k);
+    }
+    /**
+     * @returns {number}
+     */
+    links() {
+        const ret = wasm.world_links(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    links_count() {
+        const ret = wasm.world_links_count(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {World}

@@ -9,12 +9,6 @@ import {
 } from "./consts.js";
 
 
-const data = {
-    particles: [],
-    links: [],
-}
-
-
 const step = (
     world, 
     context,
@@ -134,45 +128,6 @@ const main = async () => {
 	const memory = engine.initSync().memory;
     const context = setup_rendering()
     const world = engine.World.new()
-    console.log(world.step)
-    // data.particles.add = (x, y, kind) => {
-    //     let q_m = 0
-    //     let capacity_m = 0
-    //     if (kind=='MOON') {
-    //         q_m = 10000
-    //     }
-    //     if (kind=='PIPE') {
-    //         capacity_m = 10
-    //     }
-    //     if (kind=='TANK') {
-    //         capacity_m = 100
-    //     }
-    //     if (kind=='PUMP') {
-    //         capacity_m = 10
-    //     }
-    //     if (kind=='FILTER') {
-    //         capacity_m = 10
-    //     }
-    //     data.particles.push({
-    //         x: x,
-    //         y: y,
-    //         kind: kind,
-    //         // Quantity: current quantity stored
-    //         q: {
-    //             MOON: q_m,
-    //         },
-    //         // Capacity: maximum quantity that can be stored
-    //         c: {
-    //             MOON: capacity_m,
-    //         }
-    //     });
-    // };
-    // data.links.add = (a, b) => {
-    //     data.links.push({
-    //         a: a,
-    //         b: b,
-    //     });
-    // };
     setup(engine, world)
     // debug(engine, world, memory)
     step(

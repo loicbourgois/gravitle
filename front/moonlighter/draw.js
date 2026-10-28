@@ -1,5 +1,6 @@
 import { ZOOM } from "./consts.js";
 import { get_particle } from "./particle.js";
+import { get_link } from "./link.js";
 // const COLOR = '#eee'
 
 
@@ -29,24 +30,25 @@ const draw = (ctx, center, world, engine, memory) => {
         ctx.fillStyle = engine.base_color(particle.kind);
         ctx.fill();
 	}
+    const links_ptr = world.links();
+	const link_size = engine.Link.size();
+	const links_view = new DataView(
+		memory.buffer,
+		links_ptr,
+		world.links_count() * link_size,
+	);
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        // console.log()
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        ctx.beginPath();
+        ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+        ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+        ctx.strokeStyle = "#ff8";
+        ctx.stroke();
+    }
 
-    // for (const p of data.particles) {
-    //     ctx.beginPath();
-    //     ctx.arc(p.x*diameter+centerX, -p.y*diameter+centerY, radius, 0, Math.PI * 2);
-    //     ctx.fillStyle = STYLE[p.kind] || COLOR;
-    //     ctx.fill();
-    // }
-    // for (const link of data.links) {
-    //     const a = data.particles[link.a];
-    //     const b = data.particles[link.b];
-    //     if (a && b) {
-    //         ctx.beginPath();
-    //         ctx.moveTo(a.x * diameter + centerX, -a.y * diameter + centerY);
-    //         ctx.lineTo(b.x * diameter + centerX, -b.y * diameter + centerY);
-    //         ctx.strokeStyle = STYLE.LINK;
-    //         ctx.stroke();
-    //     }
-    // }
     // for (const p of data.particles) {
     //     if (Number.isFinite(p.pressure)) {
     //         const x = p.x * diameter + centerX;

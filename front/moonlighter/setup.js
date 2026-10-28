@@ -10,12 +10,13 @@ const setup = (engine, world) => {
     world.add_particle(2, -0.1, engine.Kind.Pipe);
     world.add_particle(6, 0.1, engine.Kind.Filter);
     world.add_particle(7, 0.2, engine.Kind.Pump);
-    // data.links.add(5, 6)
-    // data.links.add(6, 7)
-    // data.links.add(7, 8)
-    // data.links.add(8, 1)
-    // data.links.add(5, 9)
-    // data.links.add(10, 9)
+
+    world.add_link(5, 6)
+    world.add_link(6, 7)
+    world.add_link(7, 8)
+    world.add_link(8, 1)
+    world.add_link(5, 9)
+    world.add_link(10, 9)
 }
 
 export {
