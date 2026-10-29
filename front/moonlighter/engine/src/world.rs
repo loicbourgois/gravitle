@@ -138,6 +138,14 @@ impl World {
 
 
         for particle in &mut self.particles {
+            let q = particle.electricity_q + particle.electricity_qd;
+            if particle.kind == Kind::Pump && q > 0 {
+                particle.electricity_qd -= 1;
+            }
+        }
+
+
+        for particle in &mut self.particles {
             particle.pressure_q = particle.pressure_qn;
             particle.moon_q += particle.moon_qd;
             particle.electricity_q += particle.electricity_qd;
