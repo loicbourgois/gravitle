@@ -47,6 +47,10 @@ pub struct Particle {
     pub moon_q: i32,
     pub moon_qd: i32,
 
+    pub electricity_c: i32,
+    pub electricity_q: i32,
+    pub electricity_qd: i32,
+
     // For wasm
     pub padding: u32,
 }
@@ -73,13 +77,21 @@ impl Particle {
                 Kind::Moon => 10000,
                 Kind::Tank => 100,
                 Kind::Pipe | Kind::Filter => 10,
-                Kind::Pump => 0,
+                _ => 0,
             },
             moon_q: match kind {
                 Kind::Moon => 10000,
                 _ => 0,
             },
             moon_qd: 0,
+            electricity_c: match kind {
+                Kind::Battery => 100,
+                Kind::Pump => 10,
+                Kind::SolarPanel => 5,
+                _ => 0,
+            },
+            electricity_q: 0,
+            electricity_qd: 0,
             padding: 0,
         };
         p.set_position(x, y);

@@ -13,5 +13,8 @@ cargo clippy --release \
     -A unused_variables \
     -A unused_imports \
     -A clippy::unnecessary_unwrap \
-    -A clippy::unnested_or_patterns
+    -A clippy::unnested_or_patterns \
+    -A clippy::nonminimal_bool \
+    -A unused_parens
+    
 echo "✅ Gravitle - Moonlighter - lint"

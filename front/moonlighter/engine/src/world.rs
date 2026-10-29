@@ -35,10 +35,7 @@ impl World {
 
     pub fn tick(&mut self) {
         self.step = self.step.wrapping_add(1);
-        for particle in &mut self.particles {
-            particle.moon_qd = 0;
-            particle.prn = 0;
-        }
+        
 
         // The pressure comparison permits transfer only from the lower-
         // pressure endpoint to the higher-pressure endpoint, so the reverse
@@ -51,22 +48,38 @@ impl World {
             pairs.insert((b, a));
         }
 
+        
+        for particle in &mut self.particles {
+            particle.moon_qd = 0;
+            particle.prn = (particle.prn-1).max(0);
+            particle.electricity_qd = 0;
+        }
+
 
         for &(a, b) in &pairs {
-            if self.particles[a ].kind == Kind::Pump {
-                self.particles[a ].prn = -6;
-            }
-            else {
-                let pressure = self.particles[b ].pr.saturating_add(1);
-                self.particles[a ].prn = self.particles[a ].prn.min(pressure);
+            match self.particles[a].kind {
+                Kind::Pump => {
+                    if self.particles[a].electricity_q > 0 { 
+                        self.particles[a].prn = -6;
+                        self.particles[a].electricity_qd -= 1;
+                    } else {
+                        self.particles[a].prn = 0;
+                    }
+                }
+                Kind::Pipe | Kind::Moon | Kind::Tank | Kind::Filter => {
+                    let neighboor_pressure = self.particles[b].pr;
+                    self.particles[a].prn = self.particles[a].prn.min(neighboor_pressure.saturating_add(1));
+                }
+                _ => {
+                    // pass
+                }
             }
         }
 
 
-        for (a, b) in pairs {
-            let source = &self.particles[a];
-            let destination = &self.particles[b ];
-
+        for (a, b) in &pairs {
+            let source = &self.particles[*a];
+            let destination = &self.particles[*b];
             if source.kind == Kind::Filter
                 || destination.pr >= source.pr
                 || source.moon_q <= 0
@@ -76,25 +89,67 @@ impl World {
             {
                 continue;
             }
-
             if destination.kind == Kind::Filter
                 && self.rng.next_f32() >= FILTER_PASS_PROBABILITY
             {
                 continue;
             }
-
-            self.particles[a ].moon_qd -= 1;
-            self.particles[b ].moon_qd += 1;
+            self.particles[*a].moon_qd -= 1;
+            self.particles[*b].moon_qd += 1;
         }
+
+        
+        // electricity
+        // for solar panel, electricity_qd is always 1
+        // electricty should then flow equally to everything
+        // if 2 neighbours ar at (2,5), next step they should be at (3,4)
+        // we only distributed by increment of 1
+        // (10,1) -> (9,2)
+        // we must first equalize the network, then push the overflow to the biggest
+        // (10/100,2/2,0/2) -> (10/100,2/2,1/2) -> (10/100,2/2,2/2) -> (11/100,2/2,2/2)
+        for particle in &mut self.particles {
+            if particle.kind == Kind::SolarPanel && particle.electricity_q < particle.electricity_c {
+                particle.electricity_qd += 1;
+            }
+        }
+
+
+        for (a, b) in &pairs {
+            let source = &self.particles[*a];
+            let destination = &self.particles[*b];
+            let source_q = source.electricity_q + source.electricity_qd;
+            let dest_q = destination.electricity_q + destination.electricity_qd;
+            let dest_free_capacity = destination.electricity_c - dest_q;
+            let source_c = source.electricity_c;
+            let transfer = ((source_q - dest_q + 1) / 2).max(1).min(dest_free_capacity);
+            if (
+                source_q > dest_q 
+                && source_q > 0 
+                && dest_free_capacity > 0
+            ) 
+            || (
+                source_q == source_c
+                && source_q > 0
+                && dest_free_capacity > 0 
+            ) 
+            {
+                self.particles[*a].electricity_qd -= transfer;
+                self.particles[*b].electricity_qd += transfer;
+            }
+        }
+
 
         for particle in &mut self.particles {
             particle.pr = particle.prn;
             particle.moon_q += particle.moon_qd;
+            particle.electricity_q += particle.electricity_qd;
+            assert!(particle.electricity_q <= particle.electricity_c);
+            // assert!(particle.electricity_q >= 0);
         }
     }
 
 
-    pub fn add_particle(&mut self, x: f32, y: f32, k: Kind) {
+    pub fn add_particle(&mut self, x: f32, y: f32, k: Kind) -> u32 {
         let index = self.particles.len() as u32;
         self.particles.push(Particle::new(
             index,
@@ -102,6 +157,7 @@ impl World {
             k,
             x, y
         ));
+        index
     }
 
     pub fn particles(&self) -> *const Particle {

@@ -1,7 +1,7 @@
 /* @ts-self-types="./engine.d.ts" */
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -9,6 +9,8 @@ export const Kind = Object.freeze({
     Tank: 2, "2": "Tank",
     Filter: 3, "3": "Filter",
     Pump: 4, "4": "Pump",
+    SolarPanel: 5, "5": "SolarPanel",
+    Battery: 6, "6": "Battery",
 });
 
 export class Link {
@@ -145,6 +147,27 @@ export class Particle {
     get dv() {
         const ret = wasm.__wbg_get_particle_dv(this.__wbg_ptr);
         return Point.__wrap(ret);
+    }
+    /**
+     * @returns {number}
+     */
+    get electricity_c() {
+        const ret = wasm.__wbg_get_particle_electricity_c(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get electricity_q() {
+        const ret = wasm.__wbg_get_particle_electricity_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get electricity_qd() {
+        const ret = wasm.__wbg_get_particle_electricity_qd(this.__wbg_ptr);
+        return ret;
     }
     /**
      * @returns {number}
@@ -299,6 +322,24 @@ export class Particle {
         _assertClass(arg0, Point);
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_dv(this.__wbg_ptr, ptr0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set electricity_c(arg0) {
+        wasm.__wbg_set_particle_electricity_c(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set electricity_q(arg0) {
+        wasm.__wbg_set_particle_electricity_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set electricity_qd(arg0) {
+        wasm.__wbg_set_particle_electricity_qd(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
@@ -545,9 +586,11 @@ export class World {
      * @param {number} x
      * @param {number} y
      * @param {Kind} k
+     * @returns {number}
      */
     add_particle(x, y, k) {
-        wasm.world_add_particle(this.__wbg_ptr, x, y, k);
+        const ret = wasm.world_add_particle(this.__wbg_ptr, x, y, k);
+        return ret >>> 0;
     }
     /**
      * @returns {number}
