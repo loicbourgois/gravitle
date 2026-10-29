@@ -51,15 +51,14 @@ const draw = (ctx, center, world, engine, memory) => {
 
     for (let i = 0; i < world.particles_count(); i++) {
         const p = get_particle(particles_view, particle_size, i);
-        if (Number.isFinite(p.pr)) {
             const x = p.ap.x * diameter + center.x;
             const y = -p.ap.y * diameter + center.y;
-            const label = String(p.pr);
+            const label = `p:${p.pressure_q}`;
             ctx.font = '16px monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             const labelX = x  ;
-            const labelY = y - 16;
+            const labelY = y + 20*3;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
             ctx.fillStyle = '#111';
@@ -71,7 +70,6 @@ const draw = (ctx, center, world, engine, memory) => {
             );
             ctx.fillStyle = "#eee";
             ctx.fillText(label, labelX, labelY);
-        }
     }
     for (let i = 0; i < world.particles_count(); i++) {
         const p = get_particle(particles_view, particle_size, i);
@@ -82,7 +80,7 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             const labelX = x;
-            const labelY = y + 16;
+            const labelY = y + 20;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
             ctx.fillStyle = '#111';
@@ -105,7 +103,7 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             const labelX = x;
-            const labelY = y + 16*2;
+            const labelY = y + 20*2;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
             ctx.fillStyle = '#111';

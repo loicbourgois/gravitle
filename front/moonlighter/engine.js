@@ -242,15 +242,22 @@ export class Particle {
     /**
      * @returns {number}
      */
-    get pr() {
-        const ret = wasm.__wbg_get_particle_pr(this.__wbg_ptr);
+    get pressure_c() {
+        const ret = wasm.__wbg_get_particle_pressure_c(this.__wbg_ptr);
         return ret;
     }
     /**
      * @returns {number}
      */
-    get prn() {
-        const ret = wasm.__wbg_get_particle_prn(this.__wbg_ptr);
+    get pressure_q() {
+        const ret = wasm.__wbg_get_particle_pressure_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get pressure_qn() {
+        const ret = wasm.__wbg_get_particle_pressure_qn(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -412,14 +419,20 @@ export class Particle {
     /**
      * @param {number} arg0
      */
-    set pr(arg0) {
-        wasm.__wbg_set_particle_pr(this.__wbg_ptr, arg0);
+    set pressure_c(arg0) {
+        wasm.__wbg_set_particle_pressure_c(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
-    set prn(arg0) {
-        wasm.__wbg_set_particle_prn(this.__wbg_ptr, arg0);
+    set pressure_q(arg0) {
+        wasm.__wbg_set_particle_pressure_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set pressure_qn(arg0) {
+        wasm.__wbg_set_particle_pressure_qn(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Particle.prototype[Symbol.dispose] = Particle.prototype.free;

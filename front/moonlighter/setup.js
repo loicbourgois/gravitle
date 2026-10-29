@@ -14,12 +14,9 @@ const setup = (engine, world) => {
     const b2 = world.add_particle(9.1, 1., engine.Kind.Battery);
     const sp1 = world.add_particle(7, 2.2, engine.Kind.SolarPanel);
     const p2 = world.add_particle(8.1, 1.1, engine.Kind.Pump);
-
-
     const sp2 = world.add_particle(9, 2.2, engine.Kind.SolarPanel);
     const sp3 = world.add_particle(9, -0.2, engine.Kind.SolarPanel);
     const sp4 = world.add_particle(10.2, 1.2, engine.Kind.SolarPanel);
-
     world.add_link(5, 6)
     world.add_link(6, 7)
     world.add_link(7, 8)
