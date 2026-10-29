@@ -112,33 +112,29 @@ impl World {
             self.particles[*b].moon_qd += 1;
         }
 
-        
-        
 
-
-        // for (a, b) in &pairs {
-        //     let source = &self.particles[*a];
-        //     let destination = &self.particles[*b];
-        //     let source_q = source.electricity_q + source.electricity_qd;
-        //     let dest_q = destination.electricity_q + destination.electricity_qd;
-        //     let dest_free_capacity = destination.electricity_c - dest_q;
-        //     let source_c = source.electricity_c;
-        //     let transfer = ((source_q - dest_q + 1) / 2).max(1).min(dest_free_capacity);
-        //     if (
-        //         source_q > dest_q 
-        //         && source_q > 0 
-        //         && dest_free_capacity > 0
-        //     ) 
-        //     || (
-        //         source_q == source_c
-        //         && source_q > 0
-        //         && dest_free_capacity > 0 
-        //     ) 
-        //     {
-        //         self.particles[*a].electricity_qd -= transfer;
-        //         self.particles[*b].electricity_qd += transfer;
-        //     }
-        // }
+        for (a, b) in &pairs {
+            let source = &self.particles[*a];
+            let destination = &self.particles[*b];
+            let source_q = source.electricity_q + source.electricity_qd;
+            let dest_q = destination.electricity_q + destination.electricity_qd;
+            let dest_free_capacity = destination.electricity_c - dest_q;
+            let source_c = source.electricity_c;
+            if (
+                source_q > dest_q 
+                && source_q > 0 
+                && dest_free_capacity > 0
+            ) 
+            // || (
+            //     source_q == source_c
+            //     && source_q > 0
+            //     && dest_free_capacity > 0 
+            // ) 
+            {
+                self.particles[*a].electricity_qd -= 1;
+                self.particles[*b].electricity_qd += 1;
+            }
+        }
 
 
         for particle in &mut self.particles {
