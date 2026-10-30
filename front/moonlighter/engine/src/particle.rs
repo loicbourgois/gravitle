@@ -87,9 +87,9 @@ impl Particle {
             },
             moon_qd: 0,
             electricity_c: match kind {
-                Kind::Battery => 100,
-                Kind::Pump => 10,
+                Kind::Battery => 10,
                 Kind::SolarPanel => 5,
+                Kind::Pump => 4,
                 _ => 0,
             },
             electricity_q: 0,

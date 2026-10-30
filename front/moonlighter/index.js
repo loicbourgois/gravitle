@@ -1,5 +1,8 @@
 import init, * as engine from "./engine.js";
-import { setup } from "./setup.js";
+import { setup } from "./setup_1.js";
+// import { setup } from "./setup_2.js";
+// import { setup } from "./setup_3.js";
+// import { setup } from "./setup_4.js";
 import { debug } from "./debug.js";
 import { setup_rendering } from "./render.js";
 import { step } from "./step.js";

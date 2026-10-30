@@ -35,10 +35,13 @@ impl World {
 
     pub fn tick(&mut self) {
         // Electricity
-        // for solar panel, electricity_qd is always 1
-        // electricty should then flow equally to everything
-        // if 2 neighbours ar at (2,5), next step they should be at (3,4)
-        // we only distributed by increment of 1
+        //
+        // Solar Panel
+        // A panal generates 1 electricity per tick
+        // 
+        // We only distribute by increment of 1 by step
+        // 
+        // Electricty should flow equally to everything
         // (10,1) -> (9,2)
         // we must first equalize the network, then push the overflow to the biggest
         // (10/100,2/2,0/2) -> (10/100,2/2,1/2) -> (10/100,2/2,2/2) -> (11/100,2/2,2/2)
@@ -69,10 +72,10 @@ impl World {
 
 
         for particle in &mut self.particles {
-            if particle.kind == Kind::Pump {
-                particle.pressure_qn = (particle.pressure_q - 1).max(-6);
-            }
-            if particle.kind == Kind::SolarPanel && particle.electricity_q < particle.electricity_c {
+            // if particle.kind == Kind::Pump {
+            //     particle.pressure_qn = (particle.pressure_q - 1).max(-6);
+            // }
+            if particle.kind == Kind::SolarPanel {
                 particle.electricity_qd += 1;
             }
         }
@@ -116,7 +119,8 @@ impl World {
         for (a, b) in &pairs {
             let source = &self.particles[*a];
             let destination = &self.particles[*b];
-            let source_q = source.electricity_q + source.electricity_qd;
+            let mut source_q = source.electricity_q + source.electricity_qd;
+            source_q = source_q.min(source.electricity_q);
             let dest_q = destination.electricity_q + destination.electricity_qd;
             let dest_free_capacity = destination.electricity_c - dest_q;
             let source_c = source.electricity_c;
@@ -124,12 +128,10 @@ impl World {
                 source_q > dest_q 
                 && source_q > 0 
                 && dest_free_capacity > 0
+            ) || (
+                source.electricity_q + source.electricity_qd > source.electricity_c
+                && dest_free_capacity > 0
             ) 
-            // || (
-            //     source_q == source_c
-            //     && source_q > 0
-            //     && dest_free_capacity > 0 
-            // ) 
             {
                 self.particles[*a].electricity_qd -= 1;
                 self.particles[*b].electricity_qd += 1;
@@ -137,10 +139,13 @@ impl World {
         }
 
 
+
         for particle in &mut self.particles {
-            let q = particle.electricity_q + particle.electricity_qd;
-            if particle.kind == Kind::Pump && q > 0 {
+            let eq = particle.electricity_q + particle.electricity_qd;
+            if particle.kind == Kind::Pump && eq > 0 {
                 particle.electricity_qd -= 1;
+                particle.pressure_qn = particle.pressure_q - 1;
+                particle.pressure_qn = particle.pressure_qn.max(-6);
             }
         }
 
@@ -149,6 +154,17 @@ impl World {
             particle.pressure_q = particle.pressure_qn;
             particle.moon_q += particle.moon_qd;
             particle.electricity_q += particle.electricity_qd;
+        }
+
+
+        for particle in &mut self.particles {
+            if particle.kind == Kind::SolarPanel {
+                particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
+            }
+        }
+
+
+        for particle in &mut self.particles {
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
         }

@@ -4,6 +4,10 @@ import { get_link } from "./link.js";
 // const COLOR = '#eee'
 
 
+const history = {
+    esum: []
+}
+
 
 
 const draw_diam = (canvas) => {
@@ -22,7 +26,25 @@ const draw = (ctx, center, world, engine, memory) => {
 		particles_ptr,
 		world.particles_count() * particle_size,
 	);
+    let aa = `${world.step}\t|`
+    let esum = 0
 	for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+        esum += particle.electricity_q
+        aa = `${aa}\t${particle.electricity_q}`
+	}
+    aa = `${aa}\t${esum}\t|`
+    for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+        // esum += particle.electricity_q
+        aa = `${aa}\t${particle.pressure_q}`
+	}
+    history.esum.push(esum)
+    if (world.step <= 24) {
+        console.log(aa)
+    }
+
+    for (let i = 0; i < world.particles_count(); i++) {
 		const particle = get_particle(particles_view, particle_size, i);
         const p = particle.ap;
         ctx.beginPath();
@@ -30,6 +52,7 @@ const draw = (ctx, center, world, engine, memory) => {
         ctx.fillStyle = engine.base_color(particle.kind);
         ctx.fill();
 	}
+
     const links_ptr = world.links();
 	const link_size = engine.Link.size();
 	const links_view = new DataView(
@@ -115,6 +138,30 @@ const draw = (ctx, center, world, engine, memory) => {
             );
             ctx.fillStyle = "#eee";
             ctx.fillText(label, labelX, labelY);
+    }
+
+    // Keep the first sample at the bottom-left; later samples extend right.
+    const squareSize = 10;
+    const squareStep = squareSize + 1;
+    ctx.fillStyle = "#ff08";
+    for (
+        let column = 0;
+        column < history.esum.length &&
+        column * squareStep + squareSize <= ctx.canvas.width;
+        column++
+    ) {
+        const esum = history.esum[column];
+        const x = column * squareStep;
+
+        for (
+            let row = 0;
+            row < esum &&
+            row * squareStep + squareSize <= ctx.canvas.height;
+            row++
+        ) {
+            const y = ctx.canvas.height - squareSize - row * squareStep;
+            ctx.fillRect(x, y, squareSize, squareSize);
+        }
     }
 }
 

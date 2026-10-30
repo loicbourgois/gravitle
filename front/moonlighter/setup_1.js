@@ -29,7 +29,13 @@ const setup = (engine, world) => {
     world.add_link(b2, p2)
     world.add_link(b2, sp2)
     world.add_link(b2, sp3)
-    world.add_link(b2, sp4)
+    // world.add_link(b2, sp4)
+
+    // TODO: why is b1 not charging ? 
+    // it's stuck at 1/10
+    // we have 3 solar panels
+    // and only 2 pumps  
+    // The 2 batteries should charge at their max 
 }
 
 export {
