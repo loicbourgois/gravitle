@@ -141,16 +141,24 @@ const draw = (ctx, center, world, engine, memory) => {
     }
 
     // Keep the first sample at the bottom-left; later samples extend right.
-    const squareSize = 10;
+    const scrollHistory = true
+    const squareSize = 6;
     const squareStep = squareSize + 1;
+    const visibleColumns = Math.floor(
+        (ctx.canvas.width - squareSize) / squareStep,
+    ) + 1;
+    const startColumn = scrollHistory
+        ? Math.max(0, history.esum.length - Math.max(0, visibleColumns))
+        : 0;
+
     ctx.fillStyle = "#ff08";
     for (
         let column = 0;
-        column < history.esum.length &&
-        column * squareStep + squareSize <= ctx.canvas.width;
+        column < visibleColumns &&
+        startColumn + column < history.esum.length;
         column++
     ) {
-        const esum = history.esum[column];
+        const esum = history.esum[startColumn + column];
         const x = column * squareStep;
 
         for (

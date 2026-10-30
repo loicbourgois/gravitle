@@ -17,6 +17,7 @@ const setup = (engine, world) => {
     const sp2 = world.add_particle(9, 2.2, engine.Kind.SolarPanel);
     const sp3 = world.add_particle(9, -0.2, engine.Kind.SolarPanel);
     const sp4 = world.add_particle(10.2, 1.2, engine.Kind.SolarPanel);
+    const b3 = world.add_particle(8, 2.5, engine.Kind.Battery);
     world.add_link(5, 6)
     world.add_link(6, 7)
     world.add_link(7, 8)
@@ -29,13 +30,9 @@ const setup = (engine, world) => {
     world.add_link(b2, p2)
     world.add_link(b2, sp2)
     world.add_link(b2, sp3)
-    // world.add_link(b2, sp4)
-
-    // TODO: why is b1 not charging ? 
-    // it's stuck at 1/10
-    // we have 3 solar panels
-    // and only 2 pumps  
-    // The 2 batteries should charge at their max 
+    world.add_link(b2, b3)
+    world.add_link(b1, b3)
+    world.add_link(b2, sp4)
 }
 
 export {

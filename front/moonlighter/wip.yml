@@ -2,10 +2,11 @@ command: l todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/wip.yml
 
 
 models:
-  # - openai/gpt-6-luna
-  - openai/gpt-6.1-sol
+  - openai/gpt-6-luna
+  # - openai/gpt-6.1-sol
   # - mistralai/mistral-large-4-0
-  # - mistralai/devstral-2512
+  - mistralai/devstral-2512
+  - deepseek/deepseek-v4.1-flash-1017
 
 
 files:
@@ -23,3 +24,4 @@ files:
 
 rules:
   - keep code tidy
+  - if replacing code, give context into what to remove

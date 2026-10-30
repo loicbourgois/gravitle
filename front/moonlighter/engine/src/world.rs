@@ -40,6 +40,8 @@ impl World {
         // A panal generates 1 electricity per tick
         // 
         // We only distribute by increment of 1 by step
+        // We want the electricity to flow gradually. 
+        // No exception.
         // 
         // Electricty should flow equally to everything
         // (10,1) -> (9,2)
@@ -72,9 +74,6 @@ impl World {
 
 
         for particle in &mut self.particles {
-            // if particle.kind == Kind::Pump {
-            //     particle.pressure_qn = (particle.pressure_q - 1).max(-6);
-            // }
             if particle.kind == Kind::SolarPanel {
                 particle.electricity_qd += 1;
             }
@@ -123,7 +122,6 @@ impl World {
             source_q = source_q.min(source.electricity_q);
             let dest_q = destination.electricity_q + destination.electricity_qd;
             let dest_free_capacity = destination.electricity_c - dest_q;
-            let source_c = source.electricity_c;
             if (
                 source_q > dest_q 
                 && source_q > 0 
@@ -137,7 +135,6 @@ impl World {
                 self.particles[*b].electricity_qd += 1;
             }
         }
-
 
 
         for particle in &mut self.particles {
