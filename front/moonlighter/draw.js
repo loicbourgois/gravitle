@@ -121,7 +121,8 @@ const draw = (ctx, center, world, engine, memory) => {
         const p = get_particle(particles_view, particle_size, i);
             const x = p.ap.x * diameter + center.x;
             const y = -p.ap.y * diameter + center.y;
-            const label = `e:${p.electricity_q}/${p.electricity_c}`;
+            const l = String(p.electricity_c).length
+            const label = `e:${String(p.electricity_q).padStart(l, " ")}/${p.electricity_c}`;
             ctx.font = '16px monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
