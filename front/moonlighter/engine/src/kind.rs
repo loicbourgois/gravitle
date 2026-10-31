@@ -12,6 +12,10 @@ pub enum Kind {
     SolarPanel = 5,
     Battery = 6,
     Wire = 7,
+    Switch = 8,
+    Led = 9,
+    Blower = 10,
+    Valve = 11,
 }
 
 #[wasm_bindgen]
@@ -25,6 +29,10 @@ pub fn base_color(k: Kind) -> String {
         Kind::SolarPanel => "rgb(227, 219, 183)".to_string(),
         Kind::Battery => "rgb(204, 194, 147)".to_string(),
         Kind::Wire => "rgb(209, 117, 71)".to_string(),
+        Kind::Switch => "rgb(118, 118, 117)".to_string(),
+        Kind::Led => "rgb(51, 113, 57)".to_string(),
+        Kind::Blower => "rgb(191, 124, 200)".to_string(),
+        Kind::Valve => "rgb(124, 149, 200)".to_string(),
         // _ => "#f0f".to_string(),
     }
 }

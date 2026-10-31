@@ -9,8 +9,10 @@ const step = (
     context,
     engine, 
     memory,
+    custom_logic,
 ) => {
     world.tick()
+    custom_logic(world, engine, memory)
     draw(
         context,
         {
@@ -28,6 +30,7 @@ const step = (
                 context,
                 engine, 
                 memory,
+                custom_logic,
             )
         });
     } else if (TIME_MODE == "slow") {
@@ -37,6 +40,7 @@ const step = (
                 context,
                 engine, 
                 memory,
+                custom_logic,
             )
         }, 500);
     } else {

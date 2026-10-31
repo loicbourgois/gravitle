@@ -3,11 +3,12 @@ command: l review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/revie
 
 models:
   - mistralai/mistral-large-4-0
-  - mistralai/devstral-2512
+  # - mistralai/devstral-2512
   - deepseek/deepseek-v4.1-flash-1017
 
 
 files:
+  - file://./../../../../gravitle/front/moonlighter/design/README.md
   - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world.rs
   - file://./../../../../gravitle/front/moonlighter/index.js
@@ -16,6 +17,5 @@ files:
 
 
 rules:
-  - keep code tidy
   - review for logic only
-  - higlight edge cases
+  - highlight edge cases

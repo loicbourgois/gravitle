@@ -1,7 +1,7 @@
 /* @ts-self-types="./engine.d.ts" */
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -12,6 +12,10 @@ export const Kind = Object.freeze({
     SolarPanel: 5, "5": "SolarPanel",
     Battery: 6, "6": "Battery",
     Wire: 7, "7": "Wire",
+    Switch: 8, "8": "Switch",
+    Led: 9, "9": "Led",
+    Blower: 10, "10": "Blower",
+    Valve: 11, "11": "Valve",
 });
 
 export class Link {
@@ -106,6 +110,13 @@ export class Particle {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_particle_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get activation() {
+        const ret = wasm.__wbg_get_particle_activation(this.__wbg_ptr);
+        return ret;
     }
     /**
      * @returns {number}
@@ -285,6 +296,12 @@ export class Particle {
     static size() {
         const ret = wasm.particle_size();
         return ret >>> 0;
+    }
+    /**
+     * @param {number} arg0
+     */
+    set activation(arg0) {
+        wasm.__wbg_set_particle_activation(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
@@ -639,6 +656,13 @@ export class World {
     particles_count() {
         const ret = wasm.world_particles_count(this.__wbg_ptr);
         return ret >>> 0;
+    }
+    /**
+     * @param {number} pidx
+     * @param {number} v
+     */
+    set_activation(pidx, v) {
+        wasm.world_set_activation(this.__wbg_ptr, pidx, v);
     }
     tick() {
         wasm.world_tick(this.__wbg_ptr);

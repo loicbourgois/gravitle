@@ -52,6 +52,8 @@ pub struct Particle {
     pub electricity_q: i32,
     pub electricity_qd: i32,
 
+    pub activation: i32,
+
     // For wasm
     pub padding: u32,
 }
@@ -62,7 +64,8 @@ impl Particle {
         let mut p = Particle {
             idx,
             diameter: match kind {
-                Kind::Wire => 0.25,
+                Kind::Wire | Kind::Led | Kind::Switch => 0.25,
+                Kind::Pipe  => 0.75,
                 _ => 1.0,
             },
             p: Point::new(0.0, 0.0),
@@ -76,7 +79,8 @@ impl Particle {
             collision_response_count: 0,
             link_response: Point::new(0.0, 0.0),
             pressure_c: match kind {
-                Kind::Pump => -6,
+                Kind::Pump => -20,
+                Kind::Blower => 20,
                 _ => 0,
             },
             pressure_q: 0,
@@ -85,6 +89,7 @@ impl Particle {
                 Kind::Moon => 10000,
                 Kind::Tank => 100,
                 Kind::Pipe | Kind::Filter => 10,
+                Kind::Valve => 1,
                 _ => 0,
             },
             moon_q: match kind {
@@ -96,11 +101,12 @@ impl Particle {
                 Kind::Battery => 10,
                 Kind::SolarPanel => 5,
                 Kind::Pump => 4,
-                Kind::Wire => 4,
+                Kind::Wire | Kind::Led | Kind::Switch | Kind::Blower => 4,
                 _ => 0,
             },
             electricity_q: 0,
             electricity_qd: 0,
+            activation: 0,
             padding: 0,
         };
         p.set_position(x, y);

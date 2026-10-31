@@ -48,6 +48,7 @@ const get_particle = (particles_view, particle_size, idx) => {
 		electricity_c: particles_view.getInt32(idx * particle_size + 104, true),
 		electricity_q: particles_view.getInt32(idx * particle_size + 108, true),
 		electricity_qd: particles_view.getInt32(idx * particle_size + 112, true),
+		activation: particles_view.getInt32(idx * particle_size + 116, true),
 	};
 	particle.ap = {
 		x: (particle.p.x + particle.pp.x) * 0.5,
