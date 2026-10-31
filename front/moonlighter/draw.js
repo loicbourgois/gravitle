@@ -49,7 +49,6 @@ const draw = (ctx, center, world, engine, memory) => {
         const esum = history.esum[index];
         const emax = history.emax[index];
         const x = column * squareStep;
-
         for (
             let row = 0;
             row < emax &&
@@ -143,6 +142,13 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.beginPath();
             ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
             ctx.fillStyle = "#f00";
+            ctx.fill();
+        }
+
+        if (particle.kind == engine.Kind.Valve && particle.activation == 0) {
+            ctx.beginPath();
+            ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
+            ctx.fillStyle = "#f004";
             ctx.fill();
         }
 	}

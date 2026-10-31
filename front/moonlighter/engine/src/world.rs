@@ -154,9 +154,13 @@ impl World {
             {
                 continue;
             }
-            if destination.kind == Kind::Filter
-                && self.rng.next_f32() >= FILTER_PASS_PROBABILITY
-            {
+            if destination.kind == Kind::Filter && self.rng.next_f32() >= FILTER_PASS_PROBABILITY {
+                continue;
+            }
+            // if source.kind == Kind::Filter {
+            //     continue;
+            // }
+            if destination.kind == Kind::Filter && source.kind == Kind::Filter {
                 continue;
             }
             self.particles[*a].moon_qd -= 1;
