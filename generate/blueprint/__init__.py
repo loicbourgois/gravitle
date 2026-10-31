@@ -51,6 +51,16 @@ def blueprint():
                         "y": -row * DIAM * y_ratio / 2,
                     }
                 )
+            elif c2 == "hl":
+                cells.append(
+                    {
+                        "kind": "headlight",
+                        "xy": [col, row],
+                        "idx": len(cells),
+                        "x": col / 6 * DIAM,
+                        "y": -row * DIAM * y_ratio / 2,
+                    }
+                )
             elif c == "\\":
                 links.append({"kind": "\\", "xy": [col, row]})
             elif c == "/":

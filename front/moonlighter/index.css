@@ -1,0 +1,19 @@
+* {
+    background: #111;
+    font-family: monospace;
+    color: #eee;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+    display: flex;
+    height: 100vh;
+}
+
+
+canvas {
+    width: 100%;
+    flex-grow: 1;
+}

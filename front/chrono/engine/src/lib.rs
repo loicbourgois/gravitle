@@ -1,6 +1,7 @@
-mod cell;
+mod kind;
 mod link;
 mod math;
+mod particle;
 mod point;
 mod sfc32;
 mod utils;

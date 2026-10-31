@@ -1,0 +1,21 @@
+command: l review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/03_logic.yml
+
+
+models:
+  - mistralai/mistral-large-4-0
+  # - mistralai/devstral-2512
+  - deepseek/deepseek-v4.1-flash-1017
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/design/README.md
+  - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world.rs
+  - file://./../../../../gravitle/front/moonlighter/index.js
+  - file://./../../../../gravitle/front/moonlighter/setup_5.js
+  - file://./../../../../gravitle/front/moonlighter/setup_6.js
+
+
+rules:
+  - review for logic only
+  - highlight edge cases

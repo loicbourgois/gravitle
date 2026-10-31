@@ -1,4 +1,5 @@
 #!/bin/sh
+# $HOME/github.com/loicbourgois/gravitle/lint_chrono.sh
 set -e
 cd $HOME/github.com/loicbourgois/gravitle/front/chrono/engine
 cargo clippy --release \
@@ -12,5 +13,6 @@ cargo clippy --release \
     -A unused_variables \
     -A dead_code \
     -A unused_imports \
-    -A clippy::unnecessary_unwrap
+    -A clippy::unnecessary_unwrap \
+    -A clippy::unnested_or_patterns
 echo "✅ lint_chrono"

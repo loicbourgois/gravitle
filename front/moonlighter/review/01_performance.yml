@@ -1,0 +1,19 @@
+command: l review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/01_performance.yml
+
+
+models:
+  - mistralai/devstral-2512
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/build.sh
+  - file://./../../../../gravitle/front/moonlighter/engine/Cargo.toml
+  - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world.rs
+
+
+rules:
+  - keep code tidy
+  - review for performance only
+  - only CPU matters
+  - we do NOT care about RAM 
