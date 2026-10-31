@@ -1,7 +1,7 @@
 /* @ts-self-types="./engine.d.ts" */
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -11,6 +11,7 @@ export const Kind = Object.freeze({
     Pump: 4, "4": "Pump",
     SolarPanel: 5, "5": "SolarPanel",
     Battery: 6, "6": "Battery",
+    Wire: 7, "7": "Wire",
 });
 
 export class Link {
@@ -262,14 +263,13 @@ export class Particle {
     }
     /**
      * @param {number} idx
-     * @param {number} diameter
      * @param {Kind} kind
      * @param {number} x
      * @param {number} y
      * @returns {Particle}
      */
-    static new(idx, diameter, kind, x, y) {
-        const ret = wasm.particle_new(idx, diameter, kind, x, y);
+    static new(idx, kind, x, y) {
+        const ret = wasm.particle_new(idx, kind, x, y);
         return Particle.__wrap(ret);
     }
     /**

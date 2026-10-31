@@ -58,10 +58,13 @@ pub struct Particle {
 
 #[wasm_bindgen]
 impl Particle {
-    pub fn new(idx: u32, diameter: f32, kind: Kind, x: f32, y: f32) -> Particle {
+    pub fn new(idx: u32, kind: Kind, x: f32, y: f32) -> Particle {
         let mut p = Particle {
             idx,
-            diameter,
+            diameter: match kind {
+                Kind::Wire => 0.25,
+                _ => 1.0,
+            },
             p: Point::new(0.0, 0.0),
             np: Point::new(0.0, 0.0),
             pp: Point::new(0.0, 0.0),
@@ -72,7 +75,10 @@ impl Particle {
             collision_response: Point::new(0.0, 0.0),
             collision_response_count: 0,
             link_response: Point::new(0.0, 0.0),
-            pressure_c: 0,
+            pressure_c: match kind {
+                Kind::Pump => -6,
+                _ => 0,
+            },
             pressure_q: 0,
             pressure_qn: 0,
             moon_c: match kind {
@@ -90,6 +96,7 @@ impl Particle {
                 Kind::Battery => 10,
                 Kind::SolarPanel => 5,
                 Kind::Pump => 4,
+                Kind::Wire => 4,
                 _ => 0,
             },
             electricity_q: 0,

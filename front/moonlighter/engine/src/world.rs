@@ -3,7 +3,7 @@ use crate::particle::Particle;
 use crate::kind::Kind;
 use crate::wasm_bindgen;
 use crate::sfc32::Sfc32;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 const FILTER_PASS_PROBABILITY: f32 = 0.01;
 
@@ -57,7 +57,7 @@ impl World {
         self.step = self.step.wrapping_add(1);
         
         
-        let mut pairs: HashSet<(usize, usize)> = HashSet::new();
+        let mut pairs: BTreeSet<(usize, usize)> = BTreeSet::new();
         for link in &self.links {
             let a = link.a as usize;
             let b = link.b as usize;
@@ -118,25 +118,33 @@ impl World {
         for (a, b) in &pairs {
             let source = &self.particles[*a];
             let destination = &self.particles[*b];
+            let dest_c = destination.electricity_c;
+            let source_c = source.electricity_c;
+            // we don't want to consider particles 
+            // if they can't hold electricity
+            // if source_c <= 0 || dest_c <= 0 {
+            //     continue;
+            // }
             let mut source_q = source.electricity_q + source.electricity_qd;
             source_q = source_q.min(source.electricity_q);
             let dest_q = destination.electricity_q + destination.electricity_qd;
             let dest_free_capacity = destination.electricity_c - dest_q;
+            let source_ratio = source_q as f32 / source_c as f32;
+            let dest_ratio = dest_q as f32 / dest_c as f32;
+            let source_overcapacity = source.electricity_q + source.electricity_qd - source.electricity_c;
             if (
-                source_q > dest_q 
+                source_ratio > dest_ratio 
                 && source_q > 0 
                 && dest_free_capacity > 0
             ) || (
-                source.electricity_q + source.electricity_qd > source.electricity_c
+                source_overcapacity > 0
                 && dest_free_capacity > 0
-            ) 
+            )
             {
                 self.particles[*a].electricity_qd -= 1;
                 self.particles[*b].electricity_qd += 1;
             }
         }
-
-
         for particle in &mut self.particles {
             let eq = particle.electricity_q + particle.electricity_qd;
             if particle.kind == Kind::Pump && eq > 0 {
@@ -144,23 +152,21 @@ impl World {
                 particle.pressure_qn = particle.pressure_q - 1;
                 particle.pressure_qn = particle.pressure_qn.max(-6);
             }
+            if particle.kind == Kind::Pump && eq <= 0 {
+                particle.pressure_qn = particle.pressure_q + 1;
+                particle.pressure_qn = particle.pressure_qn.min(0);
+            }
         }
-
-
         for particle in &mut self.particles {
             particle.pressure_q = particle.pressure_qn;
             particle.moon_q += particle.moon_qd;
             particle.electricity_q += particle.electricity_qd;
         }
-
-
         for particle in &mut self.particles {
             if particle.kind == Kind::SolarPanel {
                 particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
             }
         }
-
-
         for particle in &mut self.particles {
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
@@ -172,9 +178,9 @@ impl World {
         let index = self.particles.len() as u32;
         self.particles.push(Particle::new(
             index,
-            1.0,
             k,
-            x, y
+            x, 
+            y,
         ));
         index
     }
