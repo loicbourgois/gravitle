@@ -7,7 +7,7 @@ use std::collections::{BTreeSet, HashSet};
 
 // The probability for dust to get into the filter
 // and start clogging it.
-const FILTER_PASS_PROBABILITY: f32 = 0.50;
+const FILTER_PASS_PROBABILITY: f32 = 0.10;
 
 #[wasm_bindgen]
 pub struct World {
