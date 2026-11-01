@@ -22,3 +22,5 @@ docs/chrono/review/
 **.yml.prompt.md			
 **.yml.response.**.md
 **/**.yml.prompt.md
+
+front/moonlighter/*.wasm
