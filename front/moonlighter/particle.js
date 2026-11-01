@@ -51,6 +51,9 @@ const get_particle = (particles_view, particle_size, idx) => {
 		activation: particles_view.getInt32(idx * particle_size + 116, true),
 		signal_q: particles_view.getInt32(idx * particle_size + 120, true),
 		signal_qn: particles_view.getInt32(idx * particle_size + 124, true),
+		smc: particles_view.getInt32(idx * particle_size + 128, true),
+		smq: particles_view.getInt32(idx * particle_size + 132, true),
+		smqd: particles_view.getInt32(idx * particle_size + 136, true),
 	};
 	particle.ap = {
 		x: (particle.p.x + particle.pp.x) * 0.5,

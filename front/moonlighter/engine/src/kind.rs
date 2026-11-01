@@ -23,6 +23,10 @@ pub enum Kind {
     SignalWire = 16,
     Trit = 17,
     SignalInverter = 18,
+    Press = 19,
+    Storage = 20,
+    Conveyor = 21,
+    Launcher = 22,
 }
 
 #[wasm_bindgen]
@@ -48,6 +52,11 @@ pub fn base_color(k: Kind) -> String {
         Kind::SignalWire => "rgb(168, 172, 118)".to_string(),
         Kind::Trit => "rgb(182, 182, 181)".to_string(),
         Kind::SignalInverter => "rgb(182, 182, 181)".to_string(),
+
+        Kind::Press => "rgb(103, 169, 208)".to_string(),
+        Kind::Storage => "rgb(126, 190, 157)".to_string(),
+        Kind::Conveyor => "rgb(136, 126, 190)".to_string(),
+        Kind::Launcher => "rgb(190, 188, 126)".to_string(),
         // _ => "#f0f".to_string(),
     }
 }

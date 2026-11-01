@@ -56,6 +56,10 @@ pub struct Particle {
     pub signal_q: i32,
     pub signal_qn: i32,
 
+    pub solidmoon_c: i32,
+    pub solidmoon_q: i32,
+    pub solidmoon_qd: i32,
+
     // For wasm
     pub padding: u32,
 }
@@ -97,6 +101,7 @@ impl Particle {
             moon_c: match kind {
                 Kind::Moon => 10000,
                 Kind::Tank => 1000,
+                Kind::Press => 20,
                 Kind::Pipe | Kind::Filter => 10,
                 Kind::Valve => 1,
                 _ => 0,
@@ -118,6 +123,12 @@ impl Particle {
             activation: 0,
             signal_q: 0,
             signal_qn: 0,
+            solidmoon_c: match kind {
+                Kind::Press | Kind::Launcher | Kind::Conveyor => 1,
+                _ => 0,
+            },
+            solidmoon_q: 0,
+            solidmoon_qd: 0,
             padding: 0,
         };
         p.set_position(x, y);

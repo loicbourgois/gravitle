@@ -19,6 +19,7 @@ cargo clippy --release \
     -A clippy::match_same_arms \
     -A clippy::too_many_lines \
     -A clippy::needless_continue \
-    -A clippy::single_match
+    -A clippy::single_match \
+    -A clippy::collapsible_match
     
 echo "✅ Gravitle - Moonlighter - lint"

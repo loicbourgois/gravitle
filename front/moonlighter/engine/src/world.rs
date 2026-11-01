@@ -55,11 +55,12 @@ impl World {
             }
         }
 
+        // Pressure management
         for aidx in 0..self.particles.len() {
             let ak = self.particles[aidx].kind;
             let aa = self.particles[aidx].activation;
             match ak {
-                Kind::Pipe | Kind::Tank | Kind::Filter => {
+                Kind::Pipe | Kind::Tank | Kind::Filter | Kind::Press => {
                     // pass
                 }
                 Kind::Valve if aa > 0 => {
@@ -78,6 +79,7 @@ impl World {
                         || self.particles[b].kind == Kind::Pump
                         || self.particles[b].kind == Kind::Blower
                         || self.particles[b].kind == Kind::Filter
+                        || self.particles[b].kind == Kind::Press
                     {
                         total += self.particles[b].pressure_q as f32;
                         count += 1.0;
@@ -175,6 +177,8 @@ impl World {
                 particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
             }
         }
+
+        // If filter is full, blocks the pressure
         for aidx in 0..self.particles.len() {
             if self.particles[aidx].kind != Kind::Filter
                 || self.particles[aidx].moon_q < self.particles[aidx].moon_c
@@ -196,12 +200,14 @@ impl World {
             }
         }
 
+        // Leaking
+        // Helps with above filter blocking
         for particle in &mut self.particles {
             match particle.kind {
-                Kind::Tank | Kind::Pipe | Kind::Valve => {
+                Kind::Pump => {}
+                _ => {
                     particle.pressure_q -= particle.pressure_q.signum();
                 }
-                _ => {}
             }
         }
 
@@ -347,11 +353,33 @@ impl World {
                 _ => {}
             }
         }
+
+        // Dust -> Solid
+        for i1 in 0..self.particles.len() {
+            let p1 = self.pm(i1);
+            match p1.kind {
+                Kind::Press => {
+                    if p1.moon_q == p1.moon_c && p1.solidmoon_q == 0 {
+                        p1.moon_q = 0;
+                        p1.solidmoon_q = 1;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+
+        // Solid movement
+
+        
+
+        // Debug
         for particle in &mut self.particles {
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
         }
 
+        // Done
         self.completed_steps += 1;
     }
 

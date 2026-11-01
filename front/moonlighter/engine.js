@@ -1,9 +1,9 @@
-/* @ts-self-types="./engine-2026-11-01_15-27-55.d.ts" */
+/* @ts-self-types="./engine-2026-11-01_16-50-35.d.ts" */
 
 //#region exports
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -25,6 +25,10 @@ export const Kind = Object.freeze({
     SignalWire: 16, "16": "SignalWire",
     Trit: 17, "17": "Trit",
     SignalInverter: 18, "18": "SignalInverter",
+    Press: 19, "19": "Press",
+    Storage: 20, "20": "Storage",
+    Conveyor: 21, "21": "Conveyor",
+    Launcher: 22, "22": "Launcher",
 });
 
 export class Link {
@@ -370,6 +374,33 @@ export class Particle {
         return ret;
     }
     /**
+     * @returns {number}
+     */
+    get solidmoon_c() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_solidmoon_c(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get solidmoon_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_solidmoon_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get solidmoon_qd() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_solidmoon_qd(this.__wbg_ptr);
+        return ret;
+    }
+    /**
      * @param {number} idx
      * @param {Kind} kind
      * @param {number} x
@@ -653,6 +684,33 @@ export class Particle {
         _assertNum(this.__wbg_ptr);
         _assertNum(arg0);
         wasm.__wbg_set_particle_signal_qn(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set solidmoon_c(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_solidmoon_c(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set solidmoon_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_solidmoon_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set solidmoon_qd(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_solidmoon_qd(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Particle.prototype[Symbol.dispose] = Particle.prototype.free;
@@ -1003,7 +1061,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-01_15-27-55_bg.js": import0,
+        "./engine-2026-11-01_16-50-35_bg.js": import0,
     };
 }
 
@@ -1224,7 +1282,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-01_15-27-55_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-01_16-50-35_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 
