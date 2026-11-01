@@ -164,7 +164,6 @@ const draw = (ctx, center, world, engine, memory) => {
         const link = get_link(links_view, link_size, i);
         const a = get_particle(particles_view, particle_size, link.a);
         const b = get_particle(particles_view, particle_size, link.b);
-
         if (
             (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Pipe)
             || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
@@ -188,10 +187,13 @@ const draw = (ctx, center, world, engine, memory) => {
             || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
             || (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Tank)
         ) {
+            const v = parseInt(225.0 * (a.moon_q / a.moon_c* 0.5 + 0.5))
+            const v2 = parseInt(225.0 * (b.moon_q / b.moon_c * 0.5 + 0.5))
+            const v3 = parseInt((v+v2)*0.5)
             ctx.beginPath();
             ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
             ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
-            ctx.strokeStyle = "#111";
+            ctx.strokeStyle = `rgb(${v}, ${v}, ${v})`;
             ctx.lineWidth = diameter*a.diameter*0.25;
             ctx.stroke();
             ctx.beginPath();
@@ -200,7 +202,7 @@ const draw = (ctx, center, world, engine, memory) => {
                 -a.p.y*diameter+center.y, 
                 diameter/2*a.diameter*0.5,
                 0, Math.PI * 2);
-            ctx.fillStyle = "#111";
+            ctx.fillStyle = `rgb(${v}, ${v}, ${v})`;
             ctx.fill();
             ctx.beginPath();
             ctx.arc(
@@ -208,7 +210,7 @@ const draw = (ctx, center, world, engine, memory) => {
                 -b.p.y*diameter+center.y, 
                 diameter/2*b.diameter*0.5,
                 0, Math.PI * 2);
-            ctx.fillStyle = "#111";
+            ctx.fillStyle = `rgb(${v2}, ${v2}, ${v2})`;
             ctx.fill();
         } else {
             ctx.beginPath();
