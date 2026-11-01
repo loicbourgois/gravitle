@@ -13,13 +13,10 @@ const setup = (engine, world) => {
     const earth_1 = world.add_particle(c.x-1, c.y+5, engine.Kind.Earth)
     const blower_1 = world.add_particle(c.x+3, c.y-1, engine.Kind.Blower)
     const switch_2 = world.add_particle(c.x+7, c.y-1, engine.Kind.Switch)
-
     const sens1 = world.add_particle(c.x+4, c.y-2, engine.Kind.SensorMoonEmpty);
     const sens2 = world.add_particle(c.x+4, c.y-3, engine.Kind.SensorMoonFull);
-
     const trit1 = world.add_particle(c.x+5, c.y-2, engine.Kind.Trit);
     const inv1 = world.add_particle(c.x+6, c.y-2, engine.Kind.SignalInverter);
-
     world.add_link(pump_1, switch_1)
     world.add_link(switch_1, solar_panel_1)
     world.add_link(pump_1, filter_2)

@@ -159,15 +159,65 @@ const draw = (ctx, center, world, engine, memory) => {
 		links_ptr,
 		world.links_count() * link_size,
 	);
+
     for (let i = 0; i < world.links_count(); i++) {
         const link = get_link(links_view, link_size, i);
         const a = get_particle(particles_view, particle_size, link.a);
         const b = get_particle(particles_view, particle_size, link.b);
-        ctx.beginPath();
-        ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
-        ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
-        ctx.strokeStyle = "#ff8";
-        ctx.stroke();
+
+        if (
+            (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Pipe)
+            || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
+            || (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Tank)
+        ) {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = engine.base_color(a.kind);
+            ctx.lineWidth = diameter*a.diameter*0.5;
+            ctx.stroke();
+        }
+    }
+
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        if (
+            (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Pipe)
+            || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
+            || (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Tank)
+        ) {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = "#111";
+            ctx.lineWidth = diameter*a.diameter*0.25;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(
+                a.p.x*diameter+center.x, 
+                -a.p.y*diameter+center.y, 
+                diameter/2*a.diameter*0.5,
+                0, Math.PI * 2);
+            ctx.fillStyle = "#111";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(
+                b.p.x*diameter+center.x, 
+                -b.p.y*diameter+center.y, 
+                diameter/2*b.diameter*0.5,
+                0, Math.PI * 2);
+            ctx.fillStyle = "#111";
+            ctx.fill();
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.lineWidth=1
+            ctx.strokeStyle = "#f8f";
+            ctx.stroke();
+        }
     }
     for (let i = 0; i < world.particles_count(); i++) {
         const p = get_particle(particles_view, particle_size, i);
