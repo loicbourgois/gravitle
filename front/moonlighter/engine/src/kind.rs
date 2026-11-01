@@ -21,6 +21,8 @@ pub enum Kind {
     SignalInput = 14,
     SignalOutput = 15,
     SignalWire = 16,
+    Trit = 17,
+    SignalInverter = 18,
 }
 
 #[wasm_bindgen]
@@ -39,11 +41,13 @@ pub fn base_color(k: Kind) -> String {
         Kind::Blower => "rgb(191, 124, 200)".to_string(),
         Kind::Valve => "rgb(124, 149, 200)".to_string(),
 
-        Kind::SensorMoonFull => "rgb(124, 149, 200)".to_string(),
+        Kind::SensorMoonFull => "rgb(231, 232, 127)".to_string(),
         Kind::SensorMoonEmpty => "rgb(124, 149, 200)".to_string(),
         Kind::SignalInput => "rgb(124, 149, 200)".to_string(),
         Kind::SignalOutput => "rgb(124, 149, 200)".to_string(),
-        Kind::SignalWire => "rgb(124, 149, 200)".to_string(),
+        Kind::SignalWire => "rgb(168, 172, 118)".to_string(),
+        Kind::Trit => "rgb(182, 182, 181)".to_string(),
+        Kind::SignalInverter => "rgb(182, 182, 181)".to_string(),
         // _ => "#f0f".to_string(),
     }
 }

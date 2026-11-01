@@ -1,7 +1,9 @@
-/* @ts-self-types="./engine-2026-11-01_10-20-06.d.ts" */
+/* @ts-self-types="./engine-2026-11-01_14-53-23.d.ts" */
+
+//#region exports
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -21,9 +23,14 @@ export const Kind = Object.freeze({
     SignalInput: 14, "14": "SignalInput",
     SignalOutput: 15, "15": "SignalOutput",
     SignalWire: 16, "16": "SignalWire",
+    Trit: 17, "17": "Trit",
+    SignalInverter: 18, "18": "SignalInverter",
 });
 
 export class Link {
+    constructor() {
+        throw new Error('cannot invoke `new` directly');
+    }
     static __wrap(ptr) {
         const obj = Object.create(Link.prototype);
         obj.__wbg_ptr = ptr;
@@ -44,6 +51,8 @@ export class Link {
      * @returns {number}
      */
     get a() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_link_a(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -51,6 +60,8 @@ export class Link {
      * @returns {number}
      */
     get b() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_link_b(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -58,6 +69,8 @@ export class Link {
      * @returns {number}
      */
     get idx() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_link_idx(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -68,6 +81,9 @@ export class Link {
      * @returns {Link}
      */
     static new(idx, a, b) {
+        _assertNum(idx);
+        _assertNum(a);
+        _assertNum(b);
         const ret = wasm.link_new(idx, a, b);
         return Link.__wrap(ret);
     }
@@ -82,24 +98,36 @@ export class Link {
      * @param {number} arg0
      */
     set a(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_link_a(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set b(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_link_b(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set idx(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_link_idx(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Link.prototype[Symbol.dispose] = Link.prototype.free;
 
 export class Particle {
+    constructor() {
+        throw new Error('cannot invoke `new` directly');
+    }
     static __wrap(ptr) {
         const obj = Object.create(Particle.prototype);
         obj.__wbg_ptr = ptr;
@@ -120,6 +148,8 @@ export class Particle {
      * @returns {number}
      */
     get activation() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_activation(this.__wbg_ptr);
         return ret;
     }
@@ -127,6 +157,8 @@ export class Particle {
      * @returns {number}
      */
     get collision_response_count() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_collision_response_count(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -134,6 +166,8 @@ export class Particle {
      * @returns {Point}
      */
     get collision_response() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_collision_response(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -141,6 +175,8 @@ export class Particle {
      * @returns {number}
      */
     get diameter() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_diameter(this.__wbg_ptr);
         return ret;
     }
@@ -148,6 +184,8 @@ export class Particle {
      * @returns {Point}
      */
     get direction() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_direction(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -155,6 +193,8 @@ export class Particle {
      * @returns {Point}
      */
     get dp() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_dp(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -162,6 +202,8 @@ export class Particle {
      * @returns {Point}
      */
     get dv() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_dv(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -169,6 +211,8 @@ export class Particle {
      * @returns {number}
      */
     get electricity_c() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_electricity_c(this.__wbg_ptr);
         return ret;
     }
@@ -176,6 +220,8 @@ export class Particle {
      * @returns {number}
      */
     get electricity_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_electricity_q(this.__wbg_ptr);
         return ret;
     }
@@ -183,6 +229,8 @@ export class Particle {
      * @returns {number}
      */
     get electricity_qd() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_electricity_qd(this.__wbg_ptr);
         return ret;
     }
@@ -190,6 +238,8 @@ export class Particle {
      * @returns {number}
      */
     get idx() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_idx(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -197,6 +247,8 @@ export class Particle {
      * @returns {Kind}
      */
     get kind() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_kind(this.__wbg_ptr);
         return ret;
     }
@@ -204,6 +256,8 @@ export class Particle {
      * @returns {Point}
      */
     get link_response() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_link_response(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -211,6 +265,8 @@ export class Particle {
      * @returns {number}
      */
     get moon_c() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_moon_c(this.__wbg_ptr);
         return ret;
     }
@@ -218,6 +274,8 @@ export class Particle {
      * @returns {number}
      */
     get moon_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_moon_q(this.__wbg_ptr);
         return ret;
     }
@@ -225,6 +283,8 @@ export class Particle {
      * @returns {number}
      */
     get moon_qd() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_moon_qd(this.__wbg_ptr);
         return ret;
     }
@@ -232,6 +292,8 @@ export class Particle {
      * @returns {Point}
      */
     get np() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_np(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -239,6 +301,8 @@ export class Particle {
      * @returns {Point}
      */
     get p() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_p(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -246,6 +310,8 @@ export class Particle {
      * @returns {number}
      */
     get padding() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_padding(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -253,6 +319,8 @@ export class Particle {
      * @returns {Point}
      */
     get pp() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_pp(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -260,6 +328,8 @@ export class Particle {
      * @returns {number}
      */
     get pressure_c() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_pressure_c(this.__wbg_ptr);
         return ret;
     }
@@ -267,6 +337,8 @@ export class Particle {
      * @returns {number}
      */
     get pressure_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_pressure_q(this.__wbg_ptr);
         return ret;
     }
@@ -274,7 +346,27 @@ export class Particle {
      * @returns {number}
      */
     get pressure_qn() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_pressure_qn(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get signal_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_signal_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get signal_qn() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_signal_qn(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -285,6 +377,8 @@ export class Particle {
      * @returns {Particle}
      */
     static new(idx, kind, x, y) {
+        _assertNum(idx);
+        _assertNum(kind);
         const ret = wasm.particle_new(idx, kind, x, y);
         return Particle.__wrap(ret);
     }
@@ -293,6 +387,8 @@ export class Particle {
      * @param {number} y
      */
     set_position(x, y) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.particle_set_position(this.__wbg_ptr, x, y);
     }
     /**
@@ -306,19 +402,30 @@ export class Particle {
      * @param {number} arg0
      */
     set activation(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_activation(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set collision_response_count(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_collision_response_count(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
      */
     set collision_response(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_collision_response(this.__wbg_ptr, ptr0);
     }
@@ -326,13 +433,20 @@ export class Particle {
      * @param {number} arg0
      */
     set diameter(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.__wbg_set_particle_diameter(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
      */
     set direction(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_direction(this.__wbg_ptr, ptr0);
     }
@@ -340,7 +454,12 @@ export class Particle {
      * @param {Point} arg0
      */
     set dp(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_dp(this.__wbg_ptr, ptr0);
     }
@@ -348,7 +467,12 @@ export class Particle {
      * @param {Point} arg0
      */
     set dv(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_dv(this.__wbg_ptr, ptr0);
     }
@@ -356,37 +480,57 @@ export class Particle {
      * @param {number} arg0
      */
     set electricity_c(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_electricity_c(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set electricity_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_electricity_q(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set electricity_qd(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_electricity_qd(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set idx(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_idx(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Kind} arg0
      */
     set kind(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_kind(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
      */
     set link_response(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_link_response(this.__wbg_ptr, ptr0);
     }
@@ -394,25 +538,39 @@ export class Particle {
      * @param {number} arg0
      */
     set moon_c(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_moon_c(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set moon_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_moon_q(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set moon_qd(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_moon_qd(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
      */
     set np(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_np(this.__wbg_ptr, ptr0);
     }
@@ -420,7 +578,12 @@ export class Particle {
      * @param {Point} arg0
      */
     set p(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_p(this.__wbg_ptr, ptr0);
     }
@@ -428,13 +591,21 @@ export class Particle {
      * @param {number} arg0
      */
     set padding(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_padding(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
      */
     set pp(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         _assertClass(arg0, Point);
+        if (arg0.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_pp(this.__wbg_ptr, ptr0);
     }
@@ -442,24 +613,54 @@ export class Particle {
      * @param {number} arg0
      */
     set pressure_c(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_pressure_c(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set pressure_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_pressure_q(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set pressure_qn(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
         wasm.__wbg_set_particle_pressure_qn(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set signal_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_signal_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set signal_qn(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_signal_qn(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Particle.prototype[Symbol.dispose] = Particle.prototype.free;
 
 export class Point {
+    constructor() {
+        throw new Error('cannot invoke `new` directly');
+    }
     static __wrap(ptr) {
         const obj = Object.create(Point.prototype);
         obj.__wbg_ptr = ptr;
@@ -480,6 +681,8 @@ export class Point {
      * @returns {number}
      */
     get x() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_point_x(this.__wbg_ptr);
         return ret;
     }
@@ -487,6 +690,8 @@ export class Point {
      * @returns {number}
      */
     get y() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_point_y(this.__wbg_ptr);
         return ret;
     }
@@ -495,8 +700,13 @@ export class Point {
      * @returns {number}
      */
     distance(b) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         const ptr = this.__destroy_into_raw();
+        _assertNum(ptr);
         _assertClass(b, Point);
+        if (b.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = b.__destroy_into_raw();
         const ret = wasm.point_distance(ptr, ptr0);
         return ret;
@@ -506,8 +716,13 @@ export class Point {
      * @returns {number}
      */
     distance_squared_2(b) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         const ptr = this.__destroy_into_raw();
+        _assertNum(ptr);
         _assertClass(b, Point);
+        if (b.__wbg_ptr === 0) {
+            throw new Error('Attempt to use a moved value');
+        }
         var ptr0 = b.__destroy_into_raw();
         const ret = wasm.point_distance_squared_2(ptr, ptr0);
         return ret;
@@ -518,7 +733,9 @@ export class Point {
      * @returns {number}
      */
     distance_squared(x, y) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         const ptr = this.__destroy_into_raw();
+        _assertNum(ptr);
         const ret = wasm.point_distance_squared(ptr, x, y);
         return ret;
     }
@@ -526,7 +743,9 @@ export class Point {
      * @returns {number}
      */
     length() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         const ptr = this.__destroy_into_raw();
+        _assertNum(ptr);
         const ret = wasm.point_length(ptr);
         return ret;
     }
@@ -544,6 +763,8 @@ export class Point {
      * @returns {Point}
      */
     normalize_2(length) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.point_normalize_2(this.__wbg_ptr, length);
         return Point.__wrap(ret);
     }
@@ -551,6 +772,8 @@ export class Point {
      * @returns {Point}
      */
     normalize() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.point_normalize(this.__wbg_ptr);
         return Point.__wrap(ret);
     }
@@ -558,29 +781,40 @@ export class Point {
      * @returns {Point}
      */
     normalized() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         const ptr = this.__destroy_into_raw();
+        _assertNum(ptr);
         const ret = wasm.point_normalized(ptr);
         return Point.__wrap(ret);
     }
     reset() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.point_reset(this.__wbg_ptr);
     }
     /**
      * @param {number} arg0
      */
     set x(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.__wbg_set_point_x(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
      */
     set y(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.__wbg_set_point_y(this.__wbg_ptr, arg0);
     }
 }
 if (Symbol.dispose) Point.prototype[Symbol.dispose] = Point.prototype.free;
 
 export class World {
+    constructor() {
+        throw new Error('cannot invoke `new` directly');
+    }
     static __wrap(ptr) {
         const obj = Object.create(World.prototype);
         obj.__wbg_ptr = ptr;
@@ -600,21 +834,30 @@ export class World {
     /**
      * @returns {number}
      */
-    get step() {
-        const ret = wasm.__wbg_get_world_step(this.__wbg_ptr);
+    get completed_steps() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_world_completed_steps(this.__wbg_ptr);
         return ret >>> 0;
     }
     /**
      * @param {number} arg0
      */
-    set step(arg0) {
-        wasm.__wbg_set_world_step(this.__wbg_ptr, arg0);
+    set completed_steps(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_world_completed_steps(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} a
      * @param {number} b
      */
     add_link(a, b) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(a);
+        _assertNum(b);
         wasm.world_add_link(this.__wbg_ptr, a, b);
     }
     /**
@@ -624,6 +867,9 @@ export class World {
      * @returns {number}
      */
     add_particle(x, y, k) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(k);
         const ret = wasm.world_add_particle(this.__wbg_ptr, x, y, k);
         return ret >>> 0;
     }
@@ -631,6 +877,8 @@ export class World {
      * @returns {number}
      */
     links() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.world_links(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -638,6 +886,8 @@ export class World {
      * @returns {number}
      */
     links_count() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.world_links_count(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -652,6 +902,8 @@ export class World {
      * @returns {number}
      */
     particles() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.world_particles(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -659,6 +911,8 @@ export class World {
      * @returns {number}
      */
     particles_count() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         const ret = wasm.world_particles_count(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -667,9 +921,15 @@ export class World {
      * @param {number} v
      */
     set_activation(pidx, v) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(pidx);
+        _assertNum(v);
         wasm.world_set_activation(this.__wbg_ptr, pidx, v);
     }
     tick() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
         wasm.world_tick(this.__wbg_ptr);
     }
 }
@@ -683,6 +943,7 @@ export function base_color(k) {
     let deferred1_0;
     let deferred1_1;
     try {
+        _assertNum(k);
         const ret = wasm.base_color(k);
         deferred1_0 = ret[0];
         deferred1_1 = ret[1];
@@ -695,13 +956,17 @@ export function base_color(k) {
 export function setup() {
     wasm.setup();
 }
+
+//#endregion
+
+//#region wasm imports
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
         __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_error_757e9472f8410341: function(arg0, arg1) {
+        __wbg_error_757e9472f8410341: function() { return logError(function (arg0, arg1) {
             let deferred0_0;
             let deferred0_1;
             try {
@@ -711,21 +976,21 @@ function __wbg_get_imports() {
             } finally {
                 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
             }
-        },
-        __wbg_log_9cbc4889b2aa9438: function(arg0, arg1) {
+        }, arguments); },
+        __wbg_log_9cbc4889b2aa9438: function() { return logError(function (arg0, arg1) {
             console.log(getStringFromWasm0(arg0, arg1));
-        },
-        __wbg_new_227d7c05414eb861: function() {
+        }, arguments); },
+        __wbg_new_227d7c05414eb861: function() { return logError(function () {
             const ret = new Error();
             return ret;
-        },
-        __wbg_stack_3b0d974bbf31e44f: function(arg0, arg1) {
+        }, arguments); },
+        __wbg_stack_3b0d974bbf31e44f: function() { return logError(function (arg0, arg1) {
             const ret = arg1.stack;
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-        },
+        }, arguments); },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
             const offset = table.grow(4);
@@ -738,10 +1003,12 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-01_10-20-06_bg.js": import0,
+        "./engine-2026-11-01_14-53-23_bg.js": import0,
     };
 }
 
+
+//#endregion
 const LinkFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_link_free(ptr, 1));
@@ -755,10 +1022,16 @@ const WorldFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_world_free(ptr, 1));
 
+
+//#region intrinsics
 function _assertClass(instance, klass) {
     if (!(instance instanceof klass)) {
         throw new Error(`expected instance of ${klass.name}`);
     }
+}
+
+function _assertNum(n) {
+    if (typeof(n) !== 'number') throw new Error(`expected a number argument, found ${typeof(n)}`);
 }
 
 let cachedDataViewMemory0 = null;
@@ -781,7 +1054,24 @@ function getUint8ArrayMemory0() {
     return cachedUint8ArrayMemory0;
 }
 
+function logError(f, args) {
+    try {
+        return f.apply(this, args);
+    } catch (e) {
+        let error = (function () {
+            try {
+                return e instanceof Error ? `${e.message}\n\nStack:\n${e.stack}` : e.toString();
+            } catch(_) {
+                return "<failed to stringify thrown value>";
+            }
+        }());
+        console.error("wasm-bindgen: imported JS function that was not marked as `catch` threw an error:", error);
+        throw e;
+    }
+}
+
 function passStringToWasm0(arg, malloc, realloc) {
+    if (typeof(arg) !== 'string') throw new Error(`expected a string argument, found ${typeof(arg)}`);
     if (realloc === undefined) {
         const buf = cachedTextEncoder.encode(arg);
         const ptr = malloc(buf.length, 1) >>> 0;
@@ -809,7 +1099,7 @@ function passStringToWasm0(arg, malloc, realloc) {
         ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
         const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
         const ret = cachedTextEncoder.encodeInto(arg, view);
-
+        if (ret.read !== arg.length) throw new Error('failed to pass whole string');
         offset += ret.written;
         ptr = realloc(ptr, len, offset, 1) >>> 0;
     }
@@ -847,6 +1137,10 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
+
+//#endregion
+
+//#region wasm loading
 let wasmModule, wasmInstance, wasm;
 function __wbg_finalize_init(instance, module) {
     wasmInstance = instance;
@@ -930,7 +1224,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-01_10-20-06_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-01_14-53-23_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 
@@ -944,3 +1238,5 @@ async function __wbg_init(module_or_path) {
 }
 
 export { initSync, __wbg_init as default };
+//#endregion
+export { wasm as __wasm }

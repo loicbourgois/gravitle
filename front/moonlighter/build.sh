@@ -5,7 +5,7 @@ cd $HOME/github.com/loicbourgois/gravitle/front/moonlighter/engine
 datetime="$(date '+%Y-%m-%d_%H-%M-%S')"
 # echo "datetime: $datetime"
 name="engine-$datetime"
-RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build --out-name $name --target web
+RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build --dev --out-name $name --target web
 rm $HOME/github.com/loicbourgois/gravitle/front/moonlighter/engine-*_bg.wasm || true
 source="$HOME/github.com/loicbourgois/gravitle/front/moonlighter/engine/pkg/"
 dest="$HOME/github.com/loicbourgois/gravitle/front/moonlighter/"

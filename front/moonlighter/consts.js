@@ -1,5 +1,5 @@
 
-const ZOOM = 1/16
+const ZOOM = 1/10
 
 const TIME_MODE = 'real time'
 // const TIME_MODE = 'slow'

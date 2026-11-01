@@ -173,7 +173,8 @@ const draw = (ctx, center, world, engine, memory) => {
         const p = get_particle(particles_view, particle_size, i);
             const x = p.ap.x * diameter + center.x;
             const y = -p.ap.y * diameter + center.y;
-            const label = `p:${p.pressure_q}`;
+            const l = 3
+            const label = `p:${String(p.pressure_q).padStart(l, " ")}/${p.pressure_c}`;
             ctx.font = '16px monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
@@ -195,7 +196,8 @@ const draw = (ctx, center, world, engine, memory) => {
         const p = get_particle(particles_view, particle_size, i);
             const x = p.ap.x * diameter + center.x;
             const y = -p.ap.y * diameter + center.y;
-            const label = `m:${p.moon_q}`;
+            const l = String(p.moon_c).length
+            const label = `m:${String(p.moon_q).padStart(l, " ")}/${p.moon_c}`;
             ctx.font = '16px monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
@@ -203,7 +205,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111d';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -225,6 +227,55 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.textBaseline = 'middle';
             const labelX = x;
             const labelY = y + 20*2;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = 3
+            const label = `a:${String(p.activation).padStart(l, " ")}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*4;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = 3
+            const label = `s:${String(p.signal_q).padStart(l, " ")}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*5;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
             ctx.fillStyle = '#111';

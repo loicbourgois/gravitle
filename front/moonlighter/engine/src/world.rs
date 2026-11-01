@@ -3,7 +3,7 @@ use crate::link::Link;
 use crate::particle::Particle;
 use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 // The probability for dust to get into the filter
 // and start clogging it.
@@ -13,7 +13,7 @@ const FILTER_PASS_PROBABILITY: f32 = 0.50;
 pub struct World {
     particles: Vec<Particle>,
     links: Vec<Link>,
-    pub step: u32,
+    pub completed_steps: u32,
     rng: Sfc32,
 }
 
@@ -29,28 +29,12 @@ impl World {
         World {
             particles: Vec::new(),
             links: Vec::new(),
-            step: 0,
+            completed_steps: 0,
             rng: crate::sfc32::Sfc32::new(&[19, 4768, 9087, 35]),
         }
     }
 
     pub fn tick(&mut self) {
-        // Electricity
-        //
-        // Solar Panel
-        // A panal generates 1 electricity per tick
-        //
-        // We only distribute by increment of 1 by step
-        // We want the electricity to flow gradually.
-        // No exception.
-        //
-        // Electricty should flow equally to everything
-        // (10,1) -> (9,2)
-        // we must first equalize the network, then push the overflow to the biggest
-        // (10/100,2/2,0/2) -> (10/100,2/2,1/2) -> (10/100,2/2,2/2) -> (11/100,2/2,2/2)
-
-        self.step = self.step.wrapping_add(1);
-
         let mut pairs: BTreeSet<(usize, usize)> = BTreeSet::new();
         for link in &self.links {
             let a = link.a as usize;
@@ -71,31 +55,6 @@ impl World {
             }
         }
 
-        // `Kind::Moon` must remain a fixed high-pressure source (0)
-        // Otherwise, a moon connected to a low-pressure pipe
-        // would adopt that lower pressure, destroying the gradient
-        // that drives dust toward the pumps.
-        // for &(a, b) in &pairs {
-        //     let ak = self.particles[a].kind;
-        //     let bk = self.particles[b].kind;
-        //     match ak {
-        //         Kind::Pipe | Kind::Tank | Kind::Filter => {
-        //             let neighboor_pressure = self.particles[b].pressure_q;
-        //             let qn_up = self.particles[a].pressure_qn.min(neighboor_pressure + 1);
-        //             let qn_down = self.particles[a].pressure_qn.min(neighboor_pressure - 1);
-        //             self.particles[a].pressure_qn = ;
-        //         }
-        //         Kind::Valve
-        //             if self.particles[a].activation > 0 => {
-        //                 let neighboor_pressure = self.particles[b].pressure_q;
-        //                 self.particles[a].pressure_qn = self.particles[a].pressure_qn.min(neighboor_pressure.saturating_add(1));
-        //         }
-        //         _ => {
-        //             // pass
-        //         }
-        //     }
-        // }
-
         for aidx in 0..self.particles.len() {
             let ak = self.particles[aidx].kind;
             let aa = self.particles[aidx].activation;
@@ -113,7 +72,13 @@ impl World {
             for &(a, b) in &pairs {
                 if a == aidx {
                     if self.particles[b].kind == Kind::Valve && self.particles[b].activation == 0 {
-                    } else {
+                    } else if self.particles[b].kind == Kind::Valve
+                        || self.particles[b].kind == Kind::Tank
+                        || self.particles[b].kind == Kind::Pipe
+                        || self.particles[b].kind == Kind::Pump
+                        || self.particles[b].kind == Kind::Blower
+                        || self.particles[b].kind == Kind::Filter
+                    {
                         total += self.particles[b].pressure_q as f32;
                         count += 1.0;
                     }
@@ -240,10 +205,180 @@ impl World {
             }
         }
 
+        for i1 in 0..self.particles.len() {
+            match self.p(i1).kind {
+                Kind::SensorMoonFull => {
+                    self.pm(i1).signal_q = 0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        if p2.moon_c > 0 && p2.moon_c == p2.moon_q {
+                            self.pm(i1).signal_q = 1;
+                        }
+                    }
+                    self.pm(i1).signal_qn = self.pm(i1).signal_q;
+                }
+                Kind::SensorMoonEmpty => {
+                    self.pm(i1).signal_q = 0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        if p2.moon_c > 0 && p2.moon_q == 0 {
+                            self.pm(i1).signal_q = -1;
+                        }
+                    }
+                    self.pm(i1).signal_qn = self.pm(i1).signal_q;
+                }
+                _ => {}
+            }
+        }
+
+        for i1 in 0..self.particles.len() {
+            match self.p(i1).kind {
+                Kind::SignalWire => {
+                    let mut total: f32 = 0.0;
+                    let mut count: f32 = 0.0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        match p2.kind {
+                            Kind::SignalWire | Kind::SignalInput => {
+                                total += p2.signal_q as f32;
+                                count += 1.0;
+                            }
+                            _ => {}
+                        }
+                    }
+                    if count > 0.0 {
+                        let average = total / count;
+                        self.pm(i1).signal_qn = if average > 0.0 {
+                            average.ceil() as i32
+                        } else {
+                            average.floor() as i32
+                        };
+                    }
+                }
+                Kind::SignalInput => {
+                    let mut total: f32 = 0.0;
+                    let mut count: f32 = 0.0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        match p2.kind {
+                            Kind::SensorMoonFull => {
+                                total += p2.signal_q as f32;
+                                count += 1.0;
+                            }
+                            _ => {}
+                        }
+                    }
+                    if count > 0.0 {
+                        let average = total / count;
+                        self.pm(i1).signal_qn = if average > 0.0 {
+                            average.ceil() as i32
+                        } else {
+                            average.floor() as i32
+                        };
+                    }
+                }
+                Kind::Trit => {
+                    let mut total: i32 = 0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        match p2.kind {
+                            Kind::SensorMoonFull | Kind::SensorMoonEmpty => {
+                                total += p2.signal_q;
+                            }
+                            _ => {}
+                        }
+                    }
+                    self.pm(i1).signal_qn = match total.signum() {
+                        1 => 1,
+                        -1 => -1,
+                        _ => self.p(i1).signal_q,
+                    };
+                }
+                Kind::SignalInverter => {
+                    let mut total: i32 = 0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        match p2.kind {
+                            Kind::Trit => {
+                                total += p2.signal_q;
+                            }
+                            _ => {}
+                        }
+                    }
+                    self.pm(i1).signal_qn = match total.signum() {
+                        1 => -1,
+                        -1 => 1,
+                        _ => self.p(i1).signal_q,
+                    };
+                }
+                Kind::Valve | Kind::Switch => {
+                    let mut total: i32 = 0;
+                    for i2 in self.ns(i1) {
+                        let p2 = self.p(i2);
+                        match p2.kind {
+                            Kind::SignalInverter | Kind::Trit => {
+                                total += p2.signal_q;
+                            }
+                            _ => {}
+                        }
+                    }
+                    self.pm(i1).signal_qn = match total.signum() {
+                        1 => 1,
+                        -1 => -1,
+                        _ => self.p(i1).signal_q,
+                    };
+                }
+                _ => {}
+            }
+        }
+        for particle in &mut self.particles {
+            particle.signal_q = particle.signal_qn;
+        }
+        for particle in &mut self.particles {
+            match particle.kind {
+                Kind::Valve | Kind::Switch => {
+                    if particle.signal_q == 1 {
+                        particle.activation = 1;
+                    }
+                    if particle.signal_q == -1 {
+                        particle.activation = 0;
+                    }
+                }
+                _ => {}
+            }
+        }
         for particle in &mut self.particles {
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
         }
+
+        self.completed_steps += 1;
+    }
+
+    // Get particle
+    fn p(&self, i: usize) -> &Particle {
+        &self.particles[i]
+    }
+
+    // Get mutable particle
+    fn pm(&mut self, i: usize) -> &mut Particle {
+        &mut self.particles[i]
+    }
+
+    // Get neighbours
+    fn ns(&self, idx: usize) -> HashSet<usize> {
+        self.links
+            .iter()
+            .filter_map(|link| {
+                if link.a as usize == idx {
+                    Some(link.b as usize)
+                } else if link.b as usize == idx {
+                    Some(link.a as usize)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     pub fn add_particle(&mut self, x: f32, y: f32, k: Kind) -> u32 {

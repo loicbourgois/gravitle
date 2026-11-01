@@ -53,6 +53,9 @@ pub struct Particle {
 
     pub activation: i32,
 
+    pub signal_q: i32,
+    pub signal_qn: i32,
+
     // For wasm
     pub padding: u32,
 }
@@ -113,6 +116,8 @@ impl Particle {
             electricity_q: 0,
             electricity_qd: 0,
             activation: 0,
+            signal_q: 0,
+            signal_qn: 0,
             padding: 0,
         };
         p.set_position(x, y);
