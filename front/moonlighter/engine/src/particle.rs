@@ -77,6 +77,9 @@ impl Particle {
                 | Kind::SensorMoonEmpty
                 | Kind::SignalInput
                 | Kind::SignalOutput
+                | Kind::MoonBall
+                | Kind::Trit
+                | Kind::SignalInverter
                 | Kind::SignalWire => 0.25,
                 Kind::Pipe => 0.75,
                 _ => 1.0,
@@ -99,23 +102,23 @@ impl Particle {
             pressure_q: 0,
             pressure_qn: 0,
             moon_c: match kind {
-                Kind::Moon => 10000,
+                Kind::Moon => 1_000_000,
                 Kind::Tank => 1000,
-                Kind::Press => 20,
+                Kind::Press => 40,
                 Kind::Pipe | Kind::Filter => 10,
                 Kind::Valve => 1,
                 _ => 0,
             },
             moon_q: match kind {
-                Kind::Moon => 10000,
+                Kind::Moon => 1_000_000,
                 _ => 0,
             },
             moon_qd: 0,
             electricity_c: match kind {
-                Kind::Battery => 10,
-                Kind::SolarPanel => 5,
+                Kind::Battery => 100,
+                Kind::SolarPanel => 10,
                 Kind::Pump => 4,
-                Kind::Wire | Kind::Led | Kind::Switch | Kind::Blower => 4,
+                Kind::Wire | Kind::Led | Kind::Switch | Kind::Blower => 10,
                 _ => 0,
             },
             electricity_q: 0,

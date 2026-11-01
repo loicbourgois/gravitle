@@ -27,6 +27,9 @@ pub enum Kind {
     Storage = 20,
     Conveyor = 21,
     Launcher = 22,
+    MoonBall = 23,
+    Earth = 24,
+    Dead = 25,
 }
 
 #[wasm_bindgen]
@@ -57,6 +60,9 @@ pub fn base_color(k: Kind) -> String {
         Kind::Storage => "rgb(126, 190, 157)".to_string(),
         Kind::Conveyor => "rgb(136, 126, 190)".to_string(),
         Kind::Launcher => "rgb(190, 188, 126)".to_string(),
+        Kind::MoonBall => "#eee".to_string(),
+        Kind::Earth => "#48f".to_string(),
+        Kind::Dead => "#1111".to_string(),
         // _ => "#f0f".to_string(),
     }
 }

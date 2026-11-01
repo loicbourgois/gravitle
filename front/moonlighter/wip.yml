@@ -6,22 +6,24 @@ models:
   # - openai/gpt-6.1-sol
   # - mistralai/mistral-large-4-0
   - mistralai/devstral-2512
-  - deepseek/deepseek-v4.1-flash-1017
+  # - deepseek/deepseek-v4.1-flash-1017
+  # - z-ai/glm-5.3-prime
+  - z-ai/glm-5.3-flashx
 
 
 files:
   # - file://./index.css
   # - file://./index.html
   # - file://./index.js
-  # - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
   - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
   - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
-  - file://./../../../gravitle/front/moonlighter/setup_1.js
+  # - file://./../../../gravitle/front/moonlighter/setup_1.js
   # - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs
   # - file://./../../../gravitle/front/moonlighter/index.js
   # - file://./../../../gravitle/front/moonlighter/step.js
-  - file://./../../../gravitle/front/moonlighter/draw.js
-  - file://./../../../gravitle/front/moonlighter/particle.js
+  # - file://./../../../gravitle/front/moonlighter/draw.js
+  # - file://./../../../gravitle/front/moonlighter/particle.js
   # - file://./../../../gravitle/front/moonlighter/consts.js
 
 

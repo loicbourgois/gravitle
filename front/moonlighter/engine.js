@@ -1,9 +1,9 @@
-/* @ts-self-types="./engine-2026-11-01_16-50-35.d.ts" */
+/* @ts-self-types="./engine-2026-11-01_19-03-04.d.ts" */
 
 //#region exports
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25}
  */
 export const Kind = Object.freeze({
     Moon: 0, "0": "Moon",
@@ -29,6 +29,9 @@ export const Kind = Object.freeze({
     Storage: 20, "20": "Storage",
     Conveyor: 21, "21": "Conveyor",
     Launcher: 22, "22": "Launcher",
+    MoonBall: 23, "23": "MoonBall",
+    Earth: 24, "24": "Earth",
+    Dead: 25, "25": "Dead",
 });
 
 export class Link {
@@ -1061,7 +1064,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-01_16-50-35_bg.js": import0,
+        "./engine-2026-11-01_19-03-04_bg.js": import0,
     };
 }
 
@@ -1282,7 +1285,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-01_16-50-35_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-01_19-03-04_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

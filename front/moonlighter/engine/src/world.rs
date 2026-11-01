@@ -1,5 +1,6 @@
 use crate::kind::Kind;
 use crate::link::Link;
+use crate::log;
 use crate::particle::Particle;
 use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
@@ -204,7 +205,7 @@ impl World {
         // Helps with above filter blocking
         for particle in &mut self.particles {
             match particle.kind {
-                Kind::Pump => {}
+                Kind::Pump | Kind::Blower => {}
                 _ => {
                     particle.pressure_q -= particle.pressure_q.signum();
                 }
@@ -368,19 +369,105 @@ impl World {
             }
         }
 
+        // Launch
+        let mut particles_to_add = Vec::new();
+        for i1 in 0..self.particles.len() {
+            match self.p(i1).kind {
+                Kind::Launcher => {
+                    if self.p(i1).solidmoon_q == 1 {
+                        self.pm(i1).solidmoon_q = 0;
+                        particles_to_add.push((self.p(i1).p.x, self.p(i1).p.y, Kind::MoonBall));
+                    }
+                }
+                _ => {}
+            }
+        }
+        for p in particles_to_add {
+            self.add_particle(p.0, p.1, p.2);
+        }
 
-        // Solid movement
+        // SolidMoon movement
+        // Movement happens in two steps:
+        // 1. Calculate deltas (solidmoon_qd) for all particles
+        // 2. Apply the deltas to the actual quantities (solidmoon_q)
+        //
+        // Valid transitions:
+        // - Press -> Conveyor
+        // - Conveyor -> Launcher
+        // Movement only happens if:
+        // - Source has solidmoon (source_q > 0)
+        // - Destination has capacity (dest_q < dest_c)
+        for p in &mut self.particles {
+            p.solidmoon_qd = 0;
+        }
+        for (a, b) in &pairs {
+            let source_kind = self.particles[*a].kind;
+            let dest_kind = self.particles[*b].kind;
+            let mut source_q = self.particles[*a].solidmoon_q + self.particles[*a].solidmoon_qd;
+            source_q = source_q.min(self.particles[*a].solidmoon_q);
+            let dest_q = self.particles[*b].solidmoon_q + self.particles[*b].solidmoon_qd;
+            let dest_c = self.particles[*b].solidmoon_c;
+            let valid = matches!(
+                (source_kind, dest_kind),
+                (Kind::Press, Kind::Conveyor) | (Kind::Conveyor, Kind::Launcher)
+            );
+            if !valid || source_q <= 0 || dest_q >= dest_c {
+                continue;
+            }
+            self.particles[*a].solidmoon_qd -= 1;
+            self.particles[*b].solidmoon_qd += 1;
+        }
+        for p in &mut self.particles {
+            p.solidmoon_q += p.solidmoon_qd;
+        }
 
-        
+        // Movement
+        for p in &mut self.particles {
+            p.pp.x = p.p.x;
+            p.pp.y = p.p.y;
+        }
+        for p in &mut self.particles {
+            match p.kind {
+                Kind::MoonBall => {
+                    p.p.y += 0.02;
+                    p.p.x -= 0.02;
+                }
+                _ => {}
+            }
+        }
+
+        // Collision
+        let mut crs = Vec::new();
+        for p1 in &self.particles {
+            for p2 in &self.particles {
+                if p1.kind == Kind::MoonBall && p2.kind == Kind::Earth && Self::colision(p1, p2) {
+                    crs.push((p1.idx as usize, p2.idx as usize));
+                }
+            }
+        }
+        for cr in crs {
+            self.particles[cr.0].kind = Kind::Dead;
+            self.particles[cr.1].solidmoon_q += 1;
+        }
 
         // Debug
         for particle in &mut self.particles {
+            assert!(particle.moon_q <= particle.moon_c);
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
         }
 
         // Done
         self.completed_steps += 1;
+    }
+
+    // Returns true when the two particles' circles overlap.
+    // Uses squared distances to avoid a sqrt per pair.
+    fn colision(a: &Particle, b: &Particle) -> bool {
+        let dx = a.p.x - b.p.x;
+        let dy = a.p.y - b.p.y;
+        let radius_sum = a.diameter * 0.5 + b.diameter * 0.5;
+        dx * dx + dy * dy <= radius_sum * radius_sum
     }
 
     // Get particle
