@@ -16,12 +16,17 @@ pub enum Kind {
     Led = 9,
     Blower = 10,
     Valve = 11,
+    SensorMoonFull = 12,
+    SensorMoonEmpty = 13,
+    SignalInput = 14,
+    SignalOutput = 15,
+    SignalWire = 16,
 }
 
 #[wasm_bindgen]
 pub fn base_color(k: Kind) -> String {
     match k {
-        Kind::Moon => "#eee".to_string(), 
+        Kind::Moon => "#eee".to_string(),
         Kind::Pipe => "#b88".to_string(),
         Kind::Tank => "#866".to_string(),
         Kind::Filter => "rgb(136, 164, 255)".to_string(),
@@ -33,6 +38,12 @@ pub fn base_color(k: Kind) -> String {
         Kind::Led => "rgb(51, 113, 57)".to_string(),
         Kind::Blower => "rgb(191, 124, 200)".to_string(),
         Kind::Valve => "rgb(124, 149, 200)".to_string(),
+
+        Kind::SensorMoonFull => "rgb(124, 149, 200)".to_string(),
+        Kind::SensorMoonEmpty => "rgb(124, 149, 200)".to_string(),
+        Kind::SignalInput => "rgb(124, 149, 200)".to_string(),
+        Kind::SignalOutput => "rgb(124, 149, 200)".to_string(),
+        Kind::SignalWire => "rgb(124, 149, 200)".to_string(),
         // _ => "#f0f".to_string(),
     }
 }

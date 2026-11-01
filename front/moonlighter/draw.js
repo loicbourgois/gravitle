@@ -22,66 +22,66 @@ const draw = (ctx, center, world, engine, memory) => {
     // for elec and pressure, draw {n}max as well
     // we should always see {n}max squares
     // use the full color for esum, then the empty color for the rest
-    const ec_empty = "#4408"
-    const ec_full = "#8808"
-    const pc_empty = "#244"
-    const pc_full = "#484"
+    // const ec_empty = "#4408"
+    // const ec_full = "#8808"
+    // const pc_empty = "#244"
+    // const pc_full = "#484"
 
-    // Elect draw
-    // Keep the first sample at the bottom-left; later samples extend right.
-    const scrollHistory = true
-    const squareSize = 10;
-    const squareStep = squareSize + 1;
-    const visibleColumns = Math.floor(
-        (ctx.canvas.width - squareSize) / squareStep,
-    ) + 1;
-    const startColumn = scrollHistory
-        ? Math.max(0, history.esum.length - Math.max(0, visibleColumns))
-        : 0;
-    ctx.fillStyle = ec_full;
-    for (
-        let column = 0;
-        column < visibleColumns &&
-        startColumn + column < history.esum.length;
-        column++
-    ) {
-        const index = startColumn + column;
-        const esum = history.esum[index];
-        const emax = history.emax[index];
-        const x = column * squareStep;
-        for (
-            let row = 0;
-            row < emax &&
-            row * squareStep + squareSize <= ctx.canvas.height;
-            row++
-        ) {
-            const y = ctx.canvas.height - squareSize - row * squareStep;
-            ctx.fillStyle = row < esum ? ec_full : ec_empty;
-            ctx.fillRect(x, y, squareSize, squareSize);
-        }
-    }
-    // Pressure draw
-    for (
-        let column = 0;
-        column < visibleColumns &&
-        startColumn + column < history.psum.length;
-        column++
-    ) {
-        const psum = -history.psum[startColumn + column];
-        const pmax = -history.pmax[startColumn + column];
-        const x = column * squareStep;
-        const yStart = 0;  // Start from top
-        for (
-            let row = 0;
-            row < pmax &&
-            row * squareStep + squareSize <= ctx.canvas.height;
-            row++
-        ) {
-            const y = yStart + row * squareStep;
-            ctx.fillStyle = row < psum ? pc_full : pc_empty;
-            ctx.fillRect(x, y, squareSize, squareSize);
-        }
-    }
+    // // Elect draw
+    // // Keep the first sample at the bottom-left; later samples extend right.
+    // const scrollHistory = true
+    // const squareSize = 6;
+    // const squareStep = squareSize + 1;
+    // const visibleColumns = Math.floor(
+    //     (ctx.canvas.width - squareSize) / squareStep,
+    // ) + 1;
+    // const startColumn = scrollHistory
+    //     ? Math.max(0, history.esum.length - Math.max(0, visibleColumns))
+    //     : 0;
+    // ctx.fillStyle = ec_full;
+    // for (
+    //     let column = 0;
+    //     column < visibleColumns &&
+    //     startColumn + column < history.esum.length;
+    //     column++
+    // ) {
+    //     const index = startColumn + column;
+    //     const esum = history.esum[index];
+    //     const emax = history.emax[index];
+    //     const x = column * squareStep;
+    //     for (
+    //         let row = 0;
+    //         row < emax &&
+    //         row * squareStep + squareSize <= ctx.canvas.height;
+    //         row++
+    //     ) {
+    //         const y = ctx.canvas.height - squareSize - row * squareStep;
+    //         ctx.fillStyle = row < esum ? ec_full : ec_empty;
+    //         ctx.fillRect(x, y, squareSize, squareSize);
+    //     }
+    // }
+    // // Pressure draw
+    // for (
+    //     let column = 0;
+    //     column < visibleColumns &&
+    //     startColumn + column < history.psum.length;
+    //     column++
+    // ) {
+    //     const psum = -history.psum[startColumn + column];
+    //     const pmax = -history.pmax[startColumn + column];
+    //     const x = column * squareStep;
+    //     const yStart = 0;  // Start from top
+    //     for (
+    //         let row = 0;
+    //         row < pmax &&
+    //         row * squareStep + squareSize <= ctx.canvas.height;
+    //         row++
+    //     ) {
+    //         const y = yStart + row * squareStep;
+    //         ctx.fillStyle = row < psum ? pc_full : pc_empty;
+    //         ctx.fillRect(x, y, squareSize, squareSize);
+    //     }
+    // }
 
 
     const diameter = draw_diam(ctx.canvas);

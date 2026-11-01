@@ -6,6 +6,7 @@ authors = ["Loïc Bourgois"]
 edition = "2024"
 repository = "gravitle"
 description = "gravitle-moonlighter"
+license = "AGPLv3"
 
 [lib]
 # https://doc.rust-lang.org/reference/linkage.html

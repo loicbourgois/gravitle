@@ -39,7 +39,6 @@ pub struct Particle {
     // q:  quantity
     // qd: quantity delta
     // qn: quantity new
-
     pub pressure_c: i32,
     pub pressure_q: i32,
     pub pressure_qn: i32,
@@ -64,8 +63,15 @@ impl Particle {
         let mut p = Particle {
             idx,
             diameter: match kind {
-                Kind::Wire | Kind::Led | Kind::Switch => 0.25,
-                Kind::Pipe  => 0.75,
+                Kind::Wire
+                | Kind::Led
+                | Kind::Switch
+                | Kind::SensorMoonFull
+                | Kind::SensorMoonEmpty
+                | Kind::SignalInput
+                | Kind::SignalOutput
+                | Kind::SignalWire => 0.25,
+                Kind::Pipe => 0.75,
                 _ => 1.0,
             },
             p: Point::new(0.0, 0.0),
@@ -79,15 +85,15 @@ impl Particle {
             collision_response_count: 0,
             link_response: Point::new(0.0, 0.0),
             pressure_c: match kind {
-                Kind::Pump => -20,
-                Kind::Blower => 20,
+                Kind::Pump => -50,
+                Kind::Blower => 50,
                 _ => 0,
             },
             pressure_q: 0,
             pressure_qn: 0,
             moon_c: match kind {
                 Kind::Moon => 10000,
-                Kind::Tank => 100,
+                Kind::Tank => 1000,
                 Kind::Pipe | Kind::Filter => 10,
                 Kind::Valve => 1,
                 _ => 0,

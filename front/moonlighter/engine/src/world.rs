@@ -1,15 +1,13 @@
+use crate::kind::Kind;
 use crate::link::Link;
 use crate::particle::Particle;
-use crate::kind::Kind;
-use crate::wasm_bindgen;
 use crate::sfc32::Sfc32;
+use crate::wasm_bindgen;
 use std::collections::BTreeSet;
-
 
 // The probability for dust to get into the filter
 // and start clogging it.
-const FILTER_PASS_PROBABILITY: f32 = 0.1;
-
+const FILTER_PASS_PROBABILITY: f32 = 0.50;
 
 #[wasm_bindgen]
 pub struct World {
@@ -36,26 +34,23 @@ impl World {
         }
     }
 
-
     pub fn tick(&mut self) {
         // Electricity
         //
         // Solar Panel
         // A panal generates 1 electricity per tick
-        // 
+        //
         // We only distribute by increment of 1 by step
-        // We want the electricity to flow gradually. 
+        // We want the electricity to flow gradually.
         // No exception.
-        // 
+        //
         // Electricty should flow equally to everything
         // (10,1) -> (9,2)
         // we must first equalize the network, then push the overflow to the biggest
         // (10/100,2/2,0/2) -> (10/100,2/2,1/2) -> (10/100,2/2,2/2) -> (11/100,2/2,2/2)
 
-
         self.step = self.step.wrapping_add(1);
-        
-        
+
         let mut pairs: BTreeSet<(usize, usize)> = BTreeSet::new();
         for link in &self.links {
             let a = link.a as usize;
@@ -64,13 +59,11 @@ impl World {
             pairs.insert((b, a));
         }
 
-        
         for particle in &mut self.particles {
             particle.moon_qd = 0;
             particle.pressure_qn = 0;
             particle.electricity_qd = 0;
         }
-
 
         for particle in &mut self.particles {
             if particle.kind == Kind::SolarPanel {
@@ -78,10 +71,9 @@ impl World {
             }
         }
 
-
         // `Kind::Moon` must remain a fixed high-pressure source (0)
-        // Otherwise, a moon connected to a low-pressure pipe 
-        // would adopt that lower pressure, destroying the gradient 
+        // Otherwise, a moon connected to a low-pressure pipe
+        // would adopt that lower pressure, destroying the gradient
         // that drives dust toward the pumps.
         // for &(a, b) in &pairs {
         //     let ak = self.particles[a].kind;
@@ -93,7 +85,7 @@ impl World {
         //             let qn_down = self.particles[a].pressure_qn.min(neighboor_pressure - 1);
         //             self.particles[a].pressure_qn = ;
         //         }
-        //         Kind::Valve 
+        //         Kind::Valve
         //             if self.particles[a].activation > 0 => {
         //                 let neighboor_pressure = self.particles[b].pressure_q;
         //                 self.particles[a].pressure_qn = self.particles[a].pressure_qn.min(neighboor_pressure.saturating_add(1));
@@ -104,7 +96,6 @@ impl World {
         //     }
         // }
 
-        
         for aidx in 0..self.particles.len() {
             let ak = self.particles[aidx].kind;
             let aa = self.particles[aidx].activation;
@@ -115,16 +106,13 @@ impl World {
                 Kind::Valve if aa > 0 => {
                     // pass
                 }
-                _ => {
-                    continue
-                }
+                _ => continue,
             }
             let mut total: f32 = 0.0;
             let mut count: f32 = 0.0;
             for &(a, b) in &pairs {
                 if a == aidx {
                     if self.particles[b].kind == Kind::Valve && self.particles[b].activation == 0 {
-
                     } else {
                         total += self.particles[b].pressure_q as f32;
                         count += 1.0;
@@ -134,14 +122,12 @@ impl World {
             if count > 0.0 {
                 let average = total / count;
                 self.particles[aidx].pressure_qn = if average > 0.0 {
-                    average.ceil() as i32 
+                    average.ceil() as i32
                 } else {
-                    average.floor() as i32 
+                    average.floor() as i32
                 };
-                // self.particles[aidx].pressure_qn = average.round() as i32 ;
             }
-        } 
-
+        }
 
         for (a, b) in &pairs {
             let source = &self.particles[*a];
@@ -157,9 +143,6 @@ impl World {
             if destination.kind == Kind::Filter && self.rng.next_f32() >= FILTER_PASS_PROBABILITY {
                 continue;
             }
-            // if source.kind == Kind::Filter {
-            //     continue;
-            // }
             if destination.kind == Kind::Filter && source.kind == Kind::Filter {
                 continue;
             }
@@ -167,13 +150,12 @@ impl World {
             self.particles[*b].moon_qd += 1;
         }
 
-
         for (a, b) in &pairs {
             let source = &self.particles[*a];
             let destination = &self.particles[*b];
             let dest_c = destination.electricity_c;
             let source_c = source.electricity_c;
-            // we don't want to consider particles 
+            // we don't want to consider particles
             // if they can't hold electricity
             if source_c <= 0 || dest_c <= 0 {
                 continue;
@@ -188,15 +170,10 @@ impl World {
             let dest_free_capacity = destination.electricity_c - dest_q;
             let source_ratio = source_q as f32 / source_c as f32;
             let dest_ratio = dest_q as f32 / dest_c as f32;
-            let source_overcapacity = source.electricity_q + source.electricity_qd - source.electricity_c;
-            if (
-                source_ratio > dest_ratio 
-                && source_q > 0 
-                && dest_free_capacity > 0
-            ) || (
-                source_overcapacity > 0
-                && dest_free_capacity > 0
-            )
+            let source_overcapacity =
+                source.electricity_q + source.electricity_qd - source.electricity_c;
+            if (source_ratio > dest_ratio && source_q > 0 && dest_free_capacity > 0)
+                || (source_overcapacity > 0 && dest_free_capacity > 0)
             {
                 self.particles[*a].electricity_qd -= 1;
                 self.particles[*b].electricity_qd += 1;
@@ -218,8 +195,7 @@ impl World {
                 particle.electricity_qd -= 1;
                 particle.pressure_qn = particle.pressure_q + 1;
                 particle.pressure_qn = particle.pressure_qn.min(particle.pressure_c);
-            }
-            else if particle.kind == Kind::Blower {
+            } else if particle.kind == Kind::Blower {
                 particle.pressure_qn = particle.pressure_q - 1;
                 particle.pressure_qn = particle.pressure_qn.max(0);
             }
@@ -234,21 +210,45 @@ impl World {
                 particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
             }
         }
+        for aidx in 0..self.particles.len() {
+            if self.particles[aidx].kind != Kind::Filter
+                || self.particles[aidx].moon_q < self.particles[aidx].moon_c
+            {
+                continue;
+            }
+            // filter out neighbour if it's a closed valve
+            if let Some(pressure) = pairs
+                .iter()
+                .filter(|&&(a, b)| {
+                    a == aidx
+                        && !(self.particles[b].kind == Kind::Valve
+                            && self.particles[b].activation == 0)
+                })
+                .map(|&(_, b)| self.particles[b].pressure_q)
+                .max()
+            {
+                self.particles[aidx].pressure_q = pressure;
+            }
+        }
+
+        for particle in &mut self.particles {
+            match particle.kind {
+                Kind::Tank | Kind::Pipe | Kind::Valve => {
+                    particle.pressure_q -= particle.pressure_q.signum();
+                }
+                _ => {}
+            }
+        }
+
         for particle in &mut self.particles {
             assert!(particle.electricity_q <= particle.electricity_c);
             assert!(particle.electricity_q >= 0);
         }
     }
 
-
     pub fn add_particle(&mut self, x: f32, y: f32, k: Kind) -> u32 {
         let index = self.particles.len() as u32;
-        self.particles.push(Particle::new(
-            index,
-            k,
-            x, 
-            y,
-        ));
+        self.particles.push(Particle::new(index, k, x, y));
         index
     }
 
@@ -265,11 +265,7 @@ impl World {
 
     pub fn add_link(&mut self, a: u32, b: u32) {
         let index = self.links.len() as u32;
-        self.links.push(Link::new(
-            index,
-            a,
-            b,
-        ));
+        self.links.push(Link::new(index, a, b));
     }
 
     pub fn links(&self) -> *const Link {

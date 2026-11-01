@@ -94,13 +94,14 @@ const setup = (engine, world) => {
             world.particles_count() * particle_size,
         );
         const f1p = get_particle(particles_view, particle_size, f1);
-        if (f1p.moon_q >= 3) {
+        if (f1p.moon_q == 10) {
             world.set_activation(s1, 1);
             world.set_activation(v1, 0);
             world.set_activation(v2, 0);
             world.set_activation(v3, 1);
             world.set_activation(v4, 1);
-        } else {
+        } 
+        if (f1p.moon_q == 0) {
             world.set_activation(s1,  0);
             world.set_activation(v1, 1);
             world.set_activation(v2, 1);

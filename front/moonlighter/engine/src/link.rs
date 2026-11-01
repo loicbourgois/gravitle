@@ -9,11 +9,7 @@ pub struct Link {
 #[wasm_bindgen]
 impl Link {
     pub fn new(idx: u32, a: u32, b: u32) -> Link {
-        Link {
-            idx,
-            a,
-            b,
-        }
+        Link { idx, a, b }
     }
     pub fn size() -> u32 {
         size_of::<Link>() as u32
