@@ -17,3 +17,8 @@ canvas {
     width: 100%;
     flex-grow: 1;
 }
+
+#canvas_webgpu {
+    height: 100vh;
+    background: #fff0;
+}

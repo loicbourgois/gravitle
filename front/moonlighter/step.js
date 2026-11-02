@@ -2,6 +2,7 @@ import {
     TIME_MODE,
 } from "./consts.js";
 import { draw } from "./draw.js";
+import { draw_triangle_webgpu } from "./draw_webgpu.js";
 
 
 const step = (
@@ -10,6 +11,8 @@ const step = (
     engine, 
     memory,
     custom_logic,
+    gpu,
+    gpu_pipeline,
 ) => {
     world.tick()
     custom_logic(world, engine, memory)
@@ -23,6 +26,7 @@ const step = (
         engine, 
         memory,
     );
+    draw_triangle_webgpu(gpu.device, gpu.context, gpu_pipeline)
     if (TIME_MODE == "real time") {
         window.requestAnimationFrame(()=>{
             step(
@@ -31,6 +35,8 @@ const step = (
                 engine, 
                 memory,
                 custom_logic,
+                gpu,
+                gpu_pipeline,
             )
         });
     } else if (TIME_MODE == "slow") {
@@ -41,6 +47,8 @@ const step = (
                 engine, 
                 memory,
                 custom_logic,
+                gpu,
+                gpu_pipeline,
             )
         }, 500);
     } else {
