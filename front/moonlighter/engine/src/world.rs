@@ -1,6 +1,5 @@
 use crate::kind::Kind;
 use crate::link::Link;
-use crate::log;
 use crate::particle::Particle;
 use crate::sfc32::Sfc32;
 use crate::wasm_bindgen;
@@ -149,7 +148,6 @@ impl World {
         }
         for particle in &mut self.particles {
             let eq = particle.electricity_q + particle.electricity_qd;
-            let a = particle.activation;
             if particle.kind == Kind::Pump && eq > 0 {
                 particle.electricity_qd -= 1;
                 particle.pressure_qn = particle.pressure_q - 1;

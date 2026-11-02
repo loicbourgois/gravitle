@@ -66,3 +66,80 @@ pub fn base_color(k: Kind) -> String {
         // _ => "#f0f".to_string(),
     }
 }
+
+#[wasm_bindgen]
+pub fn draw_link_as_pipe(ak: Kind, bk: Kind) -> bool {
+    draw_link_as_pipe_inner(ak, bk) || draw_link_as_pipe_inner(bk, ak)
+}
+
+fn draw_link_as_pipe_inner(ak: Kind, bk: Kind) -> bool {
+    matches!(
+        (ak, bk),
+        (Kind::Pipe, Kind::Pipe)
+            | (Kind::Pipe, Kind::Valve)
+            | (Kind::Pipe, Kind::Moon)
+            | (Kind::Pipe, Kind::Tank)
+            | (Kind::Pipe, Kind::Filter)
+            | (Kind::Filter, Kind::Filter)
+            | (Kind::Filter, Kind::Pump)
+            | (Kind::Filter, Kind::Press)
+            | (Kind::Pipe, Kind::Press)
+            | (Kind::Filter, Kind::Blower)
+            | (Kind::Pipe, Kind::Blower)
+            | (Kind::Valve, Kind::Tank)
+            | (Kind::Valve, Kind::Pump)
+            | (Kind::Valve, Kind::Filter)
+    )
+}
+
+#[wasm_bindgen]
+pub fn draw_link_as_electricty(ak: Kind, bk: Kind) -> bool {
+    draw_link_as_electricty_inner(ak, bk) || draw_link_as_electricty_inner(bk, ak)
+}
+
+fn draw_link_as_electricty_inner(ak: Kind, bk: Kind) -> bool {
+    matches!(
+        (ak, bk),
+        (Kind::SolarPanel, Kind::Pump)
+            | (Kind::SolarPanel, Kind::Switch)
+            | (Kind::Pump, Kind::Switch)
+            | (Kind::Blower, Kind::Switch)
+            | (Kind::Wire, Kind::Switch)
+            | (Kind::Wire, Kind::Wire)
+            | (Kind::Switch, Kind::Led)
+            | (Kind::Blower, Kind::Led)
+            | (Kind::SolarPanel, Kind::Wire)
+    )
+}
+
+#[wasm_bindgen]
+pub fn draw_signal(ak: Kind, bk: Kind) -> bool {
+    draw_signal_inner(ak, bk) || draw_signal_inner(bk, ak)
+}
+
+fn draw_signal_inner(ak: Kind, bk: Kind) -> bool {
+    matches!(
+        (ak, bk),
+        (Kind::Switch, Kind::Trit)
+            | (Kind::Switch, Kind::SignalInverter)
+            | (Kind::SensorMoonEmpty, Kind::Trit)
+            | (Kind::SignalInverter, Kind::Trit)
+            | (Kind::SensorMoonFull, Kind::Trit)
+            | (Kind::SensorMoonEmpty, Kind::Filter)
+            | (Kind::SensorMoonFull, Kind::Filter)
+            | (Kind::Valve, Kind::Trit)
+            | (Kind::Valve, Kind::SignalInverter)
+    )
+}
+
+#[wasm_bindgen]
+pub fn draw_solid_moon(ak: Kind, bk: Kind) -> bool {
+    draw_solid_moon_inner(ak, bk) || draw_solid_moon_inner(bk, ak)
+}
+
+fn draw_solid_moon_inner(ak: Kind, bk: Kind) -> bool {
+    matches!(
+        (ak, bk),
+        (Kind::Press, Kind::Conveyor) | (Kind::Conveyor, Kind::Launcher)
+    )
+}

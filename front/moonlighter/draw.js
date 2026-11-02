@@ -144,13 +144,6 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.fillStyle = "#f00";
             ctx.fill();
         }
-
-        if (particle.kind == engine.Kind.Valve && particle.activation == 0) {
-            ctx.beginPath();
-            ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
-            ctx.fillStyle = "#f004";
-            ctx.fill();
-        }
 	}
     const links_ptr = world.links();
 	const link_size = engine.Link.size();
@@ -164,11 +157,7 @@ const draw = (ctx, center, world, engine, memory) => {
         const link = get_link(links_view, link_size, i);
         const a = get_particle(particles_view, particle_size, link.a);
         const b = get_particle(particles_view, particle_size, link.b);
-        if (
-            (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Pipe)
-            || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
-            || (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Tank)
-        ) {
+        if (engine.draw_link_as_pipe(a.kind, b.kind)) {
             ctx.beginPath();
             ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
             ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
@@ -178,22 +167,83 @@ const draw = (ctx, center, world, engine, memory) => {
         }
     }
 
+    
+
     for (let i = 0; i < world.links_count(); i++) {
         const link = get_link(links_view, link_size, i);
         const a = get_particle(particles_view, particle_size, link.a);
         const b = get_particle(particles_view, particle_size, link.b);
         if (
-            (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Pipe)
-            || (a.kind == engine.Kind.Tank && b.kind == engine.Kind.Pipe)
-            || (a.kind == engine.Kind.Pipe && b.kind == engine.Kind.Tank)
+            !engine.draw_link_as_electricty(a.kind, b.kind)
+            && !engine.draw_signal(a.kind, b.kind)
+            && !engine.draw_link_as_pipe(a.kind, b.kind)
+            && !engine.draw_solid_moon(a.kind, b.kind)
         ) {
-            const v = parseInt(225.0 * (a.moon_q / a.moon_c* 0.5 + 0.5))
-            const v2 = parseInt(225.0 * (b.moon_q / b.moon_c * 0.5 + 0.5))
-            const v3 = parseInt((v+v2)*0.5)
             ctx.beginPath();
             ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
             ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
-            ctx.strokeStyle = `rgb(${v}, ${v}, ${v})`;
+            ctx.lineWidth=100
+            ctx.strokeStyle = "#f8f";
+            ctx.stroke();
+            console.log(a.kind, b.kind)
+        }
+    }
+
+
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        if (engine.draw_link_as_electricty(a.kind, b.kind)) {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = `#edbf`;
+            ctx.lineWidth = 8;
+            ctx.stroke();
+        }
+    }
+
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        if (engine.draw_signal(a.kind, b.kind)) {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = `#f0f`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        if (engine.draw_solid_moon(a.kind, b.kind)) {
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = `#bbb`;
+            ctx.lineWidth = 10;
+            ctx.stroke();
+        }
+    }
+
+    for (let i = 0; i < world.links_count(); i++) {
+        const link = get_link(links_view, link_size, i);
+        const a = get_particle(particles_view, particle_size, link.a);
+        const b = get_particle(particles_view, particle_size, link.b);
+        if (engine.draw_link_as_pipe(a.kind, b.kind)) {
+            const v = parseInt(225.0 * (a.moon_q / a.moon_c * 0.5 + 0.5))
+            const v2 = parseInt(225.0 * (b.moon_q / b.moon_c * 0.5 + 0.5))
+            const v3 = parseInt((v+v2)/2)
+            ctx.beginPath();
+            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.strokeStyle = `rgb(${v3}, ${v3}, ${v3})`;
             ctx.lineWidth = diameter*a.diameter*0.25;
             ctx.stroke();
             ctx.beginPath();
@@ -212,15 +262,30 @@ const draw = (ctx, center, world, engine, memory) => {
                 0, Math.PI * 2);
             ctx.fillStyle = `rgb(${v2}, ${v2}, ${v2})`;
             ctx.fill();
-        } else {
+        } 
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+        const p = particle.ap;
+        if (particle.kind === engine.Kind.Moon) {
             ctx.beginPath();
-            ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
-            ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+            ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter, 0, Math.PI * 2);
+            ctx.fillStyle = engine.base_color(particle.kind);
             ctx.lineWidth=1
-            ctx.strokeStyle = "#f8f";
-            ctx.stroke();
+            ctx.fill();
+        }
+        if (particle.kind == engine.Kind.Valve && particle.activation == 0) {
+            ctx.beginPath();
+            ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.45, 0, Math.PI * 2);
+            ctx.fillStyle = engine.base_color(engine.Kind.Valve);
+            ctx.fill();
         }
     }
+
+
+    // Debug
     for (let i = 0; i < world.particles_count(); i++) {
         const p = get_particle(particles_view, particle_size, i);
             const x = p.ap.x * diameter + center.x;

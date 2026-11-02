@@ -7,7 +7,7 @@ const setup = (engine, world) => {
     const launcher_1 = world.add_particle(c.x+2, c.y+2, engine.Kind.Launcher)
     const filter_1 = world.add_particle(c.x+3, c.y+0, engine.Kind.Filter)
     const filter_2 = world.add_particle(c.x+4, c.y+0, engine.Kind.Filter)
-    const pump_1 = world.add_particle(c.x+5, c.y+0, engine.Kind.Pump)
+    const pump_1 = world.add_particle(c.x+5, c.y+1, engine.Kind.Pump)
     const switch_1 = world.add_particle(c.x+6, c.y+0, engine.Kind.Switch)
     const solar_panel_1 = world.add_particle(c.x+7, c.y+0, engine.Kind.SolarPanel)
     const earth_1 = world.add_particle(c.x-1, c.y+5, engine.Kind.Earth)

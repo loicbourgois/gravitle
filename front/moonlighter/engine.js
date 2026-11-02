@@ -1,4 +1,4 @@
-/* @ts-self-types="./engine-2026-11-01_19-03-04.d.ts" */
+/* @ts-self-types="./engine-2026-11-02_21-04-01.d.ts" */
 
 //#region exports
 
@@ -1014,6 +1014,54 @@ export function base_color(k) {
     }
 }
 
+/**
+ * @param {Kind} ak
+ * @param {Kind} bk
+ * @returns {boolean}
+ */
+export function draw_link_as_electricty(ak, bk) {
+    _assertNum(ak);
+    _assertNum(bk);
+    const ret = wasm.draw_link_as_electricty(ak, bk);
+    return ret !== 0;
+}
+
+/**
+ * @param {Kind} ak
+ * @param {Kind} bk
+ * @returns {boolean}
+ */
+export function draw_link_as_pipe(ak, bk) {
+    _assertNum(ak);
+    _assertNum(bk);
+    const ret = wasm.draw_link_as_pipe(ak, bk);
+    return ret !== 0;
+}
+
+/**
+ * @param {Kind} ak
+ * @param {Kind} bk
+ * @returns {boolean}
+ */
+export function draw_signal(ak, bk) {
+    _assertNum(ak);
+    _assertNum(bk);
+    const ret = wasm.draw_signal(ak, bk);
+    return ret !== 0;
+}
+
+/**
+ * @param {Kind} ak
+ * @param {Kind} bk
+ * @returns {boolean}
+ */
+export function draw_solid_moon(ak, bk) {
+    _assertNum(ak);
+    _assertNum(bk);
+    const ret = wasm.draw_solid_moon(ak, bk);
+    return ret !== 0;
+}
+
 export function setup() {
     wasm.setup();
 }
@@ -1064,7 +1112,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-01_19-03-04_bg.js": import0,
+        "./engine-2026-11-02_21-04-01_bg.js": import0,
     };
 }
 
@@ -1285,7 +1333,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-01_19-03-04_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-02_21-04-01_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

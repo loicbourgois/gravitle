@@ -106,7 +106,7 @@ impl Particle {
                 Kind::Tank => 1000,
                 Kind::Press => 40,
                 Kind::Pipe | Kind::Filter => 10,
-                Kind::Valve => 1,
+                Kind::Valve | Kind::Pump | Kind::Blower => 1,
                 _ => 0,
             },
             moon_q: match kind {
