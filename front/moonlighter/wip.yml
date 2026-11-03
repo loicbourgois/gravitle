@@ -23,9 +23,10 @@ files:
   - file://./../../../gravitle/front/moonlighter/index.js
   - file://./../../../gravitle/front/moonlighter/step.js
   - file://./../../../gravitle/front/moonlighter/draw.js
-  - file://./../../../gravitle/front/moonlighter/draw_webgpu.js
   - file://./../../../gravitle/front/moonlighter/particle.js
   - file://./../../../gravitle/front/moonlighter/consts.js
+
+  - file://./../../../gravitle/front/moonlighter/webgpu.js
   - file://./../../../gravitle/front/moonlighter/render.js
   - file://./../../../gravitle/front/moonlighter/shader.wgsl
 

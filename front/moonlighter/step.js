@@ -2,7 +2,7 @@ import {
     TIME_MODE,
 } from "./consts.js";
 import { draw } from "./draw.js";
-import { draw_triangle_webgpu } from "./draw_webgpu.js";
+import { draw_triangle_webgpu } from "./webgpu.js";
 
 
 const step = (
