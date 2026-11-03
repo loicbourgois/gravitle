@@ -103,6 +103,7 @@ fn vs_main(@builtin(vertex_index) i: u32) -> VertexOut {
         );
         out.pos = vec4f(positions[i], 0.0, 1.0);
         out.color = vec4f(colors[i], 0.8);
+        out.color = vec4f(0.0);
     } else if (i < 9u) {
         // Debug 100x100 px square in the top-left corner (pixel coords, y down)
         out.pos = vec4f(px_to_ndc(quad_corners(0.0, 0.0, 100.0, 100.0)[i - 3u]), 0.0, 1.0);
