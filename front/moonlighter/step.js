@@ -26,7 +26,7 @@ const step = (
         engine, 
         memory,
     );
-    draw_triangle_webgpu(gpu.device, gpu.context, gpu_pipeline)
+    draw_triangle_webgpu(gpu.device, gpu.context, gpu_pipeline, world, engine, memory)
     if (TIME_MODE == "real time") {
         window.requestAnimationFrame(()=>{
             step(
