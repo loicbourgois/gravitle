@@ -15,8 +15,8 @@ files:
   # - file://./index.css
   # - file://./index.html
   # - file://./index.js
-  # - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
-  # - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
   # - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
   # - file://./../../../gravitle/front/moonlighter/setup_1.js
   # - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs

@@ -1,3 +1,5 @@
+// TODO draw all particles
+
 const make_triangle_pipeline = async (device, format) => {
     const shader_src = await (await fetch("./shader.wgsl")).text();
     const module = device.createShaderModule({ code: shader_src });
@@ -42,7 +44,7 @@ const draw_triangle_webgpu = (device, context, gpu_pipeline) => {
     });
     pass.setPipeline(pipeline);
     pass.setBindGroup(0, bind_group);
-    pass.draw(15); // 3 for the triangle + 6 for the 100x100 square + 6 for the centered square
+    pass.draw(21); // 3 for the triangle + 6 for the 100x100 square + 6 for the centered square + 6 for the circle
     pass.end();
     device.queue.submit([encoder.finish()]);
 }

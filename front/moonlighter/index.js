@@ -6,13 +6,12 @@ import init, * as engine from "./engine.js";
 // import { setup } from "./setup_5.js";
 // import { setup } from "./setup_6.js";
 // import { setup } from "./setup_7.js";
-import { setup } from "./setup_8.js";
-// import { setup } from "./setup/01_pump.js";
+// import { setup } from "./setup_8.js";
+import { setup } from "./setup/01_pump.js";
 import { debug } from "./debug.js";
 import { setup_rendering, setup_rendering_webgpu } from "./render.js";
 import { make_triangle_pipeline } from "./draw_webgpu.js";
 import { step } from "./step.js";
-
 
 
 const main = async () => {
