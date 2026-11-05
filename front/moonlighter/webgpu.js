@@ -1,14 +1,16 @@
 import { ZOOM } from "./consts.js";
-import { get_particle } from "./particle.js";
+
 
 // Rust `Particle` is #[repr(C)] with 4-byte-aligned fields; the WGSL
 // `GpuParticle` struct mirrors it exactly, so the raw wasm bytes can be
 // copied to the GPU as-is.
 const COLOR_STRIDE = 4; // floats per particle color (vec4f)
+const LINK_STRIDE = 3; // u32 per Link (idx, a, b)
+
 
 const color_cache = new Map();
 
-// Parse engine.base_color output: "#eee", "#48f" or "rgb(r, g, b)"
+
 const parse_color = (s) => {
     if (color_cache.has(s)) {
         return color_cache.get(s);
@@ -38,8 +40,11 @@ const parse_color = (s) => {
     return rgba;
 }
 
+
 const make_triangle_pipeline = async (device, format) => {
-    const shader_src = await (await fetch("./shader.wgsl")).text();
+    const shader_src = await (
+        await fetch("./shader.wgsl", { cache: "no-store" })
+    ).text();
     const module = device.createShaderModule({ code: shader_src });
     const pipeline = device.createRenderPipeline({
         layout: 'auto',
@@ -56,20 +61,29 @@ const make_triangle_pipeline = async (device, format) => {
         uniform_buffer,
         particle_buffer: null,
         color_buffer: null,
+        link_buffer: null,
         particle_capacity: 0,
+        link_capacity: 0,
         bind_group_with_particles: null,
     };
 }
 
+
 // Lazily (re)allocate the storage buffers when the count changes,
 // and rebuild the bind group accordingly.
-const ensure_storage = (device, gpu_pipeline, count, particle_size) => {
-    if (gpu_pipeline.particle_buffer !== null && gpu_pipeline.particle_capacity >= count) {
+const ensure_storage = (device, gpu_pipeline, count, particle_size, link_count) => {
+    const particle_ok =
+        gpu_pipeline.particle_buffer !== null &&
+        gpu_pipeline.particle_capacity >= count;
+    const link_ok =
+        gpu_pipeline.link_buffer !== null && gpu_pipeline.link_capacity >= link_count;
+    if (particle_ok && link_ok) {
         return;
     }
     if (gpu_pipeline.particle_buffer !== null) {
         gpu_pipeline.particle_buffer.destroy();
         gpu_pipeline.color_buffer.destroy();
+        gpu_pipeline.link_buffer.destroy();
     }
     const n = Math.max(1, count);
     gpu_pipeline.particle_buffer = device.createBuffer({
@@ -80,7 +94,13 @@ const ensure_storage = (device, gpu_pipeline, count, particle_size) => {
         size: n * COLOR_STRIDE * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
+    const l = Math.max(1, link_count);
+    gpu_pipeline.link_buffer = device.createBuffer({
+        size: l * LINK_STRIDE * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
     gpu_pipeline.particle_capacity = n;
+    gpu_pipeline.link_capacity = l;
     gpu_pipeline.bind_group_with_particles = device.createBindGroup({
         layout: gpu_pipeline.pipeline.getBindGroupLayout(0),
         entries: [
@@ -96,9 +116,14 @@ const ensure_storage = (device, gpu_pipeline, count, particle_size) => {
                 binding: 2,
                 resource: { buffer: gpu_pipeline.color_buffer },
             },
+            {
+                binding: 3,
+                resource: { buffer: gpu_pipeline.link_buffer },
+            },
         ],
     });
 }
+
 
 const draw_triangle_webgpu = (
     device,
@@ -126,8 +151,9 @@ const draw_triangle_webgpu = (
     );
 
     const count = world.particles_count();
+    const link_count = world.links_count();
     const particle_size = engine.Particle.size();
-    ensure_storage(device, gpu_pipeline, count, particle_size);
+    ensure_storage(device, gpu_pipeline, count, particle_size, link_count);
     if (gpu_pipeline.bind_group_with_particles === null) {
         return;
     }
@@ -147,6 +173,11 @@ const draw_triangle_webgpu = (
         0,
         count * f32_per_particle,
     );
+
+    // if (link_count > 0) {
+        const links_data = new Uint32Array(memory.buffer, world.links(), link_count * LINK_STRIDE);
+        device.queue.writeBuffer(gpu_pipeline.link_buffer, 0, links_data);
+    // }
 
     // Colors must be computed in JS (engine.base_color); `kind` is read
     // directly from the same wasm memory (offset 76 bytes = 19 floats).
@@ -179,8 +210,7 @@ const draw_triangle_webgpu = (
     });
     pass.setPipeline(gpu_pipeline.pipeline);
     pass.setBindGroup(0, gpu_pipeline.bind_group_with_particles);
-    // 3 for the debug triangle + 6 for the 100x100 square + 6 per particle
-    pass.draw(9 + 6 * count);
+    pass.draw(9 + 6 * count + 6 * link_count);
     pass.end();
     device.queue.submit([encoder.finish()]);
 }

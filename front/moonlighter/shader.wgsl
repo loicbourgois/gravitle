@@ -1,10 +1,14 @@
+const LINE_HALF_WIDTH: f32 = 20.0;
+
+
 struct Uniforms {
     canvas_size: vec2f,
     zoom: f32,
     time: f32,
     step: f32,
     rnd: f32,
-    _pad: vec2f,
+    link_count: f32,
+    _pad: f32,
 };
 
 // Mirrors `Particle` in engine/src/particle.rs (`#[repr(C)]`, 4-byte aligned).
@@ -40,10 +44,17 @@ struct GpuParticle {
     padding: u32,
 };
 
+struct GpuLink {
+    idx: u32,
+    a: u32,
+    b: u32,
+};
+
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var<storage, read> particles: array<GpuParticle>;
 // rgba per particle, computed in JS from engine.base_color
 @group(0) @binding(2) var<storage, read> colors: array<vec4f>;
+@group(0) @binding(3) var<storage, read> links: array<GpuLink>;
 
 
 fn px_to_ndc(p: vec2f) -> vec2f {
@@ -71,6 +82,8 @@ struct VertexOut {
     @location(1) uv: vec2f,
     @location(2) moon_ratio: f32, // quantity / capacity
     @location(3) @interpolate(flat) kind: u32,
+    // 1.0 for link vertices: disables the disc discard in fs_main
+    @location(4) @interpolate(flat) is_link: f32,
 };
 
 
@@ -87,8 +100,9 @@ fn vs_main(@builtin(vertex_index) i: u32) -> VertexOut {
     var out: VertexOut;
     out.uv = vec2f(0.0, 0.0);
     out.color = vec4f(1.0);
-    // out.moon_ratio = 1.0;
-    // out.kind = 0;
+    out.moon_ratio = 0.0;
+    out.kind = 0u;
+    out.is_link = 0.0;
     if (i < 3u) {
         // Debug triangle
         var positions = array<vec2f, 3>(
@@ -102,13 +116,12 @@ fn vs_main(@builtin(vertex_index) i: u32) -> VertexOut {
             vec3f(0.2, 0.2, 1.0),
         );
         out.pos = vec4f(positions[i], 0.0, 1.0);
-        out.color = vec4f(colors[i], 0.8);
         out.color = vec4f(0.0);
     } else if (i < 9u) {
         // Debug 100x100 px square in the top-left corner (pixel coords, y down)
         out.pos = vec4f(px_to_ndc(quad_corners(0.0, 0.0, 100.0, 100.0)[i - 3u]), 0.0, 1.0);
         out.color = vec4f(1.0, 0.8, 0.2, 0.8);
-    } else {
+    } else if (i < 9u + 6u * arrayLength(&particles)) {
         // One quad (drawn as a disc) per particle
         let pi = (i - 9u) / 6u;
         let corner = quad_corners(-1.0, -1.0, 1.0, 1.0)[(i - 9u) % 6u];
@@ -125,36 +138,57 @@ fn vs_main(@builtin(vertex_index) i: u32) -> VertexOut {
         out.uv = corner;
         out.kind = particle.kind;
         out.moon_ratio = f32(particle.moon_q) / f32(particle.moon_c);
+    } else {
+        // One thin quad per link: simple pink debug line, drawn in pixel space.
+        let base = 9u + 6u * arrayLength(&particles);
+        let li = (i - base) / 6u;
+        let corner = quad_corners(-1.0, -1.0, 1.0, 1.0)[(i - base) % 6u];
+        let link = links[li];
+        let pa = particles[link.a];
+        let pb = particles[link.b];
+        let aa = min(u.canvas_size.x, u.canvas_size.y) * u.zoom;
+        let ca = vec2f(
+            u.canvas_size.x * 0.5 + pa.p.x * aa,
+            u.canvas_size.y * 0.5 - pa.p.y * aa,
+        );
+        let cb = vec2f(
+            u.canvas_size.x * 0.5 + pb.p.x * aa,
+            u.canvas_size.y * 0.5 - pb.p.y * aa,
+        );
+        let dir = select(vec2f(1.0, 0.0), normalize(cb - ca), cb != ca);
+        let perp = vec2f(-dir.y, dir.x);
+        let t = corner.x * 0.5 + 0.5; // 0 at a, 1 at b
+        let c = mix(ca, cb, vec2f(t)) + perp * (corner.y * LINE_HALF_WIDTH);
+        out.pos = vec4f(px_to_ndc(c), 0.0, 1.0);
+        out.color = vec4f(1.0, 0.2, 0.8, 1.0); // debug pink
+        out.is_link = 1.0;
     }
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4f {
-    if (length(in.uv) > 1.0) {
+    if (in.is_link < 0.5 && length(in.uv) > 1.0) {
         discard;
     }
     if (
-        (
-            in.kind == 1 
-            || in.kind == 2 
-            || in.kind == 3 
+        in.is_link < 0.5
+        && (
+            in.kind == 1
+            || in.kind == 2
+            || in.kind == 3
             || in.kind == 10
             || in.kind == 4
             || in.kind == 19
         )
-        && length(in.uv) < 0.5
+        && length(in.uv) < 0.75
     ) {
         var seed = vec3f(
-            in.uv * 24.0 + u.canvas_size * 0.013,
-            u.time * 0.6 + u.step * 0.37 + u.rnd,
-        );
-        seed = vec3f(
             in.uv * 24.0 + u.canvas_size * 0.013,
             19.0,
         );
         let n = hash(floor(seed));
-        let aa = select(0.0, 1.0, n < in.moon_ratio);
+        let aa = select(0.0, 1.0, n < in.moon_ratio * 0.5);
         return vec4f(aa, aa, aa, 1.0);
     } else {
         return in.color;

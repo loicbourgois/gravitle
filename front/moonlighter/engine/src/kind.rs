@@ -89,6 +89,7 @@ fn draw_link_as_pipe_inner(ak: Kind, bk: Kind) -> bool {
             | (Kind::Valve, Kind::Tank)
             | (Kind::Valve, Kind::Pump)
             | (Kind::Valve, Kind::Filter)
+            | (Kind::Moon, Kind::Press)
     )
 }
 

@@ -4,6 +4,8 @@ import { resize_canvas } from "./canvas.js";
 const setup_rendering = () => {
     const canvas = document.createElement('canvas');
     canvas.id = 'canvas';
+    canvas.style.zIndex = '1'
+    canvas.style.background = 'transparent';
     document.body.appendChild(canvas);
     resize_canvas(canvas);
     window.addEventListener('resize', () => {resize_canvas(canvas)});

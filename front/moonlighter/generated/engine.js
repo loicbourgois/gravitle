@@ -1,4 +1,4 @@
-/* @ts-self-types="./engine-2026-11-02_21-04-01.d.ts" */
+/* @ts-self-types="./engine-2026-11-05_19-20-21.d.ts" */
 
 //#region exports
 
@@ -1112,7 +1112,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-02_21-04-01_bg.js": import0,
+        "./engine-2026-11-05_19-20-21_bg.js": import0,
     };
 }
 
@@ -1333,7 +1333,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-02_21-04-01_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-05_19-20-21_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

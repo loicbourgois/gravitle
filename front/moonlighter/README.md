@@ -1,7 +1,6 @@
 # Moonlighter
 
 
-
 ## Development
 ```sh
 $HOME/github.com/loicbourgois/gravitle/front.sh
