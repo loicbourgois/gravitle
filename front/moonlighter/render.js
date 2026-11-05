@@ -24,7 +24,6 @@ const setup_rendering_webgpu = async () => {
         return null;
     }
     const device = await adapter.requestDevice();
-
     const canvas = document.createElement('canvas');
     canvas.id = 'canvas_webgpu';
     canvas.style.position = 'fixed';
@@ -33,11 +32,9 @@ const setup_rendering_webgpu = async () => {
     document.body.appendChild(canvas);
     resize_canvas(canvas);
     window.addEventListener('resize', () => {resize_canvas(canvas)});
-
     const context = canvas.getContext('webgpu');
     const format = navigator.gpu.getPreferredCanvasFormat();
     context.configure({ device, format, alphaMode: 'premultiplied' });
-
     return { device, context, format };
 }
 

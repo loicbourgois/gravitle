@@ -1,4 +1,4 @@
-/* @ts-self-types="./engine-2026-11-05_19-20-21.d.ts" */
+/* @ts-self-types="./engine-2026-11-05_23-51-34.d.ts" */
 
 //#region exports
 
@@ -314,15 +314,6 @@ export class Particle {
         return Point.__wrap(ret);
     }
     /**
-     * @returns {number}
-     */
-    get padding() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.__wbg_get_particle_padding(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
      * @returns {Point}
      */
     get pp() {
@@ -356,6 +347,33 @@ export class Particle {
         if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
         _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_pressure_qn(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get progress_c() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_progress_c(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get progress_q() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_progress_q(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get progress_qd() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_progress_qd(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -622,15 +640,6 @@ export class Particle {
         wasm.__wbg_set_particle_p(this.__wbg_ptr, ptr0);
     }
     /**
-     * @param {number} arg0
-     */
-    set padding(arg0) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(arg0);
-        wasm.__wbg_set_particle_padding(this.__wbg_ptr, arg0);
-    }
-    /**
      * @param {Point} arg0
      */
     set pp(arg0) {
@@ -669,6 +678,33 @@ export class Particle {
         _assertNum(this.__wbg_ptr);
         _assertNum(arg0);
         wasm.__wbg_set_particle_pressure_qn(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set progress_c(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_progress_c(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set progress_q(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_progress_q(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set progress_qd(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_progress_qd(this.__wbg_ptr, arg0);
     }
     /**
      * @param {number} arg0
@@ -1112,7 +1148,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-05_19-20-21_bg.js": import0,
+        "./engine-2026-11-05_23-51-34_bg.js": import0,
     };
 }
 
@@ -1333,7 +1369,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-05_19-20-21_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-05_23-51-34_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

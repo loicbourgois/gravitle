@@ -18,3 +18,9 @@ services:
         command: /root/github.com/loicbourgois/gravitle/generate/inner.sh
         volumes:
             - $HOME/github.com/loicbourgois/gravitle:/root/github.com/loicbourgois/gravitle:rw
+    moonlighter_watch:
+        build:
+            context: $HOME/github.com/loicbourgois/gravitle/front/moonlighter
+            dockerfile: $HOME/github.com/loicbourgois/gravitle/front/moonlighter/Dockerfile
+        volumes:
+            - $HOME/github.com/loicbourgois/gravitle/front/moonlighter:/root/github.com/loicbourgois/gravitle/front/moonlighter:rw

@@ -24,3 +24,8 @@ docs/chrono/review/
 **/**.yml.prompt.md
 
 front/moonlighter/*.wasm
+
+
+**.yml.t.p.md
+**.yml.t.r.*.md
+**.yml.t.r.*.md

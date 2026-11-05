@@ -60,8 +60,9 @@ pub struct Particle {
     pub solidmoon_q: i32,
     pub solidmoon_qd: i32,
 
-    // For wasm
-    pub padding: u32,
+    pub progress_c: i32,
+    pub progress_q: i32,
+    pub progress_qd: i32,
 }
 
 #[wasm_bindgen]
@@ -82,6 +83,7 @@ impl Particle {
                 | Kind::SignalInverter
                 | Kind::SignalWire => 0.25,
                 Kind::Pipe => 0.75,
+                Kind::Moon => 2.0,
                 _ => 1.0,
             },
             p: Point::new(0.0, 0.0),
@@ -132,7 +134,12 @@ impl Particle {
             },
             solidmoon_q: 0,
             solidmoon_qd: 0,
-            padding: 0,
+            progress_c: match kind {
+                Kind::Press => 100,
+                _ => 0,
+            },
+            progress_q: 0,
+            progress_qd: 0,
         };
         p.set_position(x, y);
         p

@@ -41,11 +41,32 @@ const parse_color = (s) => {
 }
 
 
+const resolve_shader_imports = async (src) => {
+    const import_re = /^\s*import\s+([\w/]+)\s*;/gm;
+    const parts = [];
+    let last = 0;
+    let match;
+    while ((match = import_re.exec(src)) !== null) {
+        parts.push(src.slice(last, match.index));
+        const file = `./shader/${match[1]}.wgsl`;
+        const text = await (
+            await fetch(file, { cache: "no-store" })
+        ).text();
+        // Recursively resolve imports inside the dependency too.
+        parts.push(await resolve_shader_imports(text));
+        last = import_re.lastIndex;
+    }
+    parts.push(src.slice(last));
+    return parts.join("\n");
+}
+
+
 const make_triangle_pipeline = async (device, format) => {
     const shader_src = await (
-        await fetch("./shader.wgsl", { cache: "no-store" })
+        await fetch("./shader/main.wgsl", { cache: "no-store" })
     ).text();
-    const module = device.createShaderModule({ code: shader_src });
+    const merged_src = await resolve_shader_imports(shader_src);
+    const module = device.createShaderModule({ code: merged_src });
     const pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: { module, entryPoint: 'vs_main' },

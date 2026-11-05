@@ -1,5 +1,6 @@
 commands: 
   todo: l todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/wip.yml
+  format: l todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/format.sh
 
 
 models:
@@ -13,29 +14,32 @@ models:
 
 
 files:
-  # - file://./index.css
-  # - file://./index.html
-  # - file://./index.js
-  - file://./../../../gravitle/front/moonlighter/engine/src/world.rs
-  - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
-  - file://./../../../gravitle/front/moonlighter/engine/src/link.rs
-  - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
+  # - file://./../../../gravitle/front.sh
+  # - file://./../../../gravitle/docker-compose.yml
+  # - file://./../../../gravitle/front/moonlighter/Dockerfile
+
+  - file://./../../../gravitle/front/moonlighter/engine/src/world/mod.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/link.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
   # - file://./../../../gravitle/front/moonlighter/setup_1.js
   # - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs
   # - file://./../../../gravitle/front/moonlighter/index.js
   # - file://./../../../gravitle/front/moonlighter/step.js
-  - file://./../../../gravitle/front/moonlighter/draw.js
-  - file://./../../../gravitle/front/moonlighter/particle.js
+  # - file://./../../../gravitle/front/moonlighter/draw.js
+  # - file://./../../../gravitle/front/moonlighter/particle.js
   # - file://./../../../gravitle/front/moonlighter/consts.js
 
-  - file://./../../../gravitle/front/moonlighter/webgpu.js
-  - file://./../../../gravitle/front/moonlighter/render.js
-  - file://./../../../gravitle/front/moonlighter/shader.wgsl
+  # - file://./../../../gravitle/front/moonlighter/webgpu.js
+  # - file://./../../../gravitle/front/moonlighter/render.js
+  # - file://./../../../gravitle/front/moonlighter/shader/main.wgsl
+
+  # - file://./../../../gravitle/front/moonlighter/scripts/watch.sh
 
 
 rules:
   - keep code tidy
   - if replacing code, give context into what to remove
   - |
-    TODO
-      Make the links
+    TODO: see code
