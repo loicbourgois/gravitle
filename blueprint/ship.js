@@ -13,7 +13,7 @@
       },
       "d": 0.0125,
       "player_id": "0",
-      "kind": "armor",
+      "kind": "headlight",
       "binding": null
     },
     {
@@ -23,7 +23,7 @@
       },
       "d": 0.0125,
       "player_id": "0",
-      "kind": "armor",
+      "kind": "headlight",
       "binding": null
     },
     {

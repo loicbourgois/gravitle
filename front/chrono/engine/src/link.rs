@@ -1,5 +1,6 @@
 use crate::wasm_bindgen;
 #[wasm_bindgen]
+#[repr(C)]
 pub struct Link {
     pub idx: u32,
     pub a: u32,

@@ -36,7 +36,6 @@ function generateRandomWord(length) {
 		}
 		isConsonant = !isConsonant;
 	}
-
 	return word;
 }
 const random_seed = () => {

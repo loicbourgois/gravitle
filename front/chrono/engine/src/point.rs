@@ -21,7 +21,7 @@ impl Point {
         self.y = 0.0;
     }
     pub fn normalize(&mut self) -> Point {
-        self.normalize_2((self.x.powf(2.0) + self.y.powf(2.0)).sqrt())
+        self.normalize_2((self.x * self.x + self.y * self.y).sqrt())
     }
     pub fn normalize_2(&mut self, length: f32) -> Point {
         if length != 0.0 {
@@ -31,23 +31,29 @@ impl Point {
         *self
     }
     pub fn normalized(self) -> Point {
-        let length = (self.x.powf(2.0) + self.y.powf(2.0)).sqrt();
+        let length = (self.x * self.x + self.y * self.y).sqrt();
         Point {
             x: self.x / length,
             y: self.y / length,
         }
     }
     pub fn distance(self, b: Point) -> f32 {
-        ((self.x - b.x).powf(2.0) + (self.y - b.y).powf(2.0)).sqrt()
+        let dx = self.x - b.x;
+        let dy = self.y - b.y;
+        (dx * dx + dy * dy).sqrt()
     }
     pub fn distance_squared_2(self, b: Point) -> f32 {
-        (self.x - b.x).powf(2.0) + (self.y - b.y).powf(2.0)
+        let dx = self.x - b.x;
+        let dy = self.y - b.y;
+        dx * dx + dy * dy
     }
     pub fn distance_squared(self, x: f32, y: f32) -> f32 {
-        (self.x - x).powf(2.0) + (self.y - y).powf(2.0)
+        let dx = self.x - x;
+        let dy = self.y - y;
+        dx * dx + dy * dy
     }
     pub fn length(self) -> f32 {
-        (self.x.powf(2.0) + self.y.powf(2.0)).sqrt()
+        (self.x * self.x + self.y * self.y).sqrt()
     }
 }
 impl Sub for Point {

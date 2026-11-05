@@ -1,4 +1,4 @@
-import { get_cell } from "./get_cell.js";
+import { get_particle } from "./get_particle.js";
 import { get_link } from "./get_link.js";
 import { test_wrap_around } from "./math.js";
 const test = (gravitle, memory) => {
@@ -11,7 +11,7 @@ const test = (gravitle, memory) => {
 	const world = gravitle.World.new();
 	const input = [
 		{
-			item_kind: "cell",
+			item_kind: "particle",
 			kind: 1,
 			p: {
 				x: 2.4,
@@ -38,7 +38,7 @@ const test = (gravitle, memory) => {
 		},
 		{
 			kind: 4,
-			item_kind: "cell",
+			item_kind: "particle",
 			p: {
 				x: 12.4,
 				y: -3.6,
@@ -64,7 +64,7 @@ const test = (gravitle, memory) => {
 		},
 		{
 			kind: 5,
-			item_kind: "cell",
+			item_kind: "particle",
 			p: {
 				x: 5.4,
 				y: 2.6,
@@ -90,7 +90,7 @@ const test = (gravitle, memory) => {
 		},
 		{
 			kind: 6,
-			item_kind: "cell",
+			item_kind: "particle",
 			p: {
 				x: 5.4,
 				y: 2.4,
@@ -123,21 +123,21 @@ const test = (gravitle, memory) => {
 		},
 	];
 	for (const e of input) {
-		if (e.item_kind == "cell") {
-			const idx = world.add_cell(null, null, null, null, 2);
-			world.set_cell_position_x(idx, e.p.x);
-			world.set_cell_position_y(idx, e.p.y);
-			world.set_cell_pp_x(idx, e.pp.x);
-			world.set_cell_pp_y(idx, e.pp.y);
-			world.set_cell_np_x(idx, e.np.x);
-			world.set_cell_np_y(idx, e.np.y);
-			world.set_cell_diameter(idx, e.diameter);
-			world.set_cell_kind(idx, e.kind);
-			world.set_cell_activated(idx, e.activated);
-			world.set_cell_direction_x(idx, e.direction.x);
-			world.set_cell_direction_y(idx, e.direction.y);
-			world.set_cell_dp_x(idx, e.dp.x);
-			world.set_cell_dp_y(idx, e.dp.y);
+		if (e.item_kind == "particle") {
+			const idx = world.add_particle(null, null, null, null, 2);
+			world.set_particle_position_x(idx, e.p.x);
+			world.set_particle_position_y(idx, e.p.y);
+			world.set_particle_pp_x(idx, e.pp.x);
+			world.set_particle_pp_y(idx, e.pp.y);
+			world.set_particle_np_x(idx, e.np.x);
+			world.set_particle_np_y(idx, e.np.y);
+			world.set_particle_diameter(idx, e.diameter);
+			world.set_particle_kind(idx, e.kind);
+			world.set_particle_activated(idx, e.activated);
+			world.set_particle_direction_x(idx, e.direction.x);
+			world.set_particle_direction_y(idx, e.direction.y);
+			world.set_particle_dp_x(idx, e.dp.x);
+			world.set_particle_dp_y(idx, e.dp.y);
 			e.idx = idx;
 		} else if (e.item_kind == "link") {
 			const _idx = world.add_link(e.a, e.b);
@@ -145,13 +145,13 @@ const test = (gravitle, memory) => {
 			throw new Error(`invalid item_kind: ${e.item_kind}`);
 		}
 	}
-	const cellsPtr = world.cells();
-	const cells_view = new DataView(
+	const particlesPtr = world.particles();
+	const particles_view = new DataView(
 		memory.buffer,
-		cellsPtr,
-		world.cells_count() * gravitle.Cell.size(),
+		particlesPtr,
+		world.particles_count() * gravitle.Particle.size(),
 	);
-	const cell_size = gravitle.Cell.size();
+	const particle_size = gravitle.Particle.size();
 	const linksPtr = world.links();
 	const links_view = new DataView(
 		memory.buffer,
@@ -161,8 +161,8 @@ const test = (gravitle, memory) => {
 	const link_size = gravitle.Link.size();
 	const errors = [];
 	for (const ei of input) {
-		if (ei.item_kind == "cell") {
-			const eo = get_cell(cells_view, cell_size, ei.idx);
+		if (ei.item_kind == "particle") {
+			const eo = get_particle(particles_view, particle_size, ei.idx);
 			for (const field of [
 				"idx",
 				"kind",
@@ -216,15 +216,19 @@ const test = (gravitle, memory) => {
 		}
 	}
 	if (errors.length) {
-		console.log(`gravitle.Cell.size(): ${gravitle.Cell.size()}`);
-		for (let i = 0; i < world.cells_count() * gravitle.Cell.size(); i++) {
+		console.log(`gravitle.Particle.size(): ${gravitle.Particle.size()}`);
+		for (
+			let i = 0;
+			i < world.particles_count() * gravitle.Particle.size();
+			i++
+		) {
 			try {
 				console.log(
 					i,
-					`@${cells_view.getUint32(i, true)}`,
-					`@${cells_view.getFloat32(i, true)}`,
-					`@${cells_view.getUint8(i, true)}`,
-					`@${cells_view.getUint8(i, false)}`,
+					`@${particles_view.getUint32(i, true)}`,
+					`@${particles_view.getFloat32(i, true)}`,
+					`@${particles_view.getUint8(i, true)}`,
+					`@${particles_view.getUint8(i, false)}`,
 				);
 			} catch (error) {}
 		}
@@ -270,7 +274,7 @@ const test = (gravitle, memory) => {
 	// 				errors_2.push(field, fi, fo);
 	// 			}
 	// 		}
-	// 	} else if (ei.kind == "cell") {
+	// 	} else if (ei.kind == "particle") {
 	// 		// pass
 	// 	} else {
 	// 		throw new Error(`invalid kind: ${ei.kind}`);
