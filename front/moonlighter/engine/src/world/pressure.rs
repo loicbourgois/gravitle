@@ -5,22 +5,30 @@ use std::collections::BTreeSet;
 pub fn generate(world: &mut World) {
     for particle in &mut world.particles {
         let eq = particle.electricity_q + particle.electricity_qd;
-        if particle.kind == Kind::Pump && eq > 0 {
-            particle.electricity_qd -= 1;
-            particle.pressure_qn = particle.pressure_q - 1;
-            particle.pressure_qn = particle.pressure_qn.max(particle.pressure_c);
-        }
-        if particle.kind == Kind::Pump && eq <= 0 {
-            particle.pressure_qn = particle.pressure_q + 1;
-            particle.pressure_qn = particle.pressure_qn.min(0);
-        }
-        if particle.kind == Kind::Blower && eq > 0 {
-            particle.electricity_qd -= 1;
-            particle.pressure_qn = particle.pressure_q + 1;
-            particle.pressure_qn = particle.pressure_qn.min(particle.pressure_c);
-        } else if particle.kind == Kind::Blower {
-            particle.pressure_qn = particle.pressure_q - 1;
-            particle.pressure_qn = particle.pressure_qn.max(0);
+        match (particle.kind, eq > 0) {
+            // pump with energy available
+            (Kind::Pump, true) => {
+                particle.electricity_qd -= 1;
+                particle.pressure_qn = particle.pressure_q - 1;
+                particle.pressure_qn = particle.pressure_qn.max(particle.pressure_c);
+            }
+            // pump without energy available
+            (Kind::Pump, false) => {
+                particle.pressure_qn = particle.pressure_q + 1;
+                particle.pressure_qn = particle.pressure_qn.min(0);
+            }
+            // blower with energy available
+            (Kind::Blower, true) => {
+                particle.electricity_qd -= 1;
+                particle.pressure_qn = particle.pressure_q + 1;
+                particle.pressure_qn = particle.pressure_qn.min(particle.pressure_c);
+            }
+            // blower without energy available
+            (Kind::Blower, false) => {
+                particle.pressure_qn = particle.pressure_q - 1;
+                particle.pressure_qn = particle.pressure_qn.max(0);
+            }
+            _ => {}
         }
     }
 }
@@ -73,6 +81,14 @@ pub fn equalize(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
         }
     }
 }
+
+
+pub fn apply(world: &mut World) {
+    for particle in &mut world.particles {
+        particle.pressure_q = particle.pressure_qn;
+    }
+}
+
 
 pub fn block(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
     for aidx in 0..world.particles.len() {

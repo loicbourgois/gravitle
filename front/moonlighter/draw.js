@@ -430,6 +430,55 @@ const draw = (ctx, center, world, engine, memory) => {
             ctx.fillStyle = "#eee";
             ctx.fillText(label, labelX, labelY);
     }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = String(p.progress_c).length
+            const label = `prog:${String(p.progress_q).padStart(l, " ")}/${p.progress_c}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*7;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const label = `state: ${p.state}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*8;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
     
     
 }

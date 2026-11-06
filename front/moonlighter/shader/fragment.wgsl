@@ -25,9 +25,8 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
         return vec4f(aa, aa, aa, 1.0);
     }
     else if (
-        (
-            in.kind == 19u
-        )
+        in.kind == 19u
+        && in.state != 4
         && length(in.uv) < 0.75 * (1.0 - in.progress_ratio * 0.5)
     ) {
         let seed = vec3f(
@@ -37,7 +36,22 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
         let n = hash(floor(seed));
         var aa = select(0.0, 1.0, n < in.moon_ratio * 0.5 + in.progress_ratio * 0.5);
         return vec4f(aa, aa, aa, 1.0);
-    } else {
+    }
+    else if (
+        in.kind == 19u
+        && in.state == 4
+        && length(in.uv) < 0.75 * 0.5
+    ) {
+        return vec4f(1.0, 1.0, 1.0, 1.0);
+    }
+    else if (
+        in.kind == 19u
+        && in.state == 4
+        && length(in.uv) < 0.75 * (1.0 - in.progress_ratio * 0.5)
+    ) {
+        return vec4f(0.0, 0.0, 0.0, 0.0);
+    }
+    else {
         return in.color;
     }
 }

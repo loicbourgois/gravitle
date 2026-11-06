@@ -41,3 +41,12 @@ pub fn equalize(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
         }
     }
 }
+
+pub fn apply(world: &mut World) {
+    for particle in &mut world.particles {
+        particle.electricity_q += particle.electricity_qd;
+            if particle.kind == Kind::SolarPanel {
+                particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
+            }
+    }
+}

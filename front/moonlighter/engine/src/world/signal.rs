@@ -1,7 +1,7 @@
 use crate::world::Kind;
 use crate::world::World;
 
-pub fn transmission(world: &mut World) {
+pub fn tansmit(world: &mut World) {
     for i1 in 0..world.particles.len() {
         match world.p(i1).kind {
             Kind::SignalWire => {
@@ -105,4 +105,21 @@ pub fn transmission(world: &mut World) {
     for particle in &mut world.particles {
         particle.signal_q = particle.signal_qn;
     }
+}
+
+
+pub fn apply(world: &mut World) {
+    for particle in &mut world.particles {
+            match particle.kind {
+                Kind::Valve | Kind::Switch => {
+                    if particle.signal_q == 1 {
+                        particle.activation = 1;
+                    }
+                    if particle.signal_q == -1 {
+                        particle.activation = 0;
+                    }
+                }
+                _ => {}
+            }
+        }
 }

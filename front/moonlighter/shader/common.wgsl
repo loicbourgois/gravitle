@@ -44,6 +44,8 @@ struct GpuParticle {
     progress_c: i32,
     progress_q: i32,
     progress_qd: i32,
+    state: u32,
+    padding: u32,
 };
 
 struct GpuLink {
@@ -71,6 +73,7 @@ struct VertexOut {
     // 1.0 for link vertices: disables the disc discard in fs_main
     @location(4) @interpolate(flat) is_link: u32,
     @location(5) progress_ratio: f32,
+    @location(6) @interpolate(flat) state: u32,
 };
 
 

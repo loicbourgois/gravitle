@@ -1,7 +1,9 @@
+mod debug;
 mod electricity;
 mod moon;
 mod moon_dust;
 mod moon_solid;
+mod physics;
 mod pressure;
 mod reset;
 mod sensor;
@@ -47,74 +49,19 @@ impl World {
         moon_dust::equalize(self, &pairs);
         electricity::equalize(self, &pairs);
         pressure::generate(self);
-        for particle in &mut self.particles {
-            particle.pressure_q = particle.pressure_qn;
-            particle.moon_q += particle.moon_qd;
-            particle.electricity_q += particle.electricity_qd;
-        }
-        for particle in &mut self.particles {
-            if particle.kind == Kind::SolarPanel {
-                particle.electricity_q = particle.electricity_q.min(particle.electricity_c);
-            }
-        }
+        pressure::apply(self);
+        moon_dust::apply(self);
+        electricity::apply(self);
         pressure::block(self, &pairs);
         pressure::leak(self);
         sensor::activation(self);
-        signal::transmission(self);
-        for particle in &mut self.particles {
-            match particle.kind {
-                Kind::Valve | Kind::Switch => {
-                    if particle.signal_q == 1 {
-                        particle.activation = 1;
-                    }
-                    if particle.signal_q == -1 {
-                        particle.activation = 0;
-                    }
-                }
-                _ => {}
-            }
-        }
+        signal::tansmit(self);
+        signal::apply(self);
         moon::dust_to_solid(self);
         moon_solid::launch(self);
         moon_solid::move_(self, &pairs);
-
-
-        // Particle Movement
-        for p in &mut self.particles {
-            p.pp.x = p.p.x;
-            p.pp.y = p.p.y;
-        }
-        for p in &mut self.particles {
-            match p.kind {
-                Kind::MoonBall => {
-                    p.p.y += 0.02;
-                    p.p.x -= 0.02;
-                }
-                _ => {}
-            }
-        }
-
-
-        // Particle Collision
-        let mut crs = Vec::new();
-        for p1 in &self.particles {
-            for p2 in &self.particles {
-                if p1.kind == Kind::MoonBall && p2.kind == Kind::Earth && Self::colision(p1, p2) {
-                    crs.push((p1.idx as usize, p2.idx as usize));
-                }
-            }
-        }
-        for cr in crs {
-            self.particles[cr.0].kind = Kind::Dead;
-            self.particles[cr.1].solidmoon_q += 1;
-        }
-        // Debug
-        for particle in &mut self.particles {
-            assert!(particle.moon_q <= particle.moon_c);
-            assert!(particle.electricity_q <= particle.electricity_c);
-            assert!(particle.electricity_q >= 0);
-        }
-        // Done
+        physics::update(self);
+        debug::assert(self);
         self.completed_steps += 1;
     }
 

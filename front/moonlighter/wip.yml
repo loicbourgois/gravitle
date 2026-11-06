@@ -18,9 +18,9 @@ files:
   # - file://./../../../gravitle/docker-compose.yml
   # - file://./../../../gravitle/front/moonlighter/Dockerfile
 
-  - file://./../../../gravitle/front/moonlighter/engine/src/world/mod.rs
-  - file://./../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
-  # - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/mod.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
   # - file://./../../../gravitle/front/moonlighter/engine/src/link.rs
   # - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
   # - file://./../../../gravitle/front/moonlighter/setup_1.js
@@ -34,6 +34,7 @@ files:
   # - file://./../../../gravitle/front/moonlighter/webgpu.js
   # - file://./../../../gravitle/front/moonlighter/render.js
   # - file://./../../../gravitle/front/moonlighter/shader/main.wgsl
+  - file://./../../../gravitle/front/moonlighter/shader/common.wgsl
 
   # - file://./../../../gravitle/front/moonlighter/scripts/watch.sh
 

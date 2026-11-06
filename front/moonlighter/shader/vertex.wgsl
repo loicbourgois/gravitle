@@ -40,6 +40,7 @@ fn vs_main(@builtin(vertex_index) i: u32) -> VertexOut {
         out.color = colors[pi];
         out.uv = corner;
         out.kind = particle.kind;
+        out.state = particle.state;
         out.moon_ratio = f32(particle.moon_q) / f32(particle.moon_c);
         out.progress_ratio = f32(particle.progress_q) / f32(particle.progress_c);
     } else {

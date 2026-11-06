@@ -1,6 +1,20 @@
 use crate::kind::Kind;
 use crate::point::Point;
 use crate::wasm_bindgen;
+use std::mem::size_of;
+
+
+#[wasm_bindgen]
+#[repr(u32)]
+#[derive(PartialEq, Copy, Clone)]
+pub enum State {
+    Default = 0,
+    ReadyEmpty = 1,
+    LoadingMoonDust = 2,
+    Pressing = 3,
+    Releasing = 4,
+    ReadyFull = 5,
+}
 
 #[wasm_bindgen]
 #[repr(C)]
@@ -63,7 +77,21 @@ pub struct Particle {
     pub progress_c: i32,
     pub progress_q: i32,
     pub progress_qd: i32,
+
+    pub state: State,
+    pub padding: u32,
 }
+
+
+// Particle is uploaded to the GPU as an array of `GpuParticle`
+// (shader/common.wgsl). Its size must be a multiple of its alignment
+// (`size_of::<Point>()` = 8) so the storage-buffer stride matches.
+// `padding` guarantees this today; this assertion keeps it true tomorrow.
+const _: () = assert!(
+    size_of::<Particle>() % size_of::<Point>() == 0,
+    "Particle size must be a multiple of size_of::<Point>() (8) to match GpuParticle in shader/common.wgsl; adjust `padding`"
+);
+
 
 #[wasm_bindgen]
 impl Particle {
@@ -140,6 +168,11 @@ impl Particle {
             },
             progress_q: 0,
             progress_qd: 0,
+            state: match kind {
+                Kind::Press => State::ReadyEmpty,
+                _ => State::Default,
+            },
+            padding: 0,
         };
         p.set_position(x, y);
         p

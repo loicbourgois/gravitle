@@ -1,6 +1,7 @@
 use crate::world::Kind;
 use crate::world::World;
 use std::collections::BTreeSet;
+use crate::particle::State;
 
 pub fn launch(world: &mut World) {
     // Launch
@@ -37,17 +38,23 @@ pub fn move_(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
         p.solidmoon_qd = 0;
     }
     for (a, b) in pairs {
-        let source_kind = world.particles[*a].kind;
-        let dest_kind = world.particles[*b].kind;
-        let mut source_q = world.particles[*a].solidmoon_q + world.particles[*a].solidmoon_qd;
-        source_q = source_q.min(world.particles[*a].solidmoon_q);
-        let dest_q = world.particles[*b].solidmoon_q + world.particles[*b].solidmoon_qd;
-        let dest_c = world.particles[*b].solidmoon_c;
-        let valid = matches!(
-            (source_kind, dest_kind),
+        let source = &world.particles[*a];
+        let dest = &world.particles[*b];
+        let dest_q = dest.solidmoon_q + dest.solidmoon_qd;
+        let dest_c = dest.solidmoon_c;
+        let valid_source_dest = matches!(
+            (source.kind, dest.kind),
             (Kind::Press, Kind::Conveyor) | (Kind::Conveyor, Kind::Launcher)
         );
-        if !valid || source_q <= 0 || dest_q >= dest_c {
+            // is not a valid source->dest pair 
+        if  !valid_source_dest 
+            // source is empty
+            || source.solidmoon_q <= 0 
+            // dest is full
+            || dest_q >= dest_c 
+            // press is not ready
+            || (source.kind == Kind::Press && source.state != State::ReadyFull )
+        {
             continue;
         }
         world.particles[*a].solidmoon_qd -= 1;
@@ -57,3 +64,29 @@ pub fn move_(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
         p.solidmoon_q += p.solidmoon_qd;
     }
 }
+
+
+
+// let source = &world.particles[*a];
+//         let destination = &world.particles[*b];
+//             // Invalid pressure between destination and source
+//         if  destination.pressure_q >= source.pressure_q
+//             // Source is empty now
+//             || source.moon_q <= 0
+//             // Source would be empty next turn
+//             || source.moon_q + source.moon_qd <= 0
+//             // Destination is full
+//             || destination.moon_q >= destination.moon_c
+//             || destination.moon_q + destination.moon_qd >= destination.moon_c
+//             // a Press already holding a solid moon
+//             // can not store more dust until it is picked up
+//             || (destination.kind == Kind::Press && destination.solidmoon_q > 0)
+//             // a Press in progress can not let go dust
+//             || (source.kind == Kind::Press && matches!(source.state, State::LoadingMoonDust))
+//             // ..
+//             || (destination.kind == Kind::Filter && world.rng.next_f32() >= FILTER_PASS_PROBABILITY)
+//             // .. 
+//             || (destination.kind == Kind::Filter && source.kind == Kind::Filter)
+//         {
+//             continue;
+//         }

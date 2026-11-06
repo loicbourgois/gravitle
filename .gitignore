@@ -28,4 +28,5 @@ front/moonlighter/*.wasm
 
 **.yml.t.p.md
 **.yml.t.r.*.md
-**.yml.t.r.*.md
+**.yml.r.r.*.md
+**.yml.r.p.md

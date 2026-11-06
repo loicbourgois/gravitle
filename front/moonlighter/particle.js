@@ -54,6 +54,13 @@ const get_particle = (particles_view, particle_size, idx) => {
 		smc: particles_view.getInt32(idx * particle_size + 128, true),
 		smq: particles_view.getInt32(idx * particle_size + 132, true),
 		smqd: particles_view.getInt32(idx * particle_size + 136, true),
+
+		progress_c: particles_view.getInt32(idx * particle_size + 140, true),
+		progress_q: particles_view.getInt32(idx * particle_size + 144, true),
+		progress_qd: particles_view.getInt32(idx * particle_size + 148, true),
+
+		state: particles_view.getUint32(idx * particle_size + 152, true),
+
 	};
 	particle.ap = {
 		x: (particle.p.x + particle.pp.x) * 0.5,
