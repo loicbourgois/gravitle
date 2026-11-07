@@ -1,0 +1,45 @@
+models:
+  # - openai/gpt-6-luna
+  # - openai/gpt-6.1-sol
+  # - mistralai/mistral-large-4-0
+  - mistralai/devstral-2512
+  # - deepseek/deepseek-v4.1-flash-1017
+  # - z-ai/glm-5.3-prime
+  - z-ai/glm-5.3-flashx
+
+
+files:
+  # - file://./../../../gravitle/front.sh
+  # - file://./../../../gravitle/docker-compose.yml
+  # - file://./../../../gravitle/front/moonlighter/Dockerfile
+
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/mod.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/progress.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/moon_solid.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/link.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
+  # - file://./../../../gravitle/front/moonlighter/setup_1.js
+  # - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs
+  # - file://./../../../gravitle/front/moonlighter/index.js
+  # - file://./../../../gravitle/front/moonlighter/step.js
+  # - file://./../../../gravitle/front/moonlighter/draw.js
+  # - file://./../../../gravitle/front/moonlighter/particle.js
+  # - file://./../../../gravitle/front/moonlighter/consts.js
+
+  # - file://./../../../gravitle/front/moonlighter/webgpu.js
+  # - file://./../../../gravitle/front/moonlighter/render.js
+  # - file://./../../../gravitle/front/moonlighter/shader/common.wgsl
+  # - file://./../../../gravitle/front/moonlighter/shader/fragment.wgsl
+  # - file://./../../../gravitle/front/moonlighter/shader/main.wgsl
+  # - file://./../../../gravitle/front/moonlighter/shader/vertex.wgsl
+
+
+  - file://./../../../gravitle/front/moonlighter/specifications/main.md
+  - file://./../../../gravitle/front/moonlighter/specifications/logic.md
+
+
+rules:
+  - make sure the specs is implemented properly
+  - raise missing files

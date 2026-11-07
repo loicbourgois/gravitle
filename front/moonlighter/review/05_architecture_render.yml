@@ -1,0 +1,38 @@
+commands: 
+  review: l review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/05_architecture_render.yml
+  todo: l todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/05_architecture_render.yml
+
+
+models:
+  # - mistralai/mistral-large-4-0
+  # - mistralai/devstral-2512
+  # - deepseek/deepseek-v4.1-flash-1017
+  - z-ai/glm-5.3-flashx
+  - openai/gpt-6.1-sol
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/shader/common.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/fragment.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/main.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/vertex.wgsl
+  - file://./../../../../gravitle/front/moonlighter/render.js
+  - file://./../../../../gravitle/front/moonlighter/webgpu.js
+  - file://./../../../../gravitle/front/moonlighter/engine/src/kind.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/state.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/review/05_architecture_render.yml.t.r.glm5.3flashx.md
+  - file://./../../../../gravitle/front/moonlighter/review/05_architecture_render.yml.t.r.gpt6.1sol.md
+
+
+rules:
+  - review the 2 propositions
+  - we want a clean archi, that stays performant and is easy to evolve
+  # - Review architecture only
+  # - |
+  #   Evaluate options for draw strategy.
+  #   Should we split into multiple draw call ?
+  #   Is it better to keep the current single draw call ? 
+  #   Other alternatives ?
+  # - split into 4 `draw()` calls within the same pass and pipeline
+  # - split into 4 fragment and 4 vertex shaders

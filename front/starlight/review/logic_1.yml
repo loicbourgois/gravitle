@@ -1,0 +1,26 @@
+command: l review $HOME/github.com/loicbourgois/gravitle/front/chrono/review/logic_1.yml
+
+
+models:
+  # https://openrouter.ai/openai/gpt-6.1-sol
+  # - openai/gpt-6.1-sol
+  - openai/gpt-6-luna-pro
+  - mistralai/mistral-large-4-0
+  - deepseek/deepseek-v4.1-flash
+
+
+files:
+  - file://./../../../../gravitle/front/chrono/engine/src/world.rs
+  - file://./../../../../gravitle/front/chrono/engine/src/math.rs
+  - file://./../../../../gravitle/front/chrono/engine/src/particle.rs
+  - file://./../../../../gravitle/front/chrono/engine/src/link.rs
+  - file://./../../../../gravitle/front/chrono/engine/src/point.rs
+
+
+rules:
+  - file path relative to review/logic_1.yml
+  - | 
+    focus on overall game logic
+    are there gaps ?
+    is there undefined behaviour ? 
+  - we don't care about panics and out of bound issues

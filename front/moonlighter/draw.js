@@ -1,0 +1,489 @@
+import { ZOOM } from "./consts.js";
+import { get_particle } from "./particle.js";
+import { get_link } from "./link.js";
+
+
+const history = {
+    esum: [],
+    emax: [],
+    psum: [],
+    pmax: [],
+}
+
+
+const draw_diam = (canvas) => {
+    return Math.min(canvas.height, canvas.width) * ZOOM;
+}
+
+
+const draw = (ctx, center, world, engine, memory) => {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // for elec and pressure, draw {n}max as well
+    // we should always see {n}max squares
+    // use the full color for esum, then the empty color for the rest
+    // const ec_empty = "#4408"
+    // const ec_full = "#8808"
+    // const pc_empty = "#244"
+    // const pc_full = "#484"
+
+    // // Elect draw
+    // // Keep the first sample at the bottom-left; later samples extend right.
+    // const scrollHistory = true
+    // const squareSize = 6;
+    // const squareStep = squareSize + 1;
+    // const visibleColumns = Math.floor(
+    //     (ctx.canvas.width - squareSize) / squareStep,
+    // ) + 1;
+    // const startColumn = scrollHistory
+    //     ? Math.max(0, history.esum.length - Math.max(0, visibleColumns))
+    //     : 0;
+    // ctx.fillStyle = ec_full;
+    // for (
+    //     let column = 0;
+    //     column < visibleColumns &&
+    //     startColumn + column < history.esum.length;
+    //     column++
+    // ) {
+    //     const index = startColumn + column;
+    //     const esum = history.esum[index];
+    //     const emax = history.emax[index];
+    //     const x = column * squareStep;
+    //     for (
+    //         let row = 0;
+    //         row < emax &&
+    //         row * squareStep + squareSize <= ctx.canvas.height;
+    //         row++
+    //     ) {
+    //         const y = ctx.canvas.height - squareSize - row * squareStep;
+    //         ctx.fillStyle = row < esum ? ec_full : ec_empty;
+    //         ctx.fillRect(x, y, squareSize, squareSize);
+    //     }
+    // }
+    // // Pressure draw
+    // for (
+    //     let column = 0;
+    //     column < visibleColumns &&
+    //     startColumn + column < history.psum.length;
+    //     column++
+    // ) {
+    //     const psum = -history.psum[startColumn + column];
+    //     const pmax = -history.pmax[startColumn + column];
+    //     const x = column * squareStep;
+    //     const yStart = 0;  // Start from top
+    //     for (
+    //         let row = 0;
+    //         row < pmax &&
+    //         row * squareStep + squareSize <= ctx.canvas.height;
+    //         row++
+    //     ) {
+    //         const y = yStart + row * squareStep;
+    //         ctx.fillStyle = row < psum ? pc_full : pc_empty;
+    //         ctx.fillRect(x, y, squareSize, squareSize);
+    //     }
+    // }
+
+
+    const diameter = draw_diam(ctx.canvas);
+    const particles_ptr = world.particles();
+	const particle_size = engine.Particle.size();
+	const particles_view = new DataView(
+		memory.buffer,
+		particles_ptr,
+		world.particles_count() * particle_size,
+	);
+    let aa = `${world.step}\t|`
+    let esum = 0
+    let psum = 0
+    let emax = 0
+    let pmax = 0
+	for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+        esum += particle.electricity_q
+        emax += particle.electricity_c
+        aa = `${aa}\t${particle.electricity_q}`
+	}
+    aa = `${aa}\t${esum}\t|`
+    for (let i = 0; i < world.particles_count(); i++) {
+		const particle = get_particle(particles_view, particle_size, i);
+        aa = `${aa}\t${particle.pressure_q}`
+        if (particle.kind === engine.Kind.Pump) {  // Only for pumps
+            psum += particle.pressure_q
+            pmax += particle.pressure_c
+        }
+	}
+    history.esum.push(esum)
+    history.psum.push(psum)
+    history.emax.push(emax)
+    history.pmax.push(pmax)
+    if (world.step <= 24) {
+        // console.log(aa)
+    }
+    // for (let i = 0; i < world.particles_count(); i++) {
+	// 	const particle = get_particle(particles_view, particle_size, i);
+    //     const p = particle.ap;
+    //     ctx.beginPath();
+    //     ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter, 0, Math.PI * 2);
+    //     ctx.fillStyle = engine.base_color(particle.kind);
+    //     ctx.fill();
+    //     if (particle.kind == engine.Kind.Led && particle.electricity_q > 0) {
+    //         ctx.beginPath();
+    //         ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
+    //         ctx.fillStyle = "#0f0";
+    //         ctx.fill();
+    //     }
+    //     if (particle.kind == engine.Kind.Switch && particle.activation > 0) {
+    //         ctx.beginPath();
+    //         ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
+    //         ctx.fillStyle = "#0c0";
+    //         ctx.fill();
+    //     }
+    //     if (particle.kind == engine.Kind.Switch && particle.activation == 0) {
+    //         ctx.beginPath();
+    //         ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.6, 0, Math.PI * 2);
+    //         ctx.fillStyle = "#f00";
+    //         ctx.fill();
+    //     }
+	// }
+    // const links_ptr = world.links();
+	// const link_size = engine.Link.size();
+	// const links_view = new DataView(
+	// 	memory.buffer,
+	// 	links_ptr,
+	// 	world.links_count() * link_size,
+	// );
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (engine.draw_link_as_pipe(a.kind, b.kind)) {
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.strokeStyle = engine.base_color(a.kind);
+    //         ctx.lineWidth = diameter*a.diameter*0.5;
+    //         ctx.stroke();
+    //     }
+    // }
+
+    
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (
+    //         !engine.draw_link_as_electricty(a.kind, b.kind)
+    //         && !engine.draw_signal(a.kind, b.kind)
+    //         && !engine.draw_link_as_pipe(a.kind, b.kind)
+    //         && !engine.draw_solid_moon(a.kind, b.kind)
+    //     ) {
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.lineWidth=100
+    //         ctx.strokeStyle = "#f8f";
+    //         ctx.stroke();
+    //         console.error(a.kind, b.kind)
+    //     }
+    // }
+
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (engine.draw_link_as_electricty(a.kind, b.kind)) {
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.strokeStyle = `#edbf`;
+    //         ctx.lineWidth = 8;
+    //         ctx.stroke();
+    //     }
+    // }
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (engine.draw_signal(a.kind, b.kind)) {
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.strokeStyle = `#f0f`;
+    //         ctx.lineWidth = 2;
+    //         ctx.stroke();
+    //     }
+    // }
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (engine.draw_solid_moon(a.kind, b.kind)) {
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.strokeStyle = `#bbb`;
+    //         ctx.lineWidth = 10;
+    //         ctx.stroke();
+    //     }
+    // }
+
+    // for (let i = 0; i < world.links_count(); i++) {
+    //     const link = get_link(links_view, link_size, i);
+    //     const a = get_particle(particles_view, particle_size, link.a);
+    //     const b = get_particle(particles_view, particle_size, link.b);
+    //     if (engine.draw_link_as_pipe(a.kind, b.kind)) {
+    //         const v = parseInt(225.0 * (a.moon_q / a.moon_c * 0.5 + 0.5))
+    //         const v2 = parseInt(225.0 * (b.moon_q / b.moon_c * 0.5 + 0.5))
+    //         const v3 = parseInt((v+v2)/2)
+    //         ctx.beginPath();
+    //         ctx.moveTo(a.ap.x * diameter + center.x, -a.ap.y * diameter + center.y);
+    //         ctx.lineTo(b.ap.x * diameter + center.x, -b.ap.y * diameter + center.y);
+    //         ctx.strokeStyle = `rgb(${v3}, ${v3}, ${v3})`;
+    //         ctx.lineWidth = diameter*a.diameter*0.25;
+    //         ctx.stroke();
+    //         ctx.beginPath();
+    //         ctx.arc(
+    //             a.p.x*diameter+center.x, 
+    //             -a.p.y*diameter+center.y, 
+    //             diameter/2*a.diameter*0.5,
+    //             0, Math.PI * 2);
+    //         ctx.fillStyle = `rgb(${v}, ${v}, ${v})`;
+    //         ctx.fill();
+    //         ctx.beginPath();
+    //         ctx.arc(
+    //             b.p.x*diameter+center.x, 
+    //             -b.p.y*diameter+center.y, 
+    //             diameter/2*b.diameter*0.5,
+    //             0, Math.PI * 2);
+    //         ctx.fillStyle = `rgb(${v2}, ${v2}, ${v2})`;
+    //         ctx.fill();
+    //     } 
+    // }
+
+
+    // for (let i = 0; i < world.particles_count(); i++) {
+	// 	const particle = get_particle(particles_view, particle_size, i);
+    //     const p = particle.ap;
+    //     if (particle.kind === engine.Kind.Moon) {
+    //         ctx.beginPath();
+    //         ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter, 0, Math.PI * 2);
+    //         ctx.fillStyle = engine.base_color(particle.kind);
+    //         ctx.lineWidth=1
+    //         ctx.fill();
+    //     }
+    //     if (particle.kind == engine.Kind.Valve && particle.activation == 0) {
+    //         ctx.beginPath();
+    //         ctx.arc(p.x*diameter+center.x, -p.y*diameter+center.y, diameter/2*particle.diameter*0.45, 0, Math.PI * 2);
+    //         ctx.fillStyle = engine.base_color(engine.Kind.Valve);
+    //         ctx.fill();
+    //     }
+    // }
+
+
+    // Debug
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = 3
+            const label = `p:${String(p.pressure_q).padStart(l, " ")}/${p.pressure_c}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x  ;
+            const labelY = y + 20*3;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = String(p.moon_c).length
+            const label = `m:${String(p.moon_q).padStart(l, " ")}/${p.moon_c}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = String(p.electricity_c).length
+            const label = `e:${String(p.electricity_q).padStart(l, " ")}/${p.electricity_c}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*2;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = 3
+            const label = `a:${String(p.activation).padStart(l, " ")}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*4;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = 3
+            const label = `s:${String(p.signal_q).padStart(l, " ")}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*5;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = String(p.smc).length
+            const label = `sm:${String(p.smq).padStart(l, " ")}/${p.smc}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*6;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const l = String(p.progress_c).length
+            const label = `prog:${String(p.progress_q).padStart(l, " ")}/${p.progress_c}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*7;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+
+
+    for (let i = 0; i < world.particles_count(); i++) {
+        const p = get_particle(particles_view, particle_size, i);
+            const x = p.ap.x * diameter + center.x;
+            const y = -p.ap.y * diameter + center.y;
+            const label = `state: ${p.state}`;
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const labelX = x;
+            const labelY = y + 20*8;
+            const padding = 3;
+            const labelWidth = ctx.measureText(label).width;
+            ctx.fillStyle = '#111c';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - 8 - padding,
+                labelWidth + padding * 2,
+                16 + padding * 2,
+            );
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, labelX, labelY);
+    }
+    
+    
+}
+
+
+export {
+    draw,
+}

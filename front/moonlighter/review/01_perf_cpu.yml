@@ -1,0 +1,19 @@
+models:
+  - mistralai/devstral-2512
+  - openai/gpt-6.1-terra
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/scripts/build_dev.sh
+  - file://./../../../../gravitle/front/moonlighter/scripts/build_prd.sh
+  - file://./../../../../gravitle/front/moonlighter/engine/Cargo.toml
+  - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/point.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world/mod.rs
+
+
+rules:
+  - keep code tidy
+  - review for performance only
+  - only CPU matters
+  - we do NOT care about RAM 

@@ -1,0 +1,190 @@
+use crate::kind::Kind;
+use crate::point::Point;
+use crate::state::State;
+use crate::wasm_bindgen;
+use std::mem::size_of;
+
+
+#[wasm_bindgen]
+#[repr(C)]
+pub struct Particle {
+    pub idx: u32,
+
+    pub diameter: f32,
+
+    // position
+    pub p: Point,
+
+    // previous position
+    pub pp: Point,
+
+    // new position
+    pub np: Point,
+
+    // Delta Position
+    pub dp: Point,
+
+    // direction in which the particle points
+    // away from neighbours
+    pub direction: Point,
+
+    // delta velocity
+    // Not used currently, but kept for potential future usage.
+    // We might add logic or graphics on top of it.
+    pub dv: Point,
+
+    pub link_response: Point,
+    pub collision_response: Point,
+    pub collision_response_count: u32,
+    pub kind: Kind,
+
+    // c:  capacity
+    // q:  quantity
+    // qd: quantity delta
+    // qn: quantity new
+    pub pressure_c: i32,
+    pub pressure_q: i32,
+    pub pressure_qn: i32,
+
+    pub moon_c: i32,
+    pub moon_q: i32,
+    pub moon_qd: i32,
+
+    pub electricity_c: i32,
+    pub electricity_q: i32,
+    pub electricity_qd: i32,
+
+    pub activation: i32,
+
+    pub signal_q: i32,
+    pub signal_qn: i32,
+
+    pub solidmoon_c: i32,
+    pub solidmoon_q: i32,
+    pub solidmoon_qd: i32,
+
+    pub progress_c: i32,
+    pub progress_q: i32,
+    pub progress_qd: i32,
+
+    pub state: State,
+    pub state_status: u32,
+
+    pub input: u32,
+    pub output: u32,
+}
+
+
+// Particle is uploaded to the GPU as an array of `GpuParticle`
+// (shader/common.wgsl). Its size must be a multiple of its alignment
+// (`size_of::<Point>()` = 8) so the storage-buffer stride matches.
+// `padding` guarantees this today; this assertion keeps it true tomorrow.
+const _: () = assert!(
+    size_of::<Particle>() % size_of::<Point>() == 0,
+    "Particle size must be a multiple of size_of::<Point>() (8) to match GpuParticle in shader/common.wgsl; adjust `padding`"
+);
+
+
+#[wasm_bindgen]
+impl Particle {
+    pub fn new(idx: u32, kind: Kind, x: f32, y: f32) -> Particle {
+        let mut p = Particle {
+            idx,
+            diameter: match kind {
+                Kind::Wire
+                | Kind::Led
+                | Kind::Switch
+                | Kind::SensorMoonFull
+                | Kind::SensorMoonEmpty
+                | Kind::SignalInput
+                | Kind::SignalOutput
+                | Kind::MoonBall
+                | Kind::Trit
+                | Kind::SignalInverter
+                | Kind::SignalWire => 0.25,
+                Kind::Pipe => 0.75,
+                Kind::Moon => 2.0,
+                _ => 1.0,
+            },
+            p: Point::new(0.0, 0.0),
+            np: Point::new(0.0, 0.0),
+            pp: Point::new(0.0, 0.0),
+            dp: Point::new(0.0, 0.0),
+            dv: Point::new(0.0, 0.0),
+            direction: Point::new(0.0, 0.0),
+            kind,
+            collision_response: Point::new(0.0, 0.0),
+            collision_response_count: 0,
+            link_response: Point::new(0.0, 0.0),
+            pressure_c: match kind {
+                Kind::Pump => -50,
+                Kind::Blower => 50,
+                _ => 0,
+            },
+            pressure_q: 0,
+            pressure_qn: 0,
+            moon_c: match kind {
+                Kind::Moon => 1_000_000,
+                Kind::Tank => 1000,
+                Kind::Press => 40,
+                Kind::Pipe | Kind::Filter => 10,
+                Kind::Valve | Kind::Pump | Kind::Blower => 1,
+                _ => 0,
+            },
+            moon_q: match kind {
+                Kind::Moon => 1_000_000,
+                _ => 0,
+            },
+            moon_qd: 0,
+            electricity_c: match kind {
+                Kind::Battery => 100,
+                Kind::SolarPanel => 10,
+                Kind::Pump => 4,
+                Kind::Wire | Kind::Led | Kind::Switch | Kind::Blower => 10,
+                _ => 0,
+            },
+            electricity_q: 0,
+            electricity_qd: 0,
+            activation: 0,
+            signal_q: 0,
+            signal_qn: 0,
+            solidmoon_c: match kind {
+                Kind::Press | Kind::Launcher | Kind::Conveyor => 1,
+                _ => 0,
+            },
+            solidmoon_q: 0,
+            solidmoon_qd: 0,
+            progress_c: match kind {
+                Kind::Press => 100,
+                Kind::Conveyor => 500,
+                _ => 0,
+            },
+            progress_q: match kind {
+                Kind::Conveyor => 250,
+                _ => 0,
+            },
+            progress_qd: 0,
+            state: match kind {
+                Kind::Press => State::ReadyEmpty,
+                Kind::Conveyor => State::MovingBack,
+                _ => State::Default,
+            },
+            state_status: 0,
+            input: 0,
+            output: 0,
+        };
+        p.set_position(x, y);
+        p
+    }
+    pub fn size() -> u32 {
+        size_of::<Particle>() as u32
+    }
+    pub fn set_position(&mut self, x: f32, y: f32) {
+        self.p.x = x;
+        self.p.y = y;
+        self.pp.x = x;
+        self.pp.y = y;
+        self.np.x = x;
+        self.np.y = y;
+    }
+}

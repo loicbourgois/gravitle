@@ -1,0 +1,18 @@
+[package]
+name = "gravitle-cli"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "g"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+fs2 = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }

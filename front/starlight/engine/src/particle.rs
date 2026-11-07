@@ -1,0 +1,82 @@
+use crate::kind::Kind;
+use crate::point::Point;
+use crate::wasm_bindgen;
+use crate::world::UserKind;
+
+#[wasm_bindgen]
+#[repr(C)]
+pub struct Particle {
+    pub idx: u32,
+
+    pub diameter: f32,
+
+    // position
+    pub p: Point,
+
+    // previous position
+    pub pp: Point,
+
+    // new position
+    pub np: Point,
+
+    // Delta Position
+    // Delta position must not be wrapped around the edge of the world.
+    // We want the full delta
+    // If a perticle accelerates faster than 1 side / tick, we must have dp > 1.0.
+    pub dp: Point,
+
+    // direction in which the particle points
+    // away from neighbours (tbc)
+    pub direction: Point,
+
+    // delta velocity
+    // Not used currently, but kept for potential future usage.
+    // We might add logic or graphics on top of it.
+    pub dv: Point,
+
+    pub link_response: Point,
+    pub collision_response: Point,
+    pub collision_response_count: u32,
+    pub activated: u32,
+    pub activated_previous: u32,
+    pub kind: Kind,
+    pub user_kind: UserKind,
+
+    // For wasm
+    pub padding: u32,
+}
+
+#[wasm_bindgen]
+impl Particle {
+    pub fn new(idx: u32, diameter: f32, kind: Kind, user_kind: UserKind) -> Particle {
+        Particle {
+            idx,
+            diameter,
+            p: Point::new(0.0, 0.0),
+            np: Point::new(0.0, 0.0),
+            pp: Point::new(0.0, 0.0),
+            dp: Point::new(0.0, 0.0),
+            dv: Point::new(0.0, 0.0),
+            direction: Point::new(0.0, 0.0),
+            activated: 0,
+            activated_previous: 0,
+            kind,
+            user_kind,
+            collision_response: Point::new(0.0, 0.0),
+            collision_response_count: 0,
+            link_response: Point::new(0.0, 0.0),
+            padding: 0,
+        }
+    }
+    pub fn size() -> u32 {
+        size_of::<Particle>() as u32
+    }
+    pub fn set_position(&mut self, x: f32, y: f32) {
+        self.p.x = x;
+        self.p.y = y;
+        self.pp.x = x;
+        self.pp.y = y;
+        self.np.x = x;
+        self.np.y = y;
+    }
+}

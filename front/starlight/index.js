@@ -1,0 +1,75 @@
+import init, * as gravitle from "./gravitle_time_trial.js";
+import { test } from "./test.js";
+import { View2d } from "./view_2d.js";
+import { ViewWebGPU } from "./view_webgpu.js";
+import { Game } from "./game.js";
+import { defaults } from "./defaults.js";
+import { ship } from "./ship.js";
+import { random_seed } from "./random.js";
+
+const has_webgpu_support = async () => {
+	const adapter = await navigator.gpu?.requestAdapter();
+	const device = await adapter?.requestDevice();
+	if (device) {
+		return true;
+	} else {
+		return false;
+	}
+};
+
+const main = async () => {
+	await init();
+	gravitle.setup();
+	const memory = gravitle.initSync().memory;
+	test(gravitle, memory);
+	const url = new URL(window.location.href);
+	const params = new URLSearchParams(url.search);
+	const stars_count = params.get("stars") ?? defaults.stars_count;
+	let seed_input = params.get("seed") ?? new Date().toISOString().split("T")[0];
+	if (params.get("randomseed") === "true") {
+		seed_input = random_seed();
+	}
+	const ghost = params.get("ghost");
+	if (params.get("debug") === "true") {
+		document.querySelector("#debug")?.classList.add("visible");
+	}
+	let darkmode = false;
+	if (params.get("darkmode") === "true") {
+		darkmode = true;
+	}
+	// TODO: webgpu as default once good enough
+	// const render_mode =
+	// 	params.get("render") ??
+	// 	{
+	// 		[true]: "webgpu",
+	// 		[false]: "2d",
+	// 	}[await has_webgpu_support()];
+	const render_mode = params.get("render") ?? "2d";
+	const view = await {
+		"2d": () => {
+			return new View2d("canvas", darkmode);
+		},
+		webgpu: async () => {
+			const v = new ViewWebGPU("canvas");
+			await v.setup(gravitle);
+			return v;
+		},
+	}[render_mode]();
+	window.addEventListener("resize", function () {
+		view.resize();
+	});
+	console.log(seed_input);
+	new Game({
+		gravitle,
+		memory,
+		seed_input,
+		stars_count,
+		ghost,
+		view,
+		ship,
+		asteroid_count: 16,
+	});
+};
+window.onload = () => {
+	main();
+};
