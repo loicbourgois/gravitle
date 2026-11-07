@@ -134,3 +134,56 @@ fn formatting_uses_the_cli_manifest_and_directory() {
         ],
     );
 }
+
+#[test]
+fn command_descriptions_match_their_behavior() {
+    use clap::CommandFactory;
+
+    let command = Cli::command();
+
+    for (name, expected) in [
+        (
+            "completions",
+            "Generate shell completions; defaults to Zsh",
+        ),
+        ("format", "Format the CLI Rust source with cargo fmt"),
+        ("front", "Run the project's scripts/front.sh"),
+        (
+            "test",
+            "Run CLI tests; defaults to both Rust and Python",
+        ),
+        ("up", "Run the project's scripts/up.sh"),
+        (
+            "watch",
+            "Manage background rebuilding and installation of the CLI",
+        ),
+        ("wip", "Run the CLI work-in-progress todo workflow"),
+        (
+            "todo",
+            "Generate todo improvement proposals from a YAML specification",
+        ),
+    ] {
+        let subcommand = command
+            .find_subcommand(name)
+            .unwrap_or_else(|| panic!("missing command: {name}"));
+
+        assert_eq!(
+            subcommand.get_about().map(ToString::to_string),
+            Some(expected.to_owned()),
+            "incorrect description for g {name}",
+        );
+    }
+}
+
+#[test]
+fn todo_requires_a_specification() {
+    assert!(Cli::try_parse_from(["g", "todo"]).is_err());
+
+    let cli = Cli::try_parse_from(["g", "todo", "/tmp/project/tasks.yml"]).unwrap();
+    match cli.command {
+        Commands::Todo { spec_file } => {
+            assert_eq!(spec_file, "/tmp/project/tasks.yml");
+        }
+        _ => panic!("expected todo command"),
+    }
+}

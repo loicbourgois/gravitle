@@ -12,6 +12,7 @@ g:
     all: Run both Rust and Python tests; fail if either suite fails.
     python: Run Python unittest discovery through uv.
     rust: Run Rust tests through cargo test.
+  todo: Generate improvement proposals from a YAML specification.
   up: Run ~/github.com/loicbourgois/gravitle/scripts/up.sh.
   watch:
     description: Manage background CLI rebuilding and installation; defaults to start.

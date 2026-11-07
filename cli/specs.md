@@ -15,6 +15,14 @@ Python should be invoqued via uv.
     - all:      default
     - python:   discovers *_test.py in cli/scripts via uv
     - rust:     runs cargo test using cli/Cargo.toml
+- todo:     generates improvement proposals from a YAML specification
+    - requires a specification path
+    - reads models, files, and rules from the specification
+    - resolves relative file references beside the specification
+    - reports missing files before making API requests
+    - reads the OpenRouter API key as raw text from $HOME/github.com/loicbourgois/gravitle_local/openrouter_key
+    - writes <specification filename>.t.p.md beside the specification
+    - writes <specification filename>.t.r.<short model name>.md for each successful response
 - up:       runs $HOME/github.com/loicbourgois/gravitle/scripts/up.sh
 - watch:    runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh
 - wip:      runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/wip.sh in interactive Zsh
@@ -38,6 +46,12 @@ The watch should run in the background.
 We should have an easy to check wether or not watch is active.
 
 cli/logs/watch.log should not contain any warning
+
+Generated files must not trigger rebuilds:
+- Git internals and Python bytecode caches
+- cli/target and cli/logs
+- Todo prompts: *.t.p.md
+- Todo responses: *.t.r.<short model name>.md
 
 
 ## Logs

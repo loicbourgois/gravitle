@@ -42,6 +42,53 @@ class WatchTests(unittest.TestCase):
             self.assertEqual(lock.read(), "12345")
             self.assertTrue(watch.LOG_PATH.is_file())
     
+    def test_generated_todo_outputs_do_not_trigger_rebuilds(self):
+        specifications = self.cli_dir / "specifications"
+        specifications.mkdir()
+        specification = specifications / "tasks.yml"
+        specification.write_text("models: []\n")
+        previous = watch.snapshot()
+
+        outputs = [
+            specifications / "tasks.yml.t.p.md",
+            specifications / "tasks.yml.t.r.gpt6.1sol.md",
+            specifications / "tasks.yml.t.r.claudeopus5.5.md",
+        ]
+
+        for output in outputs:
+            output.write_text("generated")
+        self.assertEqual(watch.snapshot(), previous)
+
+        for output in outputs:
+            output.write_text("updated generated content")
+        self.assertEqual(watch.snapshot(), previous)
+
+        for output in outputs:
+            output.unlink()
+        self.assertEqual(watch.snapshot(), previous)
+
+        specification.write_text("models: [provider/model]\n")
+        self.assertNotEqual(watch.snapshot(), previous)
+
+    def test_generated_todo_output_matching_is_specific(self):
+        for name in (
+            "tasks.yml.t.p.md",
+            "tasks.yml.t.r.gpt6.1sol.md",
+            "tasks.yml.t.r.model123.md",
+        ):
+            with self.subTest(name=name):
+                self.assertTrue(watch.is_generated_todo_output(name))
+
+        for name in (
+            "tasks.yml",
+            "todo_prompt.md",
+            "tasks.yml.t.p.md.backup",
+            "tasks.yml.t.r.model.md.backup",
+            "tasks.yml.t.r..md",
+        ):
+            with self.subTest(name=name):
+                self.assertFalse(watch.is_generated_todo_output(name))
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)

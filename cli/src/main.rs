@@ -1,4 +1,6 @@
 mod logging;
+mod todo;
+mod openrouter;
 
 #[cfg(test)]
 #[path = "main_test.rs"]
@@ -27,18 +29,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Generate shell completions; defaults to Zsh.
     Completions {
         #[arg(value_enum, default_value = "zsh")]
         shell: CompletionShell,
     },
-    Format,
-    /// Run CLI tests; defaults to both Rust and Python.
-    Front,
     /// Format the CLI Rust source with cargo fmt.
+    Format,
+    /// Run the project's scripts/front.sh.
+    Front,
+    /// Run CLI tests; defaults to both Rust and Python.
     Test {
         #[arg(value_enum, default_value = "all")]
         suite: TestSuite,
     },
+    /// Generate todo improvement proposals from a YAML specification.
+    Todo {
+        /// YAML specification; relative file references resolve beside this file.
+        spec_file: String,
+    },
+    /// Run the project's scripts/up.sh.
     Up,
     /// Manage background rebuilding and installation of the CLI.
     Watch {
@@ -108,6 +118,7 @@ fn main() -> ExitCode {
         Commands::Test { .. } => "test",
         Commands::Wip => "wip",
         Commands::Watch { action } => action.as_str(),
+        Commands::Todo { .. } => "todo",
         Commands::Completions { .. } => "completions",
     };
     let invocation = match &cli.command {
@@ -128,6 +139,17 @@ fn main() -> ExitCode {
             generate(shell, &mut Cli::command(), "g", &mut std::io::stdout());
             ExitCode::SUCCESS
         }
+        Commands::Todo { spec_file } => match todo::todo(&spec_file) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                let message = format!("Todo failed: {error}");
+                logging::record(&message);
+                if logging::command_message(&message).is_err() {
+                    eprintln!("{message}");
+                }
+                ExitCode::FAILURE
+            }
+        },
         Commands::Up => run_script("bash", "scripts/up.sh", &[]),
         Commands::Front => run_script("bash", "scripts/front.sh", &[]),
         Commands::Format => run_format(),
@@ -299,6 +321,7 @@ fn run_tests(suite: TestSuite) -> ExitCode {
 
 fn run_logged_command(command: &mut Command) -> io::Result<ExitStatus> {
     let mut child = command
+        .env(logging::OUTPUT_DELEGATED_ENV, "1")
         .stdin(Stdio::inherit())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

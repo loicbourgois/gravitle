@@ -158,3 +158,45 @@ fn retained_terminal_log_paths_are_normalized() {
 
     fs::remove_dir_all(directory).unwrap();
 }
+
+
+#[test]
+fn delegated_output_is_forwarded_without_reformatting() {
+    let input = concat!(
+        "2026-11-07T16:21:28Z Prompt: ~/project/tasks.yml.t.p.md\n",
+        "\n",
+        "compiler output\r\n",
+        "final line without newline",
+    );
+    let mut terminal = Vec::new();
+
+    forward_delegated_output(io::Cursor::new(input.as_bytes()), &mut terminal).unwrap();
+
+    assert_eq!(terminal, input.as_bytes());
+}
+
+#[test]
+fn delegated_output_propagates_terminal_errors() {
+    struct FailingTerminal;
+
+    impl io::Write for FailingTerminal {
+        fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "terminal closed",
+            ))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    let error = forward_delegated_output(
+        io::Cursor::new(b"command output\n"),
+        &mut FailingTerminal,
+    )
+    .unwrap_err();
+
+    assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+}

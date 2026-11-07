@@ -29,8 +29,10 @@ LOG_LIMIT = 100
 def format_log_paths(message):
     home = re.escape(str(Path.home()))
     return re.sub(
-        home + r"""(?=/|$|[\s)'":,;\]}])""",
-        "~",
+        r"""(^|[\s('"=:,;\[{}])"""
+        + home
+        + r"""(?=/|$|[\s)'":,;\]}])""",
+        lambda match: match.group(1) + "~",
         str(message),
     )
 
@@ -80,6 +82,9 @@ def snapshot():
         ]
 
         for name in files:
+            if is_generated_todo_output(name):
+                continue
+
             path = Path(root) / name
             try:
                 metadata = path.stat()
@@ -90,7 +95,6 @@ def snapshot():
 
             entries[str(path.relative_to(CLI_DIR))] = (
                 metadata.st_mode,
-                metadata.st_mtime_ns,
                 digest,
             )
 
@@ -146,6 +150,12 @@ def watch(lock_fd):
     finally:
         os.close(lock_fd)
 
+
+def is_generated_todo_output(name):
+    return (
+        name.endswith(".t.p.md")
+        or re.search(r"\.t\.r\.[A-Za-z0-9.]+\.md$", name) is not None
+    )
 
 def start(lock):
     if not try_lock(lock):

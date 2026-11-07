@@ -13,6 +13,8 @@ use fs2::FileExt;
 
 const LOG_LIMIT: usize = 100;
 
+pub(crate) const OUTPUT_DELEGATED_ENV: &str = "GRAVITLE_CLI_OUTPUT_DELEGATED";
+
 pub(crate) fn record(message: &str) {
     let Some(home) = env::var_os("HOME") else {
         return;
@@ -22,6 +24,28 @@ pub(crate) fn record(message: &str) {
 
     // Logging is best-effort and must not change command behavior.
     let _ = write_record(&directory, home, message);
+}
+
+
+fn forward_delegated_output(
+    mut reader: impl BufRead,
+    terminal: &mut impl Write,
+) -> io::Result<()> {
+    let mut buffer = Vec::new();
+
+    loop {
+        buffer.clear();
+        if reader.read_until(b'\n', &mut buffer)? == 0 {
+            return Ok(());
+        }
+
+        let _guard = COMMAND_OUTPUT_LOCK
+            .lock()
+            .map_err(|_| io::Error::other("command output lock poisoned"))?;
+
+        terminal.write_all(&buffer)?;
+        terminal.flush()?;
+    }
 }
 
 fn normalize_paths(message: &str, home: &Path) -> String {
@@ -34,16 +58,32 @@ fn normalize_paths(message: &str, home: &Path) -> String {
     let mut remaining = message;
 
     while let Some(index) = remaining.find(home.as_ref()) {
+        let absolute_index = message.len() - remaining.len() + index;
+        let starts_path = message[..absolute_index]
+            .chars()
+            .next_back()
+            .is_none_or(|character| {
+                character.is_whitespace()
+                    || matches!(
+                        character,
+                        '(' | '[' | '{' | '\'' | '"' | '=' | ':' | ',' | ';'
+                    )
+            });
+
         output.push_str(&remaining[..index]);
         remaining = &remaining[index + home.len()..];
 
-        let boundary = remaining.chars().next().is_none_or(|character| {
+        let ends_home = remaining.chars().next().is_none_or(|character| {
             character == '/'
                 || character.is_whitespace()
                 || matches!(character, '\'' | '"' | ')' | ']' | '}' | ':' | ',' | ';')
         });
 
-        output.push_str(if boundary { "~" } else { home.as_ref() });
+        output.push_str(if starts_path && ends_home {
+            "~"
+        } else {
+            home.as_ref()
+        });
     }
 
     output.push_str(remaining);
@@ -92,9 +132,19 @@ fn write_record(directory: &Path, home: &Path, message: &str) -> io::Result<()> 
     file.flush()
 }
 
+pub(crate) fn command_message(message: &str) -> io::Result<()> {
+    forward_command_output(io::Cursor::new(format!("{message}\n")))
+}
+
 static COMMAND_OUTPUT_LOCK: Mutex<()> = Mutex::new(());
 
 pub(crate) fn forward_command_output(reader: impl BufRead) -> io::Result<()> {
+    if env::var_os(OUTPUT_DELEGATED_ENV).as_deref() == Some(std::ffi::OsStr::new("1")) {
+        // The capturing parent owns timestamping and terminal.log persistence.
+        // Do not hold stdout or the output mutex while waiting for pipe input.
+        return forward_delegated_output(reader, &mut io::stdout());
+    }
+
     for line in reader.split(b'\n') {
         let line = line?;
         let message = String::from_utf8_lossy(&line);

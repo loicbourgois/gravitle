@@ -20,6 +20,11 @@ files:
   - file://./../../gravitle/cli/README.md
   - file://./../../gravitle/cli/specs.md
   - file://./../../gravitle/cli/wip.yml
+  - file://./../../gravitle/cli/src/openrouter.rs
+  - file://./../../gravitle/cli/src/todo.rs
+  - file://./../../gravitle/cli/src/todo_prompt.md
+  - file://./../../gravitle/cli/src/openrouter_test.rs
+  - file://./../../gravitle/cli/src/todo_test.rs
 
 
 rules:
