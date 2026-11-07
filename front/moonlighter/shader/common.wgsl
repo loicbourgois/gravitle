@@ -1,6 +1,49 @@
 const LINE_HALF_WIDTH: f32 = 2.0;
 
 
+const KIND_MOON: u32 = 0u;
+const KIND_PIPE: u32 = 1u;
+const KIND_TANK: u32 = 2u;
+const KIND_FILTER: u32 = 3u;
+const KIND_PUMP: u32 = 4u;
+const KIND_SOLAR_PANEL: u32 = 5u;
+const KIND_BATTERY: u32 = 6u;
+const KIND_WIRE: u32 = 7u;
+const KIND_SWITCH: u32 = 8u;
+const KIND_LED: u32 = 9u;
+const KIND_BLOWER: u32 = 10u;
+const KIND_VALVE: u32 = 11u;
+const KIND_SENSOR_MOON_FULL: u32 = 12u;
+const KIND_SENSOR_MOON_EMPTY: u32 = 13u;
+const KIND_SIGNAL_INPUT: u32 = 14u;
+const KIND_SIGNAL_OUTPUT: u32 = 15u;
+const KIND_SIGNAL_WIRE: u32 = 16u;
+const KIND_TRIT: u32 = 17u;
+const KIND_SIGNAL_INVERTER: u32 = 18u;
+const KIND_PRESS: u32 = 19u;
+const KIND_STORAGE: u32 = 20u;
+const KIND_CONVEYOR: u32 = 21u;
+const KIND_LAUNCHER: u32 = 22u;
+const KIND_MOON_BALL: u32 = 23u;
+const KIND_EARTH: u32 = 24u;
+const KIND_DEAD: u32 = 25u;
+
+
+const STATE_DONE: u32 = 4u;          
+const STATE_READY: u32 = 5u;       
+const STATE_MOVING_AWAY: u32 = 8u;
+
+
+const GPU_TYPE_DEFAULT: i32 = 0i;
+const GPU_TYPE_INDICATOR: i32 = 1i;
+
+
+const DRAW_DEBUG: u32 = 0u;
+const DRAW_PARTICLES: u32 = 1u;
+const DRAW_LINKS: u32 = 2u;
+const DRAW_INDICATORS: u32 = 3u;
+
+
 struct Uniforms {
     canvas_size: vec2f,
     zoom: f32,
@@ -8,7 +51,7 @@ struct Uniforms {
     step: f32,
     rnd: f32,
     link_count: f32,
-    _pad: f32,
+    particle_count: f32,
 };
 
 // Mirrors `Particle` in engine/src/particle.rs (`#[repr(C)]`, 4-byte aligned).
@@ -45,7 +88,9 @@ struct GpuParticle {
     progress_q: i32,
     progress_qd: i32,
     state: u32,
-    padding: u32,
+    state_status: u32,
+    input: u32,
+    output: u32,
 };
 
 struct GpuLink {
@@ -64,16 +109,14 @@ struct GpuLink {
 struct VertexOut {
     @builtin(position) pos: vec4f,
     @location(0) color: vec4f,
-    // Local coordinates of the fragment relative to the center of the shape,
-    // expressed in units of the shape's radius. Fragments with
-    // `length(uv) > 1.0` are discarded for round shapes.
+    // Local coordinates in units of the shape's radius.
     @location(1) uv: vec2f,
-    @location(2) moon_ratio: f32, // quantity / capacity
+    @location(2) moon_ratio: f32,
     @location(3) @interpolate(flat) kind: u32,
-    // 1.0 for link vertices: disables the disc discard in fs_main
-    @location(4) @interpolate(flat) is_link: u32,
+    @location(4) @interpolate(flat) draw_kind: u32,
     @location(5) progress_ratio: f32,
     @location(6) @interpolate(flat) state: u32,
+    @location(7) @interpolate(flat) solidmoon_q: i32,
 };
 
 

@@ -1,7 +1,7 @@
 use crate::world::Kind;
 use crate::world::World;
 use std::collections::BTreeSet;
-use crate::particle::State;
+use crate::state::State;
 
 pub fn launch(world: &mut World) {
     // Launch
@@ -54,6 +54,10 @@ pub fn move_(world: &mut World, pairs: &BTreeSet<(usize, usize)>) {
             || dest_q >= dest_c 
             // press is not ready
             || (source.kind == Kind::Press && source.state != State::ReadyFull )
+            // 
+            || (source.kind == Kind::Conveyor && source.state != State::ReadyEnd )
+            // 
+            || (dest.kind == Kind::Conveyor && dest.state != State::ReadyStart )
         {
             continue;
         }

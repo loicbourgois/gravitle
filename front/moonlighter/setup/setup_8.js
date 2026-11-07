@@ -36,6 +36,10 @@ const setup = (engine, world) => {
     world.add_link(inv1, trit1)
     world.add_link(inv1, switch_1)
     world.add_link(trit1, switch_2)
+
+    world.set_input(conveyor_1, press_1);
+    world.set_output(conveyor_1, launcher_1);
+
     return (world, engine, memory) => {
     }
 }

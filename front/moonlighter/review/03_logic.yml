@@ -3,27 +3,28 @@ commands:
 
 
 models:
-  - mistralai/mistral-large-4-0
-  - mistralai/devstral-2512
-  - deepseek/deepseek-v4.1-flash-1017
-  - z-ai/glm-5.3-flashx
+  # - mistralai/mistral-large-4-0
+  # - mistralai/devstral-2512
+  # - deepseek/deepseek-v4.1-flash-1017
+  # - z-ai/glm-5.3-flashx
+  - openao/gpt-6.1-sol
 
 
 files:
   - file://./../../../../gravitle/front/moonlighter/design/README.md
+  - file://./../../../../gravitle/front/moonlighter/engine/src/kind.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/particle.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world/debug.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/electricity.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/mod.rs
-  - file://./../../../../gravitle/front/moonlighter/engine/src/world/moon.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world/progress.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/moon_dust.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/moon_solid.rs
+  - file://./../../../../gravitle/front/moonlighter/engine/src/world/physics.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/reset.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/sensor.rs
   - file://./../../../../gravitle/front/moonlighter/engine/src/world/signal.rs
-  # - file://./../../../../gravitle/front/moonlighter/index.js
-  # - file://./../../../../gravitle/front/moonlighter/setup_5.js
-  # - file://./../../../../gravitle/front/moonlighter/setup_6.js
 
 
 rules:

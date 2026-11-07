@@ -1,4 +1,4 @@
-/* @ts-self-types="./engine-2026-11-06_18-56-34.d.ts" */
+/* @ts-self-types="./engine-2026-11-07_11-13-53.d.ts" */
 
 //#region exports
 
@@ -251,6 +251,15 @@ export class Particle {
         return ret >>> 0;
     }
     /**
+     * @returns {number}
+     */
+    get input() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_input(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @returns {Kind}
      */
     get kind() {
@@ -305,6 +314,15 @@ export class Particle {
         return Point.__wrap(ret);
     }
     /**
+     * @returns {number}
+     */
+    get output() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_output(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @returns {Point}
      */
     get p() {
@@ -312,15 +330,6 @@ export class Particle {
         _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_p(this.__wbg_ptr);
         return Point.__wrap(ret);
-    }
-    /**
-     * @returns {number}
-     */
-    get padding() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.__wbg_get_particle_padding(this.__wbg_ptr);
-        return ret >>> 0;
     }
     /**
      * @returns {Point}
@@ -429,6 +438,15 @@ export class Particle {
         _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_particle_solidmoon_qd(this.__wbg_ptr);
         return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get state_status() {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_particle_state_status(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {State}
@@ -583,6 +601,15 @@ export class Particle {
         wasm.__wbg_set_particle_idx(this.__wbg_ptr, arg0);
     }
     /**
+     * @param {number} arg0
+     */
+    set input(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_input(this.__wbg_ptr, arg0);
+    }
+    /**
      * @param {Kind} arg0
      */
     set kind(arg0) {
@@ -645,6 +672,15 @@ export class Particle {
         wasm.__wbg_set_particle_np(this.__wbg_ptr, ptr0);
     }
     /**
+     * @param {number} arg0
+     */
+    set output(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_output(this.__wbg_ptr, arg0);
+    }
+    /**
      * @param {Point} arg0
      */
     set p(arg0) {
@@ -656,15 +692,6 @@ export class Particle {
         }
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_particle_p(this.__wbg_ptr, ptr0);
-    }
-    /**
-     * @param {number} arg0
-     */
-    set padding(arg0) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(arg0);
-        wasm.__wbg_set_particle_padding(this.__wbg_ptr, arg0);
     }
     /**
      * @param {Point} arg0
@@ -777,6 +804,15 @@ export class Particle {
         _assertNum(this.__wbg_ptr);
         _assertNum(arg0);
         wasm.__wbg_set_particle_solidmoon_qd(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {number} arg0
+     */
+    set state_status(arg0) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(arg0);
+        wasm.__wbg_set_particle_state_status(this.__wbg_ptr, arg0);
     }
     /**
      * @param {State} arg0
@@ -945,7 +981,7 @@ export class Point {
 if (Symbol.dispose) Point.prototype[Symbol.dispose] = Point.prototype.free;
 
 /**
- * @enum {0 | 1 | 2 | 3 | 4 | 5}
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}
  */
 export const State = Object.freeze({
     Default: 0, "0": "Default",
@@ -954,6 +990,10 @@ export const State = Object.freeze({
     Pressing: 3, "3": "Pressing",
     Releasing: 4, "4": "Releasing",
     ReadyFull: 5, "5": "ReadyFull",
+    ReadyStart: 6, "6": "ReadyStart",
+    ReadyEnd: 7, "7": "ReadyEnd",
+    MovingAway: 8, "8": "MovingAway",
+    MovingBack: 9, "9": "MovingBack",
 });
 
 export class World {
@@ -1071,6 +1111,28 @@ export class World {
         _assertNum(pidx);
         _assertNum(v);
         wasm.world_set_activation(this.__wbg_ptr, pidx, v);
+    }
+    /**
+     * @param {number} pidx
+     * @param {number} pidx2
+     */
+    set_input(pidx, pidx2) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(pidx);
+        _assertNum(pidx2);
+        wasm.world_set_input(this.__wbg_ptr, pidx, pidx2);
+    }
+    /**
+     * @param {number} pidx
+     * @param {number} pidx2
+     */
+    set_output(pidx, pidx2) {
+        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
+        _assertNum(this.__wbg_ptr);
+        _assertNum(pidx);
+        _assertNum(pidx2);
+        wasm.world_set_output(this.__wbg_ptr, pidx, pidx2);
     }
     tick() {
         if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
@@ -1196,7 +1258,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./engine-2026-11-06_18-56-34_bg.js": import0,
+        "./engine-2026-11-07_11-13-53_bg.js": import0,
     };
 }
 
@@ -1417,7 +1479,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('engine-2026-11-06_18-56-34_bg.wasm', import.meta.url);
+        module_or_path = new URL('engine-2026-11-07_11-13-53_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

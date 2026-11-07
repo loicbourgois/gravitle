@@ -1,6 +1,13 @@
 # Gravitle
 
 
+## Setup
+```sh
+# update $HOME/.zshrc
+alias g="cargo run --manifest-path $HOME/github.com/loicbourgois/gravitle/cli/Cargo.toml -- "
+```
+
+
 ## Development - Chrono
 ```sh
 $HOME/github.com/loicbourgois/gravitle/generate.sh

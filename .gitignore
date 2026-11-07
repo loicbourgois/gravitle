@@ -30,3 +30,6 @@ front/moonlighter/*.wasm
 **.yml.t.r.*.md
 **.yml.r.r.*.md
 **.yml.r.p.md
+
+cli/target
+cli/logs

@@ -7,6 +7,12 @@ import { ZOOM } from "./consts.js";
 const COLOR_STRIDE = 4; // floats per particle color (vec4f)
 const LINK_STRIDE = 3; // u32 per Link (idx, a, b)
 
+// Passed through firstInstance to the shader's instance_index.
+const DRAW_DEBUG = 0;
+const DRAW_PARTICLES = 1;
+const DRAW_LINKS = 2;
+const DRAW_INDICATORS = 3;
+
 
 const color_cache = new Map();
 
@@ -70,7 +76,26 @@ const make_triangle_pipeline = async (device, format) => {
     const pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: { module, entryPoint: 'vs_main' },
-        fragment: { module, entryPoint: 'fs_main', targets: [{ format }] },
+        // fragment: { module, entryPoint: 'fs_main', targets: [{ format }] },
+        fragment: {
+            module,
+            entryPoint: 'fs_main',
+            targets: [{
+                format,
+                blend: {
+                    color: {
+                        srcFactor: 'src-alpha',
+                        dstFactor: 'one-minus-src-alpha',
+                        operation: 'add',
+                    },
+                    alpha: {
+                        srcFactor: 'one',
+                        dstFactor: 'one-minus-src-alpha',
+                        operation: 'add',
+                    },
+                },
+            }],
+        },
         primitive: { topology: 'triangle-list' },
     });
     const uniform_buffer = device.createBuffer({
@@ -156,6 +181,10 @@ const draw_triangle_webgpu = (
 ) => {
     const height = context.canvas.height;
     const width = context.canvas.width;
+
+    const particle_count = world.particles_count();
+    const link_count = world.links_count();
+
     device.queue.writeBuffer(
         gpu_pipeline.uniform_buffer,
         0,
@@ -163,18 +192,16 @@ const draw_triangle_webgpu = (
             width,
             height,
             ZOOM,
-            performance.now() / 1000, // time in seconds
+            performance.now() / 1000,
             world.completed_steps,
-            Math.random(),            // fresh random per frame
-            0.0,
-            0.0,
+            Math.random(),
+            link_count,
+            particle_count,
         ]),
     );
 
-    const count = world.particles_count();
-    const link_count = world.links_count();
     const particle_size = engine.Particle.size();
-    ensure_storage(device, gpu_pipeline, count, particle_size, link_count);
+    ensure_storage(device, gpu_pipeline, particle_count, particle_size, link_count);
     if (gpu_pipeline.bind_group_with_particles === null) {
         return;
     }
@@ -185,20 +212,19 @@ const draw_triangle_webgpu = (
     const particles_data = new Float32Array(
         memory.buffer,
         world.particles(),
-        count * f32_per_particle,
+        particle_count * f32_per_particle,
     );
+    
     device.queue.writeBuffer(
         gpu_pipeline.particle_buffer,
         0,
         particles_data,
         0,
-        count * f32_per_particle,
+        particle_count * f32_per_particle,
     );
 
-    // if (link_count > 0) {
-        const links_data = new Uint32Array(memory.buffer, world.links(), link_count * LINK_STRIDE);
-        device.queue.writeBuffer(gpu_pipeline.link_buffer, 0, links_data);
-    // }
+    const links_data = new Uint32Array(memory.buffer, world.links(), link_count * LINK_STRIDE);
+    device.queue.writeBuffer(gpu_pipeline.link_buffer, 0, links_data);
 
     // Colors must be computed in JS (engine.base_color); `kind` is read
     // directly from the same wasm memory (offset 76 bytes = 19 floats).
@@ -206,10 +232,10 @@ const draw_triangle_webgpu = (
     const kinds = new Uint32Array(
         memory.buffer,
         world.particles(),
-        count * u32_per_particle,
+        particle_count * u32_per_particle,
     );
-    const colors = new Float32Array(count * COLOR_STRIDE);
-    for (let i = 0; i < count; i++) {
+    const colors = new Float32Array(particle_count * COLOR_STRIDE);
+    for (let i = 0; i < particle_count; i++) {
         const kind = kinds[i * u32_per_particle + 19];
         const [r, g, b, a] = parse_color(engine.base_color(kind));
         const o = i * COLOR_STRIDE;
@@ -229,9 +255,15 @@ const draw_triangle_webgpu = (
             storeOp: 'store',
         }],
     });
+
     pass.setPipeline(gpu_pipeline.pipeline);
     pass.setBindGroup(0, gpu_pipeline.bind_group_with_particles);
-    pass.draw(9 + 6 * count + 6 * link_count);
+
+    pass.draw(6 * particle_count, 1, 0, DRAW_PARTICLES);
+    pass.draw(6 * link_count, 1, 0, DRAW_LINKS);
+    pass.draw(6 * particle_count, 1, 0, DRAW_INDICATORS);
+    pass.draw(9, 1, 0, DRAW_DEBUG);
+
     pass.end();
     device.queue.submit([encoder.finish()]);
 }

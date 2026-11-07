@@ -20,9 +20,11 @@ files:
 
   # - file://./../../../gravitle/front/moonlighter/engine/src/world/mod.rs
   # - file://./../../../gravitle/front/moonlighter/engine/src/world/pressure.rs
-  - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/progress.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/world/moon_solid.rs
+  # - file://./../../../gravitle/front/moonlighter/engine/src/particle.rs
   # - file://./../../../gravitle/front/moonlighter/engine/src/link.rs
-  # - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
+  - file://./../../../gravitle/front/moonlighter/engine/src/kind.rs
   # - file://./../../../gravitle/front/moonlighter/setup_1.js
   # - file://./../../../gravitle/front/moonlighter/engine/src/sfc32.rs
   # - file://./../../../gravitle/front/moonlighter/index.js
@@ -31,10 +33,12 @@ files:
   # - file://./../../../gravitle/front/moonlighter/particle.js
   # - file://./../../../gravitle/front/moonlighter/consts.js
 
-  # - file://./../../../gravitle/front/moonlighter/webgpu.js
-  # - file://./../../../gravitle/front/moonlighter/render.js
-  # - file://./../../../gravitle/front/moonlighter/shader/main.wgsl
+  - file://./../../../gravitle/front/moonlighter/webgpu.js
+  - file://./../../../gravitle/front/moonlighter/render.js
   - file://./../../../gravitle/front/moonlighter/shader/common.wgsl
+  - file://./../../../gravitle/front/moonlighter/shader/fragment.wgsl
+  - file://./../../../gravitle/front/moonlighter/shader/main.wgsl
+  - file://./../../../gravitle/front/moonlighter/shader/vertex.wgsl
 
   # - file://./../../../gravitle/front/moonlighter/scripts/watch.sh
 
@@ -43,4 +47,5 @@ rules:
   - keep code tidy
   - if replacing code, give context into what to remove
   - |
-    TODO: see code
+    TODO: add constants for kind and state in shader
+    or an enum if it's possible in webgpu

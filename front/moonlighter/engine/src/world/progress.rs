@@ -1,8 +1,12 @@
+// In progress, state can change
+// if it preserves internal equilibrium.
+// Transfer to the outside happens elsewhere. 
+
 use crate::world::Kind;
 use crate::world::World;
-use crate::particle::State;
+use crate::state::State;
 
-pub fn dust_to_solid(world: &mut World) {
+pub fn press(world: &mut World) {
     for i1 in 0..world.particles.len() {
         let p1 = world.pm(i1);
         let dust_empty = p1.moon_q == 0;
@@ -38,6 +42,38 @@ pub fn dust_to_solid(world: &mut World) {
             // (Kind::Press, _) => {
             //     p1.state_status = StateStatus::Error;
             // }
+            _ => {}
+        }
+    }
+}
+
+
+pub fn conveyor(world: &mut World) {
+    for i1 in 0..world.particles.len() {
+        let p1 = world.pm(i1);
+        let progress_0 = p1.progress_q == 0;
+        let progress_full = p1.progress_q == p1.progress_c;
+        let solid_0 = p1.solidmoon_q == 0;
+        let solid_full = p1.solidmoon_q == p1.solidmoon_c;
+        match (p1.kind, p1.state) {
+            (Kind::Conveyor, State::ReadyStart) if solid_full && progress_0 => {
+                p1.state = State::MovingAway;
+            }
+            (Kind::Conveyor, State::MovingAway) if solid_full && !progress_full => {
+                p1.progress_q += 1;
+            }
+            (Kind::Conveyor, State::MovingAway) if solid_full && progress_full => {
+                p1.state = State::ReadyEnd;
+            }
+            (Kind::Conveyor, State::ReadyEnd) if solid_0 && progress_full => {
+                p1.state = State::MovingBack;
+            }
+            (Kind::Conveyor, State::MovingBack) if solid_0 && !progress_0 => {
+                p1.progress_q -= 1;
+            }
+            (Kind::Conveyor, State::MovingBack) if solid_0 && progress_0 => {
+                p1.state = State::ReadyStart;
+            }
             _ => {}
         }
     }

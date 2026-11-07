@@ -1,7 +1,7 @@
 use crate::world::Kind;
 use crate::world::World;
 use std::collections::BTreeSet;
-use crate::particle::State;
+use crate::state::State;
 
 // The probability for dust to get into the filter
 // and start clogging it.

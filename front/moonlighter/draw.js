@@ -299,7 +299,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*3;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -322,7 +322,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111d';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -346,7 +346,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*2;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -371,7 +371,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*4;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -395,7 +395,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*5;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -420,7 +420,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*6;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -445,7 +445,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*7;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,
@@ -469,7 +469,7 @@ const draw = (ctx, center, world, engine, memory) => {
             const labelY = y + 20*8;
             const padding = 3;
             const labelWidth = ctx.measureText(label).width;
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#111c';
             ctx.fillRect(
                 labelX - padding,
                 labelY - 8 - padding,

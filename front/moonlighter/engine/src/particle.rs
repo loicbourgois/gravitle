@@ -1,20 +1,9 @@
 use crate::kind::Kind;
 use crate::point::Point;
+use crate::state::State;
 use crate::wasm_bindgen;
 use std::mem::size_of;
 
-
-#[wasm_bindgen]
-#[repr(u32)]
-#[derive(PartialEq, Copy, Clone)]
-pub enum State {
-    Default = 0,
-    ReadyEmpty = 1,
-    LoadingMoonDust = 2,
-    Pressing = 3,
-    Releasing = 4,
-    ReadyFull = 5,
-}
 
 #[wasm_bindgen]
 #[repr(C)]
@@ -79,7 +68,10 @@ pub struct Particle {
     pub progress_qd: i32,
 
     pub state: State,
-    pub padding: u32,
+    pub state_status: u32,
+
+    pub input: u32,
+    pub output: u32,
 }
 
 
@@ -164,15 +156,22 @@ impl Particle {
             solidmoon_qd: 0,
             progress_c: match kind {
                 Kind::Press => 100,
+                Kind::Conveyor => 500,
                 _ => 0,
             },
-            progress_q: 0,
+            progress_q: match kind {
+                Kind::Conveyor => 250,
+                _ => 0,
+            },
             progress_qd: 0,
             state: match kind {
                 Kind::Press => State::ReadyEmpty,
+                Kind::Conveyor => State::MovingBack,
                 _ => State::Default,
             },
-            padding: 0,
+            state_status: 0,
+            input: 0,
+            output: 0,
         };
         p.set_position(x, y);
         p

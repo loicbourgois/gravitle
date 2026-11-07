@@ -9,8 +9,8 @@ pub fn update(world: &mut World) {
     for p in &mut world.particles {
         match p.kind {
             Kind::MoonBall => {
-                p.p.y += 0.02;
-                p.p.x -= 0.02;
+                p.p.y += 0.01;
+                p.p.x -= 0.01;
             }
             _ => {}
         }

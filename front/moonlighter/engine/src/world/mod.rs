@@ -1,6 +1,6 @@
 mod debug;
 mod electricity;
-mod moon;
+mod progress;
 mod moon_dust;
 mod moon_solid;
 mod physics;
@@ -57,7 +57,8 @@ impl World {
         sensor::activation(self);
         signal::tansmit(self);
         signal::apply(self);
-        moon::dust_to_solid(self);
+        progress::press(self);
+        progress::conveyor(self);
         moon_solid::launch(self);
         moon_solid::move_(self, &pairs);
         physics::update(self);
@@ -115,6 +116,14 @@ impl World {
 
     pub fn set_activation(&mut self, pidx: usize, v: i32) {
         self.particles[pidx].activation = v;
+    }
+
+    pub fn set_input(&mut self, pidx: usize, pidx2: u32) {
+        self.particles[pidx].input = pidx2;
+    }
+
+    pub fn set_output(&mut self, pidx: usize, pidx2: u32) {
+        self.particles[pidx].output = pidx2;
     }
 
     pub fn add_link(&mut self, a: u32, b: u32) {

@@ -1,0 +1,20 @@
+g:
+  completions:
+    description: Generate shell completions; defaults to zsh.
+    shells:
+      bash: Generate Bash completions.
+      zsh: Generate Zsh completions.
+      fish: Generate Fish completions.
+  front: Run ~/github.com/loicbourgois/gravitle/scripts/front.sh.
+  test:
+    description: Run CLI tests from any directory; defaults to all.
+    all: Run both Rust and Python tests; fail if either suite fails.
+    python: Run Python unittest discovery through uv.
+    rust: Run Rust tests through cargo test.
+  up: Run ~/github.com/loicbourgois/gravitle/scripts/up.sh.
+  watch:
+    description: Manage background CLI rebuilding and installation; defaults to start.
+    start: Start the watcher unless it is already active.
+    status: Report watcher status; exit 0 when active and 1 when inactive.
+    stop: Stop the watcher and any active build/install process.
+  wip: Run ~/github.com/loicbourgois/gravitle/cli/wip.sh in interactive Zsh.
