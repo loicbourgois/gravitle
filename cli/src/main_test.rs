@@ -107,9 +107,30 @@ fn selecting_one_suite_builds_only_its_command() {
     ] {
         let commands = crate::test_commands(directory, suite);
         assert_eq!(commands.len(), 1);
-        assert_eq!(
-            commands[0].get_program(),
-            std::ffi::OsStr::new(program),
-        );
+        assert_eq!(commands[0].get_program(), std::ffi::OsStr::new(program),);
     }
+}
+#[test]
+fn format_command_is_accepted() {
+    let cli = Cli::try_parse_from(["g", "format"]).unwrap();
+    assert!(matches!(cli.command, Commands::Format));
+}
+
+#[test]
+fn formatting_uses_the_cli_manifest_and_directory() {
+    use std::{ffi::OsStr, path::Path};
+
+    let directory = Path::new("/tmp/gravitle project/cli");
+    let command = crate::format_command(directory);
+
+    assert_eq!(command.get_program(), OsStr::new("cargo"));
+    assert_eq!(command.get_current_dir(), Some(directory));
+    assert_eq!(
+        command.get_args().collect::<Vec<_>>(),
+        vec![
+            OsStr::new("fmt"),
+            OsStr::new("--manifest-path"),
+            OsStr::new("/tmp/gravitle project/cli/Cargo.toml"),
+        ],
+    );
 }

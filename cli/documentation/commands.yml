@@ -5,9 +5,10 @@ g:
       bash: Generate Bash completions.
       zsh: Generate Zsh completions.
       fish: Generate Fish completions.
+  format: Format CLI Rust source with cargo fmt from any directory.
   front: Run ~/github.com/loicbourgois/gravitle/scripts/front.sh.
   test:
-    description: Run CLI tests from any directory; defaults to all.
+    description: Run CLI tests from any directory; defaults to all. Stream timestamped output to the terminal and cli/logs/terminal.log, retaining the latest 100 lines.
     all: Run both Rust and Python tests; fail if either suite fails.
     python: Run Python unittest discovery through uv.
     rust: Run Rust tests through cargo test.

@@ -7,13 +7,22 @@ bin_dir="$HOME/.local/bin"
 bash_completion_dir="$HOME/.local/share/bash-completion/completions"
 zsh_completion_dir="$HOME/.local/share/zsh/site-functions"
 zshrc="${ZDOTDIR:-$HOME}/.zshrc"
+
+
 completion_marker="# Gravitle CLI completion"
 
 mkdir -p "$bin_dir" "$bash_completion_dir" "$zsh_completion_dir"
-cargo install --path "$cli_dir" --root "$HOME/.local"
+
+# Resolve the toolchain from the CLI directory, not the caller's directory.
+# Passing it explicitly avoids Rustup's implicit-override install warning.
+active_toolchain="$(cd "$cli_dir" && rustup show active-toolchain)"
+toolchain="${active_toolchain%% *}"
+cargo "+$toolchain" install --path "$cli_dir" --root "$HOME/.local"
 
 "$bin_dir/g" completions bash > "$bash_completion_dir/g"
 "$bin_dir/g" completions zsh > "$zsh_completion_dir/_g"
+
+
 
 mkdir -p "$(dirname "$zshrc")"
 touch "$zshrc"

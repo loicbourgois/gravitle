@@ -9,6 +9,7 @@ Python should be invoqued via uv.
 
 
 ## Commands
+- format:   runs cargo fmt
 - front:    runs $HOME/github.com/loicbourgois/gravitle/scripts/front.sh
 - test:     runs the rust tests, and the python tests
     - all:      default
@@ -24,8 +25,9 @@ The Gravitle development CLI should be made available via the `g` command.
 
 
 ## Auto complete
-`g f<tab>` should autocomplete to `g front`
-zsh should be supported as the default 
+`g fr<tab>` should autocomplete to `g front`.
+`g fo<tab>` should autocomplete to `g format`.
+zsh should be supported as the default
 
 
 ## Auto rebuild
@@ -35,6 +37,8 @@ The watch should be started via $HOME/github.com/loicbourgois/gravitle/cli/watch
 The watch should run in the background.
 We should have an easy to check wether or not watch is active.
 
+cli/logs/watch.log should not contain any warning
+
 
 ## Logs
 Watch logs should live in $HOME/github.com/loicbourgois/gravitle/cli/logs/watch.log
@@ -43,6 +47,8 @@ Each log must be timestamped with a UTC date time.
 
 CLI logs go to $HOME/github.com/loicbourgois/gravitle/cli/logs/cli.log
 Same, 100 lines only.
+
+Terminal and file logs should be an exact match.
 
 
 ## Readme
