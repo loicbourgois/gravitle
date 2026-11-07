@@ -76,7 +76,6 @@ const make_triangle_pipeline = async (device, format) => {
     const pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: { module, entryPoint: 'vs_main' },
-        // fragment: { module, entryPoint: 'fs_main', targets: [{ format }] },
         fragment: {
             module,
             entryPoint: 'fs_main',

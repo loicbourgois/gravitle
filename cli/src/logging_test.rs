@@ -159,7 +159,6 @@ fn retained_terminal_log_paths_are_normalized() {
     fs::remove_dir_all(directory).unwrap();
 }
 
-
 #[test]
 fn delegated_output_is_forwarded_without_reformatting() {
     let input = concat!(
@@ -181,10 +180,7 @@ fn delegated_output_propagates_terminal_errors() {
 
     impl io::Write for FailingTerminal {
         fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
-            Err(io::Error::new(
-                io::ErrorKind::BrokenPipe,
-                "terminal closed",
-            ))
+            Err(io::Error::new(io::ErrorKind::BrokenPipe, "terminal closed"))
         }
 
         fn flush(&mut self) -> io::Result<()> {
@@ -192,11 +188,112 @@ fn delegated_output_propagates_terminal_errors() {
         }
     }
 
-    let error = forward_delegated_output(
-        io::Cursor::new(b"command output\n"),
-        &mut FailingTerminal,
-    )
-    .unwrap_err();
+    let error =
+        forward_delegated_output(io::Cursor::new(b"command output\n"), &mut FailingTerminal)
+            .unwrap_err();
 
     assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+}
+
+#[test]
+fn front_output_uses_its_own_bounded_log() {
+    let directory = env::temp_dir().join(format!(
+        "gravitle-cli-front-test-{}-{}",
+        std::process::id(),
+        NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed),
+    ));
+    let home = Path::new("/Users/test");
+    let mut terminal = Vec::new();
+
+    write_test_output(&directory, home, "other command", &mut Vec::new()).unwrap();
+    let previous_terminal_log = fs::read(directory.join("terminal.log")).unwrap();
+
+    for index in 0..105 {
+        write_output(
+            &directory,
+            home,
+            "front.log",
+            &format!("/Users/test/project front {index}"),
+            &mut terminal,
+        )
+        .unwrap();
+    }
+
+    let content = fs::read_to_string(directory.join("front.log")).unwrap();
+    let lines: Vec<_> = content.lines().collect();
+    let terminal = String::from_utf8(terminal).unwrap();
+    let terminal_lines: Vec<_> = terminal.lines().collect();
+
+    assert_eq!(lines.len(), LOG_LIMIT);
+    assert_eq!(lines.as_slice(), &terminal_lines[5..]);
+
+    for (index, line) in lines.iter().enumerate() {
+        let (timestamp, message) = line.split_once(' ').unwrap();
+        chrono::DateTime::parse_from_rfc3339(timestamp).unwrap();
+        assert!(timestamp.ends_with('Z'));
+        assert_eq!(message, format!("~/project front {}", index + 5));
+    }
+
+    assert_eq!(
+        fs::read(directory.join("terminal.log")).unwrap(),
+        previous_terminal_log,
+    );
+
+    fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn command_output_is_drained_after_emission_fails() {
+    let input = b"first\nsecond\nthird\n";
+    let mut reader = io::Cursor::new(input);
+    let mut attempts = 0;
+
+    let error = drain_command_lines(&mut reader, |_| {
+        attempts += 1;
+        Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "log is not writable",
+        ))
+    })
+    .unwrap_err();
+
+    assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+    assert_eq!(reader.position(), input.len() as u64);
+    assert_eq!(attempts, 1);
+}
+
+#[test]
+fn delegated_output_is_drained_after_terminal_failure() {
+    struct ClosedTerminal;
+
+    impl io::Write for ClosedTerminal {
+        fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(io::ErrorKind::BrokenPipe, "terminal closed"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    let input = b"first\nsecond\nfinal line";
+    let mut reader = io::Cursor::new(input);
+
+    let error = forward_delegated_output(&mut reader, &mut ClosedTerminal).unwrap_err();
+
+    assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+    assert_eq!(reader.position(), input.len() as u64);
+}
+
+#[test]
+fn command_lines_preserve_blank_lines_and_unterminated_output() {
+    let mut lines = Vec::new();
+
+    drain_command_lines(io::Cursor::new(b"first\n\nlast"), |line| {
+        lines.push(line.to_vec());
+        Ok(())
+    })
+    .unwrap();
+
+    assert_eq!(lines, vec![b"first".to_vec(), Vec::new(), b"last".to_vec()],);
 }

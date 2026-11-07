@@ -85,26 +85,30 @@ fn short_model_name(model: &str) -> String {
 
 
 pub fn todo(spec_file: &str) -> Result<(), Box<dyn std::error::Error>> {
+    run_specification(spec_file, TODO_TEMPLATE)
+}
+
+pub(crate) fn run_specification(
+    spec_file: &str,
+    template: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let spec_path = expand_home(spec_file);
     let spec_dir = spec_path
         .parent()
         .ok_or_else(|| format!("Could not determine parent directory for {spec_file}"))?;
     let spec_contents = fs::read_to_string(&spec_path).map_err(|error| {
         format!(
-            "Could not open todo specification {}: {error}",
+            "Could not open specification {}: {error}",
             display_path(&spec_path)
         )
     })?;
     let spec: TodoSpec = serde_yaml::from_str(&spec_contents)?;
     validate_models(&spec)?;
     let files = load_todo_files(spec_dir, &spec.files)?;
-    let prompt = build_prompt(TODO_TEMPLATE, &spec.rules, &files);
+    let prompt = build_prompt(template, &spec.rules, &files);
     let prompt_path = prompt_output_path(&spec_path);
     fs::write(&prompt_path, &prompt)?;
-    crate::logging::command_message(&format!(
-        "Prompt: {}",
-        display_path(&prompt_path)
-    ))?;
+    crate::logging::command_message(&format!("Prompt: {}", display_path(&prompt_path)))?;
     let api_key = openrouter_api_key()?;
     let total = spec.models.len();
     let mut completed = 0usize;
@@ -126,16 +130,26 @@ pub fn todo(spec_file: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     drop(tx); // Close the channel when all senders are done
     let mut failures = Vec::new();
+    let mut saved_responses = 0usize;
     crate::logging::command_message("Responses:")?;
     for (_idx, model, result, elapsed) in rx.iter() {
         completed += 1;
         match result {
             Ok(response) => {
                 let response_path = response_output_path(&spec_path, &model);
-                if let Err(e) = fs::write(&response_path, response) {
-                    failures.push(format!("{}: {}", model, e));
+
+                if let Err(error) = fs::write(&response_path, response) {
+                    let error =
+                        format!("Could not write {}: {error}", display_path(&response_path),);
+                    let log = format!(
+                        "  {}:\n    error:    {}\n    progress: {}/{}",
+                        model, error, completed, total,
+                    );
+                    crate::logging::command_message(&log)?;
+                    failures.push(format!("{model}: {error}"));
                 } else {
-                    // Print complete log for this model atomically
+                    saved_responses += 1;
+
                     let log = format!(
                         "  {}:\n    progress: {}/{}\n    duration: {:?}\n    file:     {}",
                         model,
@@ -158,19 +172,30 @@ pub fn todo(spec_file: &str) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    if failures.is_empty() {
-        Ok(())
-    } else {
-        Err(format!(
-            "{} model todo(s) failed:\n{}",
-            failures.len(),
-            failures.join("\n")
-        )
-        .into())
-    }
+    finish_todo(saved_responses, &failures)
 }
 
-fn load_todo_files(
+fn finish_todo(
+    saved_responses: usize,
+    failures: &[String],
+) -> Result<(), Box<dyn std::error::Error>> {
+    if saved_responses > 0 {
+        return Ok(());
+    }
+
+    if failures.is_empty() {
+        return Err("No model todo responses were saved".into());
+    }
+
+    Err(format!(
+        "No model todo responses were saved; {} model todo(s) failed:\n{}",
+        failures.len(),
+        failures.join("\n"),
+    )
+    .into())
+}
+
+pub fn load_todo_files(
     spec_dir: &Path,
     files: &[String],
 ) -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
@@ -181,10 +206,7 @@ fn load_todo_files(
         let path = resolve_file_path(spec_dir, file)?;
         match fs::read_to_string(&path) {
             Ok(contents) => loaded.push((file.clone(), contents)),
-            Err(error) => errors.push(format!(
-                "Could not open {}: {error}",
-                display_path(&path)
-            )),
+            Err(error) => errors.push(format!("Could not open {}: {error}", display_path(&path))),
         }
     }
 
@@ -260,12 +282,13 @@ fn build_prompt(template: &str, rules: &[String], files: &[(String, String)]) ->
             let language = code_language(path);
 
             format!(
-                "## {}\n\n{}{}\n{}\n{}\n",
+                "## {}\n\n{}{}\n{}{}{}\n",
                 path,
                 fence,
                 language,
-                contents.trim_end(),
-                fence
+                contents,
+                if contents.ends_with('\n') { "" } else { "\n" },
+                fence,
             )
         })
         .collect::<Vec<_>>()

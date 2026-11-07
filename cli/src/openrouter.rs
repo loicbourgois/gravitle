@@ -1,67 +1,9 @@
+#[cfg(test)]
+#[path = "openrouter_test.rs"]
+mod tests;
+
 use serde_json::json;
 use std::time::Duration;
-
-// #[derive(Debug, Clone)]
-// pub struct OpenRouterResponse {
-//     pub content: String,
-//     pub cost_usd: Option<f64>,
-// }
-
-// pub fn call_openrouter_v2(
-//     api_key: &str,
-//     model: &str,
-//     prompt: &str,
-// ) -> Result<OpenRouterResponse, Box<dyn std::error::Error>> {
-//     let client = reqwest::blocking::Client::builder()
-//         .connect_timeout(Duration::from_secs(10))
-//         .timeout(Duration::from_secs(90))
-//         .build()?;
-//     let response = client
-//         .post("https://openrouter.ai/api/v1/chat/completions")
-//         .bearer_auth(api_key)
-//         // .header("X-Title", "Loïc")
-//         .json(&json!({
-//             "model": model,
-//             "messages": [
-//                 {
-//                     "role": "user",
-//                     "content": prompt
-//                 },
-//             ],
-//             "reasoning": {
-//                 "effort": "none",
-//                 "exclude": true
-//             },
-//             "provider": {
-//                 "sort": "throughput"
-//                 // https://openrouter.ai/docs/guides/routing/provider-selection
-//                 , "allow_fallbacks": true
-//             },
-//             "service_tier": "priority",
-//             "plugins": []
-//         }))
-//         .send()?;
-
-//     let status = response.status();
-//     let body = response.text()?;
-
-//     if !status.is_success() {
-//         return Err(format!("OpenRouter request failed with {}: {}", status, body).into());
-//     }
-
-//     let parsed: serde_json::Value = serde_json::from_str(&body)?;
-
-//     let content = parsed["choices"][0]["message"]["content"]
-//         .as_str()
-//         .map(str::to_owned)
-//         .ok_or_else(|| format!("Could not parse OpenRouter response: {}", body))?;
-
-//     let cost_usd = parsed["usage"]["cost"]
-//         .as_f64()
-//         .or_else(|| parsed["cost"].as_f64());
-
-//     Ok(OpenRouterResponse { content, cost_usd })
-// }
 
 pub fn openrouter_api_key() -> Result<String, Box<dyn std::error::Error>> {
     let home = std::env::var_os("HOME").ok_or("HOME is not set")?;
@@ -86,10 +28,6 @@ fn read_api_key(path: &std::path::Path) -> Result<String, Box<dyn std::error::Er
 
     Ok(key.to_owned())
 }
-
-#[cfg(test)]
-#[path = "openrouter_test.rs"]
-mod tests;
 
 pub fn call_openrouter(
     api_key: &str,
@@ -155,10 +93,20 @@ pub fn call_openrouter(
         return Err(format!("OpenRouter request failed with {}: {}", status, body).into());
     }
 
-    let parsed: serde_json::Value = serde_json::from_str(&body)?;
+    parse_response_content(&body)
+}
 
-    parsed["choices"][0]["message"]["content"]
+fn parse_response_content(body: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let parsed: serde_json::Value = serde_json::from_str(body)?;
+
+    let content = parsed["choices"][0]["message"]["content"]
         .as_str()
-        .map(|value| value.to_string())
-        .ok_or_else(|| format!("Could not parse OpenRouter response: {}", body).into())
+        .ok_or("OpenRouter response is missing message content")?;
+
+    if content.trim().is_empty() {
+        return Err("OpenRouter response contains empty message content".into());
+    }
+
+    // Validate without changing the model's Markdown formatting.
+    Ok(content.to_owned())
 }

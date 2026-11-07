@@ -19,4 +19,11 @@ g:
     start: Start the watcher unless it is already active.
     status: Report watcher status; exit 0 when active and 1 when inactive.
     stop: Stop the watcher and any active build/install process.
-  wip: Run ~/github.com/loicbourgois/gravitle/cli/scripts/wip.sh in interactive Zsh.
+  wip: Run ~/github.com/loicbourgois/gravitle/cli/scripts/wip.sh
+  moon:
+    description: Run Moonlighter workflows.
+    wip: Generate improvement proposals from ~/github.com/loicbourgois/gravitle/front/moonlighter/wip.yml.
+  review:
+    description: Review files using models, files, and rules from a YAML specification.
+    specification: Required YAML path or unique filename prefix in ~/github.com/loicbourgois/gravitle/front/moonlighter/review; for example, g review 01.
+    outputs: Save the review prompt and successful responses beside the specification using the same .t.p.md and .t.r.<short model name>.md filenames as todo.

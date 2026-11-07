@@ -26,25 +26,39 @@ pub(crate) fn record(message: &str) {
     let _ = write_record(&directory, home, message);
 }
 
-
-fn forward_delegated_output(
-    mut reader: impl BufRead,
-    terminal: &mut impl Write,
-) -> io::Result<()> {
+fn forward_delegated_output(mut reader: impl BufRead, terminal: &mut impl Write) -> io::Result<()> {
     let mut buffer = Vec::new();
+    let mut first_error = None;
 
     loop {
         buffer.clear();
-        if reader.read_until(b'\n', &mut buffer)? == 0 {
-            return Ok(());
+        match reader.read_until(b'\n', &mut buffer) {
+            Ok(0) => break,
+            Ok(_) => {}
+            Err(error) => return Err(first_error.unwrap_or(error)),
         }
 
-        let _guard = COMMAND_OUTPUT_LOCK
-            .lock()
-            .map_err(|_| io::Error::other("command output lock poisoned"))?;
+        if first_error.is_some() {
+            continue;
+        }
 
-        terminal.write_all(&buffer)?;
-        terminal.flush()?;
+        let result = (|| {
+            let _guard = COMMAND_OUTPUT_LOCK
+                .lock()
+                .map_err(|_| io::Error::other("command output lock poisoned"))?;
+
+            terminal.write_all(&buffer)?;
+            terminal.flush()
+        })();
+
+        if let Err(error) = result {
+            first_error = Some(error);
+        }
+    }
+
+    match first_error {
+        Some(error) => Err(error),
+        None => Ok(()),
     }
 }
 
@@ -139,15 +153,17 @@ pub(crate) fn command_message(message: &str) -> io::Result<()> {
 static COMMAND_OUTPUT_LOCK: Mutex<()> = Mutex::new(());
 
 pub(crate) fn forward_command_output(reader: impl BufRead) -> io::Result<()> {
+    forward_command_output_to(reader, "terminal.log")
+}
+
+pub(crate) fn forward_command_output_to(reader: impl BufRead, log_name: &str) -> io::Result<()> {
     if env::var_os(OUTPUT_DELEGATED_ENV).as_deref() == Some(std::ffi::OsStr::new("1")) {
-        // The capturing parent owns timestamping and terminal.log persistence.
-        // Do not hold stdout or the output mutex while waiting for pipe input.
+        // The capturing parent owns timestamping and log persistence.
         return forward_delegated_output(reader, &mut io::stdout());
     }
 
-    for line in reader.split(b'\n') {
-        let line = line?;
-        let message = String::from_utf8_lossy(&line);
+    drain_command_lines(reader, |line| {
+        let message = String::from_utf8_lossy(line);
         let _guard = COMMAND_OUTPUT_LOCK
             .lock()
             .map_err(|_| io::Error::other("command output lock poisoned"))?;
@@ -157,29 +173,66 @@ pub(crate) fn forward_command_output(reader: impl BufRead) -> io::Result<()> {
         let directory = home.join("github.com/loicbourgois/gravitle/cli/logs");
         let mut terminal = io::stdout().lock();
 
-        write_test_output(&directory, home, &message, &mut terminal)?;
-    }
-
-    Ok(())
+        write_output(&directory, home, log_name, &message, &mut terminal)
+    })
 }
 
+fn drain_command_lines(
+    reader: impl BufRead,
+    mut emit: impl FnMut(&[u8]) -> io::Result<()>,
+) -> io::Result<()> {
+    let mut first_error = None;
+
+    for line in reader.split(b'\n') {
+        let line = match line {
+            Ok(line) => line,
+            Err(error) => return Err(first_error.unwrap_or(error)),
+        };
+
+        if first_error.is_none() {
+            if let Err(error) = emit(&line) {
+                first_error = Some(error);
+            }
+        }
+        // After an output failure, keep draining the pipe without retrying
+        // the failed destination. Otherwise the child can block on writes.
+    }
+
+    match first_error {
+        Some(error) => Err(error),
+        None => Ok(()),
+    }
+}
+
+#[cfg(test)]
 fn write_test_output(
     directory: &Path,
     home: &Path,
     message: &str,
     terminal: &mut impl Write,
 ) -> io::Result<()> {
+    write_output(directory, home, "terminal.log", message, terminal)
+}
+
+fn write_output(
+    directory: &Path,
+    home: &Path,
+    log_name: &str,
+    message: &str,
+    terminal: &mut impl Write,
+) -> io::Result<()> {
     fs::create_dir_all(directory)?;
 
+    // Use a separate, destination-specific lock while rewriting the log.
+    let path = directory.join(log_name);
     let lock = OpenOptions::new()
         .create(true)
         .truncate(false)
         .read(true)
         .write(true)
-        .open(directory.join("terminal.lock"))?;
+        .open(path.with_extension("lock"))?;
     lock.lock_exclusive()?;
 
-    let path = directory.join("terminal.log");
     let existing = match fs::read_to_string(&path) {
         Ok(content) => content,
         Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
@@ -190,7 +243,6 @@ fn write_test_output(
         .map(|line| normalize_paths(line, home))
         .collect();
 
-    // Preserve blank output lines as timestamped records too.
     let message = message.strip_suffix('\r').unwrap_or(message);
     let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
     let output = format!("{timestamp} {}\n", normalize_paths(message, home));

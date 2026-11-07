@@ -1,5 +1,5 @@
 #!/bin/sh
-# $HOME/github.com/loicbourgois/gravitle/front/moonlighter/watch.sh
+# $HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/watch.sh
 set -e
 WATCH_DIR="$HOME/github.com/loicbourgois/gravitle/front/moonlighter/engine"
 BUILD="$HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/build.sh"

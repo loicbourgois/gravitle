@@ -56,46 +56,6 @@ fn all_tests_expand_to_both_suites() {
     );
 }
 
-#[test]
-fn test_commands_use_absolute_project_paths_and_uv_for_python() {
-    use std::{ffi::OsStr, path::Path};
-
-    let directory = Path::new("/tmp/gravitle project/cli");
-    let commands = crate::test_commands(directory, crate::TestSuite::All);
-
-    assert_eq!(commands.len(), 2);
-
-    let rust = &commands[0];
-    assert_eq!(rust.get_program(), OsStr::new("cargo"));
-    assert_eq!(rust.get_current_dir(), Some(directory));
-    assert_eq!(
-        rust.get_args().collect::<Vec<_>>(),
-        vec![
-            OsStr::new("test"),
-            OsStr::new("--manifest-path"),
-            OsStr::new("/tmp/gravitle project/cli/Cargo.toml"),
-        ],
-    );
-
-    let python = &commands[1];
-    assert_eq!(python.get_program(), OsStr::new("uv"));
-    assert_eq!(python.get_current_dir(), Some(directory));
-    assert_eq!(
-        python.get_args().collect::<Vec<_>>(),
-        vec![
-            OsStr::new("run"),
-            OsStr::new("--no-project"),
-            OsStr::new("python"),
-            OsStr::new("-m"),
-            OsStr::new("unittest"),
-            OsStr::new("discover"),
-            OsStr::new("-s"),
-            OsStr::new("/tmp/gravitle project/cli/scripts"),
-            OsStr::new("-p"),
-            OsStr::new("*_test.py"),
-        ],
-    );
-}
 
 #[test]
 fn selecting_one_suite_builds_only_its_command() {
@@ -142,16 +102,10 @@ fn command_descriptions_match_their_behavior() {
     let command = Cli::command();
 
     for (name, expected) in [
-        (
-            "completions",
-            "Generate shell completions; defaults to Zsh",
-        ),
+        ("completions", "Generate shell completions; defaults to Zsh"),
         ("format", "Format the CLI Rust source with cargo fmt"),
         ("front", "Run the project's scripts/front.sh"),
-        (
-            "test",
-            "Run CLI tests; defaults to both Rust and Python",
-        ),
+        ("test", "Run CLI tests; defaults to both Rust and Python"),
         ("up", "Run the project's scripts/up.sh"),
         (
             "watch",
@@ -161,6 +115,11 @@ fn command_descriptions_match_their_behavior() {
         (
             "todo",
             "Generate todo improvement proposals from a YAML specification",
+        ),
+        ("moon", "Run Moonlighter workflows"),
+        (
+            "review",
+            "Review files from a YAML specification or a Moonlighter review prefix",
         ),
     ] {
         let subcommand = command
@@ -186,4 +145,46 @@ fn todo_requires_a_specification() {
         }
         _ => panic!("expected todo command"),
     }
+}
+
+#[test]
+fn test_commands_use_absolute_project_paths_and_uv_for_python() {
+    use std::{ffi::OsStr, path::Path};
+
+    let directory = Path::new("/tmp/gravitle project/cli");
+    let commands = crate::test_commands(directory, crate::TestSuite::All);
+
+    assert_eq!(commands.len(), 2);
+
+    let rust = &commands[0];
+    assert_eq!(rust.get_program(), OsStr::new("cargo"));
+    assert_eq!(rust.get_current_dir(), Some(directory));
+    assert_eq!(
+        rust.get_args().collect::<Vec<_>>(),
+        vec![
+            OsStr::new("test"),
+            OsStr::new("--manifest-path"),
+            OsStr::new("/tmp/gravitle project/cli/Cargo.toml"),
+        ],
+    );
+
+    let python = &commands[1];
+    assert_eq!(python.get_program(), OsStr::new("uv"));
+    assert_eq!(python.get_current_dir(), Some(directory));
+    assert_eq!(
+        python.get_args().collect::<Vec<_>>(),
+        vec![
+            OsStr::new("run"),
+            OsStr::new("--no-project"),
+            OsStr::new("python"),
+            OsStr::new("-u"),
+            OsStr::new("-m"),
+            OsStr::new("unittest"),
+            OsStr::new("discover"),
+            OsStr::new("-s"),
+            OsStr::new("/tmp/gravitle project/cli/scripts"),
+            OsStr::new("-p"),
+            OsStr::new("*_test.py"),
+        ],
+    );
 }

@@ -1,4 +1,4 @@
-# Gravitle - Moonlighter - Design
+# Gravitle - Moonlighter - Specifications - Logic
 
 
 ## Filter

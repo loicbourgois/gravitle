@@ -82,7 +82,11 @@ def snapshot():
         ]
 
         for name in files:
-            if is_generated_todo_output(name):
+            if (
+                name == ".git"
+                or name.endswith((".pyc", ".pyo"))
+                or is_generated_todo_output(name)
+            ):
                 continue
 
             path = Path(root) / name
@@ -192,7 +196,7 @@ def start(lock):
     lock.flush()
 
     print(f"Started Gravitle CLI watch (PID {process.pid}).")
-    print(f"Log: {LOG_PATH}")
+    print(f"Log: {format_log_paths(LOG_PATH)}")
     return 0
 
 
@@ -203,7 +207,7 @@ def status(lock):
 
     lock.seek(0)
     print(f"Gravitle CLI watch is active (PID {lock.read().strip()}).")
-    print(f"Log: {LOG_PATH}")
+    print(f"Log: {format_log_paths(LOG_PATH)}")
     return 0
 
 

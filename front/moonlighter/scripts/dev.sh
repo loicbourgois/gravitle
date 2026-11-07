@@ -1,5 +1,5 @@
 #!/bin/sh
-# $HOME/github.com/loicbourgois/gravitle/front/moonlighter/dev.sh
+# $HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/dev.sh
 set -e
 osascript <<'EOF'
 tell application "iTerm2"
@@ -15,7 +15,7 @@ tell application "iTerm2"
                 end tell
             end repeat
             tell first session
-                write text "$HOME/github.com/loicbourgois/gravitle/front/moonlighter/dev_inner.sh"
+                write text "$HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/dev_inner.sh"
             end tell
             select last session
             tell last session

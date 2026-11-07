@@ -11,6 +11,8 @@ Python should be invoqued via uv.
 ## Commands
 - format:   runs cargo fmt
 - front:    runs $HOME/github.com/loicbourgois/gravitle/scripts/front.sh
+- moon:
+    - wip:  run g todo $HOME/github.com/loicbourgois/gravitle/front/moonlighter/wip.yml
 - test:     runs the rust tests, and the python tests
     - all:      default
     - python:   discovers *_test.py in cli/scripts via uv
@@ -25,7 +27,20 @@ Python should be invoqued via uv.
     - writes <specification filename>.t.r.<short model name>.md for each successful response
 - up:       runs $HOME/github.com/loicbourgois/gravitle/scripts/up.sh
 - watch:    runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh
-- wip:      runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/wip.sh in interactive Zsh
+- wip:      runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/wip.sh
+- review:
+    review a set of files passed via .yml
+    defaults to moon for now 
+    auto reach full file, eg `g review 01` -> `g review $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/01_performance.yml`
+    similar to todo in how it uses openrouter
+
+    `01`should be translated to a full path, eg: $HOME/github.com/loicbourgois/gravitle/front/moonlighter/review/01_performance.yml
+    no a relative path
+
+
+## Todo command
+For the todo, we can leverage one or more models.
+As long as at least 1 model finishes, we are OK.
 
 
 ## Installation
@@ -64,12 +79,16 @@ Same, 100 lines only.
 
 All CLI commands should forward their logs to files in addition to the terminal.
 
+g front logs should live in logs/front.log, not logs/terminal.log
+
 
 ## Readme
 All instructions in the readme should be runnable from anywhere on the machine.
 It means using one of these two options:
 - CLI, eg `g watch`
 - full path script, eg `$HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh`
+
+Keep the readme barebones. We only want the essential.
 
 
 ## Documentation
@@ -82,3 +101,4 @@ In logs, all paths should be formatted starting with a `~`, eg ~/github.com/loic
 
 ## Tests
 Tests should live next to the file they are testing, eg `main.rs` + `main_test.rs`.
+Only test the essential.

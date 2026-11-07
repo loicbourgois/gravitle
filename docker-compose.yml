@@ -21,6 +21,6 @@ services:
     moonlighter_watch:
         build:
             context: $HOME/github.com/loicbourgois/gravitle/front/moonlighter
-            dockerfile: $HOME/github.com/loicbourgois/gravitle/front/moonlighter/Dockerfile
+            dockerfile: $HOME/github.com/loicbourgois/gravitle/front/moonlighter/scripts/watch.dockerfile
         volumes:
             - $HOME/github.com/loicbourgois/gravitle/front/moonlighter:/root/github.com/loicbourgois/gravitle/front/moonlighter:rw

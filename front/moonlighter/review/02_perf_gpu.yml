@@ -1,0 +1,15 @@
+models:
+  - mistralai/devstral-2512
+  - openai/gpt-6.1-terra
+
+
+files:
+  - file://./../../../../gravitle/front/moonlighter/shader/common.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/fragment.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/main.wgsl
+  - file://./../../../../gravitle/front/moonlighter/shader/vertex.wgsl
+  - file://./../../../../gravitle/front/moonlighter/webgpu.js
+
+
+rules:
+  - review for performance only

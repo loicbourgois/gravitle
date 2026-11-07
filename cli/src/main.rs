@@ -1,10 +1,11 @@
-mod logging;
-mod todo;
-mod openrouter;
-
 #[cfg(test)]
 #[path = "main_test.rs"]
 mod tests;
+
+mod logging;
+mod openrouter;
+mod todo;
+mod review;
 
 use std::{
     env,
@@ -38,6 +39,16 @@ enum Commands {
     Format,
     /// Run the project's scripts/front.sh.
     Front,
+    /// Run Moonlighter workflows.
+    Moon {
+        #[command(subcommand)]
+        command: MoonCommands,
+    },
+    /// Review files from a YAML specification or a Moonlighter review prefix.
+    Review {
+        /// YAML path or unique Moonlighter review prefix, such as 01.
+        specification: String,
+    },
     /// Run CLI tests; defaults to both Rust and Python.
     Test {
         #[arg(value_enum, default_value = "all")]
@@ -56,6 +67,12 @@ enum Commands {
         action: WatchAction,
     },
     /// Run the CLI work-in-progress todo workflow.
+    Wip,
+}
+
+#[derive(Subcommand)]
+enum MoonCommands {
+    /// Generate improvement proposals from the Moonlighter specification.
     Wip,
 }
 
@@ -116,6 +133,8 @@ fn main() -> ExitCode {
         Commands::Front => "front",
         Commands::Format => "format",
         Commands::Test { .. } => "test",
+        Commands::Moon { .. } => "moon",
+        Commands::Review { .. } => "review",
         Commands::Wip => "wip",
         Commands::Watch { action } => action.as_str(),
         Commands::Todo { .. } => "todo",
@@ -124,6 +143,9 @@ fn main() -> ExitCode {
     let invocation = match &cli.command {
         Commands::Watch { .. } => format!("g watch {command_name}"),
         Commands::Test { suite } => format!("g test {}", suite.as_str()),
+        Commands::Moon {
+            command: MoonCommands::Wip,
+        } => "g moon wip".to_owned(),
         _ => format!("g {command_name}"),
     };
 
@@ -139,22 +161,28 @@ fn main() -> ExitCode {
             generate(shell, &mut Cli::command(), "g", &mut std::io::stdout());
             ExitCode::SUCCESS
         }
-        Commands::Todo { spec_file } => match todo::todo(&spec_file) {
-            Ok(()) => ExitCode::SUCCESS,
-            Err(error) => {
-                let message = format!("Todo failed: {error}");
-                logging::record(&message);
-                if logging::command_message(&message).is_err() {
+        Commands::Todo { spec_file } => run_todo(&spec_file),
+        Commands::Review { specification } => run_review(&specification),
+        Commands::Moon {
+            command: MoonCommands::Wip,
+        } => {
+            let Some(home) = env::var_os("HOME") else {
+                let message = "Cannot run Moonlighter wip: HOME is not set";
+                logging::record(message);
+                if logging::command_message(message).is_err() {
                     eprintln!("{message}");
                 }
-                ExitCode::FAILURE
-            }
-        },
+                return ExitCode::FAILURE;
+            };
+
+            let spec_path = moon_wip_spec_path(std::path::Path::new(&home));
+            run_todo(&spec_path.to_string_lossy())
+        }
         Commands::Up => run_script("bash", "scripts/up.sh", &[]),
         Commands::Front => run_script("bash", "scripts/front.sh", &[]),
         Commands::Format => run_format(),
         Commands::Test { suite } => run_tests(suite),
-        Commands::Wip => run_project_command("zsh", &["-i"], "cli/scripts/wip.sh", &[]),
+        Commands::Wip => run_script("bash", "cli/scripts/wip.sh", &[]),
         Commands::Watch { action } => run_script("zsh", "cli/scripts/watch.sh", &[action.as_str()]),
     };
 
@@ -168,6 +196,38 @@ fn main() -> ExitCode {
     ));
 
     result
+}
+
+fn run_review(specification: &str) -> ExitCode {
+    match review::review(specification) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            let message = format!("Review failed: {error}");
+            logging::record(&message);
+            if logging::command_message(&message).is_err() {
+                eprintln!("{message}");
+            }
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn moon_wip_spec_path(home: &std::path::Path) -> PathBuf {
+    home.join("github.com/loicbourgois/gravitle/front/moonlighter/wip.yml")
+}
+
+fn run_todo(spec_file: &str) -> ExitCode {
+    match todo::todo(spec_file) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            let message = format!("Todo failed: {error}");
+            logging::record(&message);
+            if logging::command_message(&message).is_err() {
+                eprintln!("{message}");
+            }
+            ExitCode::FAILURE
+        }
+    }
 }
 
 fn run_script(shell: &str, relative_path: &str, args: &[&str]) -> ExitCode {
@@ -216,15 +276,24 @@ fn run_project_command(
         eprintln!("HOME is not set");
         return ExitCode::FAILURE;
     };
+    let project_dir = PathBuf::from(home).join("github.com/loicbourgois/gravitle");
+    let path = project_dir.join(relative_path);
 
-    let path = PathBuf::from(home)
-        .join("github.com/loicbourgois/gravitle")
-        .join(relative_path);
+    let mut command = project_command(
+        &project_dir,
+        program,
+        prefix_args,
+        relative_path,
+        args,
+    );
 
-    let mut command = Command::new(program);
-    command.args(prefix_args).arg(&path).args(args);
+    let log_name = if relative_path == "scripts/front.sh" {
+        "front.log"
+    } else {
+        "terminal.log"
+    };
 
-    match run_logged_command(&mut command) {
+    match run_logged_command_to(&mut command, log_name) {
         Ok(status) => {
             logging::record(&format!(
                 "{program} for {} exited with {status}",
@@ -259,21 +328,22 @@ fn test_commands(cli_dir: &std::path::Path, suite: TestSuite) -> Vec<Command> {
                     command
                 }
                 TestSuite::Python => {
-                    let mut command = Command::new("uv");
-                    command
-                        .args([
-                            "run",
-                            "--no-project",
-                            "python",
-                            "-m",
-                            "unittest",
-                            "discover",
-                            "-s",
-                        ])
-                        .arg(cli_dir.join("scripts"))
-                        .args(["-p", "*_test.py"]);
-                    command
-                }
+    let mut command = Command::new("uv");
+    command
+        .args([
+            "run",
+            "--no-project",
+            "python",
+            "-u",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+        ])
+        .arg(cli_dir.join("scripts"))
+        .args(["-p", "*_test.py"]);
+    command
+}
                 TestSuite::All => unreachable!("all expands into individual suites"),
             };
             command.current_dir(cli_dir);
@@ -320,6 +390,26 @@ fn run_tests(suite: TestSuite) -> ExitCode {
 }
 
 fn run_logged_command(command: &mut Command) -> io::Result<ExitStatus> {
+    run_logged_command_to(command, "terminal.log")
+}
+
+fn project_command(
+    project_dir: &std::path::Path,
+    program: &str,
+    prefix_args: &[&str],
+    relative_path: &str,
+    args: &[&str],
+) -> Command {
+    let mut command = Command::new(program);
+    command
+        .args(prefix_args)
+        .arg(project_dir.join(relative_path))
+        .args(args)
+        .current_dir(project_dir);
+    command
+}
+
+fn run_logged_command_to(command: &mut Command, log_name: &str) -> io::Result<ExitStatus> {
     let mut child = command
         .env(logging::OUTPUT_DELEGATED_ENV, "1")
         .stdin(Stdio::inherit())
@@ -331,8 +421,10 @@ fn run_logged_command(command: &mut Command) -> io::Result<ExitStatus> {
     let stderr = child.stderr.take().expect("stderr was piped");
 
     thread::scope(|scope| {
-        let stdout_worker = scope.spawn(|| logging::forward_command_output(BufReader::new(stdout)));
-        let stderr_worker = scope.spawn(|| logging::forward_command_output(BufReader::new(stderr)));
+        let stdout_worker =
+            scope.spawn(|| logging::forward_command_output_to(BufReader::new(stdout), log_name));
+        let stderr_worker =
+            scope.spawn(|| logging::forward_command_output_to(BufReader::new(stderr), log_name));
 
         let status = child.wait();
 
