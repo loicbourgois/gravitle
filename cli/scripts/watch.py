@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 import traceback
 
 
-CLI_DIR = Path(__file__).resolve().parent
+CLI_DIR = Path(__file__).resolve().parent.parent
 STATE_DIR = (
     Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")
     / "gravitle-cli"
@@ -102,7 +102,7 @@ def install():
 
     try:
         with subprocess.Popen(
-            ["zsh", str(CLI_DIR / "install.sh")],
+            ["zsh", str(CLI_DIR / "scripts/install.sh")],
             cwd=CLI_DIR,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -158,7 +158,10 @@ def start(lock):
 
     process = subprocess.Popen(
         [
-            sys.executable,
+            "uv",
+            "run",
+            "--no-project",
+            "python",
             "-u",
             str(Path(__file__).resolve()),
             "--worker-fd",

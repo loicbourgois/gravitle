@@ -110,3 +110,51 @@ fn test_output_preserves_blank_lines_and_normalizes_crlf() {
 
     fs::remove_dir_all(directory).unwrap();
 }
+
+#[test]
+fn retained_terminal_log_paths_are_normalized() {
+    let directory = env::temp_dir().join(format!(
+        "gravitle-cli-terminal-retained-test-{}-{}",
+        std::process::id(),
+        NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed)
+    ));
+    fs::create_dir_all(&directory).unwrap();
+    fs::write(
+        directory.join("terminal.log"),
+        concat!(
+            "2026-11-07T13:39:19Z Installed /Users/test/.local/bin/g\n",
+            "2026-11-07T13:39:20Z \n",
+            "2026-11-07T13:39:21Z Unrelated /Users/test-other/file\n",
+        ),
+    )
+    .unwrap();
+
+    let mut terminal = Vec::new();
+    write_test_output(
+        &directory,
+        Path::new("/Users/test"),
+        "Watching /Users/test/project",
+        &mut terminal,
+    )
+    .unwrap();
+
+    let content = fs::read_to_string(directory.join("terminal.log")).unwrap();
+    let lines: Vec<_> = content.lines().collect();
+
+    assert_eq!(lines.len(), 4);
+    assert_eq!(lines[0], "2026-11-07T13:39:19Z Installed ~/.local/bin/g");
+    assert_eq!(lines[1], "2026-11-07T13:39:20Z ");
+    assert_eq!(
+        lines[2],
+        "2026-11-07T13:39:21Z Unrelated /Users/test-other/file"
+    );
+    assert!(lines[3].ends_with("Z Watching ~/project"));
+
+    // Retained history is not replayed; newly emitted output matches the file.
+    assert_eq!(
+        String::from_utf8(terminal).unwrap(),
+        format!("{}\n", lines[3]),
+    );
+
+    fs::remove_dir_all(directory).unwrap();
+}

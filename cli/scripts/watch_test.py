@@ -8,6 +8,40 @@ import watch
 
 
 class WatchTests(unittest.TestCase):
+    def test_start_launches_worker_through_uv_and_publishes_pid(self):
+        with tempfile.TemporaryFile(mode="w+") as lock:
+            with (
+                patch.object(watch.subprocess, "Popen") as popen,
+                patch("sys.stdout", new_callable=io.StringIO),
+            ):
+                popen.return_value.pid = 12345
+
+                result = watch.start(lock)
+
+            self.assertEqual(result, 0)
+            popen.assert_called_once_with(
+                [
+                    "uv",
+                    "run",
+                    "--no-project",
+                    "python",
+                    "-u",
+                    str(Path(watch.__file__).resolve()),
+                    "--worker-fd",
+                    str(lock.fileno()),
+                ],
+                cwd=self.cli_dir,
+                stdin=watch.subprocess.DEVNULL,
+                stdout=watch.subprocess.DEVNULL,
+                stderr=watch.subprocess.DEVNULL,
+                start_new_session=True,
+                pass_fds=(lock.fileno(),),
+            )
+
+            lock.seek(0)
+            self.assertEqual(lock.read(), "12345")
+            self.assertTrue(watch.LOG_PATH.is_file())
+    
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
@@ -122,7 +156,33 @@ class WatchTests(unittest.TestCase):
             "2026-11-07T13:39:19Z Installed ~/.local/bin/g",
         )
         self.assertTrue(lines[1].endswith("Z Watching for changes..."))
+    
+    def test_install_uses_script_under_cli_root(self):
+        with patch.object(watch.subprocess, "Popen") as popen:
+            process = popen.return_value.__enter__.return_value
+            process.stdout = io.StringIO("")
+            process.wait.return_value = 0
 
+            watch.install()
+
+        args, kwargs = popen.call_args
+        self.assertEqual(
+            args,
+            (["zsh", str(self.cli_dir / "scripts" / "install.sh")],),
+        )
+        self.assertEqual(kwargs["cwd"], self.cli_dir)
+        self.assertEqual(kwargs["stdout"], watch.subprocess.PIPE)
+        self.assertEqual(kwargs["stderr"], watch.subprocess.STDOUT)
+
+
+class WatchPathsTests(unittest.TestCase):
+    def test_cli_root_is_parent_of_scripts_directory(self):
+        cli_dir = Path(watch.__file__).resolve().parent.parent
+
+        self.assertEqual(watch.CLI_DIR, cli_dir)
+        self.assertEqual(watch.LOG_PATH, cli_dir / "logs" / "watch.log")
+        self.assertTrue((cli_dir / "Cargo.toml").is_file())
+        self.assertTrue((cli_dir / "scripts" / "install.sh").is_file())
 
 if __name__ == "__main__":
     unittest.main()

@@ -90,7 +90,7 @@ fn test_commands_use_absolute_project_paths_and_uv_for_python() {
             OsStr::new("unittest"),
             OsStr::new("discover"),
             OsStr::new("-s"),
-            directory.as_os_str(),
+            OsStr::new("/tmp/gravitle project/cli/scripts"),
             OsStr::new("-p"),
             OsStr::new("*_test.py"),
         ],

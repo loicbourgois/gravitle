@@ -13,11 +13,11 @@ Python should be invoqued via uv.
 - front:    runs $HOME/github.com/loicbourgois/gravitle/scripts/front.sh
 - test:     runs the rust tests, and the python tests
     - all:      default
-    - python:   ..
-    - rust:     ..
+    - python:   discovers *_test.py in cli/scripts via uv
+    - rust:     runs cargo test using cli/Cargo.toml
 - up:       runs $HOME/github.com/loicbourgois/gravitle/scripts/up.sh
-- watch:    runs $HOME/github.com/loicbourgois/gravitle/cli/watch.sh
-- wip:      runs $HOME/github.com/loicbourgois/gravitle/cli/wip.sh
+- watch:    runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh
+- wip:      runs $HOME/github.com/loicbourgois/gravitle/cli/scripts/wip.sh in interactive Zsh
 
 
 ## Installation
@@ -33,7 +33,7 @@ zsh should be supported as the default
 ## Auto rebuild
 Any change to gravitle/cli should trigger a rebuild.
 A succesfull rebuild should trigger an install, including auto complete.
-The watch should be started via $HOME/github.com/loicbourgois/gravitle/cli/watch.sh
+The watch should be started via $HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh
 The watch should run in the background.
 We should have an easy to check wether or not watch is active.
 
@@ -48,14 +48,14 @@ Each log must be timestamped with a UTC date time.
 CLI logs go to $HOME/github.com/loicbourgois/gravitle/cli/logs/cli.log
 Same, 100 lines only.
 
-Terminal and file logs should be an exact match.
+All CLI commands should forward their logs to files in addition to the terminal.
 
 
 ## Readme
 All instructions in the readme should be runnable from anywhere on the machine.
 It means using one of these two options:
 - CLI, eg `g watch`
-- full path script, eg `$HOME/github.com/loicbourgois/gravitle/cli/watch.sh`
+- full path script, eg `$HOME/github.com/loicbourgois/gravitle/cli/scripts/watch.sh`
 
 
 ## Documentation

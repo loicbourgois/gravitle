@@ -27,26 +27,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Up,
-    Front,
-    /// Format the CLI Rust source with cargo fmt.
+    Completions {
+        #[arg(value_enum, default_value = "zsh")]
+        shell: CompletionShell,
+    },
     Format,
     /// Run CLI tests; defaults to both Rust and Python.
+    Front,
+    /// Format the CLI Rust source with cargo fmt.
     Test {
         #[arg(value_enum, default_value = "all")]
         suite: TestSuite,
     },
-    /// Run the CLI work-in-progress todo workflow.
-    Wip,
+    Up,
     /// Manage background rebuilding and installation of the CLI.
     Watch {
         #[arg(value_enum, default_value = "start")]
         action: WatchAction,
     },
-    Completions {
-        #[arg(value_enum, default_value = "zsh")]
-        shell: CompletionShell,
-    },
+    /// Run the CLI work-in-progress todo workflow.
+    Wip,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -132,8 +132,8 @@ fn main() -> ExitCode {
         Commands::Front => run_script("bash", "scripts/front.sh", &[]),
         Commands::Format => run_format(),
         Commands::Test { suite } => run_tests(suite),
-        Commands::Wip => run_project_command("zsh", &["-i"], "cli/wip.sh", &[]),
-        Commands::Watch { action } => run_script("zsh", "cli/watch.sh", &[action.as_str()]),
+        Commands::Wip => run_project_command("zsh", &["-i"], "cli/scripts/wip.sh", &[]),
+        Commands::Watch { action } => run_script("zsh", "cli/scripts/watch.sh", &[action.as_str()]),
     };
 
     logging::record(&format!(
@@ -170,13 +170,13 @@ fn run_format() -> ExitCode {
 
     let cli_dir = PathBuf::from(home).join("github.com/loicbourgois/gravitle/cli");
 
-    match format_command(&cli_dir).status() {
+    match run_logged_command(&mut format_command(&cli_dir)) {
         Ok(status) => {
             logging::record(&format!("cargo fmt exited with {status}"));
             ExitCode::from(status.code().unwrap_or(1).clamp(0, 255) as u8)
         }
         Err(error) => {
-            let message = format!("Failed to run cargo fmt: {error}");
+            let message = format!("Failed to run or log cargo fmt: {error}");
             logging::record(&message);
             eprintln!("{message}");
             ExitCode::FAILURE
@@ -199,12 +199,10 @@ fn run_project_command(
         .join("github.com/loicbourgois/gravitle")
         .join(relative_path);
 
-    match Command::new(program)
-        .args(prefix_args)
-        .arg(&path)
-        .args(args)
-        .status()
-    {
+    let mut command = Command::new(program);
+    command.args(prefix_args).arg(&path).args(args);
+
+    match run_logged_command(&mut command) {
         Ok(status) => {
             logging::record(&format!(
                 "{program} for {} exited with {status}",
@@ -213,7 +211,10 @@ fn run_project_command(
             ExitCode::from(status.code().unwrap_or(1).clamp(0, 255) as u8)
         }
         Err(error) => {
-            let message = format!("failed to run {program} for {}: {error}", path.display());
+            let message = format!(
+                "Failed to run or log {program} for {}: {error}",
+                path.display()
+            );
             logging::record(&message);
             eprintln!("{message}");
             ExitCode::FAILURE
@@ -247,7 +248,7 @@ fn test_commands(cli_dir: &std::path::Path, suite: TestSuite) -> Vec<Command> {
                             "discover",
                             "-s",
                         ])
-                        .arg(cli_dir)
+                        .arg(cli_dir.join("scripts"))
                         .args(["-p", "*_test.py"]);
                     command
                 }
@@ -273,7 +274,7 @@ fn run_tests(suite: TestSuite) -> ExitCode {
     for mut command in test_commands(&cli_dir, suite) {
         let program = command.get_program().to_string_lossy().into_owned();
 
-        match run_test_command(&mut command) {
+        match run_logged_command(&mut command) {
             Ok(status) => {
                 logging::record(&format!("{program} tests exited with {status}"));
                 if !status.success() {
@@ -296,8 +297,9 @@ fn run_tests(suite: TestSuite) -> ExitCode {
     }
 }
 
-fn run_test_command(command: &mut Command) -> io::Result<ExitStatus> {
+fn run_logged_command(command: &mut Command) -> io::Result<ExitStatus> {
     let mut child = command
+        .stdin(Stdio::inherit())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
@@ -306,12 +308,11 @@ fn run_test_command(command: &mut Command) -> io::Result<ExitStatus> {
     let stderr = child.stderr.take().expect("stderr was piped");
 
     thread::scope(|scope| {
-        let stdout_worker = scope.spawn(|| logging::forward_test_output(BufReader::new(stdout)));
-        let stderr_worker = scope.spawn(|| logging::forward_test_output(BufReader::new(stderr)));
+        let stdout_worker = scope.spawn(|| logging::forward_command_output(BufReader::new(stdout)));
+        let stderr_worker = scope.spawn(|| logging::forward_command_output(BufReader::new(stderr)));
 
         let status = child.wait();
 
-        // Join both readers even if waiting or one reader fails.
         let stdout_result = stdout_worker
             .join()
             .unwrap_or_else(|_| Err(io::Error::other("stdout reader panicked")));

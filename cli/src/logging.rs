@@ -92,15 +92,15 @@ fn write_record(directory: &Path, home: &Path, message: &str) -> io::Result<()> 
     file.flush()
 }
 
-static TEST_OUTPUT_LOCK: Mutex<()> = Mutex::new(());
+static COMMAND_OUTPUT_LOCK: Mutex<()> = Mutex::new(());
 
-pub(crate) fn forward_test_output(reader: impl BufRead) -> io::Result<()> {
+pub(crate) fn forward_command_output(reader: impl BufRead) -> io::Result<()> {
     for line in reader.split(b'\n') {
         let line = line?;
         let message = String::from_utf8_lossy(&line);
-        let _guard = TEST_OUTPUT_LOCK
+        let _guard = COMMAND_OUTPUT_LOCK
             .lock()
-            .map_err(|_| io::Error::other("test output lock poisoned"))?;
+            .map_err(|_| io::Error::other("command output lock poisoned"))?;
 
         let home = env::var_os("HOME").ok_or_else(|| io::Error::other("HOME is not set"))?;
         let home = Path::new(&home);
@@ -135,7 +135,10 @@ fn write_test_output(
         Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
         Err(error) => return Err(error),
     };
-    let mut lines: VecDeque<String> = existing.lines().map(str::to_owned).collect();
+    let mut lines: VecDeque<String> = existing
+        .lines()
+        .map(|line| normalize_paths(line, home))
+        .collect();
 
     // Preserve blank output lines as timestamped records too.
     let message = message.strip_suffix('\r').unwrap_or(message);

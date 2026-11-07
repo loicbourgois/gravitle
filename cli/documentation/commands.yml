@@ -18,4 +18,4 @@ g:
     start: Start the watcher unless it is already active.
     status: Report watcher status; exit 0 when active and 1 when inactive.
     stop: Stop the watcher and any active build/install process.
-  wip: Run ~/github.com/loicbourgois/gravitle/cli/wip.sh in interactive Zsh.
+  wip: Run ~/github.com/loicbourgois/gravitle/cli/scripts/wip.sh in interactive Zsh.

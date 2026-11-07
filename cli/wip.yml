@@ -7,18 +7,18 @@ files:
   - file://./../../gravitle/cli/logs/watch.log
   - file://./../../gravitle/cli/logs/terminal.log
   - file://./../../gravitle/cli/logs/cli.log
+  - file://./../../gravitle/cli/scripts/install.sh
+  - file://./../../gravitle/cli/scripts/watch_test.py
+  - file://./../../gravitle/cli/scripts/watch.py
+  - file://./../../gravitle/cli/scripts/watch.sh
+  - file://./../../gravitle/cli/scripts/wip.sh
   - file://./../../gravitle/cli/src/logging_test.rs
   - file://./../../gravitle/cli/src/logging.rs
   - file://./../../gravitle/cli/src/main_test.rs
   - file://./../../gravitle/cli/src/main.rs
   - file://./../../gravitle/cli/Cargo.toml
-  - file://./../../gravitle/cli/install.sh
   - file://./../../gravitle/cli/README.md
   - file://./../../gravitle/cli/specs.md
-  - file://./../../gravitle/cli/watch.py
-  - file://./../../gravitle/cli/watch_test.py
-  - file://./../../gravitle/cli/watch.sh
-  - file://./../../gravitle/cli/wip.sh
   - file://./../../gravitle/cli/wip.yml
 
 

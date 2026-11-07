@@ -1,13 +1,11 @@
 #!/bin/zsh
-# $HOME/github.com/loicbourgois/gravitle/cli/install.sh
 set -euo pipefail
 
-cli_dir="$HOME/github.com/loicbourgois/gravitle/cli"
+cli_dir="${0:A:h:h}"
 bin_dir="$HOME/.local/bin"
 bash_completion_dir="$HOME/.local/share/bash-completion/completions"
 zsh_completion_dir="$HOME/.local/share/zsh/site-functions"
 zshrc="${ZDOTDIR:-$HOME}/.zshrc"
-
 
 completion_marker="# Gravitle CLI completion"
 
